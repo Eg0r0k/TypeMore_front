@@ -1,0 +1,50 @@
+@use "sass:color";
+@import "./fonts/fonts";
+@import "./reset";
+@import "./normalize";
+
+:root {
+    --bg-color: #111;
+    --main-color: #eee;
+    --sub-color: #444;
+    --sub-alt-color: #191919;
+    --text-color: #eee;
+    --error-color: #da3333;
+    --error-extra-color: #791717;
+    --border-radius: 6px;
+    --transition-duration: 0.08s;
+}
+@media (prefers-color-scheme: dark) {
+    body {
+        color-scheme: dark;
+    }
+}
+html,
+body {
+    line-height: normal;
+}
+html {
+    overflow-y: scroll;
+    scroll-behavior: smooth;
+    line-height: 1.25;
+    text-size-adjust: 100%;
+}
+body {
+    font-size: 16px;
+    background-color: var(--bg-color);
+    box-sizing: border-box;
+    font-family: "Noto Sans TC";
+    transition:
+        background 0.25s ease 0s,
+        transform 0.05s ease 0s;
+}
+
+::-moz-selection {
+    color: var(--bg-color);
+    background: var(--main-color);
+}
+
+::selection {
+    color: var(--bg-color);
+    background: var(--main-color);
+}
