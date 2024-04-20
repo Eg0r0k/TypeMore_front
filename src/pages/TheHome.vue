@@ -36,7 +36,6 @@ main {
    flex-direction: column;
    gap: 18px;
    margin-bottom: 35px;
-
 }
 </style>
 <template>
@@ -76,6 +75,8 @@ main {
                   decoration="underline">Create</Typography>
             </Typography>
          </div>
+         <RecaptchaV2 @widget-id="handleWidgetId" @error-callback="handleErrorCalback"
+            @expired-callback="handleExpiredCallback" @load-callback="handleLoadCallback" />
       </Container>
    </main>
    <PopUp />
@@ -83,6 +84,7 @@ main {
 </template>
 
 <script setup lang="ts">
+
 import { Button } from '@/shared/ui/button';
 import { Container } from '@/shared/ui/container'
 import { PopUp } from '@/features/popup';
@@ -94,7 +96,20 @@ import { Typography } from '@/shared/ui/typography';
 import { TextInput } from '@/shared/ui/input';
 import * as yup from 'yup';
 import { useForm } from 'vee-validate';
+import { RecaptchaV2 } from 'vue3-recaptcha-v2';
 
+const handleWidgetId = (widgetId: number) => {
+   console.log("Widget ID: ", widgetId);
+};
+const handleErrorCalback = () => {
+   console.log("Error callback");
+};
+const handleExpiredCallback = () => {
+   console.log("Expired callback");
+};
+const handleLoadCallback = (response: unknown) => {
+   console.log("Load callback", response);
+};
 
 function findDuplicates(words: Array<string>): Array<any> {
    const wordFrequencies: any = {};
@@ -112,8 +127,8 @@ function findDuplicates(words: Array<string>): Array<any> {
 }
 
 fetch('./src/static/japanese-words.json')
-   .then((response) => response.json()) 
-   .then((text) => console.log(findDuplicates(text.words))); 
+   .then((response) => response.json())
+   .then((text) => console.log(findDuplicates(text.words)));
 
 const { errors, defineField } = useForm({
    validationSchema: yup.object({

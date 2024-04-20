@@ -19,6 +19,20 @@
         color-scheme: dark;
     }
 }
+@font-face {
+    font-family: "Noto Sans TC";
+    src: url("./fonts/NotoSansTC-Thin.eot");
+    src:
+        url("NotoSansTC-Thin.eot?#  iefix") format("embedded-opentype"),
+        url("./fonts/NotoSansTC-Thin.woff2") format("woff2"),
+        url("./fonts/NotoSansTC-Thin.woff") format("woff"),
+        url("./fonts/NotoSansTC-Thin.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+    line-height: normal;
+}
+
 html,
 body {
     line-height: normal;

@@ -17,7 +17,7 @@ import { DefineComponent, ref } from 'vue';
 import { onClickOutside } from '@vueuse/core'
 
 const popUpRef = ref(null)
-const isPopUpOpen = ref<Boolean>(true);
+const isPopUpOpen = ref<Boolean>(false);
 onClickOutside(
     popUpRef, (e): void => {
         closePopUp()
