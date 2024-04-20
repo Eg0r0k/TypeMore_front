@@ -1,9 +1,9 @@
 <template>
     <nav class="header-navigation">
         <ul class="header-navigation__list">
-            <li class="list__item" v-for="link in props.data" :key="link.link">
+            <li class="list list__item" v-for="link in props.data" :key="link.link">
                 <Popper hover arrow class="registration__popper" :content="link.label">
-                    <router-link :to="link.link">
+                    <router-link :to="link.link" class="list__link">
                         <Icon :icon="link.iconName" width="30" />
                     </router-link>
                 </Popper>

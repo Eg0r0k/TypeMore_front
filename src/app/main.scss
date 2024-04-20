@@ -30,6 +30,7 @@
         color-scheme: dark;
     }
 }
+
 // @font-face {
 //     font-family: "Noto Sans TC";
 //     src: url("./fonts/NotoSansTC-Thin.eot");
@@ -46,14 +47,16 @@
 
 main {
     display: flex;
-    height: 100vh;
+    padding: 0 16px;
+    height: 100%;
     flex-grow: 1;
     flex-direction: column;
 }
-a{
-    color:var(--sub-color);
-    &:hover{
-        color:var(--main-color)
+a {
+    color: var(--sub-color);
+    transition: all var(--transition-duration);
+    &:hover {
+        color: var(--main-color);
     }
 }
 html,

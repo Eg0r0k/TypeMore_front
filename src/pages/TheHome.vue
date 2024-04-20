@@ -1,6 +1,4 @@
 <style lang="scss" scoped>
-
-
 .test {
    max-width: 350px;
    border-radius: var(--border-radius);
@@ -25,6 +23,13 @@
 
 }
 
+.wrapper {
+   height: 100%;
+   max-width: 1532px;
+   width: 100%;
+   margin: 0 auto;
+}
+
 .test__from {
 
    display: flex;
@@ -36,10 +41,8 @@
 <template>
    <Header />
    <main>
-      <Container>
-         <Button color="main" size="s">
-            <Icon icon="material-symbols-light:16mp" width="20" />
-         </Button>
+      <div class="wrapper">
+
          <form action="" novalidate @submit.prevent="test">
             <Button color="gray" size="l">Login</Button>
          </form>
@@ -72,7 +75,7 @@
          </div>
          <RecaptchaV2 @widget-id="handleWidgetId" @error-callback="handleErrorCalback"
             @expired-callback="handleExpiredCallback" @load-callback="handleLoadCallback" />
-      </Container>
+      </div>
    </main>
    <PopUp />
    <Footer />
