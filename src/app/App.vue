@@ -18,10 +18,13 @@ const fps = useFps()
 </script>
 
 <template>
+
     <div class="fps">
         FPS: {{ fps }}
     </div>
-    <RouterView />
+    <main>
+        <RouterView />
+    </main>
 </template>
 
 <style lang="scss">
@@ -31,4 +34,6 @@ const fps = useFps()
     left: 20px;
     color: var(--main-color)
 }
+
+
 </style>

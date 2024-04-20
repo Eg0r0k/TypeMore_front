@@ -1,5 +1,5 @@
 <template>
-    <component :is="props.tagName" :class="classes">
+    <component :is="props.tagName" :href="props.tagName === 'a' ? props.href : '/'" :class="classes">
         <slot></slot>
     </component>
 </template>
@@ -8,10 +8,11 @@
 import { computed } from 'vue';
 interface Props {
     isBold?: boolean;
-    tagName?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span';
+    tagName?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'a';
     size?: 'xxxl' | 'xxl' | 'xl' | 'l' | 'm' | 's' | 'xs' | 'xxs';
     color?: 'unset' | 'primary' | "error" | 'main' | 'extraerror';
-    decoration?: 'underline'
+    decoration?: 'underline',
+    href?: string
 }
 const props = withDefaults(defineProps<Props>(),
     {
@@ -59,6 +60,8 @@ const classes = computed(() => [
     }
 
 }
+
+
 
 .typography {
     margin-top: 0;

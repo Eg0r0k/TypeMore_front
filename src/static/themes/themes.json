@@ -1,5 +1,15 @@
 [
     {
+        "name":"Discord",
+        "--bg-color": "#313338",
+        "--main-color":"#5865f2",
+        "--sub-color": "#383a40",
+        "--sub-alt-color": "#232428",
+        "--text-color":"#dcdee3",
+        "--error-color": "#ff3f43",
+        "--error-extra-color":"#a12828"
+    },
+    {
         "name": "Neo",
         "--bg-color": "#000000",
         "--main-color":"#15ff00",

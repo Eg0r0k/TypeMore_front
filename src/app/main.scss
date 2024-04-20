@@ -1,11 +1,11 @@
 @use "sass:color";
-@import "./fonts/fonts";
+
 @import "./reset";
 @import "./normalize";
 
 :root {
     --bg-color: #111;
-    --main-color: #eee;
+    --main-color: #f7f7f7;
     --sub-color: #444;
     --sub-alt-color: #191919;
     --text-color: #eee;
@@ -14,25 +14,48 @@
     --border-radius: 6px;
     --transition-duration: 0.08s;
 }
+:root {
+    --popper-theme-background-color: var(--sub-alt-color);
+    --popper-theme-background-color-hover: var(--sub-alt-color);
+    --popper-theme-text-color: var(--text-color);
+    --popper-theme-border-color: var(--sub-color);
+    --popper-theme-border-width: 1px;
+    --popper-theme-border-style: solid;
+    --popper-theme-border-radius: var(--border-radius);
+    --popper-theme-padding: 6px;
+    --popper-theme-box-shadow: 0;
+}
 @media (prefers-color-scheme: dark) {
     body {
         color-scheme: dark;
     }
 }
-@font-face {
-    font-family: "Noto Sans TC";
-    src: url("./fonts/NotoSansTC-Thin.eot");
-    src:
-        url("NotoSansTC-Thin.eot?#  iefix") format("embedded-opentype"),
-        url("./fonts/NotoSansTC-Thin.woff2") format("woff2"),
-        url("./fonts/NotoSansTC-Thin.woff") format("woff"),
-        url("./fonts/NotoSansTC-Thin.ttf") format("truetype");
-    font-weight: 400;
-    font-style: normal;
-    font-display: block;
-    line-height: normal;
-}
+// @font-face {
+//     font-family: "Noto Sans TC";
+//     src: url("./fonts/NotoSansTC-Thin.eot");
+//     src:
+//         url("NotoSansTC-Thin.eot?#  iefix") format("embedded-opentype"),
+//         url("./fonts/NotoSansTC-Thin.woff2") format("woff2"),
+//         url("./fonts/NotoSansTC-Thin.woff") format("woff"),
+//         url("./fonts/NotoSansTC-Thin.ttf") format("truetype");
+//     font-weight: 400;
+//     font-style: normal;
+//     font-display: block;
+//     line-height: normal;
+// }
 
+main {
+    display: flex;
+    height: 100vh;
+    flex-grow: 1;
+    flex-direction: column;
+}
+a{
+    color:var(--sub-color);
+    &:hover{
+        color:var(--main-color)
+    }
+}
 html,
 body {
     line-height: normal;

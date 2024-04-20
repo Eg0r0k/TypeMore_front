@@ -1,10 +1,5 @@
 <style lang="scss" scoped>
-main {
-   display: flex;
-   height: 100vh;
-   flex-grow: 1;
-   flex-direction: column;
-}
+
 
 .test {
    max-width: 350px;
@@ -46,7 +41,6 @@ main {
             <Icon icon="material-symbols-light:16mp" width="20" />
          </Button>
          <form action="" novalidate @submit.prevent="test">
-
             <Button color="gray" size="l">Login</Button>
          </form>
          <div class="test">
@@ -69,10 +63,11 @@ main {
                </div>
             </form>
 
-            <Button>Goggle</Button>
+            <Button @click="openConfirmPopup">Goggle</Button>
             <Button color="main" :isLoading="false">Create</Button>
-            <Typography color="primary" size="s">No accaunt? <Typography tag-name="span" color="main"
-                  decoration="underline">Create</Typography>
+            <Typography color="primary" size="s">No accaunt? <Typography tag-name="p" color="main"
+                  decoration="underline">
+                  Create</Typography>
             </Typography>
          </div>
          <RecaptchaV2 @widget-id="handleWidgetId" @error-callback="handleErrorCalback"
@@ -88,7 +83,7 @@ main {
 import { Button } from '@/shared/ui/button';
 import { Container } from '@/shared/ui/container'
 import { PopUp } from '@/features/popup';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { Header } from '@/widgets/header';
 import { Footer } from '@/widgets/footer';
 import { Icon } from '@iconify/vue'
@@ -97,7 +92,19 @@ import { TextInput } from '@/shared/ui/input';
 import * as yup from 'yup';
 import { useForm } from 'vee-validate';
 import { RecaptchaV2 } from 'vue3-recaptcha-v2';
+import { useResolvedPopUp } from '@/shared/lib/hooks/useResolvedPopUp';
 
+
+const openConfirmPopup = async () => {
+   const result = await useResolvedPopUp(PopUp, true);
+   if (result) {
+      console.log('Пользователь подтвердил действие');
+      // Выполнить действия при подтверждении
+   } else {
+      console.log('Пользователь отменил действие');
+      // Выполнить действия при отмене
+   }
+};
 const handleWidgetId = (widgetId: number) => {
    console.log("Widget ID: ", widgetId);
 };
@@ -125,10 +132,16 @@ function findDuplicates(words: Array<string>): Array<any> {
    });
    return duplicates;
 }
-
-fetch('./src/static/japanese-words.json')
-   .then((response) => response.json())
-   .then((text) => console.log(findDuplicates(text.words)));
+const words = ref<string[]>([]);
+onMounted(async () => {
+   try {
+      const response = await fetch('./src/static/japanese-words.json');
+      const data = await response.json();
+      words.value = data.words;
+   } catch (error) {
+      console.error('Ошибка при загрузке данных:', error);
+   }
+});
 
 const { errors, defineField } = useForm({
    validationSchema: yup.object({

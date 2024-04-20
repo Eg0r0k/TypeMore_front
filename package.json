@@ -30,6 +30,7 @@
     "vue": "^3.3.11",
     "vue-recaptcha": "^3.0.0-alpha.2",
     "vue-router": "^4.2.5",
+    "vue3-popper": "^1.5.0",
     "vue3-recaptcha-v2": "^2.0.2",
     "yup": "^1.4.0"
   },
