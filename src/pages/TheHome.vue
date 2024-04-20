@@ -40,43 +40,42 @@
 </style>
 <template>
    <Header />
-   <main>
-      <div class="wrapper">
 
-         <form action="" novalidate @submit.prevent="test">
-            <Button color="gray" size="l">Login</Button>
-         </form>
-         <div class="test">
-            <div class="test__header">
-               <Typography class="test__title" tag-name="h3" :color="'main'" size="xl">Registration</Typography>
-               <Typography color="primary" size="m">Fill in all fields to register</Typography>
-            </div>
-            <form class="test__from">
-               <div>
-                  <TextInput :placeholder="'Username'" v-model="username" :usernameProps />
-                  <Typography tag-name="span" color="error">{{ errors.username }}</Typography>
-               </div>
-               <div>
-                  <TextInput :placeholder="'Email'" v-model="email" :emailProps />
-                  <Typography tag-name="span" color="error">{{ errors.email }}</Typography>
-               </div>
-               <div>
-                  <TextInput :placeholder="'Password'" v-model="password" :passwordProps />
-                  <Typography tag-name="span" color="error">{{ errors.password }}</Typography>
-               </div>
-            </form>
+   <div class="wrapper">
 
-            <Button @click="openConfirmPopup">Goggle</Button>
-            <Button color="main" :isLoading="false">Create</Button>
-            <Typography color="primary" size="s">No accaunt? <Typography tag-name="p" color="main"
-                  decoration="underline">
-                  Create</Typography>
-            </Typography>
+      <form action="" novalidate @submit.prevent="test">
+         <Button color="gray" size="l">Login</Button>
+      </form>
+      <div class="test">
+         <div class="test__header">
+            <Typography class="test__title" tag-name="h3" :color="'main'" size="xl">Registration</Typography>
+            <Typography color="primary" size="m">Fill in all fields to register</Typography>
          </div>
-         <RecaptchaV2 @widget-id="handleWidgetId" @error-callback="handleErrorCalback"
-            @expired-callback="handleExpiredCallback" @load-callback="handleLoadCallback" />
+         <form class="test__from">
+            <div>
+               <TextInput :placeholder="'Username'" v-model="username" :usernameProps />
+               <Typography tag-name="span" color="error">{{ errors.username }}</Typography>
+            </div>
+            <div>
+               <TextInput :placeholder="'Email'" v-model="email" :emailProps />
+               <Typography tag-name="span" color="error">{{ errors.email }}</Typography>
+            </div>
+            <div>
+               <TextInput :placeholder="'Password'" v-model="password" :passwordProps />
+               <Typography tag-name="span" color="error">{{ errors.password }}</Typography>
+            </div>
+         </form>
+
+         <Button @click="openConfirmPopup">Goggle</Button>
+         <Button color="main" :isLoading="false">Create</Button>
+         <Typography color="primary" size="s">No accaunt? <Typography tag-name="p" color="main" decoration="underline">
+               Create</Typography>
+         </Typography>
       </div>
-   </main>
+      <RecaptchaV2 @widget-id="handleWidgetId" @error-callback="handleErrorCalback"
+         @expired-callback="handleExpiredCallback" @load-callback="handleLoadCallback" />
+   </div>
+
    <PopUp />
    <Footer />
 </template>
