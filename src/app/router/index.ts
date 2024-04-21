@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import TheHome from '@/pages/TheHome.vue'
 import { RegistrationPage } from '@/pages/auth/registration'
 import { LoginPage } from '@/pages/auth/login'
+import { SettingPage } from '@/pages/settings'
 
 const routes = [
   {
@@ -22,7 +23,7 @@ const routes = [
   {
     path: '/settings',
     name: 'settings',
-    component: TheHome
+    component: SettingPage
   },
   {
     path: '/login',

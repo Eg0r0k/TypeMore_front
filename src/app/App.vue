@@ -23,9 +23,9 @@ const fps = useFps()
 
 <template>
 
-    <!-- <div class="fps">
+    <div class="fps">
         FPS: {{ fps }}
-    </div> -->
+    </div>
     <div class="wrapper">
 
         <Header />
