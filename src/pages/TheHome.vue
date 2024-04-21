@@ -39,10 +39,16 @@
 }
 </style>
 <template>
-   <Header />
 
-   <div class="wrapper">
 
+   <!-- <div class="container">
+      <Typography class="word" color="main" size="m" v-for="word in words" :key="word">
+         {{ word }}
+      </Typography>
+   </div> -->
+
+
+   <div>
       <form action="" novalidate @submit.prevent="test">
          <Button color="gray" size="l">Login</Button>
       </form>
@@ -74,10 +80,11 @@
       </div>
       <RecaptchaV2 @widget-id="handleWidgetId" @error-callback="handleErrorCalback"
          @expired-callback="handleExpiredCallback" @load-callback="handleLoadCallback" />
+
+
    </div>
 
-   <PopUp />
-   <Footer />
+
 </template>
 
 <script setup lang="ts">
@@ -137,7 +144,7 @@ function findDuplicates(words: Array<string>): Array<any> {
 const words = ref<string[]>([]);
 onMounted(async () => {
    try {
-      const response = await fetch('./src/static/japanese-words.json');
+      const response = await fetch('./src/static/russian-words.json');
       const data = await response.json();
       words.value = data.words;
    } catch (error) {

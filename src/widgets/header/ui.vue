@@ -1,11 +1,9 @@
 <template>
     <header class="header">
-        <Container class="wrapper">
-            <Navigation :data="navigationLinks" />
-            <router-link to="/login">
-                <Icon :icon="'mdi:user'" width="30" />
-            </router-link>
-        </Container>
+        <Navigation :data="navigationLinks" />
+        <router-link to="/login" title="Login">
+            <Icon :icon="'mdi:user'" width="30" />
+        </router-link>
     </header>
 </template>
 
@@ -19,11 +17,6 @@ const navigationLinks = NAV_LINKS
 
 <style lang="scss" scoped>
 .header {
-    display: flex;
-    padding: 36px 0;
-}
-.wrapper 
-{
     display: flex;
     justify-content: space-between;
 }

@@ -12,7 +12,7 @@ export const NAV_LINKS = [
   {
     iconName: 'solar:settings-bold',
     label: 'Settings',
-    link: '/'
+    link: '/settings'
   },
   {
     iconName: 'icon-park-solid:network-tree',

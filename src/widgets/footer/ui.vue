@@ -1,13 +1,10 @@
 <template>
     <footer class="footer">
 
-
-        <Container>
-            <div class="footer__left">
-                <FooterLinks :data="navLinks" />
-            </div>
-            <div class="footer__right"></div>
-        </Container>
+        <div class="footer__left">
+            <FooterLinks :data="navLinks" />
+        </div>
+        <div class="footer__right"></div>
 
     </footer>
 </template>
@@ -22,7 +19,7 @@ const navLinks = FOOTER_LINKS
 <style lang="scss" scoped>
 .footer {
     display: flex;
-    padding: 20px 0;
+  
 
     &__left {}
 }

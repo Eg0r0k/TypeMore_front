@@ -1,5 +1,5 @@
 <template>
-    <component :is="props.tagName" :href="props.tagName === 'a' ? props.href : '/'" :class="classes">
+    <component :is="props.tagName" :href="props.tagName === 'a' ? props.href : ''" :class="classes">
         <slot></slot>
     </component>
 </template>

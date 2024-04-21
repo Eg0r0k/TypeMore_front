@@ -27,6 +27,8 @@ coverage
 *.sln
 *.sw?
 
+.env
+
 *.tsbuildinfo
 
 *storybook.log

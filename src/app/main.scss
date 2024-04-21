@@ -46,11 +46,8 @@
 // }
 
 main {
-    display: flex;
-    padding: 0 16px;
+    display: grid;
     height: 100%;
-    flex-grow: 1;
-    flex-direction: column;
 }
 a {
     color: var(--sub-color);
@@ -70,13 +67,28 @@ html {
     text-size-adjust: 100%;
 }
 body {
+    overflow-x: hidden;
     font-size: 16px;
+    min-height: 100vh;
     background-color: var(--bg-color);
     box-sizing: border-box;
     font-family: "Noto Sans TC";
     transition:
         background 0.25s ease 0s,
         transform 0.05s ease 0s;
+}
+::-webkit-scrollbar {
+    width: 10px;
+}
+::-webkit-scrollbar-corner {
+    background: var(--sub-color);
+}
+::-webkit-scrollbar-thumb {
+    border-radius: var(--border-radius);
+    background: (--sub-color);
+    &:hover {
+        background: (--text-color);
+    }
 }
 
 ::-moz-selection {

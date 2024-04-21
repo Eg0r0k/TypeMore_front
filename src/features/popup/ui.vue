@@ -3,7 +3,7 @@
     <Transition>
         <div class="popUp" v-if="isPopUpOpen" @scroll.prevent @wheel.prevent @touchmove.prevent>
             <div class="popUp__wrapper" ref="popUpRef">
-
+                <Button @click="closePopUp">button</Button>
             </div>
         </div>
     </Transition>
@@ -17,7 +17,7 @@ import { DefineComponent, ref } from 'vue';
 import { onClickOutside } from '@vueuse/core'
 
 const popUpRef = ref(null)
-const isPopUpOpen = ref<Boolean>(false);
+const isPopUpOpen = ref<Boolean>(true);
 onClickOutside(
     popUpRef, (e): void => {
         closePopUp()
