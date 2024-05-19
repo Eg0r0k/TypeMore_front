@@ -1,1 +1,1 @@
-export {default as SettingPage } from './ui.vue'
+export { default as SettingPage } from './ui.vue'

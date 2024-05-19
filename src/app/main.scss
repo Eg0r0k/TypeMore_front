@@ -3,32 +3,39 @@
 @import "./reset";
 @import "./normalize";
 
+@font-face {
+  font-family: "Balsamiq Sans";
+  src: url("./fonts/BalsamiqSans-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: block;
+}
+
 :root {
-    --bg-color: #111;
-    --main-color: #f7f7f7;
-    --sub-color: #444;
-    --sub-alt-color: #191919;
-    --text-color: #eee;
-    --error-color: #da3333;
-    --error-extra-color: #791717;
-    --border-radius: 6px;
-    --transition-duration: 0.08s;
+  --bg-color: #111;
+  --main-color: #f7f7f7;
+  --sub-color: #444;
+  --sub-alt-color: #191919;
+  --text-color: #eee;
+  --error-color: #da3333;
+  --error-extra-color: #791717;
+  --border-radius: 6px;
+  --transition-duration: 0.08s;
 }
 :root {
-    --popper-theme-background-color: var(--sub-alt-color);
-    --popper-theme-background-color-hover: var(--sub-alt-color);
-    --popper-theme-text-color: var(--text-color);
-    --popper-theme-border-color: var(--sub-color);
-    --popper-theme-border-width: 1px;
-    --popper-theme-border-style: solid;
-    --popper-theme-border-radius: var(--border-radius);
-    --popper-theme-padding: 6px;
-    --popper-theme-box-shadow: 0;
+  --popper-theme-background-color: var(--sub-alt-color);
+  --popper-theme-background-color-hover: var(--sub-alt-color);
+  --popper-theme-text-color: var(--text-color);
+  --popper-theme-border-color: var(--sub-color);
+  --popper-theme-border-width: 1px;
+  --popper-theme-border-style: solid;
+  --popper-theme-border-radius: var(--border-radius);
+  --popper-theme-padding: 6px;
+  --popper-theme-box-shadow: 0;
 }
 @media (prefers-color-scheme: dark) {
-    body {
-        color-scheme: dark;
-    }
+  body {
+    color-scheme: dark;
+  }
 }
 
 // @font-face {
@@ -39,64 +46,76 @@
 //         url("./fonts/NotoSansTC-Thin.woff2") format("woff2"),
 //         url("./fonts/NotoSansTC-Thin.woff") format("woff"),
 //         url("./fonts/NotoSansTC-Thin.ttf") format("truetype");
-//     font-weight: 400;
+//     font-weight: 700;
 //     font-style: normal;
 //     font-display: block;
 //     line-height: normal;
 // }
 
 main {
-    display: grid;
-    height: 100%;
+  display: grid;
+  height: 100%;
 }
 a {
-    color: var(--sub-color);
-    transition: all var(--transition-duration);
-    &:hover {
-        color: var(--main-color);
-    }
+  color: var(--sub-color);
+  transition: all var(--transition-duration);
+  &:hover {
+    color: var(--main-color);
+  }
 }
 html,
 body {
-    line-height: normal;
+  line-height: normal;
 }
 html {
-    overflow-y: scroll;
-    scroll-behavior: smooth;
-    line-height: 1.25;
-    text-size-adjust: 100%;
+  overflow-y: scroll;
+  scroll-behavior: smooth;
+  line-height: 1.25;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 body {
-    overflow-x: hidden;
-    font-size: 16px;
-    min-height: 100vh;
-    background-color: var(--bg-color);
-    box-sizing: border-box;
-    font-family: "Noto Sans TC";
-    transition:
-        background 0.25s ease 0s,
-        transform 0.05s ease 0s;
+  overflow-x: hidden;
+  font-size: 16px;
+  min-height: 100vh;
+  background-color: var(--bg-color);
+  box-sizing: border-box;
+  font-family: "Noto Sans TC";
+  transition:
+    background 0.25s ease 0s,
+    transform 0.05s ease 0s;
 }
 ::-webkit-scrollbar {
-    width: 10px;
+  width: 10px;
 }
 ::-webkit-scrollbar-corner {
-    background: var(--sub-color);
+  background: var(--sub-color);
 }
 ::-webkit-scrollbar-thumb {
-    border-radius: var(--border-radius);
-    background: (--sub-color);
-    &:hover {
-        background: (--text-color);
-    }
+  border-radius: var(--border-radius);
+  background: (--sub-color);
+  &:hover {
+    background: (--text-color);
+  }
 }
 
 ::-moz-selection {
-    color: var(--bg-color);
-    background: var(--main-color);
+  color: var(--bg-color);
+  background: var(--main-color);
 }
 
 ::selection {
-    color: var(--bg-color);
-    background: var(--main-color);
+  color: var(--bg-color);
+  background: var(--main-color);
+}
+
+input {
+  padding: 5px;
+  box-sizing: border-box;
+  border: none;
+  font-size: 16px;
+  background-color: var(--sub-color);
+  border-radius: var(--border-radius);
+  color: var(--text-color);
+  caret-color: var(--main-color);
 }

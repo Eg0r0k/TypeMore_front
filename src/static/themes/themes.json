@@ -1,93 +1,82 @@
 [
-    {
-        "name":"Discord",
-        "--bg-color": "#313338",
-        "--main-color":"#5865f2",
-        "--sub-color": "#383a40",
-        "--sub-alt-color": "#232428",
-        "--text-color":"#dcdee3",
-        "--error-color": "#ff3f43",
-        "--error-extra-color":"#a12828"
-    },
-    {
-        "name": "Neo",
-        "--bg-color": "#000000",
-        "--main-color":"#15ff00",
-        "--sub-color": "#006500",
-        "--sub-alt-color": "#032000",
-        "--text-color":"#d1ffcd",
-        "--error-color": "#ff3f3f",
-        "--error-extra-color":"#751d1d"
-    },
-    {
-        "name": "Orange Apple",
-        "--bg-color": "#0d1c1c",
-        "--main-color":"#f0e800",
-        "--sub-color": "#ff6600",
-        "--sub-alt-color": "#9c9191",
-        "--text-color":"#ffffff",
-        "--error-color": "#ff0000",
-        "--error-extra-color":"#751d1d"
-    },
-    {
-        "name": "Orange Apple",
-        "--bg-color": "#0d1c1c",
-        "--main-color":"#f0e800",
-        "--sub-color": "#ff6600",
-        "--sub-alt-color": "#9c9191",
-        "--text-color":"#ffffff",
-        "--error-color": "#ff0000",
-        "--error-extra-color":"#751d1d"
-    },
-    {
-        "name": "Terrarium",
-        "--bg-color": "#0c100e",
-        "--main-color":"#89c559",
-        "--sub-color": "#436029",
-        "--sub-alt-color": "#0f1d18",
-        "--text-color":"#f0edd1",
-        "--error-color": "#d3ca78",
-        "--error-extra-color":"#89844d"
-    },
-    {
-        "name": "Drive",
-        "--bg-color": "#00002e",
-        "--main-color":"#ffadad",
-        "--sub-color": "#ff3d8b",
-        "--sub-alt-color": "#060548",
-        "--text-color":"#f1deef",
-        "--error-color": "#8fecff",
-        "--error-extra-color":"#558cab"
-    },
-    {
-        "name": "2077",
-        "--bg-color": "#f5f000",
-        "--main-color":"#003aa5",
-        "--sub-color": "#272324",
-        "--sub-alt-color": "#49bcd9",
-        "--text-color":"#ffffff",
-        "--error-color": "#ff1b86",
-        "--error-extra-color":"#6b074a"
-    },
-    {
-        "name": "Strict",
-        "--bg-color": "#eeebe2",
-        "--main-color":"#080909",
-        "--sub-color": "#99947f",
-        "--sub-alt-color": "#d3cfc1",
-        "--text-color":"#080909",
-        "--error-color": "#c87e74",
-        "--error-extra-color":"#a56961"
-    },
-    {
-        "name": "Dark",
-        "--bg-color": "#eeebe2",
-        "--main-color":"#080909",
-        "--sub-color": "#99947f",
-        "--sub-alt-color": "#d3cfc1",
-        "--text-color":"#080909",
-        "--error-color": "#c87e74",
-        "--error-extra-color":"#a56961"
-    }
-    
+  {
+    "name": "Discord",
+    "--bg-color": "#313338",
+    "--main-color": "#5865f2",
+    "--sub-color": "#383a40",
+    "--sub-alt-color": "#232428",
+    "--text-color": "#dcdee3",
+    "--error-color": "#ff3f43",
+    "--error-extra-color": "#a12828"
+  },
+  {
+    "name": "Neo",
+    "--bg-color": "#000000",
+    "--main-color": "#15ff00",
+    "--sub-color": "#006500",
+    "--sub-alt-color": "#032000",
+    "--text-color": "#d1ffcd",
+    "--error-color": "#ff3f3f",
+    "--error-extra-color": "#751d1d"
+  },
+  {
+    "name": "Orange Apple",
+    "--bg-color": "#0d1c1c",
+    "--main-color": "#f0e800",
+    "--sub-color": "#ff6600",
+    "--sub-alt-color": "#9c9191",
+    "--text-color": "#ffffff",
+    "--error-color": "#ff0000",
+    "--error-extra-color": "#751d1d"
+  },
+  {
+    "name": "Terrarium",
+    "--bg-color": "#0c100e",
+    "--main-color": "#89c559",
+    "--sub-color": "#436029",
+    "--sub-alt-color": "#0f1d18",
+    "--text-color": "#f0edd1",
+    "--error-color": "#d3ca78",
+    "--error-extra-color": "#89844d"
+  },
+  {
+    "name": "Drive",
+    "--bg-color": "#00002e",
+    "--main-color": "#ffadad",
+    "--sub-color": "#ff3d8b",
+    "--sub-alt-color": "#060548",
+    "--text-color": "#f1deef",
+    "--error-color": "#8fecff",
+    "--error-extra-color": "#558cab"
+  },
+  {
+    "name": "2077",
+    "--bg-color": "#f5f000",
+    "--main-color": "#003aa5",
+    "--sub-color": "#272324",
+    "--sub-alt-color": "#49bcd9",
+    "--text-color": "#ffffff",
+    "--error-color": "#ff1b86",
+    "--error-extra-color": "#6b074a"
+  },
+  {
+    "name": "Strict",
+    "--bg-color": "#eeebe2",
+    "--main-color": "#080909",
+    "--sub-color": "#99947f",
+    "--sub-alt-color": "#d3cfc1",
+    "--text-color": "#080909",
+    "--error-color": "#c87e74",
+    "--error-extra-color": "#a56961"
+  },
+  {
+    "name": "Dark",
+    "--bg-color": "#eeebe2",
+    "--main-color": "#080909",
+    "--sub-color": "#99947f",
+    "--sub-alt-color": "#d3cfc1",
+    "--text-color": "#080909",
+    "--error-color": "#c87e74",
+    "--error-extra-color": "#a56961"
+  }
 ]

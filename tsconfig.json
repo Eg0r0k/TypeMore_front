@@ -11,7 +11,12 @@
     "baseUrl": ".",
     "types": ["vite/client"],
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"],
+      "@shared/*": ["./src/shared/*"],
+      "@pages/*": ["./src/pages/*"],
+      "@entities/*": ["./src/entities/*"],
+      "@widgets/*": ["./src/widgets/*"],
+      "@app/*": ["./src/app/*"]
     },
     "lib": ["es2015", "dom", "dom.iterable", "scripthost"]
   },

@@ -1,76 +1,72 @@
 <template>
   <button :disabled="isLoading || isDisabled" :class="classes" role="button" :aria-label="buttonLabel">
     <span class="loader" v-if="isLoading" aria-hidden="true"></span>
-    <div :class="props.isLoading ? 'invisible' : ''" class="icon">
-      <component :is="props.leftIcon" />
-    </div>
+    <Icon width="24" inline :icon="props.leftIcon" v-if="props.leftIcon" />
     <Typography v-if="slots.default" class="button__text" :class="isLoading ? 'invisible' : ''" tagName="p"
       :size="props.size" :aria-hidden="isLoading">
+
       <slot></slot>
 
     </Typography>
-
-    <div :class="isLoading ? 'invisible' : ''" class="icon">
-      <component :is="props.rightIcon" />
-    </div>
+    <Icon width="24" inline :icon="props.rightIcon" v-if="props.rightIcon" />
   </button>
 </template>
 
 <script setup lang="ts">
-//TODO: Иконки для кнопок 
-import { useSlots, withDefaults, computed } from 'vue';
-import { Typography } from '@/shared/ui/typography';
+//TODO: Иконки для кнопок
+import { Icon } from '@iconify/vue';
+import { useSlots, withDefaults, computed } from 'vue'
+import { Typography } from '@/shared/ui/typography'
 interface Props {
-  color?: 'main' | 'gray';
-  size?: 'm' | 's' | 'l';
-  decoration?: 'default' | 'none';
-  isDisabled?: boolean;
-  buttonLabel?: string;
-  isLoading?: boolean;
-  rightIcon?: any;
-  leftIcon?: any;
+  color?: 'main' | 'gray'
+  size?: 'm' | 's' | 'l'
+  decoration?: 'default' | 'none'
+  isDisabled?: boolean
+  buttonLabel?: string
+  isLoading?: boolean
+  leftIcon?: string
+  rightIcon?: string
 }
-const slots = useSlots();
+const slots = useSlots()
 const props = withDefaults(defineProps<Props>(), {
   color: 'main',
   size: 'm',
   isDisabled: false,
   decoration: 'default',
-  buttonLabel: 'Button'
-});
+  buttonLabel: 'Button',
+  leftIcon: '',
+  rightIcon: ''
+})
 
 const classes = computed(() => [
   'button',
   `button--size-${props.size}`,
   `button--color-${props.color}`,
-  `decoration--${props.decoration}`,
-]);
+  `decoration--${props.decoration}`
+])
 </script>
 
 <style scoped lang="scss">
 $main: (
-  "background": var(--main-color),
-  "hover": var(--bg-color),
-  "active": var(--sub-color),
-  "color": var(--sub-alt-color),
-  "hover-color": var(--text-color),
-  "active-color":var(--text-color),
-
+  'background': var(--main-color),
+  'hover': var(--bg-color),
+  'active': var(--sub-color),
+  'color': var(--sub-alt-color),
+  'hover-color': var(--text-color),
+  'active-color': var(--text-color)
 );
 $gray: (
-  "background": var(--sub-color),
-  "hover": var(--text-color),
-  "active": var(--sub-alt-color),
-  "color": var(--text-color),
-  "hover-color": var(--bg-color),
-  "active-color":var(--text-color),
-
+  'background': var(--sub-color),
+  'hover': var(--text-color),
+  'active': var(--sub-alt-color),
+  'color': var(--text-color),
+  'hover-color': var(--bg-color),
+  'active-color': var(--text-color)
 );
 $styles: (
-  "main": $main,
-  "gray": $gray,
+  'main': $main,
+  'gray': $gray
 );
-
 
 .icon {
   display: flex;
@@ -82,39 +78,37 @@ $styles: (
 @mixin button-style($styles) {
   @each $key, $val in $styles {
     .button--color-#{$key} {
-      background-color: map-get($val, "background");
+      background-color: map-get($val, 'background');
 
       p {
-        color: map-get($val, "color");
+        color: map-get($val, 'color');
       }
 
       svg {
-        fill: map-get($val, "color");
+        fill: map-get($val, 'color');
       }
 
       &:hover {
-        background-color: map-get($val, "hover");
-
-
+        background-color: map-get($val, 'hover');
 
         p {
-          color: map-get($val, "hover-color");
+          color: map-get($val, 'hover-color');
         }
 
         svg {
-          fill: map-get($val, "hover-color");
+          fill: map-get($val, 'hover-color');
         }
       }
 
       &:active {
-        background-color: map-get($val, "active");
+        background-color: map-get($val, 'active');
 
         p {
-          color: map-get($val, "active-color");
+          color: map-get($val, 'active-color');
         }
 
         svg {
-          fill: map-get($val, "active-color");
+          fill: map-get($val, 'active-color');
         }
       }
     }
@@ -142,7 +136,6 @@ $styles: (
   gap: 10px;
 
   &__text {
-    width: 100%;
     text-align: center;
   }
 
@@ -168,7 +161,6 @@ $styles: (
   &:disabled {
     cursor: not-allowed;
     opacity: 0.5;
-
   }
 }
 

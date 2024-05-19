@@ -7,7 +7,12 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@shared/*":["./src/shared/*"],
+      "@pages/*":["./src/pages/*"],
+      "@entities/*":["./src/entities/*"],
+      "@widgets/*":["./src/widgets/*"],
+      "@app/*":["./src/app/*"]
     }
   }
 }

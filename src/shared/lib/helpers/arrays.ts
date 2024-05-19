@@ -22,6 +22,10 @@ export const shuffle = <T>(arr: T[]): void => {
   }
 }
 
+export const nthElementFromArray = <T>(arr: T[], index: number): T => {
+  index = index < 0 ? arr.length + index : index
+  return arr[index]
+}
 
 export const isSameArray = <T>(arr1: T[], arr2: T[]): boolean => {
   return arr1.length === arr2.length && arr1.every((v, i) => v === arr2[i])

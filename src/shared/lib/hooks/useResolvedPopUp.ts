@@ -1,3 +1,4 @@
+
 import { createApp, h } from 'vue'
 
 export const useResolvedPopUp = (component: any, props: any) => {
@@ -25,3 +26,4 @@ export const useResolvedPopUp = (component: any, props: any) => {
     app.mount(popUpContainer)
   })
 }
+

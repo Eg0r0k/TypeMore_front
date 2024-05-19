@@ -2,9 +2,9 @@ const MILISECONDS_IN_HOUR = 3600000
 const MILLISECONDS_IN_DAY = 86400000
 
 /**
- * 
- * @param hourOffset 
- * @returns 
+ *
+ * @param hourOffset
+ * @returns
  */
 export const getCurrentTimeStamp = (hourOffset = 0): number => {
   const offsetMilis: number = hourOffset * MILISECONDS_IN_HOUR
@@ -13,10 +13,10 @@ export const getCurrentTimeStamp = (hourOffset = 0): number => {
 }
 
 /**
- * 
- * @param timestamp 
- * @param offsetMilis 
- * @returns 
+ *
+ * @param timestamp
+ * @param offsetMilis
+ * @returns
  */
 export const getStartOfDayTimeStamp = (timestamp: number, offsetMilis = 0): number => {
   const timeSinceStartOfDay = (timestamp - offsetMilis) % MILLISECONDS_IN_DAY
@@ -24,10 +24,10 @@ export const getStartOfDayTimeStamp = (timestamp: number, offsetMilis = 0): numb
 }
 
 /**
- * 
- * @param timestamp 
- * @param hourOffset 
- * @returns 
+ *
+ * @param timestamp
+ * @param hourOffset
+ * @returns
  */
 export const isToday = (timestamp: number, hourOffset = 0): boolean => {
   const offsetMilis = hourOffset * MILISECONDS_IN_HOUR
@@ -37,10 +37,10 @@ export const isToday = (timestamp: number, hourOffset = 0): boolean => {
 }
 
 /**
- * 
- * @param timestamp 
- * @param hourOffset 
- * @returns 
+ *
+ * @param timestamp
+ * @param hourOffset
+ * @returns
  */
 export const isYesterday = (timestamp: number, hourOffset = 0): boolean => {
   const offsetMilis = hourOffset * MILISECONDS_IN_HOUR
@@ -48,4 +48,3 @@ export const isYesterday = (timestamp: number, hourOffset = 0): boolean => {
   const date = getStartOfDayTimeStamp(timestamp, offsetMilis)
   return date === today
 }
-

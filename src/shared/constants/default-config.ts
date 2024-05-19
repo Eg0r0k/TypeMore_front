@@ -1,11 +1,8 @@
 export default {
-  theme: '',
-  showKeyTips: false,
-  language: 'russian',
   words: 50,
-  randomTheme: false,
-  customBackground: '',
-  customBackgroundSize: 'cover',
-  soundVolume: '0.5',
-  
-}
+  time: 30,
+  language: 'english',
+  theme: 'Neo',
+  mode: 'words',
+  showFps: false
+} as Config

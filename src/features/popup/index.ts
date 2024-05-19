@@ -1,1 +1,1 @@
-export {default as PopUp} from './ui.vue'
+export { default as PopUp } from './ui.vue'
