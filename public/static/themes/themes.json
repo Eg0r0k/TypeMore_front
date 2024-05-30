@@ -3,7 +3,7 @@
     "name": "Discord",
     "--bg-color": "#313338",
     "--main-color": "#5865f2",
-    "--sub-color": "#383a40",
+    "--sub-color": "#565a62",
     "--sub-alt-color": "#232428",
     "--text-color": "#dcdee3",
     "--error-color": "#ff3f43",
@@ -61,16 +61,6 @@
   },
   {
     "name": "Strict",
-    "--bg-color": "#eeebe2",
-    "--main-color": "#080909",
-    "--sub-color": "#99947f",
-    "--sub-alt-color": "#d3cfc1",
-    "--text-color": "#080909",
-    "--error-color": "#c87e74",
-    "--error-extra-color": "#a56961"
-  },
-  {
-    "name": "Dark",
     "--bg-color": "#eeebe2",
     "--main-color": "#080909",
     "--sub-color": "#99947f",

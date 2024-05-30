@@ -15,5 +15,9 @@ export const useConfigStore = defineStore('config', () => {
   const toggleFps = () => {
     config.showFps = !config.showFps
   }
-  return { config, setLanguage, toggleFps }
+
+  const setTheme = (name: string) => {
+    config.theme = name
+  }
+  return { config, setLanguage, toggleFps, setTheme }
 })

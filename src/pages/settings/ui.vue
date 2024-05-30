@@ -1,24 +1,83 @@
 <template>
   <div>
-    <ModalThemes />
-    <p style="color:white"> Current: {{ store.input.current }}</p>
-    <p style="color:white"> History: {{ store.input.history }}</p>
 
-    <p style="color:white"> History: {{ timerStore.timer }}</p>
-    <button @click="timerStore.start">Стар</button>
-    <input type="text" v-model="store.input.current" @keydown.space.prevent="store.pushToHistory"
-      @keydown.delete="store.backspaceToPrevious" dir="auto">
+    <p style="color:white"> Current: {{ inputStore.input.current }}</p>
+    <p style="color:white"> History: {{ inputStore.input.history }}</p>
+
+    <p style="color:white"> History: {{ timerStore.time }}</p>
+    <div v-if="lang">
+      <p class="word" style="color:white" v-for="(word, index) in lang.words" :key="index">
+        {{ word }} </p>
+
+    </div>
+    <p v-else style="color:white">Loading...</p>
+    <div>
+      <Button style="width:100%" @click="restartTest">
+        Restart
+      </Button>
+      <Button style="width:100%" @click="init">Start</Button>
+    </div>
+    <input type="text" @input="startTest" v-model="inputStore.input.current"
+      @keydown.space.prevent="inputStore.pushToHistory" @keydown.delete="inputStore.backspaceToPrevious" dir="auto">
   </div>
 </template>
 
 <script setup lang="ts">
-import { ModalThemes } from '@/widgets/theme'
-import { useInputStore } from '@/entities/input/store';
-import { useTimerStore } from '@/entities/timer/model/store';
+import { useConfigStore } from '@/entities/config/store';
+import { useTestStateStore } from '@/entities/test';
+import { Button } from '@/shared/ui/button';
+import { getCurrentLang } from '@/shared/lib/helpers/json-files';
+import { useInputStore } from '@entities/input/store';
+import { useTimerStore } from '@entities/timer/model/store';
+import { onMounted, ref } from 'vue';
+import { shuffle } from '@/shared/lib/helpers/arrays';
 
-const timerStore = useTimerStore()
-const store = useInputStore()
+const testState = useTestStateStore();
+const timerStore = useTimerStore();
+const inputStore = useInputStore();
+const { config } = useConfigStore();
+const lang = ref<any>(null);
 
+const startTest = () => {
+  if (!testState.isActive) {
+    testState.setActive(true);
+    timerStore.resetTimer();
+    timerStore.startTimer();
+  }
+};
+
+const restartTest = async () => {
+
+  timerStore.resetTimer()
+  testState.setActive(false);
+  await init();
+};
+
+const init = async () => {
+  console.debug('Start init');
+  inputStore.reset();
+
+  console.log(timerStore.time)
+  try {
+    console.log(config.language);
+    lang.value = await getCurrentLang(config.language);
+    shuffle(lang.value.words)
+    console.log(lang.value.words)
+  } catch (e) {
+    console.error(`Cannot initialize test: ${e}`);
+  }
+};
+
+onMounted(async () => {
+  await init();
+});
 </script>
 
-<style scoped lang="scss"></style>
+
+
+<style scoped lang="scss">
+.word {
+  display: inline-block;
+  padding: 5px;
+}
+</style>

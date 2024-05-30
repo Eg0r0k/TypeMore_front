@@ -1,6 +1,4 @@
-import { computedAsync } from '@vueuse/core'
-import { T } from 'vitest/dist/reporters-P7C2ytIv'
-import { ref } from 'vue'
+import { LanguageObj } from '@/shared/constants/type'
 
 export async function fetchJson<T>(url: string): Promise<T> {
   try {
@@ -54,20 +52,17 @@ export const cachedFetchJson = memoizeAsync<string, typeof fetchJson>(fetchJson)
 
 let currentLang: any
 
-//ToDO add normal type for this function
-export const getLanguage = (lang: string) => {
+export const getLanguage = (lang: string): Promise<LanguageObj> => {
   try {
     if (currentLang == undefined) {
-      currentLang = cachedFetchJson(`/languages/${lang}.json`)
+      currentLang = cachedFetchJson<LanguageObj>(`./static/${lang}.json`)
     }
     return currentLang
   } catch (e) {
     throw Error()
   }
 }
-//ToDO add normal type for this function
 
-export const getCurrentLang = (lang: string) => {
+export const getCurrentLang = (lang: string): Promise<LanguageObj> => {
   return getLanguage(lang)
 }
-

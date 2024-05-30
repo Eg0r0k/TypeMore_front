@@ -46,6 +46,11 @@ textarea {
     width: 6px;
   }
 
+  &::placeholder {
+    color: var(--sub-alt-color);
+    opacity: 1;
+  }
+
   &::-webkit-scrollbar-thumb {
     background-color: var(--main-color);
     border-radius: var(--border-radius);
@@ -68,6 +73,11 @@ textarea {
 
   &:focus {
     outline: solid var(--main-color) 1px;
+  }
+
+  &::placeholder {
+    color: var(--sub-alt-color);
+    opacity: 1;
   }
 
   &__label {

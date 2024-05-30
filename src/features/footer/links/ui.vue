@@ -37,6 +37,7 @@ const props = defineProps<Props>()
   display: flex;
 
   &__list {
+    flex-wrap: wrap;
     display: flex;
     gap: 16px;
   }

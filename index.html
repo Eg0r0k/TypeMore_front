@@ -66,7 +66,14 @@
     </noscript>
     <div
       id="app"
-      style="background-color: var(--bg-color); display: flex; justify-content: center"
+      style="
+        background-color: var(--bg-color);
+        display: flex;
+        transition:
+          background 0.25s ease 0s,
+          transform 0.05s ease 0s;
+        justify-content: center;
+      "
     ></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

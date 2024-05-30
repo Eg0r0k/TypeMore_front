@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import { Input } from './types'
+import { Input } from './type'
 import { defineStore } from 'pinia'
 
 const keysToTrack = [
@@ -99,13 +99,6 @@ export const useInputStore = defineStore('input', () => {
     input.current = val
     input.length = input.current.length
   }
-  // const handleSpace = () => {
-  //   if (input.current === '') {
-  //     return
-  //   }
-  //   setCurrent(input.history[input.historyLength - 1])
-  //   popHistory()
-  // }
   const popHistory = (): string => {
     const ret = input.history.pop() ?? ''
     input.historyLength = input.history.length
@@ -117,11 +110,10 @@ export const useInputStore = defineStore('input', () => {
     resetCurrent()
   }
   const backspaceToPrevious = (): void => {
-    if(input.history.length === 0 ) {
+    if (input.history.length === 0 || input.current.length !== 0) {
       return
     }
     input.current = popHistory()
-    
   }
   return {
     reset,

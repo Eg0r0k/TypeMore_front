@@ -1,67 +1,50 @@
 import { useConfigStore } from '@/entities/config/store'
+import { useInputStore } from '@/entities/input'
+import { useTestStateStore } from '@/entities/test'
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 export const useTimerStore = defineStore('timer', () => {
   const { config } = useConfigStore()
-  const timer = ref<NodeJS.Timeout | null>(null)
-  const interval = 1000
+  const input = useInputStore()
+  const testState = useTestStateStore()
   const time = ref(0)
+  //!!!CHANGE URL!!!!!!
+  const worker = new Worker('./src/shared/lib/helpers/worker.ts') as Worker
+  worker.onmessage = (e) => {
+    if (e.data.command === 'stop') {
+      stopTimer()
+    } else {
+      time.value = e.data.timer
+    }
+  }
 
+  const startTimer = () => {
+    if (testState.isActive) {
+      worker.postMessage({ command: 'start', time: config.time })
+    }
+  }
+  const stopTimer = () => {
+    worker.postMessage({ command: 'stop' })
+    input.pushToHistory()
+    testState.isActive = false
+  }
   const getTime = (): number => {
     return time.value
   }
-
+  const resetTimer = () => {
+    worker.postMessage({ command: 'reset' })
+  }
   const setTime = (val: number): void => {
     time.value = val
   }
 
-  const incrementTime = (): void => {
-    time.value++
+  return {
+    getTime,
+    setTime,
+    time,
+    startTimer,
+    stopTimer,
+    resetTimer
   }
-
-  const checkIfTimeIsOver = (): void => {
-    if (config.mode === 'time') {
-      if (getTime() >= config.time && config.time !== 0) {
-        if (timer.value !== null) {
-          clearTimeout(timer.value)
-          timer.value = null
-        }
-      }
-    }
-  }
-
-  const clear = () => {
-    setTime(0)
-    if (timer.value !== null) {
-      clearTimeout(timer.value)
-      timer.value = null
-    }
-  }
-
-  const timerStep = () => {
-    incrementTime()
-    checkIfTimeIsOver()
-  }
-
-  const start = () => {
-    if (timer.value === null) {
-      let expected = Date.now() + interval
-
-      const loop = () => {
-        const drift = Date.now() - expected
-
-        timerStep()
-
-        expected += interval
-        if (timer.value !== null) {
-          timer.value = setTimeout(loop, Math.max(0, interval - drift))
-        }
-      }
-
-      timer.value = setTimeout(loop, interval)
-    }
-  }
-
-  return { start, clear, getTime, setTime, incrementTime, checkIfTimeIsOver, timerStep, timer }
 })

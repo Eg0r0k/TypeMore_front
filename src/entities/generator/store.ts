@@ -2,10 +2,12 @@ import { nthElementFromArray, RandomElementFromArray, shuffle } from '@/shared/l
 import { useConfigStore } from '../config/store'
 import { defineStore } from 'pinia'
 import { reactive, ref } from 'vue'
+import { useTestStateStore } from '../test'
 
 export const useWordGeneratorStore = defineStore('word-gen', () => {
   const { config } = useConfigStore()
   const shuffedIndexes = ref<number[]>([])
+  const testState = useTestStateStore()
   const previousWords = ref([])
   const words = ref([])
   const currentLanguage = ref(config.language.split('-')[0])
@@ -32,6 +34,9 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
   }
 
   const generateWords = (lang: any) => {
+    if (!testState.isRepeated) {
+      previousWords.value = []
+    }
     currentLanguage.value = lang.language
     const wordList = lang.words
     const limit = getWordsLimit()

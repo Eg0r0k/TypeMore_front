@@ -20,6 +20,6 @@
     },
     "lib": ["es2015", "dom", "dom.iterable", "scripthost"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "tests/**/*.ts", "tests/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "tests/**/*.ts", "tests/**/*.tsx", "src/shared/lib/helpers/worker.ts"],
   "exclude": ["node_modules"]
 }

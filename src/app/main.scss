@@ -21,6 +21,7 @@
   --border-radius: 6px;
   --transition-duration: 0.08s;
 }
+
 :root {
   --popper-theme-background-color: var(--sub-alt-color);
   --popper-theme-background-color-hover: var(--sub-alt-color);
@@ -68,10 +69,13 @@ body {
   line-height: normal;
 }
 html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sub-color) transparent;
   overflow-y: scroll;
   scroll-behavior: smooth;
   line-height: 1.25;
   text-size-adjust: 100%;
+  scrollbar-width: thin;
   -webkit-text-size-adjust: 100%;
 }
 body {
@@ -81,13 +85,8 @@ body {
   background-color: var(--bg-color);
   box-sizing: border-box;
   font-family: "Noto Sans TC";
-  transition:
-    background 0.25s ease 0s,
-    transform 0.05s ease 0s;
 }
-::-webkit-scrollbar {
-  width: 10px;
-}
+
 ::-webkit-scrollbar-corner {
   background: var(--sub-color);
 }
