@@ -68,5 +68,75 @@
     "--text-color": "#080909",
     "--error-color": "#c87e74",
     "--error-extra-color": "#a56961"
+  },
+  {
+    "name": "Vue",
+    "--bg-color": "#1b1b1f",
+    "--main-color": "#4fbf62",
+    "--sub-color": "#345c4c",
+    "--sub-alt-color": "#202127",
+    "--text-color": "#ffffff",
+    "--error-color": "#da3333",
+    "--error-extra-color": "#791717"
+  },
+  {
+    "name": "Strong",
+    "--bg-color": "#ffffff",
+    "--main-color": "#0d0d0d",
+    "--sub-color": "#c1c1c1",
+    "--sub-alt-color": "#dbdbdb",
+    "--text-color": "#0d0d0d",
+    "--error-color": "#da3333",
+    "--error-extra-color": "#791717"
+  },
+  {
+    "name": "Brow",
+    "--bg-color": "#10100e",
+    "--main-color": "#ff9500",
+    "--sub-color": "#5f361b",
+    "--sub-alt-color": "#c25700",
+    "--text-color": "#fee190",
+    "--error-color": "#fdec30",
+    "--error-extra-color": "#785417"
+  },
+  {
+    "name": "Octane",
+    "--bg-color": "#191a1b",
+    "--main-color": "#a4df26",
+    "--sub-color": "#48494b",
+    "--sub-alt-color": "#141516",
+    "--text-color": "#e7eae0",
+    "--error-color": "#da3333",
+    "--error-extra-color": "#791717"
+  },
+  {
+    "name": "Honey",
+    "--bg-color": "#f2aa00",
+    "--main-color": "#fff546",
+    "--sub-color": "#a66b00",
+    "--sub-alt-color": "#e19e00",
+    "--text-color": "#f3eecb",
+    "--error-color": "#e82626",
+    "--error-extra-color": "#861313"
+  },
+  {
+    "name": "YouTube",
+    "--bg-color": "#ffffff",
+    "--main-color": "#ff0000",
+    "--sub-color": "#b7b7b7",
+    "--sub-alt-color": "#f7f7f7",
+    "--text-color": "#000000",
+    "--error-color": "#da3333",
+    "--error-extra-color": "#791717"
+  },
+  {
+    "name": "0_0",
+    "--bg-color": "#000000",
+    "--main-color": "#ff9000",
+    "--sub-color": "#171717",
+    "--sub-alt-color": "#7d7d7d",
+    "--text-color": "#ffffff",
+    "--error-color": "#e44545",
+    "--error-extra-color": "#972d2d"
   }
 ]

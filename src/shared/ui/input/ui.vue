@@ -4,9 +4,10 @@
       <Typography tag-name="p" :size="'s'" color="primary">{{ label }}</Typography>
     </label>
     <component :type="props.type" autocomplete="off" dir="auto" :is="props.tagName" class="text-input"
-      :placeholder="placeholder" :disabled="isDisabled" @input="updateInput"
+      :value="modelValue" :placeholder="placeholder" :disabled="isDisabled" @input="updateInput"
       :class="{ 'text-input--error': props.isError }">
     </component>
+    
   </div>
 </template>
 

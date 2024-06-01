@@ -7,7 +7,7 @@ export interface Config {
   backgroundImg: string
   showFps: boolean
 }
-
+//TODO: dont forget to change 
 export type LanguageObj = {
   name: string
   rightToleft: boolean

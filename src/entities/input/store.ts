@@ -1,6 +1,7 @@
 import { reactive } from 'vue'
 import { Input } from './type'
 import { defineStore } from 'pinia'
+import { useTestStateStore } from '../test'
 
 const keysToTrack = [
   'KeyA',
@@ -80,6 +81,28 @@ export const useInputStore = defineStore('input', () => {
     historyLength: 0,
     length: 0
   })
+  const keypressTimings = reactive({
+    spacing: {
+      first: -1,
+      last: -1,
+      array: [] as number[]
+    },
+    duration: {
+      array: [] as number[]
+    }
+  })
+  const testState = useTestStateStore()
+  const corrected = reactive({
+    current: '',
+    history: []
+  })
+  const resetKeypressTimings = (): void => {
+    keypressTimings.spacing.first = -1
+    keypressTimings.spacing.last = -1
+    keypressTimings.spacing.array = []
+    keypressTimings.duration.array = []
+  }
+
   const reset = (): void => {
     resetCurrent()
     resetHistory()
@@ -109,12 +132,36 @@ export const useInputStore = defineStore('input', () => {
     input.historyLength = input.history.length
     resetCurrent()
   }
+  const handleSpace = () => {
+    if (!testState.isActive || input.current === '') return
+    pushToHistory()
+  }
   const backspaceToPrevious = (): void => {
     if (input.history.length === 0 || input.current.length !== 0) {
       return
     }
     input.current = popHistory()
   }
+  const recordKeyDown = (now: number, key: string): void => {
+    if (!keysToTrack.includes(key)) {
+      console.debug('Key not tracked', now, key)
+      return
+    }
+    if (keypressTimings.spacing.first === -1) {
+      keypressTimings.spacing.first = now
+    } else {
+      keypressTimings.spacing.array.push(now - keypressTimings.spacing.last)
+    }
+    keypressTimings.spacing.last = now
+  }
+  const recordKeyUp = (now: number, key: string): void => {
+    if (!keysToTrack.includes(key)) {
+      console.debug('Key not tracked', now, key)
+      return
+    }
+    keypressTimings.duration.array.push(now - keypressTimings.spacing.last)
+  }
+
   return {
     reset,
     setCurrent,
@@ -123,6 +170,7 @@ export const useInputStore = defineStore('input', () => {
     pushToHistory,
     resetHistory,
     input,
-    backspaceToPrevious
+    backspaceToPrevious,
+    handleSpace
   }
 })

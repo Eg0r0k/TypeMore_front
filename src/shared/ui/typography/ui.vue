@@ -10,7 +10,7 @@ interface Props {
   isBold?: boolean
   tagName?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'a'
   size?: 'xxxl' | 'xxl' | 'xl' | 'l' | 'm' | 's' | 'xs' | 'xxs'
-  color?: 'unset' | 'primary' | 'error' | 'main' | 'extraerror'
+  color?: 'unset' | 'primary' | 'error' | 'main' | 'extra-error' | 'sub'
   decoration?: 'underline'
   href?: string
 }
@@ -62,11 +62,16 @@ const classes = computed(() => [
 
   &--decoration {
     &-underline {
+
       text-decoration: underline;
     }
   }
 
   &--color {
+    &-sub {
+      color: var(--sub-color);
+    }
+
     &-primary {
       color: var(--text-color);
     }
@@ -83,7 +88,7 @@ const classes = computed(() => [
       color: var(--main-color);
     }
 
-    &-extraerror {
+    &-extra-error {
       color: var(--error-extra-color);
     }
   }

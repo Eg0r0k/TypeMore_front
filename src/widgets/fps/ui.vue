@@ -28,5 +28,10 @@ watch(fps, (value: number) => {
     flex-direction: column;
     gap: 12px;
     z-index: 1000;
+    position: absolute;
+    pointer-events: none;
+    top: 20px;
+    left: 20px;
+    color: var(--main-color);
 }
 </style>

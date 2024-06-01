@@ -2,7 +2,7 @@ import { useConfigStore } from '@/entities/config/store'
 import { useInputStore } from '@/entities/input'
 import { useTestStateStore } from '@/entities/test'
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 
 export const useTimerStore = defineStore('timer', () => {
   const { config } = useConfigStore()

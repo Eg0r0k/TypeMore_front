@@ -5,7 +5,7 @@ export default {
   time: 15,
   language: 'russian',
   theme: 'Terrarium',
-  mode: 'time',
+  mode: 'words',
   backgroundImg: '',
-  showFps: true
+  showFps: false
 } as Config

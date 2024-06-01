@@ -1,20 +1,19 @@
 <template>
   <button :disabled="isLoading || isDisabled" :class="classes" role="button" :aria-label="buttonLabel">
     <span class="loader" v-if="isLoading" aria-hidden="true"></span>
-    <Icon width="24" inline :icon="props.leftIcon" v-if="props.leftIcon" />
+    <slot name="left-icon"></slot>
     <Typography v-if="slots.default" class="button__text" :class="isLoading ? 'invisible' : ''" tagName="p"
       :size="props.size" :aria-hidden="isLoading">
 
       <slot></slot>
 
     </Typography>
-    <Icon width="24" inline :icon="props.rightIcon" v-if="props.rightIcon" />
+    <slot name="right-icon"></slot>
+
   </button>
 </template>
 
 <script setup lang="ts">
-//TODO: Иконки для кнопок
-import { Icon } from '@iconify/vue';
 import { useSlots, withDefaults, computed } from 'vue'
 import { Typography } from '@/shared/ui/typography'
 interface Props {
@@ -24,9 +23,8 @@ interface Props {
   isDisabled?: boolean
   buttonLabel?: string
   isLoading?: boolean
-  leftIcon?: string
-  rightIcon?: string
 }
+
 const slots = useSlots()
 const props = withDefaults(defineProps<Props>(), {
   color: 'main',
@@ -34,8 +32,7 @@ const props = withDefaults(defineProps<Props>(), {
   isDisabled: false,
   decoration: 'default',
   buttonLabel: 'Button',
-  leftIcon: '',
-  rightIcon: ''
+
 })
 
 const classes = computed(() => [
@@ -49,11 +46,11 @@ const classes = computed(() => [
 <style scoped lang="scss">
 $main: (
   'background': var(--main-color),
-  'hover': var(--bg-color),
+  'hover': var(--text-color),
   'active': var(--sub-color),
-  'color': var(--sub-alt-color),
-  'hover-color': var(--text-color),
-  'active-color': var(--text-color)
+  'color': varvar(--bg-color),
+  'hover-color': var(--bg-color),
+  'active-color': var(--bg-color)
 );
 $gray: (
   'background': var(--sub-color),
@@ -78,6 +75,8 @@ $styles: (
 @mixin button-style($styles) {
   @each $key, $val in $styles {
     .button--color-#{$key} {
+
+
       background-color: map-get($val, 'background');
 
       p {
@@ -117,26 +116,31 @@ $styles: (
 
 @include button-style($styles);
 
-.active {
-  transform: translateY(-5px);
-}
+
 
 .button {
   display: flex;
   justify-content: center;
-  align-items: center;
+
   height: min-content;
   border: none;
   border-radius: var(--border-radius);
+  -webkit-user-select: none;
   appearance: none;
   user-select: none;
   cursor: pointer;
   font-family: inherit;
   transition: var(--transition-duration) ease-in;
-  gap: 10px;
+  gap: 8px;
+
+  &:focus-visible {
+    box-shadow: 0 0 0 1.5px var(--bg-color), 0 0 0 3px var(--text-color);
+    outline: none;
+  }
 
   &__text {
     text-align: center;
+    
   }
 
   &.decoration--none {

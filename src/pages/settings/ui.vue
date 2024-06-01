@@ -18,7 +18,7 @@
       <Button style="width:100%" @click="init">Start</Button>
     </div>
     <input type="text" @input="startTest" v-model="inputStore.input.current"
-      @keydown.space.prevent="inputStore.pushToHistory" @keydown.delete="inputStore.backspaceToPrevious" dir="auto">
+      @keydown.space.prevent="inputStore.handleSpace" @keydown.delete="inputStore.backspaceToPrevious" dir="auto">
   </div>
 </template>
 
@@ -30,13 +30,14 @@ import { getCurrentLang } from '@/shared/lib/helpers/json-files';
 import { useInputStore } from '@entities/input/store';
 import { useTimerStore } from '@entities/timer/model/store';
 import { onMounted, ref } from 'vue';
-import { shuffle } from '@/shared/lib/helpers/arrays';
+
+import { LanguageObj } from '@/shared/constants/type';
 
 const testState = useTestStateStore();
 const timerStore = useTimerStore();
 const inputStore = useInputStore();
 const { config } = useConfigStore();
-const lang = ref<any>(null);
+const lang = ref<LanguageObj>();
 
 const startTest = () => {
   if (!testState.isActive) {
@@ -56,13 +57,10 @@ const restartTest = async () => {
 const init = async () => {
   console.debug('Start init');
   inputStore.reset();
-
-  console.log(timerStore.time)
   try {
     console.log(config.language);
     lang.value = await getCurrentLang(config.language);
-    shuffle(lang.value.words)
-    console.log(lang.value.words)
+ 
   } catch (e) {
     console.error(`Cannot initialize test: ${e}`);
   }

@@ -17,6 +17,6 @@ export const NAV_LINKS = [
   {
     iconName: 'icon-park-solid:network-tree',
     label: 'Servers',
-    link: '/'
+    link: '/servers'
   }
 ]

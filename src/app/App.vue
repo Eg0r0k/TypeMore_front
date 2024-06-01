@@ -62,11 +62,5 @@ onUnmounted(() => {
     box-sizing: border-box;
 }
 
-.fps {
-    position: absolute;
-    pointer-events: none;
-    top: 20px;
-    left: 20px;
-    color: var(--main-color);
-}
+
 </style>

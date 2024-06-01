@@ -4,13 +4,17 @@
       <FooterLinks :data="navLinks" />
     </div>
     <div class="footer__right">
-      <Button @click="handleOnClickOpenModal">Themes</Button>
+      <Button @click="handleOnClickOpenModal">
+        <template #left-icon>
+          <Icon width="32" icon="fluent:dark-theme-20-filled"></Icon>
+        </template>
+      </Button>
     </div>
-
   </footer>
 </template>
 
 <script lang="ts" setup>
+import { Icon } from '@iconify/vue';
 import { Button } from '@/shared/ui/button';
 import { FooterLinks } from '@/features/footer/links'
 import { FOOTER_LINKS } from '../footer/model/const/values'

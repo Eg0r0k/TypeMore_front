@@ -72,6 +72,8 @@ watch(filteredThemes, (newThemes) => {
         focusedThemeIndex.value = -1;
     }
 });
+
+//TODO: Move changeTheme, setVaribles 
 const changeTheme = (theme: Theme): void => {
     selectedTheme.value = theme.name;
     setVariables(theme);
@@ -92,9 +94,11 @@ const navigateThemes = async (direction: 'up' | 'down'): Promise<void> => {
         focusedThemeIndex.value = focusedThemeIndex.value >= themesLength - 1 ? 0 : focusedThemeIndex.value + 1;
     }
 
-    await nextTick();
+    nextTick(() => {
+        centerFocusedTheme();
+    });
 
-    centerFocusedTheme();
+
 };
 const selectFocusedTheme = (): void => {
     if (focusedThemeIndex.value >= 0 && focusedThemeIndex.value < filteredThemes.value.length) {
