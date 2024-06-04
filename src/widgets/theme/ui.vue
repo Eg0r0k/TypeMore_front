@@ -108,9 +108,9 @@ const selectFocusedTheme = (): void => {
 const centerFocusedTheme = () => {
     if (themeModalBody.value && focusedThemeIndex.value !== -1) {
         const focusedTheme = themeModalBody.value.children[focusedThemeIndex.value] as HTMLElement;
-        const bodyHeight = themeModalBody.value.clientHeight;
+        const bodyHeight = themeModalBody.value.clientHeight - 240;
         const themeHeight = focusedTheme.clientHeight;
-        const offset = (bodyHeight - themeHeight) / 2;
+        const offset = (bodyHeight - themeHeight) / 1.1;
         themeModalBody.value.scrollTop = focusedTheme.offsetTop - offset;
     }
 };
@@ -164,7 +164,7 @@ onMounted(async () => {
 
     &__body {
         overflow-y: scroll;
-        max-height: calc(100vh - 128px);
+        max-height: calc(100vh - 200px);
         display: grid;
         cursor: pointer;
         -webkit-user-select: none;

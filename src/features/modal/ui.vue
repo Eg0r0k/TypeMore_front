@@ -1,6 +1,6 @@
 <template>
-    <Transition>
-        <div class="modal" v-if="isOpen" @click.stop="modalStore.close()" 
+    <Transition @before-enter="onBeforeEnter" @enter="onEnter" @leave="onLeave" :css="false">
+        <div ref="modal" class="modal" v-if="isOpen" @keydown.esc="modalStore.close()" @click.stop="modalStore.close()"
             :class="{ 'align-start': isCommandLine, 'align-center': !isCommandLine }" tabindex="0">
             <component @click.stop :is="view" v-model="model"></component>
             <button v-for="action in actions" :key="action.label" class="btn" @click="action.callback(model)">
@@ -12,26 +12,40 @@
 
 <script setup lang="ts">
 import { useModal } from '@/entities/modal/store';
+import gsap from 'gsap';
 import { storeToRefs } from 'pinia';
-import { reactive, onMounted, onUnmounted } from 'vue';
+import { reactive } from 'vue';
 
 const model = reactive({});
 const modalStore = useModal();
 const { isOpen, isCommandLine, view, actions } = storeToRefs(modalStore);
 
-const handleKeydown = (event: KeyboardEvent) => {
-    if (event.key === 'Escape') {
-        modalStore.close();
-    }
-};
+const onBeforeEnter = (el: Element) => {
+    gsap.set(el, {
+        scale: 0.8,
+        opacity: 0,
+    });
+}
 
-onMounted(() => {
-    document.addEventListener('keydown', handleKeydown);
-});
+const onEnter = (el: Element, done: any) => {
+    gsap.to(el, {
+        duration: 0.08,
+        scale: 1,
+        opacity: 1,
+        ease: 'power2.out',
+        onComplete: done,
+    });
+}
 
-onUnmounted(() => {
-    document.removeEventListener('keydown', handleKeydown);
-});
+const onLeave = (el: Element, done: any) => {
+    gsap.to(el, {
+        duration: 0.08,
+        scale: 0.9,
+        opacity: 0,
+        ease: 'power2.in',
+        onComplete: done,
+    });
+}
 </script>
 
 <style lang="scss" scoped>

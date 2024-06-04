@@ -1,9 +1,8 @@
 <template>
+
     <FpsIndecator v-if="configStore.config.showFps" />
     <div class="wrapper">
-
         <Header />
-
         <main>
             <router-view v-slot="{ Component, route }">
                 <transition name="fade" mode="out-in">
@@ -49,7 +48,6 @@ onUnmounted(() => {
 }
 
 .wrapper {
-
     background-size: cover;
     display: flex;
     flex-direction: column;
@@ -61,6 +59,4 @@ onUnmounted(() => {
     padding: 28px 16px;
     box-sizing: border-box;
 }
-
-
 </style>

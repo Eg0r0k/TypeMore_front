@@ -12,7 +12,7 @@
     </div>
     <p v-else style="color:white">Loading...</p>
     <div>
-      <Button style="width:100%" @click="restartTest">
+      <Button color="error" style="width:100%" @click="restartTest">
         Restart
       </Button>
       <Button style="width:100%" @click="init">Start</Button>
@@ -32,6 +32,7 @@ import { useTimerStore } from '@entities/timer/model/store';
 import { onMounted, ref } from 'vue';
 
 import { LanguageObj } from '@/shared/constants/type';
+import { shuffle } from '@/shared/lib/helpers/arrays';
 
 const testState = useTestStateStore();
 const timerStore = useTimerStore();
@@ -60,7 +61,8 @@ const init = async () => {
   try {
     console.log(config.language);
     lang.value = await getCurrentLang(config.language);
- 
+    shuffle(lang.value.words)
+
   } catch (e) {
     console.error(`Cannot initialize test: ${e}`);
   }

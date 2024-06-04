@@ -15,10 +15,18 @@
                 <Typography color="main">or</Typography>
             </div>
             <div class="other login__other">
-                <Button color="gray" class="other__button other__button--google"
-                    :leftIcon="'flat-color-icons:google'">Google</Button>
-                <Button color="gray" class="other__button other__button--github"
-                    :left-icon="'mdi:github'">GitHub</Button>
+                <Button color="gray" class="other__button other__button--google">
+                    <template #left-icon>
+                        <Icon width="24" icon="ri:google-fill"></Icon>
+                    </template>
+                    Google
+                </Button>
+                <Button color="gray" class="other__button other__button--github">
+                    <template #left-icon>
+                        <Icon width="24" icon="mdi:github"></Icon>
+                    </template>
+                    GitHub
+                </Button>
             </div>
             <div class="login__footer">
                 <Typography tag-name="p" color="primary">No accaut?
@@ -30,6 +38,7 @@
 </template>
 
 <script setup lang="ts">
+import { Icon } from '@iconify/vue';
 import { Typography } from '@shared/ui/typography'
 import { TextInput } from '@shared/ui/input'
 import { Button } from '@shared/ui/button'
@@ -58,7 +67,7 @@ import { Button } from '@shared/ui/button'
     display: flex;
     flex-direction: column;
     padding: 32px;
-    background-color: var(--sub-alt-color);
+    border: 2px solid var(--sub-alt-color);
     border-radius: var(--border-radius);
     gap: 24px;
 

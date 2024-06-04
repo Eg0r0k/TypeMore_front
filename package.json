@@ -23,6 +23,7 @@
   "dependencies": {
     "@vueuse/core": "^10.9.0",
     "axios": "^1.6.5",
+    "gsap": "^3.12.5",
     "happy-dom": "^6.0.4",
     "pinia": "^2.1.7",
     "vee-validate": "^4.12.6",

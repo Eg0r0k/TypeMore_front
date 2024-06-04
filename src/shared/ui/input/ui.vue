@@ -7,7 +7,7 @@
       :value="modelValue" :placeholder="placeholder" :disabled="isDisabled" @input="updateInput"
       :class="{ 'text-input--error': props.isError }">
     </component>
-    
+
   </div>
 </template>
 
@@ -63,7 +63,7 @@ textarea {
   width: 100%;
   line-height: normal;
   box-sizing: border-box;
-  background-color: var(--sub-color);
+  background-color: var(--sub-alt-color);
   border-radius: var(--border-radius);
   border: none;
   padding: 8px;
@@ -77,7 +77,7 @@ textarea {
   }
 
   &::placeholder {
-    color: var(--sub-alt-color);
+    color: var(--sub-color);
     opacity: 1;
   }
 

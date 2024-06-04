@@ -28,7 +28,7 @@ const navigationLinks = NAV_LINKS
 
 <style lang="scss" scoped>
 .header {
-
+  z-index: var(--navigation-z);
   display: flex;
 }
 

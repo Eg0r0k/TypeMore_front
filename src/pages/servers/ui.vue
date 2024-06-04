@@ -19,6 +19,20 @@
                         <Icon width="24" icon="fluent:target-20-filled" />
                     </template>
                     Text
+                    <template #right-icon>
+                        <Icon width="24" icon="fluent:target-20-filled" />
+                    </template>
+                </Button>
+                <Button color="error">
+                    <template #left-icon>
+                        <Icon width="24" icon="ic:round-warning" />
+                    </template>
+                    Dunger
+                </Button>
+                <Button style="max-width:fit-content" size="s" color="error">
+                    <template #left-icon>
+                        <Icon width="24" icon="ic:round-warning" />
+                    </template>
                 </Button>
                 <TextInput placeholder="Some text" />
             </div>
@@ -39,7 +53,7 @@
                 <template #left-icon>
                     <Icon width="24" icon="ph:copy-bold" />
                 </template>
-                copy Theme</Button>
+                Copy</Button>
         </div>
     </div>
 </template>

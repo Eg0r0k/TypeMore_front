@@ -50,16 +50,6 @@
     "--error-extra-color": "#558cab"
   },
   {
-    "name": "2077",
-    "--bg-color": "#f5f000",
-    "--main-color": "#003aa5",
-    "--sub-color": "#272324",
-    "--sub-alt-color": "#49bcd9",
-    "--text-color": "#ffffff",
-    "--error-color": "#ff1b86",
-    "--error-extra-color": "#6b074a"
-  },
-  {
     "name": "Strict",
     "--bg-color": "#eeebe2",
     "--main-color": "#080909",
@@ -68,6 +58,26 @@
     "--text-color": "#080909",
     "--error-color": "#c87e74",
     "--error-extra-color": "#a56961"
+  },
+  {
+    "name": "Cyberpunk",
+    "--bg-color": "#0f0f0f",
+    "--main-color": "#ff00ff",
+    "--sub-color": "#00ffff",
+    "--sub-alt-color": "#1a1a1a",
+    "--text-color": "#e5e5e5",
+    "--error-color": "#ff4c4c",
+    "--error-extra-color": "#993434"
+  },
+   {
+    "name": "Maiamy",
+    "--bg-color": "#f35588",
+    "--main-color": "#00fff7",
+    "--sub-color": "#94294c",
+    "--sub-alt-color": "#db4979",
+    "--text-color": "#f0e9ec",
+    "--error-color": "#fff591",
+    "--error-extra-color": "#b9b269"
   },
   {
     "name": "Vue",
@@ -131,12 +141,206 @@
   },
   {
     "name": "0_0",
-    "--bg-color": "#000000",
+    "--bg-color": "#0e0e0e",
     "--main-color": "#ff9000",
-    "--sub-color": "#171717",
-    "--sub-alt-color": "#7d7d7d",
-    "--text-color": "#ffffff",
+    "--sub-color": "#555555",
+    "--sub-alt-color": "#151515",
+    "--text-color": "#c6c6c6",
     "--error-color": "#e44545",
     "--error-extra-color": "#972d2d"
+  },
+  {
+    "name": "Contora",
+    "--bg-color": "#0e0e10",
+    "--main-color": "#8f44fd",
+    "--sub-color": "#949494",
+    "--sub-alt-color": "#1f1f23",
+    "--text-color": "#eeeeee",
+    "--error-color": "#da3333",
+    "--error-extra-color": "#791717"
+  },
+  {
+    "name": "VS Code",
+    "--bg-color": "#121212",
+    "--main-color": "#528bff",
+    "--sub-color": "#3a3a3a",
+    "--sub-alt-color": "#1c1c1c",
+    "--text-color": "#e6e6e6",
+    "--error-color": "#ff4c4c",
+    "--error-extra-color": "#993434"
+  },
+
+  {
+    "name": "0_6",
+    "--bg-color": "#1f1f1f",
+    "--main-color": "#00ffff",
+    "--sub-color": "#484848",
+    "--sub-alt-color": "#2c2c2c",
+    "--text-color": "#f0f0f0",
+    "--error-color": "#ff3030",
+    "--error-extra-color": "#a82828"
+  },
+
+  {
+    "name": "0_9",
+    "--bg-color": "#141414",
+    "--main-color": "#ff007f",
+    "--sub-color": "#3b3b3b",
+    "--sub-alt-color": "#1a1a1a",
+    "--text-color": "#e5e5e5",
+    "--error-color": "#ff1a1a",
+    "--error-extra-color": "#b31919"
+  },
+  {
+    "name": "1_0",
+    "--bg-color": "#1f1f1f",
+    "--main-color": "#3498db",
+    "--sub-color": "#2980b9",
+    "--sub-alt-color": "#2c3e50",
+    "--text-color": "#ecf0f1",
+    "--error-color": "#e74c3c",
+    "--error-extra-color": "#c0392b"
+  },
+  {
+    "name": "1_5",
+    "--bg-color": "#2f3640",
+    "--main-color": "#e1b12c",
+    "--sub-color": "#fbc531",
+    "--sub-alt-color": "#353b48",
+    "--text-color": "#f5f6fa",
+    "--error-color": "#e84118",
+    "--error-extra-color": "#c23616"
+  },
+  {
+    "name": "1_6",
+    "--bg-color": "#273c75",
+    "--main-color": "#44bd32",
+    "--sub-color": "#4cd137",
+    "--sub-alt-color": "#192a56",
+    "--text-color": "#f5f6fa",
+    "--error-color": "#e84118",
+    "--error-extra-color": "#c23616"
+  },
+  
+  {
+    "name": "2_0",
+    "--bg-color": "#212121",
+    "--main-color": "#ff5722",
+    "--sub-color": "#ff7043",
+    "--sub-alt-color": "#424242",
+    "--text-color": "#f5f5f5",
+    "--error-color": "#d32f2f",
+    "--error-extra-color": "#b71c1c"
+  },
+  {
+    "name": "Laguna",
+    "--bg-color": "#0d47a1",
+    "--main-color": "#29b6f6",
+    "--sub-color": "#03a9f4",
+    "--sub-alt-color": "#1565c0",
+    "--text-color": "#e3f2fd",
+    "--error-color": "#d32f2f",
+    "--error-extra-color": "#b71c1c"
+  },
+  {
+    "name": "3_0",
+    "--bg-color": "#282c34",
+    "--main-color": "#61dafb",
+    "--sub-color": "#20232a",
+    "--sub-alt-color": "#30363d",
+    "--text-color": "#ffffff",
+    "--error-color": "#e06c75",
+    "--error-extra-color": "#be5046"
+  },
+  {
+    "name": "3_3",
+    "--bg-color": "#0f0f0f",
+    "--main-color": "#ff0000",
+    "--sub-color": "#282828",
+    "--sub-alt-color": "#1c1c1c",
+    "--text-color": "#ffffff",
+    "--error-color": "#d32f2f",
+    "--error-extra-color": "#b71c1c"
+  },
+  {
+    "name": "Snow",
+    "--bg-color": "#ffffff",
+    "--main-color": "#007bff",
+    "--sub-color": "#f8f9fa",
+    "--sub-alt-color": "#e9ecef",
+    "--text-color": "#343a40",
+    "--error-color": "#dc3545",
+    "--error-extra-color": "#c82333"
+  },
+  {
+    "name": "KeySmash",
+    "--bg-color": "#1a1a1a",
+    "--main-color": "#ff4500",
+    "--sub-color": "#2f2f2f",
+    "--sub-alt-color": "#404040",
+    "--text-color": "#dcdcdc",
+    "--error-color": "#ff6347",
+    "--error-extra-color": "#cc2c1a"
+  },
+  {
+    "name": "Contrast",
+    "--bg-color": "#000000",
+    "--main-color": "#ffffff",
+    "--sub-color": "#1c1c1c",
+    "--sub-alt-color": "#333333",
+    "--text-color": "#f0f0f0",
+    "--error-color": "#ff5252",
+    "--error-extra-color": "#ff1744"
+  },
+  {
+    "name": "GameBoy",
+    "--bg-color": "#92be33",
+    "--main-color": "#0f380f",
+    "--sub-color": "#306230",
+    "--sub-alt-color": "#8bac0f",
+    "--text-color": "#0f380f",
+    "--error-color": "#254832",
+    "--error-extra-color": "#254832"
+  },
+  {
+    "name": "Coffee",
+    "--bg-color": "#3f3230",
+    "--main-color": "#c4af9d",
+    "--sub-color": "#85644d",
+    "--sub-alt-color": "#ceab8c",
+    "--text-color": "#1f0d00",
+    "--error-color": "#854442",
+    "--error-extra-color": "#854442"
+  },
+  {
+    "name": "UwU",
+    "--bg-color": "#ffc2cd",
+    "--main-color": "#fc3468",
+    "--sub-color": "#ff93ac",
+    "--sub-alt-color": "#ff084a",
+    "--text-color": "#ffffff",
+    "--error-color": "#da3333",
+    "--error-extra-color": "#791717"
+  },
+  {
+    "name": "F",
+    "--bg-color": "\t#3b5998",
+    "--main-color": "#8b9dc3",
+    "--sub-color": "#f7f7f7",
+    "--sub-alt-color": "#dfe3ee",
+    "--text-color": "#ffffff",
+    "--error-color": "#ff3333",
+    "--error-extra-color": "#aa0909"
+  },
+  {
+    "name": "Lasure",
+    "--bg-color": "#18233a",
+    "--main-color": "#22345b",
+    "--sub-color": "#344b7b",
+    "--sub-alt-color": "#131e35",
+    "--text-color": "#87adff",
+    "--error-color": "#ca4754",
+    "--error-extra-color": "#7e2a33"
   }
+
 ]

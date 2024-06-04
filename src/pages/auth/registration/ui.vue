@@ -35,7 +35,7 @@ import { Button } from '@/shared/ui/button'
     width: 100%;
     max-width: 295px;
     padding: 32px;
-    background-color: var(--sub-alt-color);
+    border: 2px solid var(--sub-alt-color);
     border-radius: var(--border-radius);
 
 

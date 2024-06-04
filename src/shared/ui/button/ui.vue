@@ -1,14 +1,19 @@
 <template>
   <button :disabled="isLoading || isDisabled" :class="classes" role="button" :aria-label="buttonLabel">
     <span class="loader" v-if="isLoading" aria-hidden="true"></span>
-    <slot name="left-icon"></slot>
+    <span class="icon" v-if="!isLoading">
+      <slot name="left-icon"></slot>
+    </span>
+
     <Typography v-if="slots.default" class="button__text" :class="isLoading ? 'invisible' : ''" tagName="p"
       :size="props.size" :aria-hidden="isLoading">
 
       <slot></slot>
 
     </Typography>
-    <slot name="right-icon"></slot>
+    <span class="icon" v-if="!isLoading">
+      <slot name="right-icon"></slot>
+    </span>
 
   </button>
 </template>
@@ -17,7 +22,7 @@
 import { useSlots, withDefaults, computed } from 'vue'
 import { Typography } from '@/shared/ui/typography'
 interface Props {
-  color?: 'main' | 'gray'
+  color?: 'main' | 'gray' | 'error'
   size?: 'm' | 's' | 'l'
   decoration?: 'default' | 'none'
   isDisabled?: boolean
@@ -48,12 +53,20 @@ $main: (
   'background': var(--main-color),
   'hover': var(--text-color),
   'active': var(--sub-color),
-  'color': varvar(--bg-color),
+  'color': var(--bg-color),
+  'hover-color': var(--bg-color),
+  'active-color': var(--bg-color)
+);
+$error: (
+  'background': var(--error-color),
+  'hover': var(--text-color),
+  'active': var(--sub-color),
+  'color': var(--error-extra-color),
   'hover-color': var(--bg-color),
   'active-color': var(--bg-color)
 );
 $gray: (
-  'background': var(--sub-color),
+  'background': var(--sub-alt-color),
   'hover': var(--text-color),
   'active': var(--sub-alt-color),
   'color': var(--text-color),
@@ -62,18 +75,16 @@ $gray: (
 );
 $styles: (
   'main': $main,
-  'gray': $gray
+  'gray': $gray,
+  'error': $error
 );
 
-.icon {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-}
+
 
 @mixin button-style($styles) {
   @each $key, $val in $styles {
+
+
     .button--color-#{$key} {
 
 
@@ -83,19 +94,20 @@ $styles: (
         color: map-get($val, 'color');
       }
 
-      svg {
-        fill: map-get($val, 'color');
+      .icon {
+        color: map-get($val, 'color');
       }
 
       &:hover {
+
         background-color: map-get($val, 'hover');
 
         p {
           color: map-get($val, 'hover-color');
         }
 
-        svg {
-          fill: map-get($val, 'hover-color');
+        .icon {
+          color: map-get($val, 'hover-color');
         }
       }
 
@@ -106,8 +118,8 @@ $styles: (
           color: map-get($val, 'active-color');
         }
 
-        svg {
-          fill: map-get($val, 'active-color');
+        .icon {
+          color: map-get($val, 'active-color');
         }
       }
     }
@@ -116,12 +128,20 @@ $styles: (
 
 @include button-style($styles);
 
+.icon {
+  &:empty {
+    display: none;
+  }
 
+  display: flex;
+
+
+}
 
 .button {
   display: flex;
   justify-content: center;
-
+  align-items: center;
   height: min-content;
   border: none;
   border-radius: var(--border-radius);
@@ -129,9 +149,13 @@ $styles: (
   appearance: none;
   user-select: none;
   cursor: pointer;
+  line-height: 1.3;
   font-family: inherit;
   transition: var(--transition-duration) ease-in;
   gap: 8px;
+
+
+
 
   &:focus-visible {
     box-shadow: 0 0 0 1.5px var(--bg-color), 0 0 0 3px var(--text-color);
@@ -140,7 +164,7 @@ $styles: (
 
   &__text {
     text-align: center;
-    
+
   }
 
   &.decoration--none {
