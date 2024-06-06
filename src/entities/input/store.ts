@@ -73,8 +73,18 @@ const keysToTrack = [
   'IntlBackslash',
   'NoCode'
 ]
-
+type Keydata = {
+  timestamp: number
+  index: number
+}
+type ErrorHistoryObject = {
+  count: number
+  words: number[]
+}
 export const useInputStore = defineStore('input', () => {
+  const keyDownData: Record<string, Keydata> = reactive({})
+  const missedWords: Record<string, number> = reactive({})
+  const errorHistory: ErrorHistoryObject[] = reactive([])
   const input: Input = reactive({
     current: '',
     history: [],
@@ -171,6 +181,9 @@ export const useInputStore = defineStore('input', () => {
     resetHistory,
     input,
     backspaceToPrevious,
-    handleSpace
+    handleSpace,
+    recordKeyDown,
+    recordKeyUp,
+    keypressTimings
   }
 })

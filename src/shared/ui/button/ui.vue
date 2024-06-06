@@ -23,7 +23,8 @@ import { useSlots, withDefaults, computed } from 'vue'
 import { Typography } from '@/shared/ui/typography'
 interface Props {
   color?: 'main' | 'gray' | 'error'
-  size?: 'm' | 's' | 'l'
+  size?: 's' | 'm' | "l"
+
   decoration?: 'default' | 'none'
   isDisabled?: boolean
   buttonLabel?: string
@@ -61,7 +62,7 @@ $error: (
   'background': var(--error-color),
   'hover': var(--text-color),
   'active': var(--sub-color),
-  'color': var(--error-extra-color),
+  'color': var(--text-color),
   'hover-color': var(--bg-color),
   'active-color': var(--bg-color)
 );
@@ -129,11 +130,12 @@ $styles: (
 @include button-style($styles);
 
 .icon {
+  transition: var(--transition-duration) ease-in;
+  display: flex;
+
   &:empty {
     display: none;
   }
-
-  display: flex;
 
 
 }
@@ -154,9 +156,6 @@ $styles: (
   transition: var(--transition-duration) ease-in;
   gap: 8px;
 
-
-
-
   &:focus-visible {
     box-shadow: 0 0 0 1.5px var(--bg-color), 0 0 0 3px var(--text-color);
     outline: none;
@@ -164,7 +163,7 @@ $styles: (
 
   &__text {
     text-align: center;
-
+    transition: var(--transition-duration) ease-in;
   }
 
   &.decoration--none {
@@ -173,13 +172,17 @@ $styles: (
   }
 
   &--size {
+
+    &-s {
+      padding: 4px 8px;
+      gap: 4px;
+    }
+
     &-m {
       padding: 8px 16px;
     }
 
-    &-s {
-      padding: 4px 8px;
-    }
+
 
     &-l {
       padding: 12px 24px;

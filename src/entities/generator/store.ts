@@ -10,6 +10,7 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
   const shuffedIndexes = ref<number[]>([])
   const testState = useTestStateStore()
   const words = ref([])
+  const limit = ref(100)
   const currentLanguage = ref(config.language.split('_')[0])
   const retWords: ret = reactive({
     words: [],
@@ -24,20 +25,34 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
     hasTab: boolean
     hasNewline: boolean
   }
+  //Limit of first generated words
   const getWordsLimit = (): number => {
-    const limit = 100
     if (config.mode === 'free' && config.words === 0) {
-      return limit
+      return limit.value
     }
-
-    return limit
+    return limit.value
   }
-  const generateWords = async (lang: LanguageObj): Promise<LanguageObj> => {
+  const generateWords = async (lang: LanguageObj): Promise<any> => {
     if (!testState.isRepeated) {
-      throw Error('test is')
+      return
     }
-    
   }
+
+  const getNextWord = (
+    wordIndex: number,
+    wordLimit: number,
+    previusWord1: string,
+    previusWord2: string
+  ) => {
+    console.debug('Generated word: ', {
+      isRepeated: testState.isRepeated,
+      wordIndex,
+      previusWord1,
+      lang: currentLanguage,
+      previusWord2
+    })
+  }
+
   const shuffleWords = () => {
     if (shuffedIndexes.value.length === 0) {
       generateShuffledIndexes()

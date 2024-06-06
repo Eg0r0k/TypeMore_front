@@ -63,66 +63,40 @@ import { Icon } from '@iconify/vue';
 import { TextInput } from '@/shared/ui/input';
 import { Typography } from '@shared/ui/typography';
 import { Button } from '@shared/ui/button';
-import { ref, watch } from 'vue';
-const root: HTMLElement | null = document.querySelector(':root');
-
-
-const colors = ref([
-    { label: 'background', var: '--bg-color', hex: '#111111' },
-    { label: 'main', var: '--main-color', hex: '#f7f7f7' },
-    { label: 'sub-color', var: '--sub-color', hex: '#444444' },
-    { label: 'sub-alt-color', var: '--sub-alt-color', hex: '#191919' },
-    { label: 'text-color', var: '--text-color', hex: '#eeeeee' },
-    { label: 'error', var: '--error-color', hex: '#da3333' },
-    { label: 'extra-error', var: '--error-extra-color', hex: '#791717' },
-]);
-type Theme = {
-    name: string;
-    '--bg-color': string;
-    '--main-color': string;
-    '--sub-color': string;
-    '--sub-alt-color': string;
-    '--text-color': string;
-    '--error-color': string;
-    '--error-extra-color': string;
-};
+import { onMounted, ref, watch } from 'vue';
+import { Theme } from '@/features/modal/theme/types/themes';
+const root = document.documentElement;
 interface Color {
     label: string;
     var: string;
     hex: string;
 }
-const setVariables = (themeColors: Color[]): void => {
-    if (root) {
-        themeColors.forEach(color => {
-            root.style.setProperty(color.var, color.hex);
-        });
-    }
-};
-const getTheme = (): Theme => {
+const colors = ref([
+    { label: 'background', var: '--bg-color', hex: getComputedStyle(root).getPropertyValue('--bg-color') },
+    { label: 'main', var: '--main-color', hex: getComputedStyle(root).getPropertyValue('--main-color') },
+    { label: 'sub-color', var: '--sub-color', hex: getComputedStyle(root).getPropertyValue('--sub-color') },
+    { label: 'sub-alt-color', var: '--sub-alt-color', hex: getComputedStyle(root).getPropertyValue('--sub-alt-color') },
+    { label: 'text-color', var: '--text-color', hex: getComputedStyle(root).getPropertyValue('--text-color') },
+    { label: 'error', var: '--error-color', hex: getComputedStyle(root).getPropertyValue('--error-color') },
+    { label: 'extra-error', var: '--error-extra-color', hex: getComputedStyle(root).getPropertyValue('--error-extra-color') },
+]);
 
-    const theme: Theme = {
-        'name': 'custom',
-        '--bg-color': '',
-        '--main-color': '',
-        '--sub-color': '',
-        '--sub-alt-color': '',
-        '--text-color': '',
-        '--error-color': '',
-        '--error-extra-color': '',
-    };
-    colors.value.forEach(color => {
-        if (Object.prototype.hasOwnProperty.call(theme, color.var)) {
-            (theme as any)[color.var] = color.hex;
-        }
-    })
-
-
-    return theme;
+const setVariables = (themeColors: Color[]) => {
+    themeColors.forEach(color => {
+        root.style.setProperty(color.var, color.hex);
+    });
 }
+const getTheme = (): Theme => {
+    return colors.value.reduce((theme, color) => {
+        theme[color.var as keyof Theme] = color.hex;
+        return theme;
+    }, {} as Theme);
+};
 
-watch(colors, (newVal) => {
-    setVariables(newVal)
-}, { deep: true })
+// Watch for changes in 'colors' and update CSS variables
+watch(colors, (newColors) => {
+    setVariables(newColors);
+}, { deep: true });
 
 const copyTheme = async () => {
     const theme = getTheme()
@@ -130,10 +104,12 @@ const copyTheme = async () => {
         await navigator.clipboard.writeText(JSON.stringify(theme, null, 2))
     }
     catch (error) {
-        console.log('Faild to copy', error)
+        console.error('Failed to copy theme:', error);
     }
 }
-
+onMounted(() => {
+    getTheme()
+})
 </script>
 
 <style lang="scss" scoped>

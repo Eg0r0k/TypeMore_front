@@ -1,10 +1,14 @@
 <template>
     <div class="theme-modal" @keydown.tab.prevent="navigateThemes('down')" @keydown.up.prevent="navigateThemes('up')"
         @keydown.down.prevent="navigateThemes('down')" @keydown.enter.prevent="selectFocusedTheme" tabindex="0">
-        <div class="theme-modal__header">
-            <input ref="searchInput" type="text" v-model.trim="searchQuery" class="theme-modal__search"
+        <div class="theme-modal__header modal-header">
+            <div class="modal-header__icon">
+                <Icon width="20" icon="fluent:search-12-filled" />
+            </div>
+            <input ref="searchInput" type="text" v-model.trim="searchQuery" class="modal-header__search"
                 placeholder="Search...">
         </div>
+
         <div ref="themeModalBody" class="theme-modal__body">
             <div class="theme" @click="changeTheme(theme)"
                 :class="{ active: theme.name === selectedTheme, focused: index === focusedThemeIndex }"
@@ -23,50 +27,29 @@
 </template>
 
 <script setup lang="ts">
+import { Icon } from '@iconify/vue';
 import { cachedFetchJson } from '@/shared/lib/helpers/json-files';
-import { computed, onMounted, ref, watch, nextTick } from 'vue';
+import { computed, onMounted, ref, watch, nextTick, inject, Ref } from 'vue';
 import { Typography } from '@/shared/ui/typography';
 import { useConfigStore } from '@/entities/config/store';
 import { useFocus } from '@vueuse/core';
+import { Theme } from './types/themes';
 
 const { config } = useConfigStore();
 
-type Theme = {
-    name: string;
-    '--bg-color': string;
-    '--main-color': string;
-    '--sub-color': string;
-    '--sub-alt-color': string;
-    '--text-color': string;
-    '--error-color': string;
-    '--error-extra-color': string;
-};
-const root: HTMLElement | null = document.querySelector(':root');
+const root = document.documentElement;
 const selectedTheme = ref(config.theme);
-const themesList = ref<Theme[]>([]);
+const themesList = inject<Ref<Theme[]>>('themes');
 const searchQuery = ref('');
 const focusedThemeIndex = ref(-1);
 const searchInput = ref<HTMLInputElement | null>(null);
 const themeModalBody = ref<HTMLElement | null>(null);
-async function fetchThemes() {
-    if (themesList.value.length === 0) {
-        const themes = await cachedFetchJson<Theme[]>('./static/themes/themes.json');
-        const sortedThemes = themes.sort((a, b) => {
-            const nameA = a.name.toLowerCase();
-            const nameB = b.name.toLowerCase();
-            if (nameA < nameB) return -1;
-            if (nameA > nameB) return 1;
-            return 0;
-        });
 
-        themesList.value = sortedThemes;
-    }
-}
-const filteredThemes = computed((): Theme[] => {
-    return themesList.value.filter(theme =>
+const filteredThemes = computed(() =>
+    themesList!.value.filter(theme =>
         theme.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-    );
-});
+    )
+);
 watch(filteredThemes, (newThemes) => {
     if (focusedThemeIndex.value >= newThemes.length) {
         focusedThemeIndex.value = -1;
@@ -74,32 +57,26 @@ watch(filteredThemes, (newThemes) => {
 });
 
 //TODO: Move changeTheme, setVaribles 
+//! If add save config ti DB make cath error with set Theme 
 const changeTheme = (theme: Theme): void => {
     selectedTheme.value = theme.name;
+    config.theme = theme.name
     setVariables(theme);
 };
 const setVariables = (theme: Theme): void => {
     Object.entries(theme).forEach(([key, value]) => {
-        if (root) {
-            root.style.setProperty(key, value as string);
-        }
+        root.style.setProperty(key, value);
     });
 };
-const navigateThemes = async (direction: 'up' | 'down'): Promise<void> => {
+const navigateThemes = async (direction: 'up' | 'down') => {
     const themesLength = filteredThemes.value.length;
     if (themesLength === 0) return;
-    if (direction === 'up') {
-        focusedThemeIndex.value = focusedThemeIndex.value <= 0 ? themesLength - 1 : focusedThemeIndex.value - 1;
-    } else {
-        focusedThemeIndex.value = focusedThemeIndex.value >= themesLength - 1 ? 0 : focusedThemeIndex.value + 1;
-    }
-
+    focusedThemeIndex.value = (focusedThemeIndex.value + (direction === 'up' ? -1 : 1) + themesLength) % themesLength;
     nextTick(() => {
         centerFocusedTheme();
     });
 
-
-};
+}
 const selectFocusedTheme = (): void => {
     if (focusedThemeIndex.value >= 0 && focusedThemeIndex.value < filteredThemes.value.length) {
         changeTheme(filteredThemes.value[focusedThemeIndex.value]);
@@ -115,31 +92,31 @@ const centerFocusedTheme = () => {
     }
 };
 const centerActiveTheme = async (): Promise<void> => {
-    await nextTick();
-
-    if (themeModalBody.value && selectedTheme.value) {
+    nextTick(() => {
+        if (!themeModalBody.value || !selectedTheme.value) return;
         const activeIndex = filteredThemes.value.findIndex(theme => theme.name === selectedTheme.value);
         if (activeIndex >= 0) {
             focusedThemeIndex.value = activeIndex;
             centerFocusedTheme();
         }
-    }
+    })
 };
 useFocus(searchInput, { initialValue: true })
 onMounted(async () => {
-    await fetchThemes();
+
     centerActiveTheme();
 });
 </script>
 <style lang="scss" scoped>
-.theme-modal {
-    border-radius: var(--border-radius);
-    outline: 3px solid var(--sub-color);
-    max-width: 700px;
-    overflow: hidden;
-    width: 100%;
-    max-height: 100%;
-    background-color: var(--sub-alt-color);
+.modal-header {
+
+    display: flex;
+    align-items: center;
+
+    &__icon {
+        color: var(--sub-color);
+        margin: 5px 1rem 0;
+    }
 
     &__search {
         &::placeholder {
@@ -155,12 +132,26 @@ onMounted(async () => {
         border-radius: var(--border-radius);
         border: none;
         outline: none;
-        padding: 10px 20px;
+        padding: 10px 20px 10px 0;
         font-size: 16px;
         color: var(--text-color);
         caret-color: var(--main-color);
         position: relative;
     }
+
+}
+
+.theme-modal {
+    border-radius: var(--border-radius);
+    outline: 3px solid var(--sub-color);
+    max-width: 700px;
+    overflow: hidden;
+    width: 100%;
+    max-height: 100%;
+    background-color: var(--sub-alt-color);
+
+
+
 
     &__body {
         overflow-y: scroll;

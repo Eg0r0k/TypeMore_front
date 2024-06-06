@@ -29,20 +29,20 @@ const onBeforeEnter = (el: Element) => {
 
 const onEnter = (el: Element, done: any) => {
     gsap.to(el, {
-        duration: 0.08,
+        duration: 0.35,
         scale: 1,
         opacity: 1,
-        ease: 'power2.out',
+        ease: "back.out(2)",
         onComplete: done,
     });
 }
 
 const onLeave = (el: Element, done: any) => {
     gsap.to(el, {
-        duration: 0.08,
+        duration: 0.35,
         scale: 0.9,
         opacity: 0,
-        ease: 'power2.in',
+        ease: "back.out(2)",
         onComplete: done,
     });
 }

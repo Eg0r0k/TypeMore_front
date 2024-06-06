@@ -5,7 +5,7 @@
     "--main-color": "#5865f2",
     "--sub-color": "#565a62",
     "--sub-alt-color": "#232428",
-    "--text-color": "#dcdee3",
+    "--text-color": "#ffffff",
     "--error-color": "#ff3f43",
     "--error-extra-color": "#a12828"
   },

@@ -9,7 +9,6 @@
                 <TextInput is-required :placeholder="'Username'" />
                 <TextInput is-required :placeholder="'Email'" />
                 <TextInput :type="'password'" is-required :placeholder="'Password'" />
-
                 <Button @click.prevent="" type="sumbit" class="registration__sumbit">Create</Button>
             </form>
             <div class="registration__footer">

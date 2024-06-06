@@ -3,8 +3,9 @@
 
     <p style="color:white"> Current: {{ inputStore.input.current }}</p>
     <p style="color:white"> History: {{ inputStore.input.history }}</p>
+    <p style="color:white"> keypressTimings: {{ inputStore.keypressTimings.spacing }}</p>
 
-    <p style="color:white"> History: {{ timerStore.time }}</p>
+    <p style="color:white"> Timer: {{ timerStore.time }}</p>
     <div v-if="lang">
       <p class="word" style="color:white" v-for="(word, index) in lang.words" :key="index">
         {{ word }} </p>
@@ -17,8 +18,9 @@
       </Button>
       <Button style="width:100%" @click="init">Start</Button>
     </div>
-    <input type="text" @input="startTest" v-model="inputStore.input.current"
-      @keydown.space.prevent="inputStore.handleSpace" @keydown.delete="inputStore.backspaceToPrevious" dir="auto">
+    <input type="text" @keyup="recordKeyUp" @keydown="recordKeyDown" @input="startTest"
+      v-model="inputStore.input.current" @keydown.space.prevent="inputStore.handleSpace"
+      @keydown.delete="inputStore.backspaceToPrevious" dir="auto">
   </div>
 </template>
 
@@ -45,9 +47,41 @@ const startTest = () => {
     testState.setActive(true);
     timerStore.resetTimer();
     timerStore.startTimer();
+
   }
 };
+const recordKeyDown = (event: KeyboardEvent) => {
 
+  const now = performance.now();
+
+
+  let keyCode = event.code;
+  if (keyCode === "NumpadEnter") {
+    keyCode = "Space";
+    inputStore.handleSpace();
+  }
+  setTimeout(() => {
+    const finalKeyCode =
+      keyCode === "" || event.which === 231 ? "NoCode" : keyCode;
+    console.log(finalKeyCode)
+    inputStore.recordKeyDown(now, finalKeyCode);
+  }, 0);
+}
+const recordKeyUp = (event: KeyboardEvent) => {
+
+  const now = performance.now();
+
+  let keyCode = event.code;
+  if (keyCode === "NumpadEnter") {
+    keyCode = "Space";
+    inputStore.handleSpace();
+  }
+  setTimeout(() => {
+    const finalKeyCode =
+      keyCode === "" || event.which === 231 ? "NoCode" : keyCode;
+    inputStore.recordKeyUp(now, finalKeyCode);
+  }, 0);
+};
 const restartTest = async () => {
 
   timerStore.resetTimer()

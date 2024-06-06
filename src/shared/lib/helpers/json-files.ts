@@ -53,6 +53,7 @@ export const cachedFetchJson = memoizeAsync<string, typeof fetchJson>(fetchJson)
 let currentLang: any
 
 export const getLanguage = (lang: string): Promise<LanguageObj> => {
+  console.debug(`Getting language:  ${lang}`)
   try {
     if (currentLang == undefined) {
       currentLang = cachedFetchJson<LanguageObj>(`./static/${lang}.json`)

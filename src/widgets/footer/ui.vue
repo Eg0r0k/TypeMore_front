@@ -10,9 +10,15 @@
         <FooterLinks :data="navLinks" />
       </div>
       <div class="footer__right">
-        <Button @click="handleOnClickOpenModal">
+        <Button size="s" @click="handleOnClickOpenTheme">
           <template #left-icon>
-            <Icon width="32" icon="fluent:dark-theme-20-filled"></Icon>
+            <Icon width="12" icon="fluent:dark-theme-20-filled"></Icon>
+          </template>
+          {{ config.theme }}
+        </Button>
+        <Button size="s" @click="handleOnClickOpenInput">
+          <template #left-icon>
+            <Icon width="12" icon="ic:outline-bookmark"></Icon>
           </template>
         </Button>
       </div>
@@ -26,15 +32,20 @@ import { Button } from '@/shared/ui/button';
 import { FooterLinks } from '@/features/footer/links'
 import { FOOTER_LINKS } from '../footer/model/const/values'
 import { useModal } from '@/entities/modal/store';
-import { ModalThemes } from '../theme';
-import { Typography } from '@/shared/ui/typography';
+import { ModalThemes } from '../../features/modal/theme';
 import { FooterLink } from './model/types/links';
+import { useConfigStore } from '@/entities/config/store';
+import { useTestStateStore } from '@/entities/test';
+import { InputModal } from '@/features/modal/input';
 const navLinks: FooterLink[] = FOOTER_LINKS
 const modal = useModal()
-
-const handleOnClickOpenModal = () => {
+const { config } = useConfigStore()
+const handleOnClickOpenTheme = () => {
   modal.open(ModalThemes, [], true);
 }
+const handleOnClickOpenInput = () => {
+  modal.open(InputModal, [], false)
+} 
 </script>
 
 <style lang="scss" scoped>
