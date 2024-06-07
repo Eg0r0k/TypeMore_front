@@ -2,13 +2,14 @@
 
 @import "./reset";
 @import "./normalize";
-
+@import "./scroll";
 @font-face {
   font-family: "Balsamiq Sans";
   src: url("./fonts/BalsamiqSans-Regular.ttf") format("truetype");
   font-weight: 400;
   font-display: block;
 }
+// Base colors
 :root {
   --bg-color: #121212;
   --main-color: #528bff;
@@ -21,7 +22,7 @@
   --transition-duration: 0.08s;
   --navigation-z: 2;
 }
-
+// Color for popper plugin
 :root {
   --popper-theme-background-color: var(--sub-alt-color);
   --popper-theme-background-color-hover: var(--sub-alt-color);
@@ -33,11 +34,7 @@
   --popper-theme-padding: 6px;
   --popper-theme-box-shadow: 0;
 }
-@media (prefers-color-scheme: dark) {
-  body {
-    color-scheme: dark;
-  }
-}
+//TODO add font
 
 // @font-face {
 //     font-family: "Noto Sans TC";
@@ -57,23 +54,11 @@ main {
   display: grid;
   height: 100%;
 }
-a {
-  color: var(--sub-color);
-  transition: all var(--transition-duration);
-  &:hover {
-    color: var(--main-color);
-  }
-}
-html,
-body {
-  line-height: normal;
-}
+
 html {
-  scrollbar-width: thin;
   scrollbar-color: var(--sub-color) transparent;
   overflow-y: scroll;
   scroll-behavior: smooth;
-  line-height: 1.25;
   text-size-adjust: 100%;
   scrollbar-width: thin;
   -webkit-text-size-adjust: 100%;
@@ -82,33 +67,11 @@ body {
   overflow-x: hidden;
   font-size: 16px;
   min-height: 100vh;
-  
+  line-height: normal;
   background-color: var(--bg-color);
-  box-sizing: border-box;
   font-family: "Noto Sans TC";
 }
-
-::-webkit-scrollbar-corner {
-  background: var(--sub-color);
-}
-::-webkit-scrollbar-thumb {
-  border-radius: var(--border-radius);
-  background: (--sub-color);
-  &:hover {
-    background: (--text-color);
-  }
-}
-
-::-moz-selection {
-  color: var(--bg-color);
-  background: var(--main-color);
-}
-
-::selection {
-  color: var(--bg-color);
-  background: var(--main-color);
-}
-
+// Global styles for elements
 input {
   padding: 5px;
   box-sizing: border-box;
@@ -118,4 +81,11 @@ input {
   border-radius: var(--border-radius);
   color: var(--text-color);
   caret-color: var(--main-color);
+}
+a {
+  color: var(--sub-color);
+  transition: all var(--transition-duration);
+  &:hover {
+    color: var(--main-color);
+  }
 }

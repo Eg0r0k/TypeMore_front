@@ -1,4 +1,5 @@
 <template>
+  <!-- TODO mb go to delete -->
   <div class="container">
     <slot></slot>
   </div>
@@ -7,6 +8,7 @@
 <script setup lang="ts"></script>
 
 <style lang="scss" scoped>
+
 .container {
   height: 100%;
   max-width: 1532px;

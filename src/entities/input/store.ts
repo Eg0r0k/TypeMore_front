@@ -2,7 +2,7 @@ import { reactive } from 'vue'
 import { Input } from './type'
 import { defineStore } from 'pinia'
 import { useTestStateStore } from '../test'
-
+// Keys kodes to track 
 const keysToTrack = [
   'KeyA',
   'KeyB',
@@ -71,7 +71,7 @@ const keysToTrack = [
   'Quote',
   'Semicolon',
   'IntlBackslash',
-  'NoCode'
+  'NoCode' 
 ]
 type Keydata = {
   timestamp: number

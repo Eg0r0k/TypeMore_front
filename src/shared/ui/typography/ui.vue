@@ -6,6 +6,14 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+// xxxl  49px
+// xxl   39px
+// xl    31px
+// l     25px
+// m     20px
+// s     16px
+// xs    13px
+// xxs   10px
 interface Props {
   isBold?: boolean
   tagName?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'a'

@@ -1,25 +1,35 @@
 <template>
-    <Transition @before-enter="onBeforeEnter" @enter="onEnter" @leave="onLeave" :css="false">
-        <div ref="modal" class="modal" v-if="isOpen" @keydown.esc="modalStore.close()" @click.stop="modalStore.close()"
-            :class="{ 'align-start': isCommandLine, 'align-center': !isCommandLine }" tabindex="0">
-            <component @click.stop :is="view" v-model="model"></component>
-            <button v-for="action in actions" :key="action.label" class="btn" @click="action.callback(model)">
-                {{ action.label }}
-            </button>
-        </div>
-    </Transition>
+    <Teleport to="body">
+        <Transition @before-enter="onBeforeEnter" @enter="onEnter" @leave="onLeave" :css="false">
+            <div aria-modal="true" class="modal" v-if="isOpen" @keydown.esc="modalStore.close()"
+                :class="{ 'align-start': isCommandLine, 'align-center': !isCommandLine }" tabindex="0">
+                <component ref="modal" @click.stop :is="view" v-model="model"></component>
+                <button v-for="action in actions" :key="action.label" class="btn" @click="action.callback(model)">
+                    {{ action.label }}
+                </button>
+            </div>
+        </Transition>
+    </Teleport>
 </template>
 
 <script setup lang="ts">
+//THIS COMPONENT WILL BE RENDER INTO body
 import { useModal } from '@/entities/modal/store';
+import { onClickOutside } from '@vueuse/core';
 import gsap from 'gsap';
 import { storeToRefs } from 'pinia';
-import { reactive } from 'vue';
-
+import { reactive, ref } from 'vue';
+//Provide model 
 const model = reactive({});
+// Ref to modal component
+const modal = ref(null)
 const modalStore = useModal();
 const { isOpen, isCommandLine, view, actions } = storeToRefs(modalStore);
-
+//Catch click outside modal window
+onClickOutside(modal, (event) => {
+    modalStore.close()
+})
+// Animation for modal window
 const onBeforeEnter = (el: Element) => {
     gsap.set(el, {
         scale: 0.8,
@@ -46,6 +56,7 @@ const onLeave = (el: Element, done: any) => {
         onComplete: done,
     });
 }
+
 </script>
 
 <style lang="scss" scoped>

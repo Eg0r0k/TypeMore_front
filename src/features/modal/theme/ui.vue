@@ -9,8 +9,8 @@
                 placeholder="Search...">
         </div>
 
-        <div ref="themeModalBody" class="theme-modal__body">
-            <div class="theme" @click="changeTheme(theme)"
+        <div role="listbox" ref="themeModalBody" class="theme-modal__body">
+            <div :aria-selected="theme.name === config.theme" role="option" class="theme" @click="changeTheme(theme)"
                 :class="{ active: theme.name === selectedTheme, focused: index === focusedThemeIndex }"
                 v-for="(theme, index) in filteredThemes" :key="theme.name">
                 <div class="theme__name">
@@ -28,16 +28,15 @@
 
 <script setup lang="ts">
 import { Icon } from '@iconify/vue';
-import { cachedFetchJson } from '@/shared/lib/helpers/json-files';
 import { computed, onMounted, ref, watch, nextTick, inject, Ref } from 'vue';
 import { Typography } from '@/shared/ui/typography';
 import { useConfigStore } from '@/entities/config/store';
 import { useFocus } from '@vueuse/core';
 import { Theme } from './types/themes';
+import { apply } from '@/shared/lib/hooks/useThemes';
 
 const { config } = useConfigStore();
 
-const root = document.documentElement;
 const selectedTheme = ref(config.theme);
 const themesList = inject<Ref<Theme[]>>('themes');
 const searchQuery = ref('');
@@ -50,24 +49,19 @@ const filteredThemes = computed(() =>
         theme.name.toLowerCase().includes(searchQuery.value.toLowerCase())
     )
 );
+
 watch(filteredThemes, (newThemes) => {
     if (focusedThemeIndex.value >= newThemes.length) {
         focusedThemeIndex.value = -1;
     }
 });
 
-//TODO: Move changeTheme, setVaribles 
-//! If add save config ti DB make cath error with set Theme 
-const changeTheme = (theme: Theme): void => {
+// Function to change the theme
+const changeTheme = async (theme: Theme): Promise<void> => {
+    await apply(theme.name);
     selectedTheme.value = theme.name;
-    config.theme = theme.name
-    setVariables(theme);
 };
-const setVariables = (theme: Theme): void => {
-    Object.entries(theme).forEach(([key, value]) => {
-        root.style.setProperty(key, value);
-    });
-};
+
 const navigateThemes = async (direction: 'up' | 'down') => {
     const themesLength = filteredThemes.value.length;
     if (themesLength === 0) return;
@@ -75,13 +69,14 @@ const navigateThemes = async (direction: 'up' | 'down') => {
     nextTick(() => {
         centerFocusedTheme();
     });
+};
 
-}
 const selectFocusedTheme = (): void => {
     if (focusedThemeIndex.value >= 0 && focusedThemeIndex.value < filteredThemes.value.length) {
         changeTheme(filteredThemes.value[focusedThemeIndex.value]);
     }
 };
+
 const centerFocusedTheme = () => {
     if (themeModalBody.value && focusedThemeIndex.value !== -1) {
         const focusedTheme = themeModalBody.value.children[focusedThemeIndex.value] as HTMLElement;
@@ -91,6 +86,7 @@ const centerFocusedTheme = () => {
         themeModalBody.value.scrollTop = focusedTheme.offsetTop - offset;
     }
 };
+
 const centerActiveTheme = async (): Promise<void> => {
     nextTick(() => {
         if (!themeModalBody.value || !selectedTheme.value) return;
@@ -99,11 +95,12 @@ const centerActiveTheme = async (): Promise<void> => {
             focusedThemeIndex.value = activeIndex;
             centerFocusedTheme();
         }
-    })
+    });
 };
-useFocus(searchInput, { initialValue: true })
-onMounted(async () => {
 
+useFocus(searchInput, { initialValue: true });
+
+onMounted(async () => {
     centerActiveTheme();
 });
 </script>

@@ -1,46 +1,58 @@
+
+![Logo]("preview.png")
+
+
 # TypeMore
 
-This template should help get you started developing with Vue 3 in Vite.
+TypeMore is a web site about typing test. For improve your typing scills, and have fun time with your frends. 
 
-## Recommended IDE Setup
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
 
-## Type Support for `.vue` Imports in TS
+## Features
+- Themes
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin) to make the TypeScript language service aware of `.vue` types.
 
-If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has also implemented a [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471#discussioncomment-1361669) that is more performant. You can enable it by the following steps:
+## Tech Stack
 
-1. Disable the built-in TypeScript Extension
-    1) Run `Extensions: Show Built-in Extensions` from VSCode's command palette
-    2) Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
-2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
+**Client:** Vue, VueRouter, SCSS, TypeScript, Vee-validate, Vite
 
-## Customize configuration
+**Server:** Golang, GORM, Gin
 
-See [Vite Configuration Reference](https://vitejs.dev/config/).
+## Base colors
 
-## Project Setup
+| Color             | Hex                                                                |
+| ----------------- | ------------------------------------------------------------------ |
+| Main color | ![#528bff](https://via.placeholder.com/10/528bff?text=+) #528bff |
+| Background color | ![#121212](https://via.placeholder.com/10/121212?text=+) #121212 |
+| Sub alt color | ![#1c1c1c](https://via.placeholder.com/10/1c1c1c?text=+) #1c1c1c |
+| Sub color | ![#3a3a3a](https://via.placeholder.com/10/3a3a3a?text=+) #3a3a3a |
+| Text color | ![#eeeeee](https://via.placeholder.com/10/eeeeee?text=+) #eeeeee |
+| Error color | ![#da3333](https://via.placeholder.com/10/da3333?text=+) #da3333 |
+| Extra error color | ![#791717](https://via.placeholder.com/10/791717?text=+) #791717 |
 
-```sh
-npm install
+## Run Locally
+
+Clone the project
+
+```bash
+  git clone https://github.com/Eg0r0k/TypeMore_front.git
 ```
 
-### Compile and Hot-Reload for Development
+Go to the project directory
 
-```sh
-npm run dev
+```bash
+  cd project
 ```
 
-### Type-Check, Compile and Minify for Production
+Install dependencies
 
-```sh
-npm run build
+```bash
+  npm i
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+Start the server
 
-```sh
-npm run lint
+```bash
+  npm run dev
 ```
+

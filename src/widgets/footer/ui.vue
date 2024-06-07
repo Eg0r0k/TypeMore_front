@@ -35,14 +35,15 @@ import { useModal } from '@/entities/modal/store';
 import { ModalThemes } from '../../features/modal/theme';
 import { FooterLink } from './model/types/links';
 import { useConfigStore } from '@/entities/config/store';
-import { useTestStateStore } from '@/entities/test';
 import { InputModal } from '@/features/modal/input';
 const navLinks: FooterLink[] = FOOTER_LINKS
 const modal = useModal()
 const { config } = useConfigStore()
+// Call function to open in modal component
 const handleOnClickOpenTheme = () => {
   modal.open(ModalThemes, [], true);
 }
+// Call function to open in modal component
 const handleOnClickOpenInput = () => {
   modal.open(InputModal, [], false)
 } 

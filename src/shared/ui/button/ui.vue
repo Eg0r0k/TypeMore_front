@@ -21,10 +21,13 @@
 <script setup lang="ts">
 import { useSlots, withDefaults, computed } from 'vue'
 import { Typography } from '@/shared/ui/typography'
+//Sizes: 
+// s : padding - 4px 8px
+// m : padding - 8px 16px 
+// l : padding - 16px 24px
 interface Props {
   color?: 'main' | 'gray' | 'error'
   size?: 's' | 'm' | "l"
-
   decoration?: 'default' | 'none'
   isDisabled?: boolean
   buttonLabel?: string
@@ -74,6 +77,7 @@ $gray: (
   'hover-color': var(--bg-color),
   'active-color': var(--text-color)
 );
+// Styles for button 
 $styles: (
   'main': $main,
   'gray': $gray,
@@ -81,14 +85,10 @@ $styles: (
 );
 
 
-
+// Get map of styles and set it to classes 
 @mixin button-style($styles) {
   @each $key, $val in $styles {
-
-
     .button--color-#{$key} {
-
-
       background-color: map-get($val, 'background');
 
       p {
@@ -100,7 +100,6 @@ $styles: (
       }
 
       &:hover {
-
         background-color: map-get($val, 'hover');
 
         p {
@@ -127,13 +126,16 @@ $styles: (
   }
 }
 
+// call function 
 @include button-style($styles);
+
 
 .icon {
   transition: var(--transition-duration) ease-in;
   display: flex;
 
   &:empty {
+    // If only one Icon sets to ignore second Icon block
     display: none;
   }
 
@@ -172,7 +174,6 @@ $styles: (
   }
 
   &--size {
-
     &-s {
       padding: 4px 8px;
       gap: 4px;
@@ -181,8 +182,6 @@ $styles: (
     &-m {
       padding: 8px 16px;
     }
-
-
 
     &-l {
       padding: 12px 24px;

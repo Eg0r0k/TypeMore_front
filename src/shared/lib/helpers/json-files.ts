@@ -1,5 +1,6 @@
 import { LanguageObj } from '@/shared/constants/type'
 
+
 export async function fetchJson<T>(url: string): Promise<T> {
   try {
     if (!url) {

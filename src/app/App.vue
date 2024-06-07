@@ -5,9 +5,7 @@
         <div class="wrapper" v-if="!testState.isLoading">
             <FpsIndecator v-if="configStore.config.showFps" />
             <Header />
-
             <main>
-
                 <router-view v-slot="{ Component, route }">
                     <transition name="fade" mode="out-in">
                         <component :is="Component" :key="route.path" />
@@ -33,56 +31,30 @@
 </template>
 <script setup lang="ts">
 import { useScreenStore } from '@/entities/screen/model'
-import { onBeforeMount, onMounted, onUnmounted, provide, ref } from 'vue'
+import { onBeforeMount, onMounted, onUnmounted, provide } from 'vue'
 import { Header } from '@/widgets/header'
 import { Logo } from '@/shared/ui/logo'
 import { Footer } from '@/widgets/footer'
 import { useConfigStore } from '@/entities/config/store'
 import { ModalWindow } from '@/widgets/modal'
 import { FpsIndecator } from '@/widgets/fps'
-import { cachedFetchJson } from '@/shared/lib/helpers/json-files'
-import { Theme } from '@/features/modal/theme/types/themes'
 import { useTestStateStore } from '@/entities/test'
 const configStore = useConfigStore();
 const screenStore = useScreenStore()
 const testState = useTestStateStore();
-const { config } = useConfigStore()
 const { setPlatform } = screenStore
-const root = document.documentElement;
+import { apply, themesList } from '@/shared/lib/hooks/useThemes'
 const onResize = () => setPlatform(window.innerWidth)
-const themesList = ref<Theme[]>([]);
-const fetchThemes = async (): Promise<Theme[]> => {
-    const themes = await cachedFetchJson<Theme[]>('./static/themes/themes.json');
-    themesList.value = themes.sort((a, b) => a.name.localeCompare(b.name));
-    return []
-}
+const { config } = useConfigStore()
 
-const applyTheme = (theme: Theme) => {
-    Object.entries(theme).forEach(([key, val]) => {
-        root.style.setProperty(key, val)
-    })
-}
-
-
-const useConfigTheme = () => {
-    const savedTheme = config.theme
-    if (savedTheme) {
-        const foundTheme = themesList.value.find(theme => theme.name === savedTheme)
-        if (foundTheme) {
-            applyTheme(foundTheme)
-        }
-    }
-}
 provide('themes', themesList)
 onBeforeMount(async () => {
-    await fetchThemes()
-    useConfigTheme()
-    testState.setLoading(false)
+    //Apply themes 
+    await apply(config.theme)
 })
-
 onMounted(async () => {
+    //Set platform on load window : 'desktop' | 'tablet' | 'mobile'
     setPlatform(window.innerWidth)
-
     window.addEventListener('resize', onResize)
 })
 onUnmounted(() => {
@@ -102,7 +74,6 @@ onUnmounted(() => {
 }
 
 .loader {
-
     min-width: 40px;
     min-height: 40px;
     border: 4px solid var(--text-color);

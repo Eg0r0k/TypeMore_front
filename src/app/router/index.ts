@@ -4,7 +4,7 @@ import { RegistrationPage } from '@pages/auth/registration'
 import { LoginPage } from '@pages/auth/login'
 import { SettingPage } from '@pages/settings'
 import { ServersPage } from '@pages/servers'
-
+//Routes on page
 const routes = [
   {
     path: '/',
@@ -37,6 +37,7 @@ const routes = [
     component: LoginPage
   }
 ]
+//Create router instance
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes

@@ -16,7 +16,8 @@
         </h1>
     </router-link>
 </template>
-<script></script>
+<script>
+</script>
 <style lang="scss" scoped>
 .logo {
     text-decoration: none;
@@ -37,8 +38,6 @@ h1 {
         transform: translate(50%, 50%);
         right: 50%;
         top: -50px;
-
-
     }
 
     &:hover {
@@ -52,6 +51,7 @@ h1 {
     margin: 0;
 }
 
+//! Needs to change animation
 @keyframes shake {
     0% {
         transform: rotate(10deg);

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-
+// Store for control test state
 export const useTestStateStore = defineStore('test-state', () => {
   const isActive = ref(false)
   const isRepeated = ref(false)

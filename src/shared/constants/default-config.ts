@@ -4,7 +4,7 @@ export default {
   words: 50,
   time: 15,
   language: 'russian',
-  theme: 'Terrarium',
+  theme: 'VS Code',
   mode: 'words',
   backgroundImg: '',
   showFps: false

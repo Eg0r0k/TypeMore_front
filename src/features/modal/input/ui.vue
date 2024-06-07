@@ -1,13 +1,14 @@
 <template>
-    <div class="input-modal">
+    <div class="input-modal" tabindex="0">
         <Typography color="primary" size="l">
             Custom word amount
         </Typography>
-        <TextInput placeholder="Some text" />
+        <TextInput @keydown.enter="saveWordAmount" ref="textInputRef" tagName="input" v-model.number="wordAmount"
+            placeholder="Enter word amount" />
         <Typography color="primary" size="xs">
             You can start an infinite test by inputting 0. Then, to stop the test, use the Bail Out feature
         </Typography>
-        <Button size="m" color="gray">
+        <Button @click="saveWordAmount" size="m" color="gray">
             ok
         </Button>
     </div>
@@ -17,7 +18,25 @@
 import { TextInput } from '@/shared/ui/input';
 import { Typography } from '@/shared/ui/typography';
 import { Button } from '@/shared/ui/button';
+import { useConfigStore } from '@/entities/config/store';
+import { ref, onMounted } from 'vue';
+import { useModal } from '@/entities/modal/store';
+
+const modal = useModal();
+const configStore = useConfigStore();
+const wordAmount = ref(configStore.config.words);
+const textInputRef = ref<InstanceType<typeof TextInput> | null>(null);
+
+const saveWordAmount = () => {
+    configStore.setWords(wordAmount.value);
+    modal.close();
+};
+
+onMounted(() => {
+    (textInputRef.value?.$refs.inputEl as HTMLInputElement)?.select();
+});
 </script>
+
 
 <style lang="scss" scoped>
 .input-modal {
