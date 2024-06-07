@@ -1,5 +1,5 @@
 
-![img]("preview.png")
+![Logo](preview.png)
 
 
 # TypeMore
