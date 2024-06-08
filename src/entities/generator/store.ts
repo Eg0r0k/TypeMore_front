@@ -7,10 +7,11 @@ import { LanguageObj } from '@/shared/constants/type'
 
 export const useWordGeneratorStore = defineStore('word-gen', () => {
   const { config } = useConfigStore()
-  const shuffedIndexes = ref<number[]>([])
   const testState = useTestStateStore()
+  const shuffedIndexes = ref<number[]>([])
   const words = ref([])
   const limit = ref(100)
+
   const currentLanguage = ref(config.language.split('_')[0])
   const retWords: ret = reactive({
     words: [],
@@ -36,6 +37,8 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
     if (!testState.isRepeated) {
       return
     }
+    const limit = getWordsLimit()
+    
   }
 
   const getNextWord = (

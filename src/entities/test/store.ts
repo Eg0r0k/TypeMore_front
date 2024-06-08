@@ -5,14 +5,31 @@ export const useTestStateStore = defineStore('test-state', () => {
   const isActive = ref(false)
   const isRepeated = ref(false)
   const isLoading = ref(true)
-  const setActive = (value: boolean) => {
+  const currentWordElementIndex = ref(0)
+  const reset = () => {
+    currentWordElementIndex.value = 0
+  }
+  const setActive = (value: boolean): void => {
     isActive.value = value
   }
-  const setRepeated = (value: boolean) => {
+  const setRepeated = (value: boolean): void => {
     isRepeated.value = value
   }
-  const setLoading = (value: boolean) => {
+  const setLoading = (value: boolean): void => {
     isLoading.value = value
   }
-  return { setActive, setRepeated, isActive, isRepeated, setLoading, isLoading }
+  const setCurrentWordElementIndex = (value: number): void => {
+    currentWordElementIndex.value = value
+  }
+  return {
+    setActive,
+    setRepeated,
+    isActive,
+    isRepeated,
+    setLoading,
+    isLoading,
+    reset,
+    setCurrentWordElementIndex,
+    currentWordElementIndex
+  }
 })

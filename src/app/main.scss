@@ -61,6 +61,7 @@ html {
   scroll-behavior: smooth;
   text-size-adjust: 100%;
   scrollbar-width: thin;
+  line-height: normal;
   -webkit-text-size-adjust: 100%;
 }
 body {
@@ -77,6 +78,7 @@ input {
   box-sizing: border-box;
   border: none;
   font-size: 16px;
+  line-height: normal;
   background-color: var(--sub-color);
   border-radius: var(--border-radius);
   color: var(--text-color);

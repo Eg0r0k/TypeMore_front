@@ -2,7 +2,7 @@ import { reactive } from 'vue'
 import { Input } from './type'
 import { defineStore } from 'pinia'
 import { useTestStateStore } from '../test'
-// Keys kodes to track 
+// Keys kodes to track
 const keysToTrack = [
   'KeyA',
   'KeyB',
@@ -71,7 +71,7 @@ const keysToTrack = [
   'Quote',
   'Semicolon',
   'IntlBackslash',
-  'NoCode' 
+  'NoCode'
 ]
 type Keydata = {
   timestamp: number
@@ -85,6 +85,7 @@ export const useInputStore = defineStore('input', () => {
   const keyDownData: Record<string, Keydata> = reactive({})
   const missedWords: Record<string, number> = reactive({})
   const errorHistory: ErrorHistoryObject[] = reactive([])
+  const testState = useTestStateStore()
   const input: Input = reactive({
     current: '',
     history: [],
@@ -101,7 +102,6 @@ export const useInputStore = defineStore('input', () => {
       array: [] as number[]
     }
   })
-  const testState = useTestStateStore()
   const corrected = reactive({
     current: '',
     history: []
@@ -147,9 +147,14 @@ export const useInputStore = defineStore('input', () => {
     pushToHistory()
   }
   const backspaceToPrevious = (): void => {
-    if (input.history.length === 0 || input.current.length !== 0) {
+    if (
+      input.history.length === 0 ||
+      input.current.length !== 0 ||
+      testState.currentWordElementIndex === 0
+    ) {
       return
     }
+    testState.setCurrentWordElementIndex(testState.currentWordElementIndex - 1)
     input.current = popHistory()
   }
   const recordKeyDown = (now: number, key: string): void => {

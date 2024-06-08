@@ -7,8 +7,11 @@
 
     <p style="color:white"> Timer: {{ timerStore.time }}</p>
     <div v-if="lang">
-      <p class="word" style="color:white" v-for="(word, index) in lang.words" :key="index">
-        {{ word }} </p>
+      <p class="word" style="color:white" v-for="(word, index) in lang.words" :key="`${index + word}`">
+        <span v-for="(letter, index) in word" :key="`${index + word}`">
+          {{ letter }}
+        </span>
+      </p>
 
     </div>
     <p v-else style="color:white">Loading...</p>
@@ -21,6 +24,7 @@
     <input type="text" @keyup="recordKeyUp" @keydown="recordKeyDown" @input="startTest"
       v-model="inputStore.input.current" @keydown.space.prevent="inputStore.handleSpace"
       @keydown.delete="inputStore.backspaceToPrevious" dir="auto">
+    <KeyMap />
   </div>
 </template>
 
@@ -32,7 +36,7 @@ import { getCurrentLang } from '@/shared/lib/helpers/json-files';
 import { useInputStore } from '@entities/input/store';
 import { useTimerStore } from '@entities/timer/model/store';
 import { onMounted, ref } from 'vue';
-
+import { KeyMap } from '@/features/layouts/keymap';
 import { LanguageObj } from '@/shared/constants/type';
 import { shuffle } from '@/shared/lib/helpers/arrays';
 
@@ -42,18 +46,16 @@ const inputStore = useInputStore();
 const { config } = useConfigStore();
 const lang = ref<LanguageObj>();
 
+
 const startTest = () => {
   if (!testState.isActive) {
     testState.setActive(true);
     timerStore.resetTimer();
     timerStore.startTimer();
-
   }
 };
 const recordKeyDown = (event: KeyboardEvent) => {
-
   const now = performance.now();
-
 
   let keyCode = event.code;
   if (keyCode === "NumpadEnter") {
