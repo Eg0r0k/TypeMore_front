@@ -37,6 +37,7 @@ const routes = [
     component: LoginPage
   }
 ]
+
 //Create router instance
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

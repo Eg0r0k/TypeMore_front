@@ -25,10 +25,12 @@
       v-model="inputStore.input.current" @keydown.space.prevent="inputStore.handleSpace"
       @keydown.delete="inputStore.backspaceToPrevious" dir="auto">
     <KeyMap />
+    <TestChart />
   </div>
 </template>
 
 <script setup lang="ts">
+import { TestChart } from '@/shared/ui/chart';
 import { useConfigStore } from '@/entities/config/store';
 import { useTestStateStore } from '@/entities/test';
 import { Button } from '@/shared/ui/button';

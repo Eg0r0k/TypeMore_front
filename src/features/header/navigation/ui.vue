@@ -11,13 +11,22 @@
 
 
     </ul>
-    <router-link to="/login" title="Login">
-      <Icon :icon="'mdi:user'" width="30" />
-    </router-link>
+
+    <div style="display:flex">
+      <Button size="s">
+        <template #left-icon>
+          <Icon :icon="'ion:notifications'" width="30" />
+        </template>
+      </Button>
+      <router-link to="/login" title="Login">
+        <Icon :icon="'mdi:user'" width="30" />
+      </router-link>
+    </div>
   </nav>
 </template>
 
 <script setup lang="ts">
+import { Button } from '@/shared/ui/button';
 import { Icon } from '@iconify/vue'
 import Popper from 'vue3-popper'
 interface Props {

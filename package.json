@@ -23,6 +23,7 @@
   "dependencies": {
     "@vueuse/core": "^10.9.0",
     "axios": "^1.6.5",
+    "chart.js": "^3.9.1",
     "gsap": "^3.12.5",
     "happy-dom": "^6.0.4",
     "pinia": "^2.1.7",
@@ -30,6 +31,7 @@
     "vee-validate": "^4.12.6",
     "vitest": "^1.4.0",
     "vue": "^3.3.11",
+    "vue-chart-3": "^3.1.8",
     "vue-recaptcha": "^3.0.0-alpha.2",
     "vue-router": "^4.2.5",
     "vue3-popper": "^1.5.0",

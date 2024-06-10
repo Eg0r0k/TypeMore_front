@@ -1,9 +1,10 @@
 <template>
     <Teleport to="body">
         <Transition @before-enter="onBeforeEnter" @enter="onEnter" @leave="onLeave" :css="false">
-            <div aria-modal="true" class="modal" v-if="isOpen" @keydown.esc="modalStore.close()"
-                :class="{ 'align-start': isCommandLine, 'align-center': !isCommandLine }" tabindex="0">
-                <component ref="modal" @click.stop :is="view" v-model="model"></component>
+            <div v-if="isOpen" @keydown.esc="modalStore.close()"
+                :class="{ 'align-start': isCommandLine, 'align-center': !isCommandLine }" tabindex="0" class="modal"
+                aria-modal="true">
+                <component ref="modal" @click.stop :is="view" :model="model"></component>
                 <button v-for="action in actions" :key="action.label" class="btn" @click="action.callback(model)">
                     {{ action.label }}
                 </button>
@@ -11,6 +12,7 @@
         </Transition>
     </Teleport>
 </template>
+
 
 <script setup lang="ts">
 //THIS COMPONENT WILL BE RENDER INTO body
@@ -22,13 +24,11 @@ import { reactive, ref } from 'vue';
 //Provide model 
 const model = reactive({});
 // Ref to modal component
-const modal = ref(null)
-const modalStore = useModal();
+const modal = ref(null);
+const modalStore = useModal()
 const { isOpen, isCommandLine, view, actions } = storeToRefs(modalStore);
 //Catch click outside modal window
-onClickOutside(modal, (event) => {
-    modalStore.close()
-})
+onClickOutside(modal, () => modalStore.close());
 // Animation for modal window
 const onBeforeEnter = (el: Element) => {
     gsap.set(el, {

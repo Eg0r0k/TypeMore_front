@@ -33,7 +33,7 @@ import { Typography } from '@/shared/ui/typography';
 import { useConfigStore } from '@/entities/config/store';
 import { useFocus } from '@vueuse/core';
 import { Theme } from './types/themes';
-import { apply } from '@/shared/lib/hooks/useThemes';
+import { applyTheme } from '@/shared/lib/hooks/useThemes';
 
 const { config } = useConfigStore();
 
@@ -58,7 +58,7 @@ watch(filteredThemes, (newThemes) => {
 
 // Function to change the theme
 const changeTheme = async (theme: Theme): Promise<void> => {
-    await apply(theme.name);
+    await applyTheme(theme.name);
     selectedTheme.value = theme.name;
 };
 

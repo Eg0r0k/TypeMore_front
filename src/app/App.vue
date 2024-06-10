@@ -43,14 +43,15 @@ const configStore = useConfigStore();
 const screenStore = useScreenStore()
 const testState = useTestStateStore();
 const { setPlatform } = screenStore
-import { apply, themesList } from '@/shared/lib/hooks/useThemes'
+import { applyTheme, themesList } from '@/shared/lib/hooks/useThemes'
 const onResize = () => setPlatform(window.innerWidth)
 const { config } = useConfigStore()
 
 provide('themes', themesList)
 onBeforeMount(async () => {
-    //Apply themes 
-    await apply(config.theme)
+    // //Apply themes 
+    await applyTheme(config.theme)
+
 })
 onMounted(async () => {
     //Set platform on load window : 'desktop' | 'tablet' | 'mobile'
@@ -62,7 +63,21 @@ onUnmounted(() => {
 })
 
 </script>
-<style scoped lang="scss">
+<style lang="scss">
+:root {
+    --bg-color: #121212;
+    --main-color: #528bff;
+    --sub-color: #3a3a3a;
+    --sub-alt-color: #1c1c1c;
+    --text-color: #eeeeee;
+    --error-color: #da3333;
+    --error-extra-color: #791717;
+}
+
+#app {
+    background-color: var(--bg-color);
+}
+
 .fade-enter-active,
 .fade-leave-active {
     transition: all 0.125s;

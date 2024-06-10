@@ -83,7 +83,9 @@ const handleOnClickOpenInput = () => {
 
   &__right {
     flex: 1;
-
+    display: flex;
+    justify-content: end;
+    align-items: stretch;
   }
 }
 </style>

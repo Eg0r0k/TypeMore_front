@@ -1,74 +1,8 @@
-<style lang="scss" scoped>
-.test {
-  max-width: 350px;
-  border-radius: var(--border-radius);
-  background-color: var(--sub-alt-color);
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-  padding: 32px;
-
-  &__header {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    margin-bottom: 35px;
-    text-align: center;
-  }
-
-  &__title {
-    margin-bottom: 8px;
-  }
-}
-
-.wrapper {
-  height: 100%;
-  max-width: 1532px;
-  width: 100%;
-  margin: 0 auto;
-}
-
-.test__from {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  margin-bottom: 35px;
-}
-
-.cot {
-  height: 204px;
-  overflow: hidden;
-  display: flex;
-  flex-wrap: wrap;
-  width: 100%;
-  color: white;
-  align-content: flex-start;
-  //user-select: none;
-}
-
-.word {
-  font-size: 1.7em;
-  line-height: 1.7em;
-  position: relative;
-  font-variant: no-common-ligatures;
-  margin: 4px;
-}
-
-.letter {
-  color: var(--text-color);
-}
-</style>
+<style lang="scss" scoped></style>
 <template>
   <div>
-    <Typography size="s" color="primary" dir="auto">{{ input }}</Typography>
-    <div class="cot">
-      <div class="word" v-for="word in words" :key="word">
-        <span class="letter" v-for="letter in word" :key="letter">
-          {{ letter }}
-        </span>
-      </div>
-
-      <!-- <form action="" novalidate @submit.prevent="test">
+    <Typography class="test" size="s" color="primary" dir="auto">{{ input }}</Typography>
+    <!-- <form action="" novalidate @submit.prevent="test">
         <Button color="gray" size="l">Login</Button>
       </form>
       <div class="test">
@@ -99,22 +33,28 @@
       </div>
       <RecaptchaV2 @widget-id="handleWidgetId" @error-callback="handleErrorCalback"
         @expired-callback="handleExpiredCallback" @load-callback="handleLoadCallback" /> -->
-    </div>
-
+    <TestChart />
     <input type="text" @keyup="handleKeyup" v-model="input" dir="auto">
+    <button></button>
   </div>
 
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { Typography } from '@shared/ui/typography'
-import { TextInput } from '@/shared/ui/input'
 import * as yup from 'yup'
 import { useForm } from 'vee-validate'
 import { RecaptchaV2 } from 'vue3-recaptcha-v2'
-import { useResolvedPopUp } from '@shared/lib/hooks/useResolvedPopUp'
-import { useWordGeneratorStore } from '@/entities/generator/store'
+import { TestChart } from '../shared/ui/chart'
+
+
+
+
+
+
+
+
 
 const input = ref('');
 const startTime = ref(0);
@@ -157,15 +97,7 @@ function findDuplicates(words: Array<string>): Array<any> {
   return duplicates
 }
 const words = ref<string[]>([])
-onMounted(async () => {
-  try {
-    const response = await fetch('./src/static/russian-words.json')
-    const data = await response.json()
-    words.value = data.words
-  } catch (error) {
-    console.error('Ошибка при загрузке данных:', error)
-  }
-})
+
 
 const { errors, defineField } = useForm({
   validationSchema: yup.object({

@@ -11,7 +11,7 @@
 
 <script lang="ts" setup>
 import { onMounted, onUnmounted, reactive } from 'vue';
-
+//Keys to show
 const keys = [
     {
         id: 1,
@@ -63,20 +63,23 @@ const keys = [
         ]
     }
 ];
+//Object to contain keys 
 const pressedKeys = reactive<Record<string, boolean>>({});
-
+//Handle keyDown
 const handleKeyDown = (event: KeyboardEvent) => {
     pressedKeys[event.code] = true;
 };
-
+//Handle keyUp
 const handleKeyUp = (event: KeyboardEvent) => {
     pressedKeys[event.code] = false;
 };
+//If shift is down UpperCase labels in keys
 const getLabel = (key: { code: string; label: string }) => {
     return pressedKeys['ShiftLeft'] || pressedKeys['ShiftRight']
         ? key.label.toUpperCase()
         : key.label;
 };
+
 onMounted(() => {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -92,11 +95,11 @@ onUnmounted(() => {
 .key-map {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 8px;
 
     &__row {
         display: flex;
-        gap: 5px;
+        gap: 10px;
     }
 }
 
