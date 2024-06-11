@@ -34,31 +34,22 @@
       <RecaptchaV2 @widget-id="handleWidgetId" @error-callback="handleErrorCalback"
         @expired-callback="handleExpiredCallback" @load-callback="handleLoadCallback" /> -->
     <TestChart />
-    <input type="text" @keyup="handleKeyup" v-model="input" dir="auto">
+    <input type="text" @keyup="handleKeyup" v-model="input" dir="auto" />
     <button></button>
   </div>
-
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { ref } from 'vue'
 import { Typography } from '@shared/ui/typography'
 import * as yup from 'yup'
 import { useForm } from 'vee-validate'
-import { RecaptchaV2 } from 'vue3-recaptcha-v2'
+// import { RecaptchaV2 } from 'vue3-recaptcha-v2'
 import { TestChart } from '../shared/ui/chart'
 
-
-
-
-
-
-
-
-
-const input = ref('');
-const startTime = ref(0);
-const timer = ref();
+const input = ref('')
+const startTime = ref(0)
+const timer = ref()
 const handleKeyup = (event: any) => {
   if (timer.value) {
     startTime.value = performance.now()
@@ -68,7 +59,6 @@ const handleKeyup = (event: any) => {
   }
   console.log(`Key pressed: ${event.key} at ${Math.floor(performance.now() - startTime.value)}ms`)
 }
-
 
 const handleWidgetId = (widgetId: number) => {
   console.log('Widget ID: ', widgetId)
@@ -98,7 +88,6 @@ function findDuplicates(words: Array<string>): Array<any> {
 }
 const words = ref<string[]>([])
 
-
 const { errors, defineField } = useForm({
   validationSchema: yup.object({
     username: yup.string().min(4).max(16).required(),
@@ -121,7 +110,4 @@ const [password, passwordProps] = defineField('password', {
     error: state.errors[0]
   })
 })
-
-
-
 </script>

@@ -5,6 +5,9 @@ import { useConfigStore } from '@/entities/config/store'
 import { useTestStateStore } from '@/entities/test'
 
 //Array of themes
+
+const root = document.documentElement
+
 export const themesList = ref<Theme[]>([])
 const cssVariables = [
   '--bg-color',
@@ -20,7 +23,7 @@ type CSSVariable = (typeof cssVariables)[number]
 export const refColors = ref<Record<CSSVariable, string>>({} as Record<CSSVariable, string>)
 
 const updateRefColors = () => {
-  const computedStyle = getComputedStyle(document.documentElement)
+  const computedStyle = getComputedStyle(root)
   cssVariables.forEach((variable) => {
     refColors.value[variable] = computedStyle.getPropertyValue(variable)
   })
@@ -34,7 +37,7 @@ const styleObserver = new MutationObserver((mutations) => {
   })
 })
 
-styleObserver.observe(document.documentElement, {
+styleObserver.observe(root, {
   attributes: true,
   attributeFilter: ['style']
 })
@@ -48,8 +51,8 @@ const defaultTheme: Theme = {
   '--sub-color': '#3a3a3a',
   '--sub-alt-color': '#1c1c1c',
   '--error-extra-color': '#791717'
-}
-const root = document.documentElement
+} as const
+
 //Get themes from json file
 export const fetchThemes = async (): Promise<Theme[]> => {
   const themes = await cachedFetchJson<Theme[]>('./static/themes/themes.json')

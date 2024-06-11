@@ -341,6 +341,15 @@
     "--text-color": "#87adff",
     "--error-color": "#ca4754",
     "--error-extra-color": "#7e2a33"
+  }, 
+  {
+    "name": "monokai",
+    "--bg-color": "#272822",
+    "--main-color": "#a6e22e",
+    "--sub-color": "#e6db74",
+    "--sub-alt-color": "#1f201b",
+    "--text-color": "#e2e2dc",
+    "--error-color": "#f92672",
+    "--error-extra-color": "#fd971f"
   }
-
 ]

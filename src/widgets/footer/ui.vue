@@ -27,26 +27,26 @@
 </template>
 
 <script lang="ts" setup>
-import { Icon } from '@iconify/vue';
-import { Button } from '@/shared/ui/button';
+import { Icon } from '@iconify/vue'
+import { Button } from '@/shared/ui/button'
 import { FooterLinks } from '@/features/footer/links'
 import { FOOTER_LINKS } from '../footer/model/const/values'
-import { useModal } from '@/entities/modal/store';
-import { ModalThemes } from '../../features/modal/theme';
-import { FooterLink } from './model/types/links';
-import { useConfigStore } from '@/entities/config/store';
-import { InputModal } from '@/features/modal/input';
+import { useModal } from '@/entities/modal/store'
+import { ModalThemes } from '../../features/modal/theme'
+import { FooterLink } from './model/types/links'
+import { useConfigStore } from '@/entities/config/store'
+import { InputModal } from '@/features/modal/input'
 const navLinks: FooterLink[] = FOOTER_LINKS
 const modal = useModal()
 const { config } = useConfigStore()
 // Call function to open in modal component
 const handleOnClickOpenTheme = () => {
-  modal.open(ModalThemes, [], true);
+  modal.open(ModalThemes, [], true)
 }
 // Call function to open in modal component
 const handleOnClickOpenInput = () => {
   modal.open(InputModal, [], false)
-} 
+}
 </script>
 
 <style lang="scss" scoped>

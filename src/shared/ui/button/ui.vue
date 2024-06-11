@@ -1,33 +1,41 @@
 <template>
-  <button :disabled="isLoading || isDisabled" :class="classes" role="button" :aria-label="buttonLabel">
+  <button
+    :disabled="isLoading || isDisabled"
+    :class="classes"
+    role="button"
+    :aria-label="buttonLabel"
+  >
     <span class="loader" v-if="isLoading" aria-hidden="true"></span>
     <span class="icon" v-if="!isLoading">
       <slot name="left-icon"></slot>
     </span>
 
-    <Typography v-if="slots.default" class="button__text" :class="isLoading ? 'invisible' : ''" tagName="p"
-      :size="props.size" :aria-hidden="isLoading">
-
+    <Typography
+      v-if="slots.default"
+      class="button__text"
+      :class="isLoading ? 'invisible' : ''"
+      tagName="p"
+      :size="props.size"
+      :aria-hidden="isLoading"
+    >
       <slot></slot>
-
     </Typography>
     <span class="icon" v-if="!isLoading">
       <slot name="right-icon"></slot>
     </span>
-
   </button>
 </template>
 
 <script setup lang="ts">
 import { useSlots, withDefaults, computed } from 'vue'
 import { Typography } from '@/shared/ui/typography'
-//Sizes: 
+//Sizes:
 // s : padding - 4px 8px
-// m : padding - 8px 16px 
+// m : padding - 8px 16px
 // l : padding - 16px 24px
 interface Props {
-  color?: 'main' | 'gray' | 'error'
-  size?: 's' | 'm' | "l"
+  color?: 'main' | 'gray' | 'error' | 'main-outline' | 'error-outline'
+  size?: 's' | 'm' | 'l'
   decoration?: 'default' | 'none'
   isDisabled?: boolean
   buttonLabel?: string
@@ -40,8 +48,7 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'm',
   isDisabled: false,
   decoration: 'default',
-  buttonLabel: 'Button',
-
+  buttonLabel: 'Button'
 })
 
 const classes = computed(() => [
@@ -77,15 +84,15 @@ $gray: (
   'hover-color': var(--bg-color),
   'active-color': var(--text-color)
 );
-// Styles for button 
+
+// Styles for button
 $styles: (
   'main': $main,
   'gray': $gray,
   'error': $error
 );
 
-
-// Get map of styles and set it to classes 
+// Get map of styles and set it to classes
 @mixin button-style($styles) {
   @each $key, $val in $styles {
     .button--color-#{$key} {
@@ -123,12 +130,51 @@ $styles: (
         }
       }
     }
+
+    // Outline button styles
+    .button--color-#{$key}-outline {
+      background-color: transparent;
+      box-shadow: 0 0 0 1px map-get($val, 'background');
+
+      p {
+        color: map-get($val, 'background');
+      }
+
+      .icon {
+        color: map-get($val, 'background');
+      }
+
+      &:hover {
+        background-color: map-get($val, 'background');
+        box-shadow: 0 0 0 1px map-get($val, 'hover');
+
+        p {
+          color: map-get($val, 'hover-color');
+        }
+
+        .icon {
+          color: map-get($val, 'hover-color');
+        }
+      }
+
+      &:active {
+        background-color: map-get($val, 'active');
+        box-shadow: 0 0 0 1px map-get($val, 'active');
+
+        p {
+          color: map-get($val, 'active-color');
+        }
+
+        .icon {
+          color: map-get($val, 'active-color');
+        }
+      }
+    }
   }
 }
 
-// call function 
+// call function
 @include button-style($styles);
-
 
 .icon {
   transition: var(--transition-duration) ease-in;
@@ -138,8 +184,6 @@ $styles: (
     // If only one Icon sets to ignore second Icon block
     display: none;
   }
-
-
 }
 
 .button {
@@ -159,7 +203,9 @@ $styles: (
   gap: 8px;
 
   &:focus-visible {
-    box-shadow: 0 0 0 1.5px var(--bg-color), 0 0 0 3px var(--text-color);
+    box-shadow:
+      0 0 0 1.5px var(--bg-color),
+      0 0 0 3px var(--text-color);
     outline: none;
   }
 

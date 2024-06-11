@@ -21,6 +21,7 @@
     "deploy": "gh-pages -d build/"
   },
   "dependencies": {
+    "@splidejs/vue-splide": "^0.6.12",
     "@vueuse/core": "^10.9.0",
     "axios": "^1.6.5",
     "chart.js": "^3.9.1",
@@ -34,6 +35,7 @@
     "vue-chart-3": "^3.1.8",
     "vue-recaptcha": "^3.0.0-alpha.2",
     "vue-router": "^4.2.5",
+    "vue-slider-component": "^4.1.0-beta.7",
     "vue3-popper": "^1.5.0",
     "vue3-recaptcha-v2": "^2.0.2",
     "yup": "^1.4.0"

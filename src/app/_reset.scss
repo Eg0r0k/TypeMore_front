@@ -99,9 +99,7 @@ nav,
 section {
   display: block;
 }
-html {
-  height: 100%;
-}
+
 body {
   line-height: 1;
 }
@@ -117,7 +115,7 @@ blockquote:before,
 blockquote:after,
 q:before,
 q:after {
-  content: "";
+  content: '';
   content: none;
 }
 table {

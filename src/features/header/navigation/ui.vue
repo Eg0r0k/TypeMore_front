@@ -8,11 +8,9 @@
           </router-link>
         </Popper>
       </li>
-
-
     </ul>
 
-    <div style="display:flex">
+    <div style="display: flex">
       <Button size="s">
         <template #left-icon>
           <Icon :icon="'ion:notifications'" width="30" />
@@ -26,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { Button } from '@/shared/ui/button';
+import { Button } from '@/shared/ui/button'
 import { Icon } from '@iconify/vue'
 import Popper from 'vue3-popper'
 interface Props {
@@ -54,8 +52,6 @@ a {
 
   &__list {
     display: flex;
-
-
   }
 }
 </style>

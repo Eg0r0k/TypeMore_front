@@ -18,5 +18,10 @@ export const NAV_LINKS = [
     iconName: 'icon-park-solid:network-tree',
     label: 'Servers',
     link: '/servers'
+  },
+  {
+    iconName: 'fluent:paint-brush-24-filled',
+    label: 'Themes',
+    link: '/themes'
   }
 ]

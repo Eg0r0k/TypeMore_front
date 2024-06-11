@@ -4,6 +4,7 @@ import { RegistrationPage } from '@pages/auth/registration'
 import { LoginPage } from '@pages/auth/login'
 import { SettingPage } from '@pages/settings'
 import { ServersPage } from '@pages/servers'
+import { ThemePage } from '@/pages/themes'
 //Routes on page
 const routes = [
   {
@@ -35,6 +36,11 @@ const routes = [
     path: '/login',
     name: 'login',
     component: LoginPage
+  },
+  {
+    path: '/themes',
+    name: 'themes',
+    component: ThemePage
   }
 ]
 

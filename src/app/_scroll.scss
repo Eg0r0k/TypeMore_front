@@ -1,21 +1,21 @@
 //Styles for scroll
 ::-webkit-scrollbar-corner {
-    background: var(--sub-color);
+  background: var(--sub-color);
 }
 ::-webkit-scrollbar-thumb {
-    border-radius: var(--border-radius);
-    background: (--sub-color);
-    &:hover {
-        background: (--text-color);
-    }
+  border-radius: var(--border-radius);
+  background: (--sub-color);
+  &:hover {
+    background: (--text-color);
+  }
 }
 //Mozilla & Firefox
 ::-moz-selection {
-    color: var(--bg-color);
-    background: var(--main-color);
+  color: var(--bg-color);
+  background: var(--main-color);
 }
 
 ::selection {
-    color: var(--bg-color);
-    background: var(--main-color);
+  color: var(--bg-color);
+  background: var(--main-color);
 }

@@ -70,7 +70,6 @@ const classes = computed(() => [
 
   &--decoration {
     &-underline {
-
       text-decoration: underline;
     }
   }

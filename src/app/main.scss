@@ -1,11 +1,11 @@
-@use "sass:color";
+@use 'sass:color';
 
-@import "./reset";
-@import "./normalize";
-@import "./scroll";
+@import './reset';
+@import './normalize';
+@import './scroll';
 @font-face {
-  font-family: "Balsamiq Sans";
-  src: url("./fonts/BalsamiqSans-Regular.ttf") format("truetype");
+  font-family: 'Balsamiq Sans';
+  src: url('./fonts/BalsamiqSans-Regular.ttf') format('truetype');
   font-weight: 400;
   font-display: block;
 }
@@ -35,6 +35,80 @@
   --popper-theme-box-shadow: 0;
 }
 //TODO add font
+.splide__arrow--next {
+  right: 8px;
+}
+
+.splide__arrow--prev {
+  left: 8px;
+}
+* {
+  box-sizing: border-box;
+}
+.splide__arrow--prev svg {
+  transform: scaleX(-1);
+}
+
+.splide__arrow {
+  background-color: var(--sub-alt-color);
+}
+
+.sweeper-wrapper {
+  position: relative;
+}
+
+.splide__arrow {
+  opacity: 0.8;
+  border: 0;
+  z-index: 100;
+  position: absolute;
+  border-radius: 50%;
+  background-color: var(--sub-color);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 32px;
+  width: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.splide__pagination__page {
+  border: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  display: inline-block;
+  height: 8px;
+  margin: 3px;
+  opacity: 0.7;
+  padding: 0;
+  position: relative;
+  transition: transform 0.2s linear;
+  width: 8px;
+}
+
+.splide__pagination li {
+  display: inline-block;
+  line-height: 1;
+  list-style-type: none;
+  margin: 0;
+  pointer-events: auto;
+}
+
+.splide__pagination__page {
+  border-radius: 50%;
+  background-color: var(--sub-color);
+  border: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.splide__pagination__page.is-active {
+  background: #fff;
+  transform: scale(1.2);
+  z-index: 1;
+}
 
 // @font-face {
 //     font-family: "Noto Sans TC";
@@ -70,7 +144,7 @@ body {
   min-height: 100vh;
   line-height: normal;
   background-color: var(--bg-color);
-  font-family: "Noto Sans TC";
+  font-family: 'Noto Sans TC';
 }
 // Global styles for elements
 input {

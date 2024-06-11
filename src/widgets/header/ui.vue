@@ -8,9 +8,8 @@
 <script lang="ts" setup>
 import { Navigation } from '@/features/header/navigation'
 import { NAV_LINKS } from './model/const/values'
-import { Logo } from '@/shared/ui/logo';
+import { Logo } from '@/shared/ui/logo'
 const navigationLinks = NAV_LINKS
-
 </script>
 
 <style lang="scss" scoped>

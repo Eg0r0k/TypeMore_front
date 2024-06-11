@@ -1,4 +1,4 @@
-import { nthElementFromArray, RandomElementFromArray, shuffle } from '@/shared/lib/helpers/arrays'
+import { shuffle } from '@/shared/lib/helpers/arrays'
 import { useConfigStore } from '../config/store'
 import { defineStore } from 'pinia'
 import { reactive, ref } from 'vue'
@@ -38,7 +38,6 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
       return
     }
     const limit = getWordsLimit()
-    
   }
 
   const getNextWord = (
@@ -70,5 +69,5 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
     shuffle(shuffedIndexes.value)
   }
 
-  return { getWordsLimit, shuffleWords }
+  return { getWordsLimit, shuffleWords, retWords }
 })
