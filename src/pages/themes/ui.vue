@@ -20,7 +20,6 @@
             </SplideTrack>
           </div>
         </Splide>
-
         <div class="card__footer">
           <div class="card__desc">
             <Typography tag="p" color="sub"

@@ -324,7 +324,7 @@
   },
   {
     "name": "F",
-    "--bg-color": "\t#3b5998",
+    "--bg-color": "#3b5998",
     "--main-color": "#8b9dc3",
     "--sub-color": "#f7f7f7",
     "--sub-alt-color": "#dfe3ee",
@@ -350,6 +350,6 @@
     "--sub-alt-color": "#1f201b",
     "--text-color": "#e2e2dc",
     "--error-color": "#f92672",
-    "--error-extra-color": "#fd971f"
+    "--error-extra-color":"#fd971f"
   }
 ]

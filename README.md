@@ -4,7 +4,7 @@
 
 # TypeMore
 
-TypeMore is a web site about typing test. For improve your typing scills, and have fun time with your frends. 
+TypeMore is a web site about typing test. For improve your typing skills, and have fun time with your frends. 
 
 
 

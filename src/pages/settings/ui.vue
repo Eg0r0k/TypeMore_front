@@ -1,17 +1,13 @@
 <template>
   <div>
+    <!-- <TestChart /> -->
     <p style="color: white">Current: {{ inputStore.input.current }}</p>
     <p style="color: white">History: {{ inputStore.input.history }}</p>
     <p style="color: white">keypressTimings: {{ inputStore.keypressTimings.spacing }}</p>
 
     <p style="color: white">Timer: {{ timerStore.time }}</p>
     <div v-if="lang">
-      <p
-        class="word"
-        style="color: white"
-        v-for="(word, index) in lang.words"
-        :key="`${index + word}`"
-      >
+      <p class="word" style="color: white" v-for="(word, index) in lang.words" :key="`${index + word}`">
         <span v-for="(letter, index) in word" :key="`${index + word}`">
           {{ letter }}
         </span>
@@ -22,18 +18,11 @@
       <Button color="error" style="width: 100%" @click="restartTest"> Restart </Button>
       <Button style="width: 100%" @click="init">Start</Button>
     </div>
-    <input
-      type="text"
-      @keyup="recordKeyUp"
-      @keydown="recordKeyDown"
-      @input="startTest"
-      v-model="inputStore.input.current"
-      @keydown.space.prevent="inputStore.handleSpace"
-      @keydown.delete="inputStore.backspaceToPrevious"
-      dir="auto"
-    />
+    <input type="text" @keyup="recordKeyUp" @keydown="recordKeyDown" @input="startTest"
+      v-model="inputStore.input.current" @keydown.space.prevent="inputStore.handleSpace"
+      @keydown.delete="inputStore.backspaceToPrevious" dir="auto" />
     <KeyMap />
-    <TestChart />
+
   </div>
 </template>
 

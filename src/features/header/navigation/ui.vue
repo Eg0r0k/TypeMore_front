@@ -24,6 +24,7 @@
 </template>
 
 <script setup lang="ts">
+import { useModal } from '@/entities/modal/store';
 import { Button } from '@/shared/ui/button'
 import { Icon } from '@iconify/vue'
 import Popper from 'vue3-popper'
@@ -35,6 +36,11 @@ interface Props {
   }>
 }
 const props = defineProps<Props>()
+const modal = useModal()
+
+
+
+
 </script>
 
 <style lang="scss" scoped>

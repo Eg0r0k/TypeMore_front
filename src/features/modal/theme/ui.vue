@@ -1,35 +1,18 @@
 <template>
-  <div
-    class="theme-modal"
-    @keydown.tab.prevent="navigateThemes('down')"
-    @keydown.up.prevent="navigateThemes('up')"
-    @keydown.down.prevent="navigateThemes('down')"
-    @keydown.enter.prevent="selectFocusedTheme"
-    tabindex="0"
-  >
+  <div class="theme-modal" @keydown.tab.prevent="navigateThemes('down')" @keydown.up.prevent="navigateThemes('up')"
+    @keydown.down.prevent="navigateThemes('down')" @keydown.enter.prevent="selectFocusedTheme" tabindex="0">
     <div class="theme-modal__header modal-header">
       <div class="modal-header__icon">
         <Icon width="20" icon="fluent:search-12-filled" />
       </div>
-      <input
-        ref="searchInput"
-        type="text"
-        v-model.trim="searchQuery"
-        class="modal-header__search"
-        placeholder="Search..."
-      />
+      <input ref="searchInput" type="text" v-model.trim="searchQuery" class="modal-header__search"
+        placeholder="Search..." />
     </div>
 
     <div role="listbox" ref="themeModalBody" class="theme-modal__body">
-      <div
-        :aria-selected="theme.name === config.theme"
-        role="option"
-        class="theme"
-        @click="changeTheme(theme)"
+      <div :aria-selected="theme.name === config.theme" role="option" class="theme" @click="changeTheme(theme)"
         :class="{ active: theme.name === selectedTheme, focused: index === focusedThemeIndex }"
-        v-for="(theme, index) in filteredThemes"
-        :key="theme.name"
-      >
+        v-for="(theme, index) in filteredThemes" :key="theme.name">
         <div class="theme__name">
           <Typography color="primary"> {{ theme.name }}</Typography>
         </div>
@@ -60,12 +43,30 @@ const searchQuery = ref('')
 const focusedThemeIndex = ref(-1)
 const searchInput = ref<HTMLInputElement | null>(null)
 const themeModalBody = ref<HTMLElement | null>(null)
+const colorBrightness = (hex: string) => {
+  hex = String(hex).replace("#", "");
+  if (hex.length !== 6) {
+    throw new Error("Invalid HEX color provided.");
+  }
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
 
-const filteredThemes = computed(() =>
-  themesList!.value.filter((theme) =>
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+  const coefficient = Math.round((brightness / 255) * 100);
+
+  return coefficient;
+};
+const filteredThemes = computed(() => {
+  const themes = themesList!.value.filter((theme) =>
     theme.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
-)
+  );
+
+  return themes.sort((a, b) => {
+    return colorBrightness(a['--bg-color']) - colorBrightness(b['--bg-color']);
+  });
+});
 
 watch(filteredThemes, (newThemes) => {
   if (focusedThemeIndex.value >= newThemes.length) {
@@ -167,6 +168,7 @@ onMounted(async () => {
 
   &__body {
     overflow-y: scroll;
+    overscroll-behavior: contain;
     max-height: calc(100vh - 200px);
     display: grid;
     cursor: pointer;

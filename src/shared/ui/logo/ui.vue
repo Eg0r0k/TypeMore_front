@@ -36,6 +36,7 @@
   text-decoration: none;
   margin-right: 10px;
   display: flex;
+  user-select: none;
 }
 
 h1 {

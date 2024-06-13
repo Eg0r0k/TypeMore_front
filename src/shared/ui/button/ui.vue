@@ -1,23 +1,12 @@
 <template>
-  <button
-    :disabled="isLoading || isDisabled"
-    :class="classes"
-    role="button"
-    :aria-label="buttonLabel"
-  >
+  <button :disabled="isLoading || isDisabled" :class="classes" role="button" :aria-label="buttonLabel">
     <span class="loader" v-if="isLoading" aria-hidden="true"></span>
     <span class="icon" v-if="!isLoading">
       <slot name="left-icon"></slot>
     </span>
 
-    <Typography
-      v-if="slots.default"
-      class="button__text"
-      :class="isLoading ? 'invisible' : ''"
-      tagName="p"
-      :size="props.size"
-      :aria-hidden="isLoading"
-    >
+    <Typography v-if="slots.default" class="button__text" :class="isLoading ? 'invisible' : ''" tagName="p"
+      :size="props.size" :aria-hidden="isLoading">
       <slot></slot>
     </Typography>
     <span class="icon" v-if="!isLoading">
@@ -85,14 +74,12 @@ $gray: (
   'active-color': var(--text-color)
 );
 
-// Styles for button
 $styles: (
   'main': $main,
   'gray': $gray,
   'error': $error
 );
 
-// Get map of styles and set it to classes
 @mixin button-style($styles) {
   @each $key, $val in $styles {
     .button--color-#{$key} {
@@ -106,15 +93,18 @@ $styles: (
         color: map-get($val, 'color');
       }
 
-      &:hover {
-        background-color: map-get($val, 'hover');
+      @media (hover: hover),
+      (pointer: fine) {
+        &:hover {
+          background-color: map-get($val, 'hover');
 
-        p {
-          color: map-get($val, 'hover-color');
-        }
+          p {
+            color: map-get($val, 'hover-color');
+          }
 
-        .icon {
-          color: map-get($val, 'hover-color');
+          .icon {
+            color: map-get($val, 'hover-color');
+          }
         }
       }
 
@@ -131,7 +121,6 @@ $styles: (
       }
     }
 
-    // Outline button styles
     .button--color-#{$key}-outline {
       background-color: transparent;
       box-shadow: 0 0 0 1px map-get($val, 'background');
@@ -144,16 +133,19 @@ $styles: (
         color: map-get($val, 'background');
       }
 
-      &:hover {
-        background-color: map-get($val, 'background');
-        box-shadow: 0 0 0 1px map-get($val, 'hover');
+      @media (hover: hover),
+      (pointer: fine) {
+        &:hover {
+          background-color: map-get($val, 'background');
+          box-shadow: 0 0 0 1px map-get($val, 'hover');
 
-        p {
-          color: map-get($val, 'hover-color');
-        }
+          p {
+            color: map-get($val, 'hover-color');
+          }
 
-        .icon {
-          color: map-get($val, 'hover-color');
+          .icon {
+            color: map-get($val, 'hover-color');
+          }
         }
       }
 
@@ -173,7 +165,6 @@ $styles: (
   }
 }
 
-// call function
 @include button-style($styles);
 
 .icon {
