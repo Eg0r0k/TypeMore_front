@@ -2,6 +2,7 @@
   <div>
     <div class="settings">
       <div style="width: 100%">
+        <CheckBox value="1" />
         <TextInput placeholder="Search..." />
         <div><vue-slider height="6px" v-model="value" :lazy="true"></vue-slider></div>
       </div>
@@ -22,8 +23,8 @@
         </Splide>
         <div class="card__footer">
           <div class="card__desc">
-            <Typography tag="p" color="sub"
-              >Uploaded by <Typography decoration="underline" tagName="span"> nalyd_vs </Typography>
+            <Typography tag="p" color="sub">Uploaded by <Typography decoration="underline" tagName="span"> nalyd_vs
+              </Typography>
             </Typography>
             <Typography tag="h2" color="primary" size="l" decoration="underline">
               Soyjak
@@ -35,8 +36,7 @@
               <template #left-icon>
                 <Icon width="16" icon="material-symbols:favorite-outline" />
               </template>
-              32</Button
-            >
+              32</Button>
             <Button color="main-outline" class="apply" size="m">
               <template #left-icon>
                 <Icon width="18" icon="mingcute:paint-2-fill" />
@@ -51,6 +51,7 @@
 </template>
 
 <script lang="ts" setup>
+import { CheckBox } from '@/shared/ui/checkbox'
 import { Splide, SplideSlide, SplideTrack } from '@splidejs/vue-splide'
 import VueSlider from 'vue-slider-component'
 import 'vue-slider-component/theme/default.css'
