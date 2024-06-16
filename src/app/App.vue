@@ -12,6 +12,7 @@
       </main>
       <Footer />
       <ModalWindow />
+ 
     </div>
     <div v-else class="loader-wrapper wrapper">
       <header class="loader-wrapper__header">
@@ -25,10 +26,11 @@
       <footer class="loader-wrapper__footer"></footer>
     </div>
   </Transition>
+
 </template>
 <script setup lang="ts">
 import { useScreenStore } from '@/entities/screen/model'
-import { onBeforeMount, onMounted, onUnmounted, provide } from 'vue'
+import { onBeforeMount, onMounted, onUnmounted, provide, ref } from 'vue'
 import { Header } from '@/widgets/header'
 import { Logo } from '@/shared/ui/logo'
 import { Footer } from '@/widgets/footer'
@@ -36,43 +38,36 @@ import { useConfigStore } from '@/entities/config/store'
 import { ModalWindow } from '@/widgets/modal'
 import { FpsIndecator } from '@/widgets/fps'
 import { useTestStateStore } from '@/entities/test'
+import { Alers } from '@/shared/ui/alerts'
 const configStore = useConfigStore()
 const screenStore = useScreenStore()
 const testState = useTestStateStore()
 const { setPlatform } = screenStore
 import { applyTheme, themesList } from '@/shared/lib/hooks/useThemes'
+import { getLangList } from '@/shared/lib/helpers/json-files'
+
 const onResize = () => setPlatform(window.innerWidth)
 const { config } = useConfigStore()
-
+const lang = ref()
 provide('themes', themesList)
+provide('lang', lang)
 onBeforeMount(async () => {
-  // //Apply themes
   await applyTheme(config.theme)
+  document.querySelector('#app')?.classList.remove('hidden')
 })
+
 onMounted(async () => {
   //Set platform on load window : 'desktop' | 'tablet' | 'mobile'
+  lang.value = await getLangList()
+  console.log(lang)
+
   setPlatform(window.innerWidth)
-  window.addEventListener('resize', onResize)
 })
 onUnmounted(() => {
   window.removeEventListener('resize', onResize)
 })
 </script>
 <style lang="scss">
-:root {
-  --bg-color: #121212;
-  --main-color: #528bff;
-  --sub-color: #3a3a3a;
-  --sub-alt-color: #1c1c1c;
-  --text-color: #eeeeee;
-  --error-color: #da3333;
-  --error-extra-color: #791717;
-}
-
-#app {
-  background-color: var(--bg-color);
-}
-
 .fade-enter-active,
 .fade-leave-active {
   transition: all 0.125s;
@@ -86,7 +81,7 @@ onUnmounted(() => {
 .loader {
   min-width: 40px;
   min-height: 40px;
-  border: 4px solid var(--text-color);
+  border: 4px solid var(--main-color);
 
   border-bottom-color: var(--bg-color);
   border-radius: 100%;

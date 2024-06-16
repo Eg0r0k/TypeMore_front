@@ -16,15 +16,6 @@ export async function fetchJson<T>(url: string): Promise<T> {
   }
 }
 
-export const getLanguageList = async () => {
-  try {
-    const langList = await cachedFetchJson<string[]>('/languages/_list.json')
-    return langList
-  } catch (e) {
-    throw new Error('Lang list JSON load failed')
-  }
-}
-
 export function memoizeAsync<P, T extends <B>(...args: P[]) => Promise<B>>(
   fn: T,
   getKey?: (...args: Parameters<T>) => P
@@ -52,6 +43,15 @@ export const cachedFetchJson = memoizeAsync<string, typeof fetchJson>(fetchJson)
 
 let currentLang: any
 
+export const getLangList = async () => {
+  try {
+    const langList = await cachedFetchJson<string[]>('/static/languages/list.json')
+    return langList
+  } catch (e) {
+    throw new Error('Lang list JSON load failed')
+  }
+}
+
 export const getLanguage = (lang: string): Promise<LanguageObj> => {
   console.debug(`Getting language:  ${lang}`)
   try {
@@ -60,7 +60,7 @@ export const getLanguage = (lang: string): Promise<LanguageObj> => {
     }
     return currentLang
   } catch (e) {
-    throw Error()
+    throw Error(`No expected lang,${lang}`)
   }
 }
 

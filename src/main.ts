@@ -18,6 +18,7 @@ const options: InstallOptions = {
   cnDomains: false
 }
 const pinia = createPinia()
+
 pinia.use(piniaPluginPersistedstate)
 app.use(install, options)
 app.use(pinia)
@@ -25,3 +26,5 @@ app.use(router)
 app.component('Popper', Popper)
 app.use(VueSplide)
 app.mount('#app')
+
+

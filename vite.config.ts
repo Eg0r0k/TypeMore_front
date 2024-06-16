@@ -1,11 +1,15 @@
 import { fileURLToPath, URL } from 'node:url'
-
+import { dirname } from 'path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
-
+import { FontaineTransform } from 'fontaine'
+const options = {
+  fallbacks: ['BlinkMacSystemFont', 'Segoe UI', 'Helvetica Neue', 'Arial', 'Noto Sans'],
+  resolvePath: (id) => `file://${dirname(fileURLToPath(new URL(import.meta.url)))}public`
+}
 export default defineConfig({
-  plugins: [vue(), vueJsx()],
+  plugins: [vue(), vueJsx(), FontaineTransform.vite(options)],
 
   resolve: {
     alias: {

@@ -3,47 +3,33 @@
     <label for="" class="text-input__label" v-if="label">
       <Typography tag-name="p" :size="'s'" color="primary">{{ label }}</Typography>
     </label>
-    <component
-      ref="inputEl"
-      :type="props.type"
-      autocomplete="off"
-      dir="auto"
-      :is="props.tagName"
-      class="text-input"
-      :value="modelValue"
-      :placeholder="placeholder"
-      :disabled="isDisabled"
-      @input="updateInput"
-      :class="{ 'text-input--error': props.isError }"
-    >
+    <component v-bind="$attrs" ref="inputEl" :is="props.tagName" class="text-input" :value="modelValue"
+      :placeholder="placeholder" :disabled="isDisabled" @input="updateInput"
+      :class="{ 'text-input--error': props.isError }">
     </component>
   </div>
 </template>
 
 <script setup lang="ts">
 import { Typography } from '@/shared/ui/typography'
-
+defineOptions({
+  inheritAttrs: false
+})
 interface Props {
-  type?: string
-  isRequired?: boolean
   placeholder?: string
   isError?: boolean
   isDisabled?: boolean
-  inputValue?: string
   label?: string
-  modelValue?: string | number
   tagName?: 'input' | 'textarea'
 }
 
 const props = withDefaults(defineProps<Props>(), {
   tagName: 'input',
-  type: 'text'
 })
+const modelValue = defineModel<string | number>()
 
-const emit = defineEmits(['update:modelValue'])
-// Return values to parent component
 const updateInput = (e: any) => {
-  emit('update:modelValue', e.target.value)
+  modelValue.value = e.target.value
 }
 </script>
 

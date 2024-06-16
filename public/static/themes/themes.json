@@ -162,7 +162,7 @@
   {
     "name": "VS Code",
     "--bg-color": "#121212",
-    "--main-color": "#528bff",
+    "--main-color": "#007aCC",
     "--sub-color": "#3a3a3a",
     "--sub-alt-color": "#1c1c1c",
     "--text-color": "#e6e6e6",

@@ -33,11 +33,19 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
     }
     return limit.value
   }
-  const generateWords = async (lang: LanguageObj): Promise<any> => {
-    if (!testState.isRepeated) {
-      return
+  const generateWords = async (lang: LanguageObj) => {
+    if (testState.isRepeated) {
+      return []
     }
-    const limit = getWordsLimit()
+
+    const shuffledWords = [...lang.words]
+
+    for (let i = shuffledWords.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[shuffledWords[i], shuffledWords[j]] = [shuffledWords[j], shuffledWords[i]]
+    }
+
+    return shuffledWords
   }
 
   const getNextWord = (
@@ -69,5 +77,5 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
     shuffle(shuffedIndexes.value)
   }
 
-  return { getWordsLimit, shuffleWords, retWords }
+  return { getWordsLimit, shuffleWords, retWords, generateWords }
 })

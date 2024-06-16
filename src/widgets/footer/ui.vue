@@ -32,16 +32,16 @@ import { Button } from '@/shared/ui/button'
 import { FooterLinks } from '@/features/footer/links'
 import { FOOTER_LINKS } from '../footer/model/const/values'
 import { useModal } from '@/entities/modal/store'
-import { ModalThemes } from '../../features/modal/theme'
 import { FooterLink } from './model/types/links'
-import { useConfigStore } from '@/entities/config/store'
+import { ThemesModal } from '@/features/modal/themes'
 import { InputModal } from '@/features/modal/input'
+import { useConfigStore } from '@/entities/config/store'
 const navLinks: FooterLink[] = FOOTER_LINKS
 const modal = useModal()
 const { config } = useConfigStore()
 // Call function to open in modal component
 const handleOnClickOpenTheme = () => {
-  modal.open(ModalThemes, [], true)
+  modal.open(ThemesModal, [], true)
 }
 // Call function to open in modal component
 const handleOnClickOpenInput = () => {

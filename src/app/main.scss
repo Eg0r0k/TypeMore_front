@@ -1,14 +1,17 @@
-@use 'sass:color';
+@use "sass:color";
 
-@import './reset';
-@import './normalize';
-@import './scroll';
+@import "./reset";
+@import "./normalize";
+@import "./scroll";
+@import url("https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Lexend+Deca:wght@100..900&display=swap");
+
 @font-face {
-  font-family: 'Balsamiq Sans';
-  src: url('./fonts/BalsamiqSans-Regular.ttf') format('truetype');
+  font-family: "Balsamiq Sans";
+  src: url("./fonts/BalsamiqSans-Regular.ttf") format("truetype");
   font-weight: 400;
   font-display: block;
 }
+
 // Base colors
 :root {
   --bg-color: #121212;
@@ -21,7 +24,8 @@
   --border-radius: 6px;
   --transition-duration: 0.08s;
   --navigation-z: 2;
-  --key-map-z: 10
+  --key-map-z: 10;
+  --alert-z: 999;
 }
 // Color for popper plugin
 :root {
@@ -111,20 +115,6 @@
   z-index: 1;
 }
 
-// @font-face {
-//     font-family: "Noto Sans TC";
-//     src: url("./fonts/NotoSansTC-Thin.eot");
-//     src:
-//         url("NotoSansTC-Thin.eot?#  iefix") format("embedded-opentype"),
-//         url("./fonts/NotoSansTC-Thin.woff2") format("woff2"),
-//         url("./fonts/NotoSansTC-Thin.woff") format("woff"),
-//         url("./fonts/NotoSansTC-Thin.ttf") format("truetype");
-//     font-weight: 700;
-//     font-style: normal;
-//     font-display: block;
-//     line-height: normal;
-// }
-
 main {
   display: grid;
   height: 100%;
@@ -143,9 +133,9 @@ body {
   overflow-x: hidden;
   font-size: 16px;
   min-height: 100vh;
-  line-height: normal;
   background-color: var(--bg-color);
-  font-family: 'Noto Sans TC';
+  font-family: "JetBrains Mono", monospace;
+  line-height: normal;
 }
 // Global styles for elements
 input {

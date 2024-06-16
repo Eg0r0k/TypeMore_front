@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { useSlots, withDefaults, computed } from 'vue'
+import { useSlots, computed } from 'vue'
 import { Typography } from '@/shared/ui/typography'
 //Sizes:
 // s : padding - 4px 8px

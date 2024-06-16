@@ -19,6 +19,13 @@
         --error-color: #da3333;
         --error-extra-color: #791717;
       }
+
+      #app {
+        background-color: var(--bg-color);
+      }
+      .hidden {
+        visibility: hidden;
+      }
     </style>
     <script src="https://www.google.com/recaptcha/enterprise.js" async defer></script>
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
@@ -30,7 +37,7 @@
     <noscript>
       <div
         style="
-          background: #1f1f1f;
+          background-color: var(--bg-color);
           width: 100vw;
           height: 100vh;
           left: 0;
@@ -78,6 +85,7 @@
 
     <div
       id="app"
+      class="hidden"
       style="
         background-color: var(--bg-color);
         display: flex;

@@ -5,12 +5,13 @@ import { LoginPage } from '@pages/auth/login'
 import { SettingPage } from '@pages/settings'
 import { ServersPage } from '@pages/servers'
 import { ThemePage } from '@/pages/themes'
+import { MainPage } from '@/pages/home'
 //Routes on page
 const routes = [
   {
     path: '/',
     name: 'home',
-    component: TheHome
+    component: MainPage
   },
   {
     path: '/registration',

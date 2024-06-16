@@ -6,8 +6,7 @@
         <Typography color="error" tagName="span" decoration="underline" size="xl">quick</Typography>
         <Typography size="xl" tagName="span" color="sub"> brown </Typography>
         <Typography tagName="span" color="extra-error" decoration="underline" size="xl"
-          >fox jumps
-        </Typography>
+          >fox</Typography> jumps
         <Typography tagName="span" color="main" size="xl"> over the lazy</Typography>
         dog
       </Typography>
@@ -65,7 +64,7 @@ import { TextInput } from '@/shared/ui/input'
 import { Typography } from '@shared/ui/typography'
 import { Button } from '@shared/ui/button'
 import { onMounted, ref, watch } from 'vue'
-import { Theme } from '@/features/modal/theme/types/themes'
+import { Theme } from '@/features/modal/console/types/themes'
 const root = document.documentElement
 interface Color {
   label: string

@@ -1,13 +1,13 @@
-import { Theme } from '@/features/modal/theme/types/themes'
+import { Theme } from '@/features/modal/console/types/themes'
 import { cachedFetchJson } from '../helpers/json-files'
 import { ref } from 'vue'
-import { useConfigStore } from '@/entities/config/store'
 import { useTestStateStore } from '@/entities/test'
 
-//Array of themes
+
 
 const root = document.documentElement
 
+//Array of themes
 export const themesList = ref<Theme[]>([])
 const cssVariables = [
   '--bg-color',
@@ -21,7 +21,7 @@ const cssVariables = [
 type CSSVariable = (typeof cssVariables)[number]
 
 export const refColors = ref<Record<CSSVariable, string>>({} as Record<CSSVariable, string>)
-
+//Checks new value and set it.
 const updateRefColors = () => {
   const computedStyle = getComputedStyle(root)
   cssVariables.forEach((variable) => {
@@ -29,6 +29,8 @@ const updateRefColors = () => {
   })
 }
 
+//To change colors for js we need observe some changes in css vars,
+//and new value set for js. Like CharsJS lib where color gets with js.
 const styleObserver = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
     if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
@@ -77,7 +79,5 @@ export const applyTheme = async (name: string): Promise<void> => {
   const testState = useTestStateStore()
   const theme = await useConfigTheme(name)
   applyColor(theme)
-  const configStore = useConfigStore()
-  configStore.setTheme(theme.name)
   testState.setLoading(false)
 }

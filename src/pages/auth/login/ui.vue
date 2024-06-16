@@ -6,9 +6,9 @@
         <Typography color="primary" size="m">Fill in all fields to login</Typography>
       </div>
       <form action="" class="login__body" autocomplete="off">
-        <TextInput is-required :placeholder="'Email'" />
-        <TextInput :type="'password'" is-required :placeholder="'Password'" />
-        <Button @click.prevent="" type="sumbit" class="login__sumbit">Login</Button>
+        <TextInput required autocomplete="on" :placeholder="'Email'" v-model="email" />
+        <TextInput type="password" autocomplete="on" :placeholder="'Password'" />
+        <Button type="sumbit" class="login__sumbit">Login</Button>
       </form>
 
       <div class="divider">
@@ -29,8 +29,7 @@
         </Button>
       </div>
       <div class="login__footer">
-        <Typography tag-name="p" color="primary"
-          >No accaut?
+        <Typography tag-name="p" color="primary">No account?
           <router-link to="/registration" class="login__link">Create</router-link>
         </Typography>
       </div>
@@ -43,6 +42,9 @@ import { Icon } from '@iconify/vue'
 import { Typography } from '@shared/ui/typography'
 import { TextInput } from '@shared/ui/input'
 import { Button } from '@shared/ui/button'
+import { ref } from 'vue';
+const email = ref('')
+
 </script>
 
 <style scoped lang="scss">
@@ -82,8 +84,7 @@ import { Button } from '@shared/ui/button'
     gap: 12px;
   }
 
-  &__footer {
-  }
+  &__footer {}
 
   &__title {
     margin-bottom: 8px;

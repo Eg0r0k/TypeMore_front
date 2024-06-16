@@ -9,20 +9,19 @@
 </template>
 
 <script lang="ts" setup>
-import { useDraggable } from '@vueuse/core';
+import { useDraggable } from '@vueuse/core'
 import { onMounted, onUnmounted, reactive, ref } from 'vue'
 const el = ref<HTMLElement | null>(null)
 
 const { x, y, style } = useDraggable(el, {
   initialValue: { x: (window.innerWidth - 650) / 2, y: (window.innerHeight + 55) / 2 },
-  onMove: ({ x: newX, y: newY, }) => {
-    const maxX = window.innerWidth - el.value!.offsetWidth;
-    const maxY = window.innerHeight - el.value!.offsetHeight;
-    x.value = Math.max(0, Math.min(newX, maxX));
-    y.value = Math.max(0, Math.min(newY, maxY));
-  },
-});
-
+  onMove: ({ x: newX, y: newY }) => {
+    const maxX = window.innerWidth - el.value!.offsetWidth
+    const maxY = window.innerHeight - el.value!.offsetHeight
+    x.value = Math.max(0, Math.min(newX, maxX))
+    y.value = Math.max(0, Math.min(newY, maxY))
+  }
+})
 
 //Keys to show
 const keys = [
@@ -39,7 +38,7 @@ const keys = [
       { code: 'KeyI', label: 'i' },
       { code: 'KeyO', label: 'o' },
       { code: 'KeyP', label: 'p' },
-      { code: 'BracketLeft', label: "[" },
+      { code: 'BracketLeft', label: '[' },
       { code: 'BracketRight', label: ']' }
     ]
   },
@@ -56,7 +55,7 @@ const keys = [
       { code: 'KeyK', label: 'k' },
       { code: 'KeyL', label: 'l' },
       { code: 'Semicolon', label: ';' },
-      { code: 'Quote', label: "\\" }
+      { code: 'Quote', label: '\\' }
     ]
   },
   {
@@ -72,18 +71,14 @@ const keys = [
       { code: 'KeyM', label: 'm' },
       { code: 'Comma', label: ',' },
       { code: 'Period', label: '.' },
-      { code: 'Slash', label: "/" }
+      { code: 'Slash', label: '/' }
     ]
   },
   {
     id: 4,
-    keys: [
-
-      { code: 'Space', label: 'Space' }
-    ]
+    keys: [{ code: 'Space', label: 'Space' }]
   }
 ]
-
 
 //Object to contain keys
 const pressedKeys = reactive<Record<string, boolean>>({})
@@ -138,6 +133,7 @@ onUnmounted(() => {
 }
 
 .key {
+  border-bottom: 1px solid var(--main-color);
   user-select: none;
   min-width: 45px;
   min-height: 45px;
@@ -147,8 +143,10 @@ onUnmounted(() => {
   color: var(--main-color);
   text-align: center;
   background-color: var(--sub-alt-color);
+
   &.active {
     background-color: var(--sub-color);
+    border-bottom: 1px solid transparent;
   }
 }
 </style>
