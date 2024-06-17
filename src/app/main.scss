@@ -27,6 +27,8 @@
   --key-map-z: 10;
   --alert-z: 999;
 }
+
+
 // Color for popper plugin
 :root {
   --popper-theme-background-color: var(--sub-alt-color);
@@ -42,6 +44,7 @@
 //TODO add font
 .splide__arrow--next {
   right: 8px;
+  
 }
 
 .splide__arrow--prev {

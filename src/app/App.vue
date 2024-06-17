@@ -12,7 +12,7 @@
       </main>
       <Footer />
       <ModalWindow />
- 
+      <!-- <Alerts /> -->
     </div>
     <div v-else class="loader-wrapper wrapper">
       <header class="loader-wrapper__header">
@@ -38,7 +38,7 @@ import { useConfigStore } from '@/entities/config/store'
 import { ModalWindow } from '@/widgets/modal'
 import { FpsIndecator } from '@/widgets/fps'
 import { useTestStateStore } from '@/entities/test'
-import { Alers } from '@/shared/ui/alerts'
+import { Alerts } from '@/shared/ui/alerts'
 const configStore = useConfigStore()
 const screenStore = useScreenStore()
 const testState = useTestStateStore()

@@ -40,7 +40,7 @@ import { Typography } from '@/shared/ui/typography'
 import { LangModal } from '@/features/modal/language'
 import Popper from 'vue3-popper'
 import { useKeyModifier } from '@vueuse/core'
-import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
+import { onMounted, onUnmounted, ref, computed } from 'vue'
 import { useModal } from '@/entities/modal/store'
 import { useTimerStore } from '@/entities/timer/model/store'
 
@@ -63,7 +63,9 @@ const init = async (): Promise<void> => {
 const handleOpenModalLang = () => {
     modal.open(LangModal, [], true)
 }
-
+//TODO: add support for: 
+// arabian   - 
+// hebrew   -
 const startTest = async () => {
     try {
         timerStore.resetTimer()
