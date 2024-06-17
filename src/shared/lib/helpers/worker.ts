@@ -50,13 +50,12 @@ function setConfigTime(time: number) {
 
 function timerStep() {
   if (!isRunning) return
-  timer++
 
   postMessage({ timer })
-
+  timer++
   if (timer >= configTime && configTime !== 0) {
     isRunning = false
-
+    postMessage({ timer })
     postMessage({ command: 'stop' })
   } else {
     timeoutId = setTimeout(timerStep, 1000)
