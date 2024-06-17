@@ -5,8 +5,7 @@
         The
         <Typography color="error" tagName="span" decoration="underline" size="xl">quick</Typography>
         <Typography size="xl" tagName="span" color="sub"> brown </Typography>
-        <Typography tagName="span" color="extra-error" decoration="underline" size="xl"
-          >fox</Typography> jumps
+        <Typography tagName="span" color="extra-error" decoration="underline" size="xl">fox</Typography> jumps
         <Typography tagName="span" color="main" size="xl"> over the lazy</Typography>
         dog
       </Typography>
@@ -41,10 +40,10 @@
     <div class="controls">
       <div class="theme-input" v-for="(color, index) in colors" :key="index">
         <Typography style="flex: 1" size="m" color="primary">{{ color.label }}</Typography>
-        <TextInput v-model="color.hex" />
+        <TextInput v-model="color.hex" @input="updateColor(color)" />
         <div class="color">
           <Icon icon="mdi:color" width="30" />
-          <input class="input-color" type="color" v-model="color.hex" />
+          <input class="input-color" type="color" v-model="color.hex" @input="updateColor(color)" />
         </div>
       </div>
       <div></div>
@@ -52,8 +51,8 @@
         <template #left-icon>
           <Icon width="24" icon="ph:copy-bold" />
         </template>
-        Copy</Button
-      >
+        Copy
+      </Button>
     </div>
   </div>
 </template>
@@ -109,11 +108,7 @@ const colors = ref([
   }
 ])
 
-const setVariables = (themeColors: Color[]) => {
-  themeColors.forEach((color) => {
-    root.style.setProperty(color.var, color.hex)
-  })
-}
+
 const getTheme = (): Theme => {
   return colors.value.reduce((theme, color) => {
     theme[color.var as keyof Theme] = color.hex
@@ -121,15 +116,25 @@ const getTheme = (): Theme => {
   }, {} as Theme)
 }
 
-// Watch for changes in 'colors' and update CSS variables
-watch(
-  colors,
-  (newColors) => {
-    setVariables(newColors)
-  },
-  { deep: true }
-)
 
+let queuedUpdates: Color[] = []
+
+const updateColor = (color: Color) => {
+  queuedUpdates.push(color)
+
+  if (!queuedUpdates.length) {
+    return
+  }
+
+  requestAnimationFrame(() => {
+    const updates = queuedUpdates
+    queuedUpdates = []
+
+    updates.forEach((color) => {
+      root.style.setProperty(color.var, color.hex)
+    })
+  })
+}
 const copyTheme = async () => {
   const theme = getTheme()
   try {
