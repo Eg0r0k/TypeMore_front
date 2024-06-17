@@ -64,6 +64,3 @@ export const getLanguage = (lang: string): Promise<LanguageObj> => {
   }
 }
 
-export const getCurrentLang = (lang: string): Promise<LanguageObj> => {
-  return getLanguage(lang)
-}

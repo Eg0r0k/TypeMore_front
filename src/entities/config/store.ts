@@ -1,4 +1,5 @@
-import { LanguageObj } from '@/shared/constants/type'
+import type { Config, LanguageObj } from '@/shared/constants/type'
+import { getLanguage as getLanguageFromFile } from '@/shared/lib/helpers/json-files'
 import { applyTheme } from '@/shared/lib/hooks/useThemes'
 import defaultConfig from '@shared/constants/default-config'
 
@@ -9,13 +10,14 @@ export const useConfigStore = defineStore(
   'config',
   () => {
     //Get default config
-    const config = reactive({
+    const config = reactive<Config>({
       ...defaultConfig
     })
     const currentLang = ref<LanguageObj>()
-
-    const setLanguage = (lang: string) => {
+    const getLanguage = (): string => config.language
+    const setLanguage = async (lang: string): Promise<void> => {
       config.language = lang
+      currentLang.value = await getLanguageFromFile(lang)
     }
 
     const toggleFps = () => {
@@ -28,8 +30,26 @@ export const useConfigStore = defineStore(
     const setWords = (amount: number) => {
       config.words = amount
     }
-    return { config, setLanguage, toggleFps, setTheme, setWords, currentLang }
+    return { config, setLanguage, toggleFps, setTheme, setWords, currentLang, getLanguage }
   },
-  //Saves config to local storage
-  { persist: true }
+  //Saves only config to local storage
+  {
+    persist: {
+      storage: localStorage,
+      paths: ['config'],
+      serializer: {
+        serialize: (store) => {
+          return JSON.stringify({
+            config: store.config
+          })
+        },
+        deserialize: (data) => {
+          const parsedData = JSON.parse(data)
+          return {
+            config: parsedData.config
+          }
+        }
+      }
+    }
+  }
 )

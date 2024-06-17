@@ -140,6 +140,7 @@ const copyTheme = async () => {
   try {
     await navigator.clipboard.writeText(JSON.stringify(theme, null, 2))
   } catch (error) {
+    //TODO: Add alert 
     console.error('Failed to copy theme:', error)
   }
 }

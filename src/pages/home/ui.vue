@@ -9,9 +9,9 @@
 
                     <Icon width="24" icon="solar:globus-bold" />
                 </template>
-                {{ config.language }}
+                {{ configStore.config.language }}
             </Button>
-            <Typography color="primary"> {{ config.time - timerStore.time }}</Typography>
+            <Typography color="primary"> {{ configStore.config.time - timerStore.time }}</Typography>
         </div>
 
         <div class="caps-detected" v-show="capsLockState">CAPS!</div>
@@ -38,7 +38,6 @@ import { Button } from '@/shared/ui/button'
 import { useConfigStore } from '@/entities/config/store'
 import { useWordGeneratorStore } from '@/entities/generator/store'
 import { useTestStateStore } from '@/entities/test'
-import { getLanguage } from '@/shared/lib/helpers/json-files'
 import { Icon } from '@iconify/vue'
 import { Typography } from '@/shared/ui/typography'
 import { LangModal } from '@/features/modal/language'
@@ -50,7 +49,7 @@ import { useTimerStore } from '@/entities/timer/model/store'
 const modal = useModal()
 const testState = useTestStateStore()
 const capsLockState = useKeyModifier('CapsLock')
-const { config } = useConfigStore()
+const configStore = useConfigStore()
 const timerStore = useTimerStore()
 const generator = useWordGeneratorStore()
 const words = ref<any>([])
@@ -66,9 +65,11 @@ const startTest = async () => {
     try {
         timerStore.resetTimer()
         testState.setActive(true)
-
-        const lang = await getLanguage(config.language)
-        const generatedWords = await generator.generateWords(lang)
+        await configStore.setLanguage(configStore.config.language)
+        const currentLanguage = configStore.currentLang
+        //Maybe change later
+        if (!currentLanguage) return
+        const generatedWords = await generator.generateWords(currentLanguage)
         words.value = generatedWords
         timerStore.startTimer()
     } catch (error) {
@@ -84,7 +85,6 @@ onMounted(() => {
     init()
 })
 onUnmounted(() => {
-    
     timerStore.terminateWorker()
 })
 </script>

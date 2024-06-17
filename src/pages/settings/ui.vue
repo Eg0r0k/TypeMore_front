@@ -20,8 +20,7 @@
     </div>
     <p v-else style="color: white">Loading...</p>
     <div>
-      <Button color="error" style="width: 100%" @click="restartTest"> Restart </Button>
-      <Button style="width: 100%" @click="init">Start</Button>
+      <Button style="width: 100%">Start</Button>
     </div>
     <input
       type="text"
@@ -42,7 +41,6 @@ import { TestChart } from '@/shared/ui/chart'
 import { useConfigStore } from '@/entities/config/store'
 import { useTestStateStore } from '@/entities/test'
 import { Button } from '@/shared/ui/button'
-import { getCurrentLang } from '@/shared/lib/helpers/json-files'
 import { useInputStore } from '@entities/input/store'
 import { useTimerStore } from '@entities/timer/model/store'
 import { onMounted, ref } from 'vue'
@@ -90,27 +88,11 @@ const recordKeyUp = (event: KeyboardEvent) => {
     inputStore.recordKeyUp(now, finalKeyCode)
   }, 0)
 }
-const restartTest = async () => {
-  timerStore.resetTimer()
-  testState.setActive(false)
-  await init()
-}
 
-const init = async () => {
-  console.debug('Start init')
-  inputStore.reset()
-  try {
-    console.log(config.language)
-    lang.value = await getCurrentLang(config.language)
-    shuffle(lang.value.words)
-  } catch (e) {
-    console.error(`Cannot initialize test: ${e}`)
-  }
-}
 
-onMounted(async () => {
-  await init()
-})
+
+
+
 </script>
 
 <style scoped lang="scss">

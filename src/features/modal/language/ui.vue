@@ -1,9 +1,11 @@
 <template>
-    <ConsoleModal search-key="name" :items="langList">
-        <template #items="{ filteredItems, focusedItems }">
+    <ConsoleModal @item-selected="changeLang" v-model="selectedLang" search-key="name" :items="langList"
+        :active-item="selectedLang">
+        <template #items="{ filteredItems, focusedItems, selectItems }">
             <div class="lang" v-for="(lang, index) in filteredItems" :key="index" :class="{
+                active: lang == selectedLang,
                 focused: index === focusedItems
-            }">
+            }" @click="selectItems(lang)">
                 {{ lang.replace("_", ' ') }}
             </div>
         </template>
@@ -11,17 +13,25 @@
 </template>
 
 <script lang="ts" setup>
-import { inject } from 'vue'
+import { inject, Ref, ref } from 'vue'
 import { ConsoleModal } from '../console'
-
-//TODO: fetch langs
-const langList = inject<string[]>('lang')
-
+import { useConfigStore } from '@/entities/config/store';
+const configStore = useConfigStore()
+const langList = inject<Ref<string[]>>('lang')
+const selectedLang = ref(langList?.value.find((lang) => lang === configStore.config.language) || null)
+const changeLang = async (lang: string) => {
+    await configStore.setLanguage(lang)
+    selectedLang.value = lang
+}
 </script>
 
 <style lang="scss" scoped>
 .focused {
     border: 2px solid var(--main-color);
+}
+
+.active {
+    background-color: var(--sub-color);
 }
 
 .lang {
