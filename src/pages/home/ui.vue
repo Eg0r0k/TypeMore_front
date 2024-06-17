@@ -1,23 +1,20 @@
 <template>
     <div class="test">
-
-
         <div class="test__controls">
             <Button @click="handleOpenModalLang" size="s">
                 <template #left-icon>
-
-
                     <Icon width="24" icon="solar:globus-bold" />
                 </template>
                 {{ configStore.config.language }}
             </Button>
-            <Typography color="primary"> {{ configStore.config.time - timerStore.time }}</Typography>
+            <Typography color="primary">
+                {{ configStore.config.time - timerStore.time }}
+            </Typography>
         </div>
 
         <div class="caps-detected" v-show="capsLockState">CAPS!</div>
         <div class="words">
-
-            <p v-for="(word, index) in words" :key="`${word}-${index}`" class="word"
+            <p v-for="(word, index) in generatedWords" :key="`${word}-${index}`" class="word"
                 :class="{ current: index === testState.currentWordElementIndex }">
                 {{ word }}
             </p>
@@ -43,9 +40,10 @@ import { Typography } from '@/shared/ui/typography'
 import { LangModal } from '@/features/modal/language'
 import Popper from 'vue3-popper'
 import { useKeyModifier } from '@vueuse/core'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import { useModal } from '@/entities/modal/store'
 import { useTimerStore } from '@/entities/timer/model/store'
+
 const modal = useModal()
 const testState = useTestStateStore()
 const capsLockState = useKeyModifier('CapsLock')
@@ -53,6 +51,11 @@ const configStore = useConfigStore()
 const timerStore = useTimerStore()
 const generator = useWordGeneratorStore()
 const words = ref<any>([])
+
+const generatedWords = computed(() => {
+    return words.value
+})
+const currentLanguage = computed(() => configStore.currentLang)
 const init = async (): Promise<void> => {
     await startTest()
 }
@@ -66,10 +69,10 @@ const startTest = async () => {
         timerStore.resetTimer()
         testState.setActive(true)
         await configStore.setLanguage(configStore.config.language)
-        const currentLanguage = configStore.currentLang
+
         //Maybe change later
-        if (!currentLanguage) return
-        const generatedWords = await generator.generateWords(currentLanguage)
+        if (!currentLanguage.value) return
+        const generatedWords = await generator.generateWords(currentLanguage.value)
         words.value = generatedWords
         timerStore.startTimer()
     } catch (error) {
@@ -84,6 +87,7 @@ const restartTest = (): void => {
 onMounted(() => {
     init()
 })
+
 onUnmounted(() => {
     timerStore.terminateWorker()
 })

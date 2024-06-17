@@ -1,9 +1,9 @@
 <template>
-  <ConsoleModal v-model="selectedTheme" :items="themeList" search-key="name" :active-item="selectedTheme"
-    @item-selected="changeTheme">
+  <ConsoleModal v-model="configStore.config.theme" :items="themeList" search-key="name"
+    :active-item="configStore.config.theme" @item-selected="changeTheme">
     <template #items="{ filteredItems, selectItems, focusedItems }">
       <div v-for="(theme, index) in filteredItems" :key="theme.name"
-        :aria-selected="theme.name === selectedTheme?.name" role="option" class="theme" @click="selectItems(theme)"
+        :aria-selected="theme.name === configStore.config.theme" role="option" class="theme" @click="selectItems(theme)"
         :class="{
           active: theme.name === configStore.config.theme,
           focused: index === focusedItems
@@ -22,7 +22,7 @@
 </template>
 
 <script lang="ts" setup>
-import { inject, ref, Ref } from 'vue'
+import { inject, Ref } from 'vue'
 import { ConsoleModal } from '../console'
 import { Theme } from '../console/types/themes'
 import { Typography } from '@/shared/ui/typography'
@@ -31,10 +31,9 @@ import { useConfigStore } from '@/entities/config/store'
 
 const configStore = useConfigStore()
 const themeList = inject<Ref<Theme[]>>('themes')
-const selectedTheme = ref(themeList?.value.find((theme) => theme.name === configStore.config.theme) || null)
+
 const changeTheme = async (theme: Theme): Promise<void> => {
   await configStore.setTheme(theme.name)
-  selectedTheme.value = theme
 }
 </script>
 

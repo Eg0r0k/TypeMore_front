@@ -65,9 +65,11 @@ const navigateItems = async (direction: 'up' | 'down') => {
 
 const selectItem = (item: any): void => {
   const index = props.items.indexOf(item)
-  if (index !== -1) {
-    focusedItemIndex.value = index
-    emit('item-selected', item)
+  if (index !== -1 || index) {
+    if (item !== props.activeItem) {
+      focusedItemIndex.value = index
+      emit('item-selected', item)
+    }
   }
 }
 
@@ -99,7 +101,18 @@ useFocus(searchInput, { initialValue: true })
 onMounted(async () => {
   if (!props.items || props.items.length === 0) return
 
-  const activeIndex = props.items.findIndex((item) => item === props.activeItem)
+  let activeIndex = -1
+  if (props.activeItem) {
+    activeIndex = props.items.findIndex((item) => {
+      if (typeof item === 'string') {
+        return item === props.activeItem
+      } else if (props.searchKey) {
+        return item[props.searchKey] === props.activeItem
+      }
+      return false
+    })
+  }
+
   if (activeIndex !== -1) {
     focusedItemIndex.value = activeIndex
     await centerActiveItem()
