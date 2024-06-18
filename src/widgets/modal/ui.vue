@@ -1,36 +1,25 @@
 <template>
   <Teleport to="body">
     <Transition @before-enter="onBeforeEnter" @enter="onEnter" @leave="onLeave" :css="false">
-      <div
-        v-if="isOpen"
-        @keydown.esc="modalStore.close()"
-        :class="{ 'align-start': isCommandLine, 'align-center': !isCommandLine }"
-        tabindex="0"
-        class="modal"
-        aria-modal="true"
-      >
+      <div v-if="isOpen" @keydown.esc="modalStore.close()"
+        :class="{ 'align-start': isCommandLine, 'align-center': !isCommandLine }" tabindex="0" class="modal"
+        aria-modal="true">
         <component ref="modal" @click.stop :is="view" :model="model"></component>
-        <button
-          v-for="action in actions"
-          :key="action.label"
-          class="btn"
-          @click="action.callback(model)"
-        >
-          {{ action.label }}
-        </button>
+
       </div>
     </Transition>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-//THIS COMPONENT WILL BE RENDER INTO body
 import { useModal } from '@/entities/modal/store'
 import { onClickOutside } from '@vueuse/core'
 import gsap from 'gsap'
 import { storeToRefs } from 'pinia'
 import { reactive, ref } from 'vue'
+
 //Provide model
+//Also can provide actions 
 const model = reactive({})
 // Ref to modal component
 const modal = ref(null)

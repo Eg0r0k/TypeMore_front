@@ -35,7 +35,7 @@ export const useTimerStore = defineStore('timer', () => {
       worker.postMessage({ command: 'reset' })
       terminateWorker()
     }
-    input.pushToHistory()
+    input.handleSpace()
     testState.isActive = false
   }
   const getTime = (): number => {

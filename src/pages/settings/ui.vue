@@ -43,10 +43,9 @@ import { useTestStateStore } from '@/entities/test'
 import { Button } from '@/shared/ui/button'
 import { useInputStore } from '@entities/input/store'
 import { useTimerStore } from '@entities/timer/model/store'
-import { onMounted, ref } from 'vue'
+import {  ref } from 'vue'
 import { KeyMap } from '@/features/layouts/keymap'
 import { LanguageObj } from '@/shared/constants/type'
-import { shuffle } from '@/shared/lib/helpers/arrays'
 
 const testState = useTestStateStore()
 const timerStore = useTimerStore()

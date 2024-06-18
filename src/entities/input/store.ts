@@ -1,7 +1,8 @@
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { Input } from './type'
 import { defineStore } from 'pinia'
 import { useTestStateStore } from '../test'
+import { useWordGeneratorStore } from '../generator/store'
 // Keys kodes to track
 const keysToTrack = [
   'KeyA',
@@ -83,9 +84,10 @@ type ErrorHistoryObject = {
 }
 export const useInputStore = defineStore('input', () => {
   const keyDownData: Record<string, Keydata> = reactive({})
-  const missedWords: Record<string, number> = reactive({})
+  const missedWords = reactive<Record<string, number>>({})
   const errorHistory: ErrorHistoryObject[] = reactive([])
   const testState = useTestStateStore()
+  const generator = useWordGeneratorStore()
   const input: Input = reactive({
     current: '',
     history: [],
@@ -137,14 +139,29 @@ export const useInputStore = defineStore('input', () => {
     input.historyLength = input.history.length
     return ret
   }
+
   const pushToHistory = (): void => {
     input.history.push(input.current)
     input.historyLength = input.history.length
     resetCurrent()
   }
+
+  const pushMissedWords = (word: string): void => {
+    missedWords[word] = (missedWords[word] || 0) + 1
+  }
+
   const handleSpace = () => {
     if (!testState.isActive || input.current === '') return
-    pushToHistory()
+    const currentWord = generator.getCurrent()
+    const isWordCorrect = currentWord === input.current
+    if (isWordCorrect) {
+      pushToHistory()
+      testState.incrementWordIndex()
+    } else {
+      pushMissedWords(generator.getCurrent())
+      pushToHistory()
+      testState.incrementWordIndex()
+    }
   }
   const backspaceToPrevious = (): void => {
     if (
@@ -183,6 +200,7 @@ export const useInputStore = defineStore('input', () => {
     resetCurrent,
     getCurrent,
     pushToHistory,
+    missedWords,
     resetHistory,
     input,
     backspaceToPrevious,

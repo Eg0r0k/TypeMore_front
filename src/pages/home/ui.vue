@@ -11,10 +11,15 @@
                 {{ configStore.config.time - timerStore.time }}
             </Typography>
         </div>
-
+        <Typography size="l" color="primary">
+            {{ inputStore.input.history }}
+            {{ inputStore.missedWords }}
+        </Typography>
+        <p v-show="testState.isRepeated">is restarted</p>
         <div class="caps-detected" v-show="capsLockState">CAPS!</div>
+        <input type="text" v-model="inputStore.input.current" @keydown.space.prevent="inputStore.handleSpace">
         <div class="words">
-            <p v-for="(word, index) in generatedWords" :key="`${word}-${index}`" class="word"
+            <p v-for="(word, index) in generator.words" :key="`${word}-${index}`" class="word"
                 :class="{ current: index === testState.currentWordElementIndex }">
                 {{ word }}
             </p>
@@ -40,9 +45,10 @@ import { Typography } from '@/shared/ui/typography'
 import { LangModal } from '@/features/modal/language'
 import Popper from 'vue3-popper'
 import { useKeyModifier } from '@vueuse/core'
-import { onMounted, onUnmounted, ref, computed } from 'vue'
+import { onMounted, onUnmounted, computed } from 'vue'
 import { useModal } from '@/entities/modal/store'
 import { useTimerStore } from '@/entities/timer/model/store'
+import { useInputStore } from '@/entities/input'
 
 const modal = useModal()
 const testState = useTestStateStore()
@@ -50,11 +56,11 @@ const capsLockState = useKeyModifier('CapsLock')
 const configStore = useConfigStore()
 const timerStore = useTimerStore()
 const generator = useWordGeneratorStore()
-const words = ref<any>([])
 
-const generatedWords = computed(() => {
-    return words.value
-})
+const inputStore = useInputStore()
+
+
+
 const currentLanguage = computed(() => configStore.currentLang)
 const init = async (): Promise<void> => {
     await startTest()
@@ -74,12 +80,14 @@ const startTest = async () => {
 
         //Maybe change later
         if (!currentLanguage.value) return
-        const generatedWords = await generator.generateWords(currentLanguage.value)
-        words.value = generatedWords
+        await generator.generateWords(currentLanguage.value)
         timerStore.startTimer()
     } catch (error) {
         console.error('Произошла ошибка:', error)
     }
+}
+const reapeatTest = (): void => {
+    testState.setRepeated(true)
 }
 
 const restartTest = (): void => {
@@ -131,7 +139,7 @@ onUnmounted(() => {
 }
 
 .current {
-    color: var(--text-color) !important;
+    border-bottom: 2px solid var(--error-color);
 }
 
 .word {

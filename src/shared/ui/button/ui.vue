@@ -44,7 +44,8 @@ const classes = computed(() => [
   'button',
   `button--size-${props.size}`,
   `button--color-${props.color}`,
-  `decoration--${props.decoration}`
+  `decoration--${props.decoration}`,
+  props.isLoading ? 'loading' : ''
 ])
 </script>
 
@@ -178,6 +179,7 @@ $styles: (
 }
 
 .button {
+
   display: flex;
   justify-content: center;
   align-items: center;
@@ -205,7 +207,7 @@ $styles: (
     transition: var(--transition-duration) ease-in;
   }
 
-  &.decoration--none {
+  & &.decoration--none {
     background-color: unset;
     border-color: unset;
   }
@@ -229,6 +231,10 @@ $styles: (
     cursor: not-allowed;
     opacity: 0.5;
   }
+}
+
+.loading {
+  cursor: progress !important;
 }
 
 .invisible {

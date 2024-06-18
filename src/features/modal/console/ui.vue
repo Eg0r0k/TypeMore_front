@@ -1,6 +1,8 @@
 <template>
-  <div class="theme-modal" @keydown.tab.prevent="navigateItems('down')" @keydown.up.prevent="navigateItems('up')"
-    @keydown.down.prevent="navigateItems('down')" @keydown.enter.prevent="selectFocusedItem" tabindex="0">
+  <div class="theme-modal" @keydown.tab.prevent="navigateItems(NavigationDirection.Down)"
+    @keydown.up.prevent="navigateItems(NavigationDirection.Up)"
+    @keydown.down.prevent="navigateItems(NavigationDirection.Down)" @keydown.enter.prevent="selectFocusedItem"
+    tabindex="0">
     <div class="theme-modal__header modal-header">
       <div class="modal-header__icon">
         <Icon width="20" icon="fluent:search-12-filled" />
@@ -20,7 +22,10 @@ import { Icon } from '@iconify/vue'
 import { computed, onMounted, ref, nextTick } from 'vue'
 import { useFocus } from '@vueuse/core'
 import { Theme } from './types/themes';
-
+enum NavigationDirection {
+  Up = 'up',
+  Down = 'down',
+}
 const searchQuery = ref('')
 const focusedItemIndex = ref(-1)
 const searchInput = ref<HTMLInputElement | null>(null)
@@ -53,7 +58,7 @@ const filteredItems = computed(() => {
 });
 
 
-const navigateItems = async (direction: 'up' | 'down') => {
+const navigateItems = async (direction: NavigationDirection) => {
   const itemsLength = filteredItems.value.length
   if (itemsLength === 0) return
   focusedItemIndex.value =

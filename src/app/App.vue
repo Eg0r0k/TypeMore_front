@@ -10,7 +10,9 @@
           </transition>
         </router-view>
       </main>
+
       <Footer />
+
       <ModalWindow />
       <!-- <Alerts /> -->
     </div>
@@ -25,28 +27,30 @@
       </main>
       <footer class="loader-wrapper__footer"></footer>
     </div>
+
   </Transition>
 
 </template>
 <script setup lang="ts">
-import { useScreenStore } from '@/entities/screen/model'
-import { onBeforeMount, onMounted, onUnmounted, provide, ref } from 'vue'
+import { defineAsyncComponent, onBeforeMount, onMounted, onUnmounted, provide, ref } from 'vue'
 import { Header } from '@/widgets/header'
 import { Logo } from '@/shared/ui/logo'
 import { Footer } from '@/widgets/footer'
 import { useConfigStore } from '@/entities/config/store'
-import { ModalWindow } from '@/widgets/modal'
 import { FpsIndecator } from '@/widgets/fps'
 import { useTestStateStore } from '@/entities/test'
 import { Alerts } from '@/shared/ui/alerts'
 const configStore = useConfigStore()
-const screenStore = useScreenStore()
-const testState = useTestStateStore()
-const { setPlatform } = screenStore
-import { applyTheme, themesList } from '@/shared/lib/hooks/useThemes'
-import { getLangList } from '@/shared/lib/helpers/json-files'
 
-const onResize = () => setPlatform(window.innerWidth)
+const testState = useTestStateStore()
+import { applyTheme, styleObserver, themesList } from '@/shared/lib/hooks/useThemes'
+import { getLangList } from '@/shared/lib/helpers/json-files'
+import { useInputStore } from '@/entities/input'
+
+const ModalWindow = defineAsyncComponent(() =>
+  import('@/widgets/modal/ui.vue')
+)
+
 const { config } = useConfigStore()
 const lang = ref()
 provide('themes', themesList)
@@ -61,10 +65,9 @@ onMounted(async () => {
   lang.value = await getLangList()
   console.log(lang)
 
-  setPlatform(window.innerWidth)
 })
 onUnmounted(() => {
-  window.removeEventListener('resize', onResize)
+  styleObserver.disconnect()
 })
 </script>
 <style lang="scss">

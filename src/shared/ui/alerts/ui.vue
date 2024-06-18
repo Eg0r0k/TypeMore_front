@@ -65,6 +65,7 @@ import { Icon } from '@iconify/vue';
   --error: #d32f2f;
   --success: #1aaa55;
   --info: #1f78d1;
+
   padding: 14px;
   color: #FFFFFF;
   border-radius: var(--border-radius);

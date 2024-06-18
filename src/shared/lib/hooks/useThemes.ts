@@ -1,9 +1,7 @@
 import { Theme } from '@/features/modal/console/types/themes'
 import { cachedFetchJson } from '../helpers/json-files'
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useTestStateStore } from '@/entities/test'
-
-
 
 const root = document.documentElement
 
@@ -31,7 +29,7 @@ const updateRefColors = () => {
 
 //To change colors for js we need observe some changes in css vars,
 //and new value set for js. Like CharsJS lib where color gets with js.
-const styleObserver = new MutationObserver((mutations) => {
+export const styleObserver = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
     if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
       updateRefColors()
