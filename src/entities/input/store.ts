@@ -84,8 +84,9 @@ type ErrorHistoryObject = {
 }
 export const useInputStore = defineStore('input', () => {
   const keyDownData: Record<string, Keydata> = reactive({})
-  const missedWords = reactive<Record<string, number>>({})
+  const missedWords = ref<Record<string, number>>({})
   const errorHistory: ErrorHistoryObject[] = reactive([])
+  const currentKeypressCount = ref(0)
   const testState = useTestStateStore()
   const generator = useWordGeneratorStore()
   const input: Input = reactive({
@@ -147,7 +148,7 @@ export const useInputStore = defineStore('input', () => {
   }
 
   const pushMissedWords = (word: string): void => {
-    missedWords[word] = (missedWords[word] || 0) + 1
+    missedWords.value[word] = (missedWords.value[word] || 0) + 1
   }
 
   const handleSpace = () => {
@@ -156,13 +157,22 @@ export const useInputStore = defineStore('input', () => {
     const isWordCorrect = currentWord === input.current
     if (isWordCorrect) {
       pushToHistory()
+      incrementKeypressCount()
       testState.incrementWordIndex()
     } else {
       pushMissedWords(generator.getCurrent())
       pushToHistory()
+      incrementKeypressCount()
       testState.incrementWordIndex()
     }
   }
+
+  const restart = () => {
+    missedWords.value = {}
+  }
+
+  const handleChars = () => {}
+
   const backspaceToPrevious = (): void => {
     if (
       input.history.length === 0 ||
@@ -174,6 +184,11 @@ export const useInputStore = defineStore('input', () => {
     testState.setCurrentWordElementIndex(testState.currentWordElementIndex - 1)
     input.current = popHistory()
   }
+
+  const incrementKeypressCount = () => {
+    currentKeypressCount.value++
+  }
+
   const recordKeyDown = (now: number, key: string): void => {
     if (!keysToTrack.includes(key)) {
       console.debug('Key not tracked', now, key)

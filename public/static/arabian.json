@@ -1,6 +1,7 @@
 {
   "name": "arabic",
   "bcp47": "ar-SA",
+  "rightToleft": true,
   "words": [
     "منزل",
     "نافذة",

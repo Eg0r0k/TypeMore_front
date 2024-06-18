@@ -11,15 +11,19 @@
                 {{ configStore.config.time - timerStore.time }}
             </Typography>
         </div>
-        <Typography size="l" color="primary">
-            {{ inputStore.input.history }}
-            {{ inputStore.missedWords }}
+        <Typography size="m" color="primary">
+            history: {{ inputStore.input.history }}
+
+        </Typography>
+        <Typography size="m" color="primary">
+           miss: {{ inputStore.missedWords }}
         </Typography>
         <p v-show="testState.isRepeated">is restarted</p>
         <div class="caps-detected" v-show="capsLockState">CAPS!</div>
-        <input type="text" v-model="inputStore.input.current" @keydown.space.prevent="inputStore.handleSpace">
-        <div class="words">
-            <p v-for="(word, index) in generator.words" :key="`${word}-${index}`" class="word"
+        <input ref="testInput" :disabled="!testState.isActive" type="text" v-model="inputStore.input.current"
+            @keydown.space.prevent="inputStore.handleSpace">
+        <div class="words" :class="{ rightToLeft: isRightToLeft }">
+            <p v-for=" (word, index) in generator.words" :key="`${word}-${index}`" class="word"
                 :class="{ current: index === testState.currentWordElementIndex }">
                 {{ word }}
             </p>
@@ -44,8 +48,8 @@ import { Icon } from '@iconify/vue'
 import { Typography } from '@/shared/ui/typography'
 import { LangModal } from '@/features/modal/language'
 import Popper from 'vue3-popper'
-import { useKeyModifier } from '@vueuse/core'
-import { onMounted, onUnmounted, computed } from 'vue'
+import { useFocus, useKeyModifier } from '@vueuse/core'
+import { onMounted, onUnmounted, computed, watch, ref } from 'vue'
 import { useModal } from '@/entities/modal/store'
 import { useTimerStore } from '@/entities/timer/model/store'
 import { useInputStore } from '@/entities/input'
@@ -59,14 +63,45 @@ const generator = useWordGeneratorStore()
 
 const inputStore = useInputStore()
 
-
-
+const testInput = ref(null)
+const isRightToLeft = ref(false)
 const currentLanguage = computed(() => configStore.currentLang)
+
 const init = async (): Promise<void> => {
-    await startTest()
+    testState.setCurrentWordElementIndex(0)
+    inputStore.reset()
+    testState.setActive(true)
+    try {
+        const lang = configStore.config.language
+        await configStore.setLanguage(lang)
+
+    }
+    catch (e) {
+        console.error(e)
+    }
+    if (!currentLanguage.value) {
+        await configStore.setLanguage('russian')
+        await init()
+        return
+    }
+    try {
+        await generator.generateWords(currentLanguage.value)
+        console.log(currentLanguage.value.rightToleft)
+        //TODO: Change later
+        if (currentLanguage.value.rightToleft) {
+            isRightToLeft.value = true
+        }
+        else {
+            isRightToLeft.value = false
+        }
+    }
+    catch (e) {
+        console.error(e)
+    }
+
 }
 
-const handleOpenModalLang = () => {
+const handleOpenModalLang = (): void => {
     modal.open(LangModal, [], true)
 }
 //TODO: add support for: 
@@ -75,7 +110,7 @@ const handleOpenModalLang = () => {
 const startTest = async () => {
     try {
         timerStore.resetTimer()
-        testState.setActive(true)
+
         await configStore.setLanguage(configStore.config.language)
 
         //Maybe change later
@@ -90,10 +125,14 @@ const reapeatTest = (): void => {
     testState.setRepeated(true)
 }
 
-const restartTest = (): void => {
-    startTest()
+const restartTest = async (): Promise<void> => {
+    await init()
 }
 
+watch(() => configStore.currentLang, async () => {
+    await init();
+})
+useFocus(testInput, { initialValue: true })
 onMounted(() => {
     init()
 })
@@ -136,6 +175,11 @@ onUnmounted(() => {
     align-content: flex-start;
     overflow: hidden;
     height: 142px;
+
+}
+
+.rightToLeft {
+    direction: rtl;
 }
 
 .current {

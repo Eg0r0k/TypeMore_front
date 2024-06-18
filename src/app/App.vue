@@ -10,11 +10,12 @@
           </transition>
         </router-view>
       </main>
-
+      <button @click="showAlert"></button>
       <Footer />
+      <Alerts ref="alertsRef" />
 
       <ModalWindow />
-      <!-- <Alerts /> -->
+
     </div>
     <div v-else class="loader-wrapper wrapper">
       <header class="loader-wrapper__header">
@@ -39,14 +40,30 @@ import { Footer } from '@/widgets/footer'
 import { useConfigStore } from '@/entities/config/store'
 import { FpsIndecator } from '@/widgets/fps'
 import { useTestStateStore } from '@/entities/test'
-import { Alerts } from '@/shared/ui/alerts'
+import { Alerts } from '@/widgets/alerts'
 const configStore = useConfigStore()
-
 const testState = useTestStateStore()
 import { applyTheme, styleObserver, themesList } from '@/shared/lib/hooks/useThemes'
 import { getLangList } from '@/shared/lib/helpers/json-files'
-import { useInputStore } from '@/entities/input'
+enum AlertType {
+  Error = "error",
+  Info = "info",
+  Success = "success",
+  Warning = "warn",
+}
 
+const alertsRef = ref<InstanceType<typeof Alerts>>();
+const showAlert = () => {
+  if (alertsRef.value) {
+    alertsRef.value.addAlert({
+      type: AlertType.Warning,
+      msg: 'I fuck your mom!',
+      title: 'Warn',
+      duration: 1000,
+      closable: true,
+    });
+  }
+};
 const ModalWindow = defineAsyncComponent(() =>
   import('@/widgets/modal/ui.vue')
 )
@@ -63,6 +80,7 @@ onBeforeMount(async () => {
 onMounted(async () => {
   //Set platform on load window : 'desktop' | 'tablet' | 'mobile'
   lang.value = await getLangList()
+
   console.log(lang)
 
 })

@@ -17,7 +17,12 @@ export const useConfigStore = defineStore(
     const getLanguage = (): string => config.language
     const setLanguage = async (lang: string): Promise<void> => {
       config.language = lang
-      currentLang.value = await getLanguageFromFile(lang)
+      try {
+        const languageObj = await getLanguageFromFile(lang)
+        currentLang.value = languageObj
+      } catch (error) {
+        console.error(`Error fetching language file for ${lang}:`, error)
+      }
     }
 
     const toggleFps = () => {

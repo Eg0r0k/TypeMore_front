@@ -41,8 +41,6 @@ export function memoizeAsync<P, T extends <B>(...args: P[]) => Promise<B>>(
 }
 export const cachedFetchJson = memoizeAsync<string, typeof fetchJson>(fetchJson)
 
-let currentLang: any
-
 export const getLangList = async () => {
   try {
     const langList = await cachedFetchJson<string[]>('/static/languages/list.json')
@@ -53,14 +51,11 @@ export const getLangList = async () => {
 }
 
 export const getLanguage = (lang: string): Promise<LanguageObj> => {
-  console.debug(`Getting language:  ${lang}`)
+  // console.debug(`Getting language:  ${lang}`)
   try {
-    if (currentLang == undefined) {
-      currentLang = cachedFetchJson<LanguageObj>(`./static/${lang}.json`)
-    }
+    const currentLang = cachedFetchJson<LanguageObj>(`./static/${lang}.json`)
     return currentLang
   } catch (e) {
     throw Error(`No expected lang,${lang}`)
   }
 }
-

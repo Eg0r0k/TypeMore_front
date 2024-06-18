@@ -2,7 +2,7 @@
     <ConsoleModal @item-selected="changeLang" v-model="configStore.config.language" search-key="name" :items="langList"
         :active-item="configStore.config.language">
         <template #items="{ filteredItems, focusedItems, selectItems }">
-            <div class="lang" v-for="(lang, index) in filteredItems" :key="index" :class="{
+            <div class="lang"   v-for="(lang, index) in filteredItems" :key="index" :class="{
                 active: lang == configStore.config.language,
                 focused: index === focusedItems
             }" @click="selectItems(lang)">
