@@ -57,7 +57,7 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
     const shuffledWords = [...lang.words]
     const punctuationBox: string[] = ['.', ',', '!', '?', ':', ';', '-']
 
-    for (let i = shuffledWords.length - 1; i > 0; i--) {
+    for (let i = config.words - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
       ;[shuffledWords[i], shuffledWords[j]] = [shuffledWords[j], shuffledWords[i]]
 

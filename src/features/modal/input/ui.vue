@@ -1,13 +1,8 @@
 <template>
   <div class="input-modal" tabindex="0">
     <Typography color="primary" size="l"> Custom word amount </Typography>
-    <TextInput
-      @keydown.enter="saveWordAmount"
-      ref="textInputRef"
-      tagName="input"
-      v-model="wordAmount"
-      placeholder="Enter word amount"
-    />
+    <TextInput :min="0" :max="10000" @keydown.enter="saveWordAmount" ref="textInputRef" tagName="input"
+      v-model.number="wordAmount" placeholder="Enter word amount" />
     <Typography color="primary" size="xs">
       You can start an infinite test by inputting 0. Then, to stop the test, use the Bail Out
       feature
@@ -30,14 +25,15 @@ const wordAmount = ref(configStore.config.words)
 const textInputRef = ref<InstanceType<typeof TextInput> | null>(null)
 
 const saveWordAmount = () => {
-  if (typeof wordAmount.value === 'number') {
+  console.log(wordAmount.value, typeof wordAmount.value)
+  if (typeof wordAmount.value === 'number' && !(0 > wordAmount.value || wordAmount.value > 10000)) {
     configStore.setWords(wordAmount.value)
   }
   modal.close()
 }
 
 onMounted(() => {
-  ;(textInputRef.value?.$refs.inputEl as HTMLInputElement)?.select()
+  ; (textInputRef.value?.$refs.inputEl as HTMLInputElement)?.select()
 })
 </script>
 
