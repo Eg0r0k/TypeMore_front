@@ -1,5 +1,6 @@
 <template>
-  <div @keydown.esc="close" ref="alertRef" role="alert" v-if="isVisible" class="alert" :class="classes">
+
+  <div @click="close" ref="alertRef" role="alert" v-if="isVisible" class="alert" :class="classes">
     <div class="alert__header header-alert">
       <Icon width="30" color="white" :icon="iconName" />
       <p class="alert__header__text">{{ props.title || defaultTitles[props.type] }}</p>
@@ -8,6 +9,7 @@
       {{ props.msg }}
     </div>
   </div>
+
 
 </template>
 
@@ -71,14 +73,17 @@ const emit = defineEmits<{
 const classes = computed(() => [`alert--${props.type}`])
 
 const close = () => {
+  if (!props.closable) return
   isVisible.value = false
   emit('close')
 }
 onMounted(() => {
-  setTimeout(() => {
-    close()
-  }, props.duration)
-})
+  if (props.closable && props.duration > 0) {
+    setTimeout(() => {
+      close();
+    }, props.duration);
+  }
+});
 </script>
 
 <style lang="scss" scoped>
@@ -96,15 +101,18 @@ onMounted(() => {
   font-size: 18px;
 }
 
+
+
 .alert {
   --warn: #fc9403;
-  --error: #d32f2f;
+  --error: #b82e2e;
   --success: #1aaa55;
   --info: #1f78d1;
   min-width: 320px;
   padding: 22px;
   color: #FFFFFF;
   border-radius: var(--border-radius);
+  max-width: 400px;
 
 
   &--warn {
@@ -128,8 +136,15 @@ onMounted(() => {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
+    gap: 12px;
+    margin-bottom: 11px;
+  
+  }
+
+  &__body {
+    scrollbar-width: thin;
+    max-height: 90px;
+    overflow-y: scroll;
   }
 }
 </style>

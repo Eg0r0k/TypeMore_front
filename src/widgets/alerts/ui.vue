@@ -1,19 +1,23 @@
 <template>
     <div class="alerts-box">
-        <Alert :type="alert.type" :duration="alert.duration" :closable="alert.closable" :msg="alert.msg"
-            :title="alert.title" v-for="alert in alerts" :key="alert.id" />
+        <TransitionGroup name="list">
+            <Alert v-for="alert in queuedAlerts" :key="alert.id" :type="alert.type" :duration="alert.duration"
+                :closable="alert.closable" :msg="alert.msg" :title="alert.title" @close="removeAlert(alert.id)" />
+        </TransitionGroup>
     </div>
 </template>
 
 <script lang="ts" setup>
-import { Alert } from '@/shared/ui/alert'
-import { ref, watch } from 'vue';
+import { Alert } from '@/shared/ui/alert';
+import { ref, computed } from 'vue';
+
 enum AlertType {
     Error = "error",
     Info = "info",
     Success = "success",
     Warning = "warn",
 }
+
 interface AlertData {
     id: number;
     type: AlertType;
@@ -22,35 +26,28 @@ interface AlertData {
     duration?: number;
     closable?: boolean;
 }
+
 const alerts = ref<AlertData[]>([]);
 const nextId = ref(0);
 
 const addAlert = (alert: Omit<AlertData, 'id'>) => {
-    console.log(alerts.value)
     alerts.value.push({
         id: nextId.value++,
         ...alert,
     });
 };
+
 const removeAlert = (id: number) => {
     alerts.value = alerts.value.filter((alert) => alert.id !== id);
 };
-watch(
-    () => alerts.value,
-    (newAlerts) => {
-        if (newAlerts.length === 0) {
-            nextId.value = 0;
-        }
-    }
-);
+
+const queuedAlerts = computed(() => alerts.value.slice(0, 5));
 
 defineExpose({
     addAlert,
     removeAlert,
 });
-
 </script>
-
 <style lang="scss" scoped>
 .alerts-box {
     position: fixed;
@@ -63,6 +60,17 @@ defineExpose({
     align-items: flex-end;
     padding: 1rem;
     gap: 8px;
- 
+
+}
+
+.list-enter-active,
+.list-leave-active {
+    transition: all 0.5s ease;
+}
+
+.list-enter-from,
+.list-leave-to {
+    opacity: 0;
+    transform: translateX(30px);
 }
 </style>

@@ -56,11 +56,10 @@ const alertsRef = ref<InstanceType<typeof Alerts>>();
 const showAlert = () => {
   if (alertsRef.value) {
     alertsRef.value.addAlert({
-      type: AlertType.Info,
-      msg: 'Its joke do not take to heart. Adasd sdasd asdasds asdsad',
-      title: 'ФВфывфывфы',
-      duration: 3000,
-      closable: true,
+      type: AlertType.Error,
+      msg: 'It\'s a joke, do not take to heart. Adasd sdasd asdasds asdsad It\'s a joke, do not take to heart. Adasd sdasd asdasds asdsad It\'s a joke, do not take to heart. Adasd sdasd asdasds asdsad',
+      title: 'Information some use',
+   
     });
   }
 };
