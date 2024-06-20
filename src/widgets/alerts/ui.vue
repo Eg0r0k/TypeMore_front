@@ -1,52 +1,23 @@
 <template>
     <div class="alerts-box">
         <TransitionGroup name="list">
-            <Alert v-for="alert in queuedAlerts" :key="alert.id" :type="alert.type" :duration="alert.duration"
-                :closable="alert.closable" :msg="alert.msg" :title="alert.title" @close="removeAlert(alert.id)" />
+            <Alert v-for="alert in alertStore.queuedAlerts" :key="alert.id" :type="alert.type"
+                :duration="alert.duration" :closable="alert.closable" :msg="alert.msg" :title="alert.title"
+                @close="alertStore.removeAlert(alert.id)" />
         </TransitionGroup>
     </div>
 </template>
 
 <script lang="ts" setup>
+import { useAlertStore } from '@/entities/alert/store';
 import { Alert } from '@/shared/ui/alert';
-import { ref, computed } from 'vue';
 
-enum AlertType {
-    Error = "error",
-    Info = "info",
-    Success = "success",
-    Warning = "warn",
-}
 
-interface AlertData {
-    id: number;
-    type: AlertType;
-    msg: string;
-    title?: string;
-    duration?: number;
-    closable?: boolean;
-}
+const alertStore = useAlertStore()
 
-const alerts = ref<AlertData[]>([]);
-const nextId = ref(0);
 
-const addAlert = (alert: Omit<AlertData, 'id'>) => {
-    alerts.value.push({
-        id: nextId.value++,
-        ...alert,
-    });
-};
 
-const removeAlert = (id: number) => {
-    alerts.value = alerts.value.filter((alert) => alert.id !== id);
-};
 
-const queuedAlerts = computed(() => alerts.value.slice(0, 5));
-
-defineExpose({
-    addAlert,
-    removeAlert,
-});
 </script>
 <style lang="scss" scoped>
 .alerts-box {
@@ -60,7 +31,8 @@ defineExpose({
     align-items: flex-end;
     padding: 1rem;
     gap: 8px;
-
+    pointer-events: none;
+   
 }
 
 .list-enter-active,

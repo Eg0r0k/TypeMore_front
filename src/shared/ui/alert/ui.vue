@@ -113,7 +113,7 @@ onMounted(() => {
   color: #FFFFFF;
   border-radius: var(--border-radius);
   max-width: 400px;
-
+  pointer-events: all;
 
   &--warn {
     background-color: var(--warn);
@@ -138,7 +138,7 @@ onMounted(() => {
     align-items: center;
     gap: 12px;
     margin-bottom: 11px;
-  
+
   }
 
   &__body {

@@ -2,6 +2,8 @@ import { Theme } from '@/features/modal/console/types/themes'
 import { cachedFetchJson } from '../helpers/json-files'
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useTestStateStore } from '@/entities/test'
+import { useAlertStore } from '@/entities/alert/store'
+import { AlertType } from '@/entities/alert/types/alertData'
 
 const root = document.documentElement
 
@@ -74,8 +76,17 @@ export const useConfigTheme = async (name: string): Promise<Theme> => {
 }
 
 export const applyTheme = async (name: string): Promise<void> => {
+  const alertStore = useAlertStore()
   const testState = useTestStateStore()
   const theme = await useConfigTheme(name)
   applyColor(theme)
+
+  alertStore.addAlert({
+    type: AlertType.Success,
+    msg: 'Theme success apply',
+    title: 'Success',
+    duration: 800
+  })
+
   testState.setLoading(false)
 }

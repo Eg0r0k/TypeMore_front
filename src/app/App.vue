@@ -10,9 +10,8 @@
           </transition>
         </router-view>
       </main>
-      <button @click="showAlert"></button>
       <Footer />
-      <Alerts ref="alertsRef" />
+      <Alerts />
 
       <ModalWindow />
 
@@ -45,24 +44,9 @@ const configStore = useConfigStore()
 const testState = useTestStateStore()
 import { applyTheme, styleObserver, themesList } from '@/shared/lib/hooks/useThemes'
 import { getLangList } from '@/shared/lib/helpers/json-files'
-enum AlertType {
-  Error = "error",
-  Info = "info",
-  Success = "success",
-  Warning = "warn",
-}
 
-const alertsRef = ref<InstanceType<typeof Alerts>>();
-const showAlert = () => {
-  if (alertsRef.value) {
-    alertsRef.value.addAlert({
-      type: AlertType.Error,
-      msg: 'It\'s a joke, do not take to heart. Adasd sdasd asdasds asdsad It\'s a joke, do not take to heart. Adasd sdasd asdasds asdsad It\'s a joke, do not take to heart. Adasd sdasd asdasds asdsad',
-      title: 'Information some use',
-   
-    });
-  }
-};
+
+
 const ModalWindow = defineAsyncComponent(() =>
   import('@/widgets/modal/ui.vue')
 )

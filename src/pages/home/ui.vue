@@ -16,12 +16,12 @@
 
         </Typography>
         <Typography size="m" color="primary">
-           miss: {{ inputStore.missedWords }}
+            miss: {{ inputStore.missedWords }}
         </Typography>
         <p v-show="testState.isRepeated">is restarted</p>
         <div class="caps-detected" v-show="capsLockState">CAPS!</div>
-        <input ref="testInput" :disabled="!testState.isActive" type="text" v-model="inputStore.input.current"
-            @keydown.space.prevent="inputStore.handleSpace">
+        <input ref="testInput" :disabled="!testState.isActive" @keydown.delete="inputStore.backspaceToPrevious"
+            type="text" v-model="inputStore.input.current" @keydown.space.prevent="inputStore.handleSpace">
         <div class="words" :class="{ rightToLeft: isRightToLeft }">
             <p v-for=" (word, index) in generator.words" :key="`${word}-${index}`" class="word"
                 :class="{ current: index === testState.currentWordElementIndex }">
