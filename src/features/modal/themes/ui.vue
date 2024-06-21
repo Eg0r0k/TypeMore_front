@@ -26,13 +26,14 @@ import { inject, Ref } from 'vue'
 import { ConsoleModal } from '../console'
 import { Theme } from '../console/types/themes'
 import { Typography } from '@/shared/ui/typography'
-import { useConfigStore } from '@/entities/config/store'
+import { useConfigStore } from '@/entities/config/model/store'
 
 
 const configStore = useConfigStore()
 const themeList = inject<Ref<Theme[]>>('themes')
 
 const changeTheme = async (theme: Theme): Promise<void> => {
+ 
   await configStore.setTheme(theme.name)
 }
 </script>

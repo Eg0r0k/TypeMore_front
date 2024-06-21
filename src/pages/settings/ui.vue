@@ -38,10 +38,10 @@
 
 <script setup lang="ts">
 import { TestChart } from '@/shared/ui/chart'
-import { useConfigStore } from '@/entities/config/store'
+import { useConfigStore } from '@/entities/config/model/store'
 import { useTestStateStore } from '@/entities/test'
 import { Button } from '@/shared/ui/button'
-import { useInputStore } from '@entities/input/store'
+import { useInputStore } from '@/entities/input/model/store'
 import { useTimerStore } from '@entities/timer/model/store'
 import {  ref } from 'vue'
 import { KeyMap } from '@/features/layouts/keymap'

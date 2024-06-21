@@ -41,8 +41,8 @@
 <script lang="ts" setup>
 import { KeyMap } from '@/features/layouts/keymap'
 import { Button } from '@/shared/ui/button'
-import { useConfigStore } from '@/entities/config/store'
-import { useWordGeneratorStore } from '@/entities/generator/store'
+import { useConfigStore } from '@/entities/config/model/store'
+
 import { useTestStateStore } from '@/entities/test'
 import { Icon } from '@iconify/vue'
 import { Typography } from '@/shared/ui/typography'
@@ -50,9 +50,11 @@ import { LangModal } from '@/features/modal/language'
 import Popper from 'vue3-popper'
 import { useFocus, useKeyModifier } from '@vueuse/core'
 import { onMounted, onUnmounted, computed, watch, ref } from 'vue'
-import { useModal } from '@/entities/modal/store'
+import { useModal } from '@/entities/modal/model/store'
 import { useTimerStore } from '@/entities/timer/model/store'
-import { useInputStore } from '@/entities/input'
+import { useWordGeneratorStore } from '@/entities/generator/model/store'
+import { useInputStore } from '@/entities/input/model'
+
 
 const modal = useModal()
 const testState = useTestStateStore()

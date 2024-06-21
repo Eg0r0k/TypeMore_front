@@ -1,8 +1,8 @@
 import { shuffle } from '@/shared/lib/helpers/arrays'
-import { useConfigStore } from '../config/store'
+import { useConfigStore } from '../../config/model/store'
 import { defineStore } from 'pinia'
 import { computed, reactive, ref } from 'vue'
-import { useTestStateStore } from '../test'
+import { useTestStateStore } from '../../test'
 import { LanguageObj } from '@/shared/constants/type'
 
 export const useWordGeneratorStore = defineStore('word-gen', () => {

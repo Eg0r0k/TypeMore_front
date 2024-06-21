@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import { type Platform } from './types'
+import { type Platform } from './types/types'
 
 export const useScreenStore = defineStore('screen', () => {
   const platform = ref<Platform>('desktop')

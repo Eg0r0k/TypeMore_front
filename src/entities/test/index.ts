@@ -1,1 +1,1 @@
-export { useTestStateStore } from './store'
+export { useTestStateStore } from './model/store'

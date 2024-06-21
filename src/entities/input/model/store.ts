@@ -1,8 +1,8 @@
 import { reactive, ref } from 'vue'
-import { Input } from './type'
+import { Input } from './types/input'
 import { defineStore } from 'pinia'
-import { useTestStateStore } from '../test'
-import { useWordGeneratorStore } from '../generator/store'
+import { useTestStateStore } from '../../test'
+import { useWordGeneratorStore } from '../../generator/model/store'
 // Keys kodes to track
 const keysToTrack = [
   'KeyA',

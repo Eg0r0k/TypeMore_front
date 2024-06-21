@@ -1,9 +1,9 @@
 import { Theme } from '@/features/modal/console/types/themes'
 import { cachedFetchJson } from '../helpers/json-files'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { ref } from 'vue'
 import { useTestStateStore } from '@/entities/test'
-import { useAlertStore } from '@/entities/alert/store'
-import { AlertType } from '@/entities/alert/types/alertData'
+import { useAlertStore } from '@/entities/alert/model'
+import { AlertType } from '@/entities/alert/model/types/alertData'
 
 const root = document.documentElement
 

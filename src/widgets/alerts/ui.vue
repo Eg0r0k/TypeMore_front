@@ -9,7 +9,7 @@
 </template>
 
 <script lang="ts" setup>
-import { useAlertStore } from '@/entities/alert/store';
+import { useAlertStore } from '@/entities/alert/model/store';
 import { Alert } from '@/shared/ui/alert';
 
 

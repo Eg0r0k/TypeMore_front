@@ -1,9 +1,10 @@
-import { useConfigStore } from '@/entities/config/store'
-import { useInputStore } from '@/entities/input'
+import { useConfigStore } from '@/entities/config/model/store'
+
 import { useTestStateStore } from '@/entities/test'
 import { defineStore } from 'pinia'
 import { onMounted, ref } from 'vue'
 import WebWorker from '@/shared/lib/helpers/worker?worker'
+import { useInputStore } from '@/entities/input/model'
 export const useTimerStore = defineStore('timer', () => {
   const { config } = useConfigStore()
   const input = useInputStore()

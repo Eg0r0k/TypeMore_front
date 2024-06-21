@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import { useModal } from '@/entities/modal/store'
+import { useModal } from '@/entities/modal/model/store'
 import { onClickOutside } from '@vueuse/core'
 import gsap from 'gsap'
 import { storeToRefs } from 'pinia'

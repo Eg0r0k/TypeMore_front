@@ -10,4 +10,4 @@ type ModalAction = {
   callback: (props?: any) => void
 }
 
-export { type Modal, type ModalAction }
+export type { Modal, ModalAction }

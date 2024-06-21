@@ -36,7 +36,7 @@ import { defineAsyncComponent, onBeforeMount, onMounted, onUnmounted, provide, r
 import { Header } from '@/widgets/header'
 import { Logo } from '@/shared/ui/logo'
 import { Footer } from '@/widgets/footer'
-import { useConfigStore } from '@/entities/config/store'
+import { useConfigStore } from '@/entities/config/model/store'
 import { FpsIndecator } from '@/widgets/fps'
 import { useTestStateStore } from '@/entities/test'
 import { Alerts } from '@/widgets/alerts'

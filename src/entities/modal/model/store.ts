@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { markRaw, reactive, toRefs } from 'vue'
-import { Modal, ModalAction } from './type'
+import { Modal, ModalAction } from './types/type'
 
 export const useModal = defineStore('modal', () => {
   const modal = reactive<Modal>({

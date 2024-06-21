@@ -17,3 +17,4 @@ export const getColorWithOpacity = (color: string, opacity: number) => {
   const b = bigint & 255
   return `rgba(${r}, ${g}, ${b}, ${opacity})`
 }
+

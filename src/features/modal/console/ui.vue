@@ -1,9 +1,9 @@
 <template>
-  <div class="theme-modal" @keydown.tab.prevent="navigateItems(NavigationDirection.Down)"
+  <div class="console-modal" @keydown.tab.prevent="navigateItems(NavigationDirection.Down)"
     @keydown.up.prevent="navigateItems(NavigationDirection.Up)"
     @keydown.down.prevent="navigateItems(NavigationDirection.Down)" @keydown.enter.prevent="selectFocusedItem"
     tabindex="0">
-    <div class="theme-modal__header modal-header">
+    <div class="console-modal__header modal-header">
       <div class="modal-header__icon">
         <Icon width="20" icon="fluent:search-12-filled" />
       </div>
@@ -11,7 +11,7 @@
         placeholder="Search..." />
     </div>
 
-    <div role="listbox" ref="itemsList" class="theme-modal__body">
+    <div role="listbox" ref="itemsList" class="console-modal__body">
       <slot name="items" :focused-items="focusedItemIndex" :select-items="selectItem" :filtered-items="filteredItems" />
     </div>
   </div>
@@ -30,13 +30,11 @@ const searchQuery = ref('')
 const focusedItemIndex = ref(-1)
 const searchInput = ref<HTMLInputElement | null>(null)
 const itemsList = ref<HTMLElement | null>(null)
-
 interface Props {
-  items?: Theme[] | Record<string, any>[] | any[];
+  items: Theme[] | Record<string, any>[] | any[];
   searchKey?: string;
   activeItem?: Record<string, any> | string | null
 }
-
 const props = withDefaults(defineProps<Props>(), {
   items: () => [],
   searchKey: 'name',
@@ -58,32 +56,26 @@ const filteredItems = computed(() => {
 });
 
 
-const navigateItems = async (direction: NavigationDirection) => {
+const navigateItems = (direction: NavigationDirection) => {
   const itemsLength = filteredItems.value.length
   if (itemsLength === 0) return
-  focusedItemIndex.value =
-    (focusedItemIndex.value + (direction === 'up' ? -1 : 1) + itemsLength) % itemsLength
-  nextTick(() => {
-    centerFocusedItem()
-  })
+  focusedItemIndex.value = (focusedItemIndex.value + (direction === NavigationDirection.Up ? -1 : 1) + itemsLength) % itemsLength
+  nextTick(centerFocusedItem)
 }
+
 
 const selectItem = (item: any): void => {
-  const index = props.items.indexOf(item)
-  if (index !== -1 || index) {
-    if (item !== props.activeItem) {
-      focusedItemIndex.value = index
-      emit('item-selected', item)
-    }
+  const index = props.items.findIndex((i) => i === item)
+  if (index !== -1 && (item !== props.activeItem && item[props.searchKey] !== props.activeItem)) {
+    focusedItemIndex.value = index
+    emit('item-selected', item)
   }
 }
-
 const selectFocusedItem = (): void => {
   if (focusedItemIndex.value >= 0 && focusedItemIndex.value < filteredItems.value.length) {
     selectItem(filteredItems.value[focusedItemIndex.value])
   }
 }
-
 const centerFocusedItem = () => {
   if (itemsList?.value && focusedItemIndex.value !== -1) {
     const focusedItem = itemsList.value.children[focusedItemIndex.value] as HTMLElement
@@ -94,36 +86,18 @@ const centerFocusedItem = () => {
   }
 }
 
-const centerActiveItem = async (): Promise<void> => {
-  nextTick(() => {
-    if (!itemsList.value || focusedItemIndex.value === -1) return
-    centerFocusedItem()
-  })
-}
-
 useFocus(searchInput, { initialValue: true })
 
-onMounted(async () => {
-  if (!props.items || props.items.length === 0) return
 
-  let activeIndex = -1
-  if (props.activeItem) {
-    activeIndex = props.items.findIndex((item) => {
-      if (typeof item === 'string') {
-        return item === props.activeItem
-      } else if (props.searchKey) {
-        return item[props.searchKey] === props.activeItem
-      }
-      return false
-    })
-  }
-
-  if (activeIndex !== -1) {
-    focusedItemIndex.value = activeIndex
-    await centerActiveItem()
-  } else {
-    focusedItemIndex.value = -1
-  }
+onMounted(() => {
+  if (!props.items.length) return
+  const activeIndex = props.items.findIndex((item) =>
+    typeof item === 'string'
+      ? item === props.activeItem
+      : props.searchKey && item[props.searchKey] === props.activeItem
+  )
+  focusedItemIndex.value = activeIndex !== -1 ? activeIndex : -1
+  if (activeIndex !== -1) nextTick(centerFocusedItem)
 })
 </script>
 
@@ -159,7 +133,7 @@ onMounted(async () => {
   }
 }
 
-.theme-modal {
+.console-modal {
   border-radius: var(--border-radius);
   outline: 3px solid var(--sub-color);
   max-width: 700px;

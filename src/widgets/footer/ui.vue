@@ -31,11 +31,11 @@ import { Icon } from '@iconify/vue'
 import { Button } from '@/shared/ui/button'
 import { FooterLinks } from '@/features/footer/links'
 import { FOOTER_LINKS } from '../footer/model/const/values'
-import { useModal } from '@/entities/modal/store'
+import { useModal } from '@/entities/modal/model/store'
 import { FooterLink } from './model/types/links'
 import { ThemesModal } from '@/features/modal/themes'
 import { InputModal } from '@/features/modal/input'
-import { useConfigStore } from '@/entities/config/store'
+import { useConfigStore } from '@/entities/config/model/store'
 const navLinks: FooterLink[] = FOOTER_LINKS
 const modal = useModal()
 const { config } = useConfigStore()

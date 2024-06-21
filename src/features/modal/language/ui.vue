@@ -15,13 +15,13 @@
 <script lang="ts" setup>
 import { inject, Ref } from 'vue'
 import { ConsoleModal } from '../console'
-import { useConfigStore } from '@/entities/config/store';
+import { useConfigStore } from '@/entities/config/model/store';
 const configStore = useConfigStore()
 const langList = inject<Ref<string[]>>('lang')
 
 const changeLang = async (lang: string) => {
     await configStore.setLanguage(lang)
-
+   
 }
 </script>
 

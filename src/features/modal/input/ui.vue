@@ -15,9 +15,9 @@
 import { TextInput } from '@/shared/ui/input'
 import { Typography } from '@/shared/ui/typography'
 import { Button } from '@/shared/ui/button'
-import { useConfigStore } from '@/entities/config/store'
+import { useConfigStore } from '@/entities/config/model/store'
 import { ref, onMounted } from 'vue'
-import { useModal } from '@/entities/modal/store'
+import { useModal } from '@/entities/modal/model/store'
 
 const modal = useModal()
 const configStore = useConfigStore()
