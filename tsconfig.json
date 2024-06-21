@@ -3,7 +3,7 @@
     "target": "es5",
     "module": "esnext",
     "strict": true,
-    
+
     "jsx": "preserve",
     "importHelpers": true,
     "moduleResolution": "node",
@@ -21,6 +21,14 @@
     },
     "lib": ["es2015", "dom", "dom.iterable", "scripthost"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "tests/**/*.ts", "tests/**/*.tsx", "src/shared/lib/helpers/worker.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "src/shared/lib/helpers/worker.ts",
+    "global.d.ts"
+  ],
   "exclude": ["node_modules"]
 }

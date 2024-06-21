@@ -1,8 +1,9 @@
 <template>
-  <button :disabled="isLoading || isDisabled" :class="classes" role="button" :aria-label="buttonLabel">
+  <button :disabled="isLoading || isDisabled" :class="classes" role="button" :aria-label="buttonLabel"
+    :aria-busy="isLoading">
     <span class="loader" v-if="isLoading" aria-hidden="true"></span>
     <span class="icon" v-if="!isLoading">
-      <slot name="left-icon"></slot>
+      <slot name="left-icon" :aria-label="buttonLabel"> ></slot>
     </span>
 
     <Typography v-if="slots.default" class="button__text" :class="isLoading ? 'invisible' : ''" tagName="p"
@@ -10,7 +11,7 @@
       <slot></slot>
     </Typography>
     <span class="icon" v-if="!isLoading">
-      <slot name="right-icon"></slot>
+      <slot name="right-icon" :aria-label="buttonLabel"></slot>
     </span>
   </button>
 </template>

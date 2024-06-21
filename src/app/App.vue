@@ -1,6 +1,6 @@
 <template>
   <Transition name="fade" mode="out-in">
-    <div class="wrapper" v-if="!testState.isLoading">
+    <div class="wrapper" v-if="!testState.isLoading" role="main">
       <FpsIndecator v-if="configStore.config.showFps" />
       <Header />
       <main>
@@ -16,7 +16,7 @@
       <ModalWindow />
 
     </div>
-    <div v-else class="loader-wrapper wrapper">
+    <div v-else class="loader-wrapper wrapper" role="loading">
       <header class="loader-wrapper__header">
         <Logo />
       </header>

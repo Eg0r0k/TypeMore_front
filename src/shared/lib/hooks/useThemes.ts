@@ -82,10 +82,10 @@ export const applyTheme = async (name: string): Promise<void> => {
   applyColor(theme)
 
   alertStore.addAlert({
-    type: AlertType.Success,
+    type: AlertType.Info,
     msg: 'Theme success apply',
     title: 'Success',
-    duration: 800
+    duration: 0
   })
 
   testState.setLoading(false)

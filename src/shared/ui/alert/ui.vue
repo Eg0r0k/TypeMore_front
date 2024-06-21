@@ -1,12 +1,13 @@
 <template>
 
-  <div @click="close" ref="alertRef" role="alert" v-if="isVisible" class="alert" :class="classes">
+  <div @keyup.enter="close" @keyup.space="close" @click="close" ref="alertRef" role="alert" v-if="isVisible"
+    class="alert" :class="classes" :aria-live="props.type === AlertType.Error ? 'assertive' : 'polite'" tabindex="0">
     <div class="alert__header header-alert">
-      <Icon width="30" color="white" :icon="iconName" />
-      <p class="alert__header__text">{{ props.title || defaultTitles[props.type] }}</p>
+      <Icon aria-hidden="false" width="30" color="white" :aria-label="props.type" :icon="iconName" />
+      <h2 class="alert__header__text">{{ props.title || defaultTitles[props.type] }}</h2>
     </div>
     <div class="alert__body">
-      {{ props.msg }}
+      <p> {{ props.msg }}</p>
     </div>
   </div>
 
@@ -14,7 +15,6 @@
 </template>
 
 <script lang="ts" setup>
-//TODO: implement alert component
 import { Icon } from '@iconify/vue';
 import { computed, onMounted, ref } from 'vue';
 

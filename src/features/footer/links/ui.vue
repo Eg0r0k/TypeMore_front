@@ -1,15 +1,15 @@
 <template>
-  <nav class="footer-navigation" title="footer navigation">
-    <ul class="footer-navigation__list" title="links">
-      <li class="list list__item" v-for="link in props.data" :key="link.label">
-        <a :href="link.link" class="list__link" target="_blank" :title="link.label">
-          <Icon :icon="link.iconName" width="18" />
+  <footer class="footer-navigation" role="navigation" aria-label="footer navigation">
+    <ul class="footer-navigation__list" role="list">
+      <li class="list__item" role="listitem" v-for="link in props.data" :key="link.label">
+        <a :href="link.link" class="list__link" target="_blank" :title="link.label" role="link">
+          <Icon :icon="link.iconName" width="18" aria-hidden="true" />
           {{ link.label }}
         </a>
       </li>
     </ul>
-  </nav>
-</template>
+  </footer>
+</template>>
 
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
