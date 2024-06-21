@@ -198,6 +198,7 @@ onUnmounted(() => {
 }
 
 .caps-detected {
+    width: -moz-fit-content;
     width: fit-content;
     padding: 4px;
     border-radius: var(--border-radius);

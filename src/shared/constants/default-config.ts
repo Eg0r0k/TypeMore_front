@@ -8,5 +8,5 @@ export default {
   theme: 'VS Code',
   mode: 'words',
   backgroundImg: '',
-  showFps: true
+  showFps: false
 } as Config

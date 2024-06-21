@@ -1,6 +1,6 @@
 <template>
-  <footer class="footer-navigation" role="navigation" aria-label="footer navigation">
-    <ul class="footer-navigation__list" role="list">
+  <footer class="footer-navigation" aria-label="footer navigation">
+    <ul class="footer-navigation__list" role="navigation">
       <li class="list__item" role="listitem" v-for="link in props.data" :key="link.label">
         <a :href="link.link" class="list__link" target="_blank" :title="link.label" role="link">
           <Icon :icon="link.iconName" width="18" aria-hidden="true" />

@@ -1,23 +1,27 @@
 <template>
-
-  <div @keyup.enter="close" @keyup.space="close" @click="close" ref="alertRef" role="alert" v-if="isVisible"
-    class="alert" :class="classes" :aria-live="props.type === AlertType.Error ? 'assertive' : 'polite'" tabindex="0">
-    <div class="alert__header header-alert">
-      <Icon aria-hidden="false" width="30" color="white" :aria-label="props.type" :icon="iconName" />
-      <h2 class="alert__header__text">{{ props.title || defaultTitles[props.type] }}</h2>
+  <div v-if="isVisible" ref="alertRef" role="alertdialog" :aria-labelledby="titleId" :aria-describedby="messageId"
+    class="alert" :class="classes" :aria-live="props.type === AlertType.Error ? 'assertive' : 'polite'">
+    <div class="alert__content">
+      <div class="alert__header header-alert">
+        <Icon aria-hidden="true" width="30" color="white" :icon="iconName" />
+        <h2 :id="titleId" class="alert__header__text">{{ props.title || defaultTitles[props.type] }}</h2>
+      </div>
+      <div class="alert__body">
+        <p :id="messageId">{{ props.msg }}</p>
+      </div>
     </div>
-    <div class="alert__body">
-      <p> {{ props.msg }}</p>
-    </div>
+    <button v-if="props.closable" @click.stop.prevent="close" class="alert__close-btn" aria-label="Close alert">
+      <Icon icon="mdi:close" width="25" />
+    </button>
   </div>
-
-
 </template>
 
 <script lang="ts" setup>
 import { Icon } from '@iconify/vue';
 import { computed, onMounted, ref } from 'vue';
 
+const titleId = `alert-title-${Date.now()}`
+const messageId = `alert-message-${Date.now()}`
 enum AlertType {
   Error = "error",
   Info = "info",
@@ -87,16 +91,6 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.alert-box {
-  position: fixed;
-  top: 12px;
-  right: 0;
-  z-index: var(--alert-z);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
 .header-alert {
   font-size: 18px;
 }
@@ -108,9 +102,13 @@ onMounted(() => {
   --error: #b82e2e;
   --success: #1aaa55;
   --info: #1f78d1;
+  --main: #FFFFFF;
   min-width: 320px;
-  padding: 22px;
-  color: #FFFFFF;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 22px 4px 22px 22px;
+  color: var(--main);
   border-radius: var(--border-radius);
   max-width: 400px;
   pointer-events: all;
@@ -131,8 +129,30 @@ onMounted(() => {
     background-color: var(--success);
   }
 
+  &__close-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px;
+    background-color: transparent;
+    border: none;
+    color: var(--main);
+    transition: all var(--transition-duration);
+    cursor: pointer;
+
+    &:hover {
+      color: rgb(190, 188, 188);
+    }
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+
+  }
+
   &__header {
-    color: #ffffff;
+    color: var(--main);
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -143,8 +163,9 @@ onMounted(() => {
 
   &__body {
     scrollbar-width: thin;
-    max-height: 90px;
     overflow-y: scroll;
+    max-height: 100px;
+    height: 100%;
   }
 }
 </style>

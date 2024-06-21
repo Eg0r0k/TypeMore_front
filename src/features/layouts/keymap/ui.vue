@@ -114,7 +114,7 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 6px;
   align-items: center;
-  z-index: 100;
+
   position: fixed;
   touch-action: none;
 
@@ -134,6 +134,8 @@ onUnmounted(() => {
 
 .key {
   border-bottom: 1px solid var(--main-color);
+  -webkit-user-select: none;
+  -moz-user-select: none;
   user-select: none;
   min-width: 45px;
   min-height: 45px;

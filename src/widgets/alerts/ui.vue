@@ -25,14 +25,14 @@ const alertStore = useAlertStore()
     top: 0;
     right: 0;
     left: 0;
-    z-index: 1000;
+    z-index: var(--alert-z);
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    padding: 1rem;
+    padding: 8px;
     gap: 8px;
     pointer-events: none;
-   
+
 }
 
 .list-enter-active,

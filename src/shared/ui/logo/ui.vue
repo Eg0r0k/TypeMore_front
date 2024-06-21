@@ -21,6 +21,8 @@
   text-decoration: none;
   margin-right: 10px;
   display: flex;
+  -webkit-user-select: none;
+  -moz-user-select: none;
   user-select: none;
 
   & .icon {

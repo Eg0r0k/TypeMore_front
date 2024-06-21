@@ -4,13 +4,12 @@
     @keydown.down.prevent="navigateItems(NavigationDirection.Down)" @keydown.enter.prevent="selectFocusedItem"
     tabindex="0">
     <div class="console-modal__header modal-header">
-      <div class="modal-header__icon">
-        <Icon width="20" icon="fluent:search-12-filled" />
+      <div class="modal-header__search-wrapper">
+        <Icon width="20" icon="fluent:search-12-filled" class="modal-header__search-icon" />
+        <input ref="searchInput" type="text" v-model.trim="searchQuery" class="modal-header__search"
+          placeholder="Search..." />
       </div>
-      <input ref="searchInput" type="text" v-model.trim="searchQuery" class="modal-header__search"
-        placeholder="Search..." />
     </div>
-
     <div role="listbox" ref="itemsList" class="console-modal__body">
       <slot name="items" :focused-items="focusedItemIndex" :select-items="selectItem" :filtered-items="filteredItems" />
     </div>
@@ -106,32 +105,54 @@ onMounted(() => {
   display: flex;
   align-items: center;
 
-  &__icon {
+  &__search-wrapper {
+    position: relative;
+    width: 100%;
+
+
+
+
+    &:focus-within {
+      .modal-header__search-icon {
+        color: var(--text-color);
+      }
+    }
+  }
+
+  &__search-icon {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transition: all var(--transition-duration);
+    transform: translateY(-50%);
     color: var(--sub-color);
-    margin: 5px 1rem 0;
+    pointer-events: none;
   }
 
   &__search {
-    &::placeholder {
-      color: var(--sub-color);
-      opacity: 1;
-    }
-
     width: 100%;
-    user-select: none;
+    padding: 10px 20px 10px 50px;
+
     line-height: normal;
     box-sizing: border-box;
     background-color: var(--sub-alt-color);
     border-radius: var(--border-radius);
     border: none;
     outline: none;
-    padding: 10px 20px 10px 0;
     font-size: 16px;
     color: var(--text-color);
     caret-color: var(--main-color);
-    position: relative;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+
+    &::placeholder {
+      color: var(--sub-color);
+      opacity: 1;
+    }
   }
 }
+
 
 .console-modal {
   border-radius: var(--border-radius);

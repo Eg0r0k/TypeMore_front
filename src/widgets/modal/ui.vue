@@ -24,9 +24,9 @@ const model = reactive({})
 // Ref to modal component
 const modal = ref(null)
 const modalStore = useModal()
-const { isOpen, isCommandLine, view, actions } = storeToRefs(modalStore)
+const { isOpen, isCommandLine, view } = storeToRefs(modalStore)
 //Catch click outside modal window
-onClickOutside(modal, () => modalStore.close())
+onClickOutside(modal, modalStore.close)
 // Animation for modal window
 const onBeforeEnter = (el: Element) => {
   gsap.set(el, {
@@ -69,11 +69,12 @@ const onLeave = (el: Element, done: any) => {
   bottom: 0;
   left: 0;
   top: 0;
-  z-index: 1000;
+
   display: flex;
   justify-content: center;
   align-items: center;
   overflow: auto;
+  z-index: var(--modal-z);
 }
 
 .align-start {

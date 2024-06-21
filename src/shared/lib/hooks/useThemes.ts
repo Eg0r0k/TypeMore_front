@@ -83,7 +83,7 @@ export const applyTheme = async (name: string): Promise<void> => {
 
   alertStore.addAlert({
     type: AlertType.Info,
-    msg: 'Theme success apply',
+    msg: 'Theme success apply. Realy long message about you get new style for your collection. Its really long msassage isnt it?',
     title: 'Success',
     duration: 0
   })

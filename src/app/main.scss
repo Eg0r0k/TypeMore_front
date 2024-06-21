@@ -26,8 +26,9 @@
   --navigation-z: 2;
   --key-map-z: 10;
   --alert-z: 999;
+  --modal-z: 998;
+  --fps-z: 1000;
 }
-
 
 // Color for popper plugin
 :root {
@@ -44,7 +45,6 @@
 //TODO add font
 .splide__arrow--next {
   right: 8px;
-  
 }
 
 .splide__arrow--prev {

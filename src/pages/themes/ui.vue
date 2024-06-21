@@ -2,7 +2,10 @@
   <div>
     <div class="settings">
       <div style="width: 100%">
-        <CheckBox value="1" />
+        <CheckBox label="Enable Feature A" v-model="isFeatureAEnabled" value="Test" />
+        {{ isFeatureAEnabled }}
+        <p v-if="isFeatureAEnabled">Feature A is enabled!</p>
+
         <TextInput placeholder="Search..." />
         <div><vue-slider height="6px" v-model="value" :lazy="true"></vue-slider></div>
       </div>
@@ -62,6 +65,8 @@ import { TextInput } from '@/shared/ui/input'
 import slide1 from './slide1.vue'
 import slide2 from './slide2.vue'
 import { ref } from 'vue'
+const isFeatureAEnabled = ref(false);
+
 const value = ref([0, 100])
 </script>
 

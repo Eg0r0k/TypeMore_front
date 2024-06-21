@@ -1,9 +1,15 @@
 <template>
-  <div class="fps">
-    <p>FPS: {{ fps }}</p>
-    <p>AVG: {{ avgFps }}</p>
-    <p>MAX: {{ maxFps }}</p>
-    <p>MIN: {{ minFps }}</p>
+  <div class="fps" role="status" aria-live="polite" :aria-label="`Fps counter ${fps}`">
+    <dl>
+      <dt>FPS:</dt>
+      <dd>{{ fps }}</dd>
+      <dt>AVG:</dt>
+      <dd>{{ avgFps }}</dd>
+      <dt>MAX:</dt>
+      <dd>{{ maxFps }}</dd>
+      <dt>MIN:</dt>
+      <dd>{{ minFps }}</dd>
+    </dl>
   </div>
 </template>
 
@@ -28,11 +34,18 @@ watch(fps, (value: number) => {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  z-index: 1000;
+  z-index: var(--fps-z);
   position: absolute;
   pointer-events: none;
   top: 20px;
   left: 20px;
-  color: var(--main-color);
+  color: var(--text-color);
+
+  & dl {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-weight: bold;
+  }
 }
 </style>

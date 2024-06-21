@@ -20,11 +20,11 @@
       <header class="loader-wrapper__header">
         <Logo />
       </header>
-      <main class="loader-wrapper__body">
+      <div class="loader-wrapper__body">
         <div>
           <div class="loader"></div>
         </div>
-      </main>
+      </div>
       <footer class="loader-wrapper__footer"></footer>
     </div>
 

@@ -10,7 +10,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T">
 import { Typography } from '@/shared/ui/typography'
 defineOptions({
   inheritAttrs: false
@@ -26,7 +26,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   tagName: 'input',
 })
-const modelValue = defineModel<string | number>()
+const modelValue = defineModel<T>()
 
 const updateInput = (e: any) => {
   modelValue.value = e.target.value
@@ -35,6 +35,8 @@ const updateInput = (e: any) => {
 
 <style lang="scss" scoped>
 textarea {
+  -webkit-user-select: none;
+  -moz-user-select: none;
   user-select: none;
   resize: vertical;
   max-height: 100px;
@@ -60,6 +62,8 @@ textarea {
 }
 
 .text-input {
+  -webkit-user-select: none;
+  -moz-user-select: none;
   user-select: none;
   width: 100%;
   line-height: normal;

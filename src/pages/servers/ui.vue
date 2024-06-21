@@ -180,6 +180,8 @@ onMounted(() => {
   background-color: var(--sub-alt-color);
   border-radius: var(--border-radius);
   cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
   user-select: none;
 
   & input {
