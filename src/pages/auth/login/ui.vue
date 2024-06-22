@@ -6,15 +6,15 @@
         <Typography color="primary" size="m">Fill in all fields to login</Typography>
       </div>
       <Form class="login__body" autocomplete="off" @submit="onSubmit">
-        <TextInput v-bind="emailProps" v-model="email" required autocomplete="on" placeholder="Email"
-          :error-message="errors.email" name="email">
+        <TextInput v-bind="emailProps" v-model="email" required placeholder="Email" :error-message="errors.email"
+          name="email">
           <Typography color="primary">Email<Typography tagName="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
 
 
         <TextInput v-bind="passwordProps" v-model="password" :error-message="errors.password" type="password"
-          autocomplete="on" placeholder="Password" label="Password*" name="password">
+          placeholder="Password" label="Password*" name="password">
           <Typography color="primary">Password<Typography tagName="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
@@ -58,12 +58,15 @@ import { Form, useForm } from 'vee-validate';
 import * as yup from 'yup';
 import { useAlertStore } from '@/entities/alert/model';
 import { AlertType } from '@/entities/alert/model/types/alertData';
-const { values, errors, defineField } = useForm({
-  validationSchema: yup.object({
-    email: yup.string().email().required(),
-    password: yup.string().min(6).required()
-  }),
+
+const schema = yup.object({
+  email: yup.string().email('Invalid email').required('Email is required'),
+  password: yup.string().min(6, 'Password must be at least 6 characters').required('Password is required')
 });
+const { handleSubmit, errors, defineField } = useForm({
+  validationSchema: schema,
+});
+
 const alertStore = useAlertStore()
 const [email, emailProps] = defineField('email', {
   validateOnModelUpdate: false,
@@ -73,18 +76,23 @@ const [password, passwordProps] = defineField('password', {
 })
 
 
-const onSubmit = () => {
+const onSubmit = handleSubmit(() => {
 
-
-  console.log(values.value)
   alertStore.addAlert({
     type: AlertType.Success,
-    msg: "Success login",
+    title: "Success",
+    msg: "Form submitted successfully",
     duration: 1500
-  })
-
-
-}
+  });
+}, (errors) => {
+  console.log(errors);
+  alertStore.addAlert({
+    type: AlertType.Error,
+    title: "Error",
+    msg: "Please fill all fields correctly",
+    duration: 1500
+  });
+});
 </script>
 
 <style scoped lang="scss">

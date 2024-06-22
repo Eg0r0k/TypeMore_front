@@ -4,6 +4,7 @@ import { defineStore } from 'pinia'
 import { computed, reactive, ref } from 'vue'
 import { useTestStateStore } from '../../test'
 import { LanguageObj } from '@/shared/constants/type'
+import { logRandomIndex } from '@/shared/lib/helpers/misc'
 
 export const useWordGeneratorStore = defineStore('word-gen', () => {
   const { config } = useConfigStore()
@@ -49,42 +50,40 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
       .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
       .join(' ')
   }
+  const reset = () => {
+    retWords.words = []
+  }
+
   const generateWords = async (lang: LanguageObj) => {
     if (testState.isRepeated) {
       return
     }
-
     const shuffledWords = [...lang.words]
-    const punctuationBox: string[] = ['.', ',', '!', '?', ':', ';', '-']
 
-    for (let i = config.words - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[shuffledWords[i], shuffledWords[j]] = [shuffledWords[j], shuffledWords[i]]
-
-      if (Math.random() < 0.2) {
-        shuffledWords[i] += punctuationBox[Math.floor(Math.random() * punctuationBox.length)]
+    let stop = false
+    const limit = config.words
+    let i = 0
+    while (!stop) {
+      const nextWord = getNextWord(lang, limit, i)
+      retWords.words.push(nextWord)
+      if (retWords.words.length >= limit) {
+        stop = true
       }
+      i++
     }
-
-    words.value = shuffledWords // Присваиваем сгенерированные слова
   }
   const getCurrent = (): string => {
-    return words.value[testState.currentWordElementIndex] ?? ''
+    console.log(testState.currentWordElementIndex)
+    return retWords.words[testState.currentWordElementIndex] ?? ''
   }
 
-  const getNextWord = (
-    wordIndex: number,
-    wordLimit: number,
-    previusWord1: string,
-    previusWord2: string
-  ) => {
+  const getNextWord = (lang: LanguageObj, limit: number, index: number) => {
     console.debug('Generated word: ', {
       isRepeated: testState.isRepeated,
-      wordIndex,
-      previusWord1,
-      lang: currentLanguage,
-      previusWord2
+      lang: currentLanguage
     })
+    const randomWord = lang.words[logRandomIndex(lang.words.length)]
+    return randomWord
   }
 
   const shuffleWords = () => {
@@ -101,5 +100,5 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
     shuffle(shuffedIndexes.value)
   }
 
-  return { getWordsLimit, shuffleWords, retWords, generateWords, getCurrent, words }
+  return { getWordsLimit, shuffleWords, retWords, generateWords, getCurrent, words, reset }
 })

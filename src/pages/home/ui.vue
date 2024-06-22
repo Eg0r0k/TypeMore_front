@@ -23,7 +23,7 @@
         <input ref="testInput" :disabled="!testState.isActive" @keydown.delete="inputStore.backspaceToPrevious"
             type="text" v-model="inputStore.input.current" @keydown.space.prevent="inputStore.handleSpace">
         <div class="words" :class="{ rightToLeft: isRightToLeft }">
-            <p v-for=" (word, index) in generator.words" :key="`${word}-${index}`" class="word"
+            <p v-for=" (word, index) in generator.retWords.words" :key="`${word}-${index}`" class="word"
                 :class="{ current: index === testState.currentWordElementIndex }">
                 {{ word }}
             </p>
@@ -48,7 +48,7 @@ import { Icon } from '@iconify/vue'
 import { Typography } from '@/shared/ui/typography'
 import { LangModal } from '@/features/modal/language'
 import Popper from 'vue3-popper'
-import { useFocus, useKeyModifier, useWebSocket } from '@vueuse/core'
+import { useFocus, useKeyModifier } from '@vueuse/core'
 import { onMounted, onUnmounted, computed, watch, ref } from 'vue'
 import { useModal } from '@/entities/modal/model/store'
 import { useTimerStore } from '@/entities/timer/model/store'
@@ -76,6 +76,7 @@ const init = async (): Promise<void> => {
     testState.setCurrentWordElementIndex(0)
     inputStore.reset()
     testState.setActive(true)
+    generator.reset()
     try {
         const lang = configStore.config.language
         await configStore.setLanguage(lang)

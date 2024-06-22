@@ -152,6 +152,7 @@ export const useInputStore = defineStore('input', () => {
   }
 
   const handleSpace = () => {
+    console.log('space')
     if (!testState.isActive || input.current === '') return
     const currentWord = generator.getCurrent()
     const isWordCorrect = currentWord === input.current
@@ -160,7 +161,7 @@ export const useInputStore = defineStore('input', () => {
       incrementKeypressCount()
       testState.incrementWordIndex()
     } else {
-      pushMissedWords(generator.getCurrent())
+      pushMissedWords(currentWord)
       pushToHistory()
       incrementKeypressCount()
       testState.incrementWordIndex()

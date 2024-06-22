@@ -19,8 +19,10 @@
 <script lang="ts" setup>
 import { DEFAULT_ALERT_CLOSABLE, DEFAULT_ALERT_DURATION } from '@/entities/alert/model/const/values';
 import { Icon } from '@iconify/vue';
+import { useSound } from '@vueuse/sound';
 import { computed, onMounted, ref } from 'vue';
-
+import Error from '/static/sounds/Error.mp3'
+import Info from '/static/sounds/Stop.mp3'
 const titleId = `alert-title-${Date.now()}`
 const messageId = `alert-message-${Date.now()}`
 enum AlertType {
@@ -43,7 +45,12 @@ const defaultTitles = {
   [AlertType.Success]: 'Success',
   [AlertType.Warning]: 'Warning',
 };
-
+const alertSounds = {
+  [AlertType.Error]: useSound(Info, { volume: 0.5 }),
+  [AlertType.Info]: useSound(Info, { volume: 0.5 }),
+  [AlertType.Success]: useSound(Error, { volume: 0.5 }),
+  [AlertType.Warning]: useSound(Info, { volume: 0.5 }),
+}
 
 const isVisible = ref(true)
 const alertRef = ref(null)
@@ -76,11 +83,17 @@ const emit = defineEmits<{
 
 
 const classes = computed(() => [`alert--${props.type}`])
-
+const playSound = () => {
+  const sound = alertSounds[props.type];
+  if (sound) {
+    sound.play();
+  }
+};
 const close = () => {
   if (!props.closable) return
   isVisible.value = false
   emit('close')
+
 }
 onMounted(() => {
   if (props.closable && props.duration > 0) {
@@ -88,7 +101,13 @@ onMounted(() => {
       close();
     }, props.duration);
   }
+
+
+  setTimeout(() => {
+    playSound();
+  }, 100);
 });
+
 </script>
 
 <style lang="scss" scoped>
