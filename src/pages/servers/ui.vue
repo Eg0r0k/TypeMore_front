@@ -40,10 +40,10 @@
     <div class="controls">
       <div class="theme-input" v-for="(color, index) in colors" :key="index">
         <Typography style="flex: 1" size="m" color="primary">{{ color.label }}</Typography>
-        <TextInput v-model="color.hex" @input="updateColor(color)" />
+        <TextInput v-model="color.hex" @input="debouncedUpdateColor(color)" />
         <div class="color">
           <Icon icon="mdi:color" width="30" />
-          <input class="input-color" type="color" v-model="color.hex" @input="updateColor(color)" />
+          <input class="input-color" type="color" v-model="color.hex" @input="debouncedUpdateColor(color)" />
         </div>
       </div>
       <div></div>
@@ -62,9 +62,13 @@ import { Icon } from '@iconify/vue'
 import { TextInput } from '@/shared/ui/input'
 import { Typography } from '@shared/ui/typography'
 import { Button } from '@shared/ui/button'
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref } from 'vue'
 import { Theme } from '@/features/modal/console/types/themes'
+import { useAlertStore } from '@/entities/alert/model'
+import { AlertType } from '@/entities/alert/model/types/alertData'
+import { useDebounceFn } from '@vueuse/core'
 const root = document.documentElement
+const alertStore = useAlertStore()
 interface Color {
   label: string
   var: string
@@ -140,10 +144,16 @@ const copyTheme = async () => {
   try {
     await navigator.clipboard.writeText(JSON.stringify(theme, null, 2))
   } catch (error) {
-    //TODO: Add alert 
-    console.error('Failed to copy theme:', error)
+    alertStore.addAlert({
+      type: AlertType.Error,
+      title: "Failed to copy theme",
+      msg: `${error}`,
+      duration: 2000
+    })
   }
 }
+const debouncedUpdateColor = useDebounceFn(updateColor, 100, { maxWait: 125 })
+
 onMounted(() => {
   getTheme()
 })

@@ -1,12 +1,14 @@
 <template>
   <div class="text-input__wrapper">
-    <label for="" class="text-input__label" v-if="label">
-      <Typography tag-name="p" :size="'s'" color="primary">{{ label }}</Typography>
+    <label for="" class="text-input__label">
+      <slot></slot>
     </label>
     <component v-bind="$attrs" ref="inputEl" :is="props.tagName" class="text-input" :value="modelValue"
-      :placeholder="placeholder" :disabled="isDisabled" @input="updateInput"
+      :placeholder="placeholder" :disabled="isDisabled" @input="updateInput" @blur="$emit('blur')"
       :class="{ 'text-input--error': props.isError }">
     </component>
+    <Typography class="error-msg" v-if="errorMessage" tag-name="p" :size="'xs'" color="error">{{ errorMessage }}
+    </Typography>
   </div>
 </template>
 
@@ -18,11 +20,12 @@ defineOptions({
 interface Props {
   placeholder?: string
   isError?: boolean
+  errorMessage?: string
   isDisabled?: boolean
   label?: string
   tagName?: 'input' | 'textarea'
 }
-
+defineEmits(['blur'])
 const props = withDefaults(defineProps<Props>(), {
   tagName: 'input',
 })
@@ -57,8 +60,12 @@ textarea {
   }
 
   &--error {
-    outline: 1px solid red;
+    outline: 1px solid var(--error-color) !important;
   }
+}
+
+.error-msg {
+  padding-top: 5px;
 }
 
 .text-input {
@@ -92,7 +99,7 @@ textarea {
   }
 
   &--error {
-    outline: 1px solid red;
+    outline: 1px solid var(--error-color) !important;
   }
 }
 </style>

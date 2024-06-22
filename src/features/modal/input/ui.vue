@@ -16,13 +16,19 @@ import { TextInput } from '@/shared/ui/input'
 import { Typography } from '@/shared/ui/typography'
 import { Button } from '@/shared/ui/button'
 import { useConfigStore } from '@/entities/config/model/store'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, Ref } from 'vue'
 import { useModal } from '@/entities/modal/model/store'
+
+interface TextInputComponent {
+  $refs: {
+    inputEl: HTMLInputElement
+  }
+}
 
 const modal = useModal()
 const configStore = useConfigStore()
 const wordAmount = ref(configStore.config.words)
-const textInputRef = ref<InstanceType<typeof TextInput> | null>(null)
+const textInputRef: Ref<TextInputComponent | null> = ref(null)
 
 const saveWordAmount = () => {
   console.log(wordAmount.value, typeof wordAmount.value)
@@ -33,7 +39,7 @@ const saveWordAmount = () => {
 }
 
 onMounted(() => {
-  ; (textInputRef.value?.$refs.inputEl as HTMLInputElement)?.select()
+  textInputRef.value?.$refs.inputEl?.select()
 })
 </script>
 

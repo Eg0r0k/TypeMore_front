@@ -1,6 +1,6 @@
 import type { Config, LanguageObj } from '@/shared/constants/type'
 import { getLanguage as getLanguageFromFile } from '@/shared/lib/helpers/json-files'
-import { applyTheme } from '@/shared/lib/hooks/useThemes'
+import { useThemes } from '@/shared/lib/hooks/useThemes'
 import defaultConfig from '@shared/constants/default-config'
 
 import { defineStore } from 'pinia'
@@ -29,6 +29,7 @@ export const useConfigStore = defineStore(
       config.showFps = !config.showFps
     }
     const setTheme = async (name: string) => {
+      const { applyTheme } = useThemes()
       config.theme = name
       await applyTheme(name)
     }

@@ -48,7 +48,7 @@ import { Icon } from '@iconify/vue'
 import { Typography } from '@/shared/ui/typography'
 import { LangModal } from '@/features/modal/language'
 import Popper from 'vue3-popper'
-import { useFocus, useKeyModifier } from '@vueuse/core'
+import { useFocus, useKeyModifier, useWebSocket } from '@vueuse/core'
 import { onMounted, onUnmounted, computed, watch, ref } from 'vue'
 import { useModal } from '@/entities/modal/model/store'
 import { useTimerStore } from '@/entities/timer/model/store'
@@ -69,6 +69,9 @@ const testInput = ref(null)
 const isRightToLeft = ref(false)
 const currentLanguage = computed(() => configStore.currentLang)
 
+
+
+
 const init = async (): Promise<void> => {
     testState.setCurrentWordElementIndex(0)
     inputStore.reset()
@@ -88,7 +91,7 @@ const init = async (): Promise<void> => {
     }
     try {
         await generator.generateWords(currentLanguage.value)
-        console.log(currentLanguage.value.rightToleft)
+
         //TODO: Change later
         if (currentLanguage.value.rightToleft) {
             isRightToLeft.value = true
@@ -141,6 +144,7 @@ onMounted(() => {
 
 onUnmounted(() => {
     timerStore.terminateWorker()
+
 })
 </script>
 

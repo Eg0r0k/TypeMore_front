@@ -3,7 +3,7 @@
     :aria-busy="isLoading">
     <span class="loader" v-if="isLoading" aria-hidden="true"></span>
     <span class="icon" v-if="!isLoading">
-      <slot name="left-icon" :aria-label="buttonLabel"> ></slot>
+      <slot name="left-icon" :aria-label="buttonLabel"></slot>
     </span>
 
     <Typography v-if="slots.default" class="button__text" :class="isLoading ? 'invisible' : ''" tagName="p"

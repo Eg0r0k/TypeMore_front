@@ -1,8 +1,8 @@
 <template>
-  <div :style="style" ref="el" class="key-map">
+  <div :style="style" ref="el" class="key-map" aria-label="Virtual key map">
     <div v-for="row in keys" :key="row.id" class="key-map__row">
       <div v-for="key in row.keys" :key="key.code" class="key-map__key key" :class="{ active: pressedKeys[key.code] }">
-        <b>{{ getLabel(key) }}</b>
+        <kbd><b>{{ getLabel(key) }}</b></kbd>
       </div>
     </div>
   </div>
@@ -137,8 +137,8 @@ onUnmounted(() => {
   -webkit-user-select: none;
   -moz-user-select: none;
   user-select: none;
-  min-width: 45px;
-  min-height: 45px;
+  min-width: 40px;
+  min-height: 40px;
   transition: all 0.1s;
   padding: 10px;
   border-radius: 5px;

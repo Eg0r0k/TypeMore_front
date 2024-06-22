@@ -1,7 +1,7 @@
 <template>
     <div class="checkbox-wrapper">
         <label class="checkbox-wrapper__field">
-            <input v-model="modelValue" type="checkbox" :value="value" :name="name" :disabled="disabled"
+            <input v-model="modelValue" type="checkbox" :value="value" :name="name" :disabled="isDisabled"
                 class="checkbox-wrapper__input" @input="$emit('input', $event)" @change="$emit('change', $event)" />
             <span class="checkbox-wrapper__label">
                 <slot>
@@ -17,7 +17,7 @@ interface Props {
     value: string | number | boolean;
     label?: string
     name?: string;
-    disabled?: boolean;
+    isDisabled?: boolean;
 }
 withDefaults(defineProps<Props>(), {
     name: "checkbox",

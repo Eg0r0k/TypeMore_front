@@ -42,7 +42,7 @@ import { useTestStateStore } from '@/entities/test'
 import { Alerts } from '@/widgets/alerts'
 const configStore = useConfigStore()
 const testState = useTestStateStore()
-import { applyTheme, styleObserver, themesList } from '@/shared/lib/hooks/useThemes'
+import { useThemes } from '@/shared/lib/hooks/useThemes'
 import { getLangList } from '@/shared/lib/helpers/json-files'
 
 
@@ -50,7 +50,7 @@ import { getLangList } from '@/shared/lib/helpers/json-files'
 const ModalWindow = defineAsyncComponent(() =>
   import('@/widgets/modal/ui.vue')
 )
-
+const { applyTheme, themesList } = useThemes()
 const { config } = useConfigStore()
 const lang = ref()
 provide('themes', themesList)
@@ -64,11 +64,7 @@ onMounted(async () => {
   //Set platform on load window : 'desktop' | 'tablet' | 'mobile'
   lang.value = await getLangList()
 
-  console.log(lang)
 
-})
-onUnmounted(() => {
-  styleObserver.disconnect()
 })
 </script>
 <style lang="scss">

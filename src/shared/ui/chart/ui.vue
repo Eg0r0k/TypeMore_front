@@ -8,9 +8,9 @@ import { LineChart } from 'vue-chart-3'
 import { Chart, ChartData, ChartOptions, registerables } from 'chart.js'
 import { getColorWithOpacity } from '@/shared/lib/helpers/misc'
 import { useTimerStore } from '@/entities/timer/model/store'
-import { refColors } from '@/shared/lib/hooks/useThemes'
+import {  useThemes } from '@/shared/lib/hooks/useThemes'
 Chart.register(...registerables)
-
+const { refColors } = useThemes()
 const dataError = ref<number[]>([])
 const dataWPM = ref<number[]>([])
 const dataRAW = ref<number[]>([])
@@ -22,32 +22,32 @@ const testData = computed<ChartData<'line'>>(() => ({
     {
       label: 'Error',
       data: dataError.value,
-      borderColor: refColors.value['--error-color'],
-      backgroundColor: refColors.value['--error-color'],
-      pointBackgroundColor: refColors.value['--error-color'],
-      pointBorderColor: refColors.value['--error-color'],
+      borderColor: refColors['--error-color'],
+      backgroundColor: refColors['--error-color'],
+      pointBackgroundColor: refColors['--error-color'],
+      pointBorderColor: refColors['--error-color'],
       pointStyle: 'crossRot',
       showLine: false
     },
     {
       label: 'WPM',
       data: dataWPM.value,
-      borderColor: refColors.value['--main-color'],
-      backgroundColor: getColorWithOpacity(refColors.value['--sub-alt-color'], 0.4),
+      borderColor: refColors['--main-color'],
+      backgroundColor: getColorWithOpacity(refColors['--sub-alt-color'], 0.4),
       fill: true,
       tension: 0.2,
-      pointBackgroundColor: refColors.value['--main-color'],
-      pointBorderColor: refColors.value['--main-color']
+      pointBackgroundColor: refColors['--main-color'],
+      pointBorderColor: refColors['--main-color']
     },
     {
       label: 'RAW',
       data: dataRAW.value,
-      borderColor: refColors.value['--sub-alt-color'],
-      backgroundColor: getColorWithOpacity(refColors.value['--sub-alt-color'], 0.4),
+      borderColor: refColors['--sub-alt-color'],
+      backgroundColor: getColorWithOpacity(refColors['--sub-alt-color'], 0.4),
       fill: true,
       tension: 0.2,
-      pointBackgroundColor: refColors.value['--sub-alt-color'],
-      pointBorderColor: refColors.value['--sub-alt-color']
+      pointBackgroundColor: refColors['--sub-alt-color'],
+      pointBorderColor: refColors['--sub-alt-color']
     }
   ]
 }))
@@ -60,13 +60,13 @@ const options = computed<ChartOptions<'line'>>(() => ({
         autoSkip: false
       },
       grid: {
-        color: getColorWithOpacity(refColors.value['--sub-alt-color'], 0.4)
+        color: getColorWithOpacity(refColors['--sub-alt-color'], 0.4)
       }
     },
     y: {
       beginAtZero: true,
       grid: {
-        color: getColorWithOpacity(refColors.value['--sub-alt-color'], 0.4)
+        color: getColorWithOpacity(refColors['--sub-alt-color'], 0.4)
       }
     }
   },

@@ -148,6 +148,7 @@ onMounted(() => {
   &__content {
     display: flex;
     flex-direction: column;
+    width: 100%;
 
   }
 
@@ -158,7 +159,6 @@ onMounted(() => {
     align-items: center;
     gap: 12px;
     margin-bottom: 11px;
-
   }
 
   &__body {
@@ -166,6 +166,8 @@ onMounted(() => {
     overflow-y: scroll;
     max-height: 100px;
     height: 100%;
+    width: 100%;
+
   }
 }
 </style>
