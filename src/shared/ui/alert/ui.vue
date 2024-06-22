@@ -17,6 +17,7 @@
 </template>
 
 <script lang="ts" setup>
+import { DEFAULT_ALERT_CLOSABLE, DEFAULT_ALERT_DURATION } from '@/entities/alert/model/const/values';
 import { Icon } from '@iconify/vue';
 import { computed, onMounted, ref } from 'vue';
 
@@ -51,8 +52,8 @@ const props = withDefaults(defineProps<Props>(), {
   type: AlertType.Info,
   msg: "This is a default alert message.",
   title: "",
-  duration: 0,
-  closable: true,
+  duration: DEFAULT_ALERT_DURATION,
+  closable: DEFAULT_ALERT_CLOSABLE,
 })
 const iconName = computed(() => {
   switch (props.type) {

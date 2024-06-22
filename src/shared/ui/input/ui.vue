@@ -17,6 +17,8 @@ import { Typography } from '@/shared/ui/typography'
 defineOptions({
   inheritAttrs: false
 })
+
+
 interface Props {
   placeholder?: string
   isError?: boolean
@@ -25,11 +27,13 @@ interface Props {
   label?: string
   tagName?: 'input' | 'textarea'
 }
-defineEmits(['blur'])
+const modelValue = defineModel<T>()
 const props = withDefaults(defineProps<Props>(), {
   tagName: 'input',
 })
-const modelValue = defineModel<T>()
+defineEmits<{
+  (e: 'blur'): void
+}>()
 
 const updateInput = (e: any) => {
   modelValue.value = e.target.value

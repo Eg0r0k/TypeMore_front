@@ -6,15 +6,15 @@
         <Typography color="primary" size="m">Fill in all fields to login</Typography>
       </div>
       <Form class="login__body" autocomplete="off" @submit="onSubmit">
-        <TextInput v-model="email" required autocomplete="on" placeholder="Email" :error-message="errors.email"
-          name="email">
+        <TextInput v-bind="emailProps" v-model="email" required autocomplete="on" placeholder="Email"
+          :error-message="errors.email" name="email">
           <Typography color="primary">Email<Typography tagName="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
 
 
-        <TextInput v-model="password" :error-message="errors.password" type="password" autocomplete="on"
-          placeholder="Password" label="Password*" name="password">
+        <TextInput v-bind="passwordProps" v-model="password" :error-message="errors.password" type="password"
+          autocomplete="on" placeholder="Password" label="Password*" name="password">
           <Typography color="primary">Password<Typography tagName="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
@@ -54,7 +54,6 @@ import { Icon } from '@iconify/vue'
 import { Typography } from '@shared/ui/typography'
 import { TextInput } from '@shared/ui/input'
 import { Button } from '@shared/ui/button'
-import { ref } from 'vue';
 import { Form, useForm } from 'vee-validate';
 import * as yup from 'yup';
 import { useAlertStore } from '@/entities/alert/model';
@@ -66,17 +65,25 @@ const { values, errors, defineField } = useForm({
   }),
 });
 const alertStore = useAlertStore()
-const [email, emailProps] = defineField('email');
-const [password, passwordProps] = defineField('password')
+const [email, emailProps] = defineField('email', {
+  validateOnModelUpdate: false,
+});
+const [password, passwordProps] = defineField('password', {
+  validateOnModelUpdate: false,
+})
+
+
 const onSubmit = () => {
-  console.log(values)
-  alertStore.addAlert(
-    {
-      type: AlertType.Success,
-      msg: "Success login",
-      duration: 1500
-    }
-  )
+
+
+  console.log(values.value)
+  alertStore.addAlert({
+    type: AlertType.Success,
+    msg: "Success login",
+    duration: 1500
+  })
+
+
 }
 </script>
 

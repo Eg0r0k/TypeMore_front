@@ -32,21 +32,20 @@
 
 </template>
 <script setup lang="ts">
-import { defineAsyncComponent, onBeforeMount, onMounted, onUnmounted, provide, ref } from 'vue'
 import { Header } from '@/widgets/header'
-import { Logo } from '@/shared/ui/logo'
 import { Footer } from '@/widgets/footer'
-import { useConfigStore } from '@/entities/config/model/store'
+import { Logo } from '@/shared/ui/logo'
 import { FpsIndecator } from '@/widgets/fps'
-import { useTestStateStore } from '@/entities/test'
 import { Alerts } from '@/widgets/alerts'
-const configStore = useConfigStore()
-const testState = useTestStateStore()
+import { useConfigStore } from '@/entities/config/model/store'
+import { useTestStateStore } from '@/entities/test'
 import { useThemes } from '@/shared/lib/hooks/useThemes'
 import { getLangList } from '@/shared/lib/helpers/json-files'
+import { defineAsyncComponent, onBeforeMount, onMounted, provide, ref } from 'vue'
 
 
-
+const configStore = useConfigStore()
+const testState = useTestStateStore()
 const ModalWindow = defineAsyncComponent(() =>
   import('@/widgets/modal/ui.vue')
 )

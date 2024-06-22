@@ -61,6 +61,15 @@ const classes = computed(() => [
 }
 
 .typography {
+  --typography-size-xxxl: 49px;
+  --typography-size-xxl: 39px;
+  --typography-size-xl: 31px;
+  --typography-size-l: 25px;
+  --typography-size-m: 20px;
+  --typography-size-s: 16px;
+  --typography-size-xs: 13px;
+  --typography-size-xxs: 10px;
+  
   margin-top: 0;
   font-style: normal;
 
@@ -102,35 +111,37 @@ const classes = computed(() => [
 
   &--size- {
     &xxxl {
-      font-size: 49px;
+      font-size: var(--typography-size-xxxl);
     }
 
     &xxl {
-      font-size: 39px;
+      font-size: var(--typography-size-xxl);
     }
 
     &xl {
-      font-size: 31px;
+      font-size: var(--typography-size-xl);
     }
 
     &l {
-      font-size: 25px;
+      font-size: var(--typography-size-l);
     }
 
     &m {
-      font-size: 20px;
+      font-size: var(--typography-size-m);
     }
 
     &s {
-      font-size: 16px;
+      font-size: var(--typography-size-s);
     }
 
     &xs {
-      font-size: 13px;
+      font-size: var(--typography-size-xs);
+      ;
     }
 
     &xxs {
-      font-size: 10px;
+      font-size: var(--typography-size-xxs);
+      ;
     }
   }
 }

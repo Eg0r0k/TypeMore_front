@@ -20,7 +20,7 @@
 import { Icon } from '@iconify/vue'
 import { computed, onMounted, ref, nextTick } from 'vue'
 import { useFocus } from '@vueuse/core'
-import { Theme } from './types/themes';
+import { Theme } from '../themes/types/themes';
 enum NavigationDirection {
   Up = 'up',
   Down = 'down',

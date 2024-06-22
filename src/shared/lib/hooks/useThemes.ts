@@ -1,4 +1,4 @@
-import { Theme } from '@/features/modal/console/types/themes'
+import { Theme } from '@/features/modal/themes/types/themes'
 import { cachedFetchJson } from '../helpers/json-files'
 import { computed, onMounted, onUnmounted, reactive, ref, watchEffect } from 'vue'
 import { useTestStateStore } from '@/entities/test'
@@ -90,11 +90,6 @@ export function useThemes() {
       attributes: true,
       attributeFilter: ['style']
     })
-
-    const savedThemeName = localStorage.getItem('themeName')
-    if (savedThemeName) {
-      applyTheme(savedThemeName)
-    }
   })
   onUnmounted(() => {
     styleObserver.disconnect()
