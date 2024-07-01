@@ -152,7 +152,7 @@ const copyTheme = async () => {
     })
   }
 }
-const debouncedUpdateColor = useDebounceFn(updateColor, 100, { maxWait: 125 })
+const debouncedUpdateColor = useDebounceFn(updateColor, 200, { maxWait: 200 })
 
 onMounted(() => {
   getTheme()

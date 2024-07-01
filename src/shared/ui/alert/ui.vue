@@ -23,8 +23,10 @@ import { useSound } from '@vueuse/sound';
 import { computed, onMounted, ref } from 'vue';
 import Error from '/static/sounds/Error.mp3'
 import Info from '/static/sounds/Stop.mp3'
+import { useConfigStore } from '@/entities/config/model/store';
 const titleId = `alert-title-${Date.now()}`
 const messageId = `alert-message-${Date.now()}`
+const { config } = useConfigStore()
 enum AlertType {
   Error = "error",
   Info = "info",
@@ -46,10 +48,10 @@ const defaultTitles = {
   [AlertType.Warning]: 'Warning',
 };
 const alertSounds = {
-  [AlertType.Error]: useSound(Info, { volume: 0.5 }),
-  [AlertType.Info]: useSound(Info, { volume: 0.5 }),
-  [AlertType.Success]: useSound(Error, { volume: 0.5 }),
-  [AlertType.Warning]: useSound(Info, { volume: 0.5 }),
+  [AlertType.Error]: useSound(Info, { volume: config.soundVolume }),
+  [AlertType.Info]: useSound(Info, { volume: config.soundVolume }),
+  [AlertType.Success]: useSound(Error, { volume: config.soundVolume }),
+  [AlertType.Warning]: useSound(Info, { volume: config.soundVolume }),
 }
 
 const isVisible = ref(true)

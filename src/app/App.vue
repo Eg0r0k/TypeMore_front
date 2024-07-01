@@ -51,6 +51,7 @@ const ModalWindow = defineAsyncComponent(() =>
 )
 const { applyTheme, themesList } = useThemes()
 const { config } = useConfigStore()
+
 const lang = ref()
 provide('themes', themesList)
 provide('lang', lang)

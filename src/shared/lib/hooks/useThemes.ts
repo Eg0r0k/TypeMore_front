@@ -1,10 +1,10 @@
 import { Theme } from '@/features/modal/themes/types/themes'
 import { cachedFetchJson } from '../helpers/json-files'
-import { computed, onMounted, onUnmounted, reactive, ref, watchEffect } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, watchEffect } from 'vue'
 import { useTestStateStore } from '@/entities/test'
+import { useConfigStore } from '@/entities/config/model/store'
 
 const root = document.documentElement
-export const themesList = ref<Theme[]>([])
 const cssVariables = [
   '--bg-color',
   '--text-color',
@@ -25,10 +25,13 @@ const defaultTheme: Theme = {
   '--sub-alt-color': '#1c1c1c',
   '--error-extra-color': '#791717'
 } as const
+
 type CSSVariable = (typeof cssVariables)[number]
+
 export function useThemes() {
   const themesList = reactive<Theme[]>([])
   const refColors = reactive<Record<CSSVariable, string>>({} as Record<CSSVariable, string>)
+  const configStore = useConfigStore()
 
   const updateRefColors = () => {
     const computedStyle = getComputedStyle(root)
@@ -36,6 +39,7 @@ export function useThemes() {
       refColors[variable] = computedStyle.getPropertyValue(variable)
     })
   }
+
   const styleObserver = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
@@ -43,6 +47,7 @@ export function useThemes() {
       }
     })
   })
+
   watchEffect(() => {
     updateRefColors()
   })
@@ -52,38 +57,41 @@ export function useThemes() {
     themesList.splice(0, themesList.length, ...themes.sort((a, b) => a.name.localeCompare(b.name)))
     return themesList
   }
+
   const applyColor = (theme: Theme) => {
     Object.entries(theme).forEach(([key, val]) => {
       root.style.setProperty(key, val)
     })
   }
+
   const useConfigTheme = async (name: string): Promise<Theme> => {
     await fetchThemes()
     return themesList.find((theme) => theme.name === name) || defaultTheme
   }
+
   const currentTheme = computed(() => {
-    return (
-      themesList.find((theme) => theme.name === localStorage.getItem('themeName')) || defaultTheme
-    )
+    return themesList.find((theme) => theme.name === configStore.config.theme) || defaultTheme
   })
+
   const applyTheme = async (name: string): Promise<void> => {
     const testState = useTestStateStore()
     const theme = await useConfigTheme(name)
     applyColor(theme)
-    localStorage.setItem('themeName', name)
 
-   
     testState.setLoading(false)
   }
+
   onMounted(() => {
     styleObserver.observe(root, {
       attributes: true,
       attributeFilter: ['style']
     })
   })
+
   onUnmounted(() => {
     styleObserver.disconnect()
   })
+
   return {
     themesList,
     refColors,

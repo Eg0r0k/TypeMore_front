@@ -1,7 +1,7 @@
 import { shuffle } from '@/shared/lib/helpers/arrays'
 import { useConfigStore } from '../../config/model/store'
 import { defineStore } from 'pinia'
-import { computed, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { useTestStateStore } from '../../test'
 import { LanguageObj } from '@/shared/constants/type'
 import { logRandomIndex } from '@/shared/lib/helpers/misc'
@@ -13,7 +13,6 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
   const words = ref<any>([])
   const limit = ref(100)
 
-  const currentLanguage = computed(() => config.language.split('_')[0])
   const retWords: ret = reactive({
     words: [],
     sectionIndexes: [],
@@ -53,35 +52,38 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
   const reset = () => {
     retWords.words = []
   }
+  const test = (from: number, to: number) => {
+    retWords.words.splice(from, to)
+  }
 
   const generateWords = async (lang: LanguageObj) => {
     if (testState.isRepeated) {
       return
     }
-    const shuffledWords = [...lang.words]
+    reset()
 
     let stop = false
-    const limit = config.words
+    const limit = config.words - 1
     let i = 0
     while (!stop) {
       const nextWord = getNextWord(lang, limit, i)
       retWords.words.push(nextWord)
-      if (retWords.words.length >= limit) {
+      if (retWords.words.length > limit) {
         stop = true
       }
       i++
     }
   }
   const getCurrent = (): string => {
-    console.log(testState.currentWordElementIndex)
+    // console.log(testState.currentWordElementIndex)
     return retWords.words[testState.currentWordElementIndex] ?? ''
   }
 
   const getNextWord = (lang: LanguageObj, limit: number, index: number) => {
-    console.debug('Generated word: ', {
-      isRepeated: testState.isRepeated,
-      lang: currentLanguage
-    })
+    // console.debug('Generated word: ', {
+    //   isRepeated: testState.isRepeated,
+    //   lang: currentLanguage
+    // })
     const randomWord = lang.words[logRandomIndex(lang.words.length)]
     return randomWord
   }
@@ -100,5 +102,5 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
     shuffle(shuffedIndexes.value)
   }
 
-  return { getWordsLimit, shuffleWords, retWords, generateWords, getCurrent, words, reset }
+  return { getWordsLimit, shuffleWords, retWords, generateWords, getCurrent, words, reset, test }
 })

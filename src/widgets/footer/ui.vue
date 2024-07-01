@@ -36,23 +36,25 @@ import { FooterLink } from './model/types/links'
 import { ThemesModal } from '@/features/modal/themes'
 import { InputModal } from '@/features/modal/input'
 import { useConfigStore } from '@/entities/config/model/store'
+import { CookieModal } from '@/features/modal/cookie'
+import { CaptchaModal } from '@/features/modal/captcha'
 const navLinks: FooterLink[] = FOOTER_LINKS
 const modal = useModal()
 const { config } = useConfigStore()
 // Call function to open in modal component
 const handleOnClickOpenTheme = () => {
-  modal.open(ThemesModal, [], true)
+  modal.open(ThemesModal, [], 'top')
 }
 // Call function to open in modal component
 const handleOnClickOpenInput = () => {
-  modal.open(InputModal, [], false)
+  modal.open(CaptchaModal, [])
 }
 </script>
 
 <style lang="scss" scoped>
 .footer {
   display: flex;
-  width: 100%;
+
   flex-wrap: wrap;
   z-index: var(--navigation-z);
 

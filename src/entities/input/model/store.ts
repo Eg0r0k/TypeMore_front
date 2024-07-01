@@ -1,10 +1,16 @@
-import { reactive, ref } from 'vue'
+import { computed, ComputedRef, markRaw, reactive, Ref, ref, shallowRef } from 'vue'
 import { Input } from './types/input'
 import { defineStore } from 'pinia'
 import { useTestStateStore } from '../../test'
 import { useWordGeneratorStore } from '../../generator/model/store'
+import { useSounds } from '@/shared/lib/hooks/useSounds'
+import { useTimerStore } from '@/entities/timer/model/store'
+import { useAccuracy } from '@/shared/lib/hooks/useAccuracy'
+import { useInputState } from '@/shared/lib/hooks/useInputState'
+import { roundTo2 } from '@/shared/lib/helpers/numbers'
+
 // Keys kodes to track
-const keysToTrack = [
+const KAYS_TO_TRACK = [
   'KeyA',
   'KeyB',
   'KeyC',
@@ -74,144 +80,266 @@ const keysToTrack = [
   'IntlBackslash',
   'NoCode'
 ]
+
 type Keydata = {
   timestamp: number
   index: number
 }
-type ErrorHistoryObject = {
+
+interface ErrorHistoryObject {
   count: number
-  words: number[]
+  words: string[]
 }
+
+interface Accuracy {
+  correct: number
+  incorrect: number
+}
+
+interface InputState {
+  current: string
+  history: string[]
+}
+
 export const useInputStore = defineStore('input', () => {
   const keyDownData: Record<string, Keydata> = reactive({})
   const missedWords = ref<Record<string, number>>({})
-  const errorHistory: ErrorHistoryObject[] = reactive([])
+  const errorHistory = ref<ErrorHistoryObject>({ count: 0, words: [] })
+  const letterClasses = shallowRef<string[][]>([])
+  const currentWord = computed(() => generator.getCurrent())
+
+  const timerStore = useTimerStore()
+
+  const characterCounts = ref({
+    correct: 0,
+    incorrect: 0,
+    extra: 0,
+    total: 0,
+    correctSpaces: 0,
+    incorrectSpaces: 0
+  })
+
+  const wordInputs = ref<string[]>([])
   const currentKeypressCount = ref(0)
   const testState = useTestStateStore()
-  const generator = useWordGeneratorStore()
-  const input: Input = reactive({
-    current: '',
-    history: [],
-    historyLength: 0,
-    length: 0
-  })
-  const keypressTimings = reactive({
-    spacing: {
-      first: -1,
-      last: -1,
-      array: [] as number[]
-    },
-    duration: {
-      array: [] as number[]
-    }
-  })
+  const generator = markRaw(useWordGeneratorStore())
+  const { accuracy, incrementAccuracy, resetAccuracy } = useAccuracy()
+  const {
+    input,
+    inputHistoryLength,
+    inputLength,
+    resetCurrent,
+    resetHistory,
+    getCurrent,
+    setCurrent,
+    popHistory,
+    pushToHistory
+  } = useInputState()
+  const { playClickSound } = useSounds()
+
   const corrected = reactive({
     current: '',
-    history: []
+    history: [] as string[]
   })
-  const resetKeypressTimings = (): void => {
-    keypressTimings.spacing.first = -1
-    keypressTimings.spacing.last = -1
-    keypressTimings.spacing.array = []
-    keypressTimings.duration.array = []
+  const calculateTestSeconds = computed(() => {
+    return testState.isActive ? timerStore.getTime() : timerStore.time
+  })
+  const wpmAndRaw = computed(() => {
+    console.log(calculateTestSeconds)
+    const testSeconds = calculateTestSeconds.value
+    const correctChars = characterCounts.value.correct + characterCounts.value.correctSpaces
+    const allChars = characterCounts.value.total
+
+    const wpm = roundTo2(correctChars / 5 / (testSeconds / 60))
+    const raw = roundTo2((allChars * (60 / testSeconds)) / 5)
+
+    return {
+      wpm: isNaN(Number(wpm)) ? 0 : wpm,
+      raw: isNaN(Number(raw)) ? 0 : raw
+    }
+  })
+
+  const wpm = computed(() => Math.round(wpmAndRaw.value.wpm))
+  const raw = computed(() => Math.round(wpmAndRaw.value.raw))
+  const handleChar = (char: string, charIndex: number): void => {
+    if (char === '…' && generator.getCurrent()[charIndex] !== '…') {
+      for (let i = 0; i < 3; i++) handleChar('.', charIndex + i)
+      return
+    }
+
+    if (char === 'œ' && generator.getCurrent()[charIndex] !== 'œ') {
+      handleChar('o', charIndex)
+      handleChar('e', charIndex + 1)
+      return
+    }
+
+    if (char === 'æ' && generator.getCurrent()[charIndex] !== 'æ') {
+      handleChar('a', charIndex)
+      handleChar('e', charIndex + 1)
+      return
+    }
+
+    if (char !== '\n' && char !== '\t' && /\s/.test(char)) {
+      handleSpace()
+      return
+    }
+    console.debug(memoizedIsCharCorrect.value(char, charIndex), char, charIndex)
+    const thisCharCorrect = memoizedIsCharCorrect.value(char, charIndex)
+    incrementAccuracy(thisCharCorrect)
+    console.debug(char, thisCharCorrect, charIndex)
+    incrementCharacterCount(char, thisCharCorrect, charIndex)
+    if (!thisCharCorrect && generator.getCurrent().charAt(charIndex) === '\n') {
+      if (input.current === '') return
+      char = ' '
+    }
+    if (thisCharCorrect) {
+      //
+    } else {
+      //
+    }
+  }
+  const memoizedIsCharCorrect = computed(() => {
+    const memo = new Map<string, boolean>()
+    return (char: string, charIndex: number): boolean => {
+      const key = `${char}-${charIndex}`
+      if (!memo.has(key)) {
+        memo.set(key, generator.getCurrent()[charIndex] === char)
+      }
+      return memo.get(key)!
+    }
+  })
+  const resetCharacterCounts = (): void => {
+    Object.keys(characterCounts.value).forEach((key) => {
+      characterCounts.value[key as keyof typeof characterCounts.value] = 0
+    })
   }
 
-  const reset = (): void => {
-    resetCurrent()
-    resetHistory()
+  const handleInput = (event: Event): void => {
+    if (!event.isTrusted) {
+      ;(event.target as HTMLInputElement).value = ''
+      return
+    }
+
+    const newValue = (event.target as HTMLInputElement).value.normalize()
+    const oldValue = input.current
+    const changedChars = newValue.slice(oldValue.length)
+    changedChars.split('').forEach((char, i) => handleChar(char, oldValue.length + i))
+    input.current = newValue
+    wordInputs.value[testState.currentWordElementIndex] = input.current
+    updateLetterClasses()
+  }
+  const incrementKeypressErrors = () => {
+    errorHistory.value.count++
+  }
+  const handleSpace = () => {
+    console.debug('space')
+    if (!testState.isActive || input.current === '') return
+
+    const isWordCorrect = currentWord.value === input.current
+    incrementAccuracy(isWordCorrect)
+    wordInputs.value[testState.currentWordElementIndex] = input.current
+
+    if (isWordCorrect) {
+      characterCounts.value.correctSpaces++
+
+      pushToHistory()
+      testState.incrementWordIndex()
+    } else {
+      characterCounts.value.incorrectSpaces++
+      pushMissedWords(currentWord.value)
+      testState.incrementWordIndex()
+      incrementKeypressErrors()
+      pushToHistory()
+    }
+    incrementKeypressCount()
+    characterCounts.value.total++
+    if (testState.currentWordElementIndex === generator.retWords.words.length) {
+      console.debug('test finished')
+      testState.finish()
+      return
+    }
+    updateLetterClasses()
   }
 
-  const resetCurrent = (): void => {
-    input.current = ''
-  }
-  const resetHistory = (): void => {
-    input.history = []
-    input.historyLength = 0
-  }
-  const getCurrent = (): string => {
-    return input.current
-  }
-  const setCurrent = (val: string): void => {
-    input.current = val
-    input.length = input.current.length
-  }
-  const popHistory = (): string => {
-    const ret = input.history.pop() ?? ''
-    input.historyLength = input.history.length
-    return ret
-  }
+  const incrementCharacterCount = (char: string, isCorrect: boolean, charIndex: number): void => {
+    characterCounts.value.total++
 
-  const pushToHistory = (): void => {
-    input.history.push(input.current)
-    input.historyLength = input.history.length
-    resetCurrent()
+    if (isCorrect) {
+      characterCounts.value.correct++
+    } else {
+      if (charIndex >= currentWord.value.length) {
+        characterCounts.value.extra++
+      } else {
+        characterCounts.value.incorrect++
+      }
+    }
   }
 
   const pushMissedWords = (word: string): void => {
     missedWords.value[word] = (missedWords.value[word] || 0) + 1
   }
 
-  const handleSpace = () => {
-    console.log('space')
-    if (!testState.isActive || input.current === '') return
-    const currentWord = generator.getCurrent()
-    const isWordCorrect = currentWord === input.current
-    if (isWordCorrect) {
-      pushToHistory()
-      incrementKeypressCount()
-      testState.incrementWordIndex()
-    } else {
-      pushMissedWords(currentWord)
-      pushToHistory()
-      incrementKeypressCount()
-      testState.incrementWordIndex()
-    }
-  }
-
-  const restart = () => {
+  const clearAllInputData = () => {
+    resetCurrent()
+    resetHistory()
+    corrected.current = ''
+    corrected.history = []
+    wordInputs.value = []
+    resetCharacterCounts()
+    resetAccuracy()
     missedWords.value = {}
+    errorHistory.value = { count: 0, words: [] }
+    letterClasses.value = []
   }
 
-  const handleChars = () => {}
-
-  const backspaceToPrevious = (): void => {
-    if (
-      input.history.length === 0 ||
-      input.current.length !== 0 ||
-      testState.currentWordElementIndex === 0
-    ) {
+  const initializeLetterClasses = () => {
+    letterClasses.value = generator.retWords.words.map((word) =>
+      Array.from({ length: word.length }, () => '')
+    )
+  }
+  const updateLetterClasses = (): void => {
+    const currentWord = testState.currentWordElementIndex
+    if (currentWord >= generator.retWords.words.length) {
+      console.warn('Trying to access word beyond array length. Stopping update.')
       return
     }
+
+    const originalWord = generator.retWords.words[currentWord]
+    const currentInput = wordInputs.value[currentWord] || ''
+
+    letterClasses.value[currentWord] = originalWord
+      .split('')
+      .map((char, index) =>
+        index >= currentInput.length ? '' : currentInput[index] === char ? 'correct' : 'incorrect'
+      )
+  }
+  const getLetterClass = (wordIndex: number, letterIndex: number): string =>
+    letterClasses.value[wordIndex]?.[letterIndex] ?? ''
+
+  const getExtraLetters = (wordIndex: number): string => {
+    const originalWord = generator.retWords.words[wordIndex]
+    const currentInput = wordInputs.value[wordIndex] || ''
+    return currentInput.length > originalWord.length ? currentInput.slice(originalWord.length) : ''
+  }
+
+  const backspaceToPrevious = (): void => {
+    if (!testState.isActive) return
+    console.log(input.current.length)
+    if (input.current.length !== 0) return
+
+    if (input.history.length === 0 || testState.currentWordElementIndex === 0) return
     testState.setCurrentWordElementIndex(testState.currentWordElementIndex - 1)
     input.current = popHistory()
+
+    wordInputs.value[testState.currentWordElementIndex] = input.current
+    updateLetterClasses()
   }
 
   const incrementKeypressCount = () => {
     currentKeypressCount.value++
   }
 
-  const recordKeyDown = (now: number, key: string): void => {
-    if (!keysToTrack.includes(key)) {
-      console.debug('Key not tracked', now, key)
-      return
-    }
-    if (keypressTimings.spacing.first === -1) {
-      keypressTimings.spacing.first = now
-    } else {
-      keypressTimings.spacing.array.push(now - keypressTimings.spacing.last)
-    }
-    keypressTimings.spacing.last = now
-  }
-  const recordKeyUp = (now: number, key: string): void => {
-    if (!keysToTrack.includes(key)) {
-      console.debug('Key not tracked', now, key)
-      return
-    }
-    keypressTimings.duration.array.push(now - keypressTimings.spacing.last)
-  }
-
   return {
-    reset,
     setCurrent,
     resetCurrent,
     getCurrent,
@@ -219,10 +347,19 @@ export const useInputStore = defineStore('input', () => {
     missedWords,
     resetHistory,
     input,
+    getExtraLetters,
     backspaceToPrevious,
     handleSpace,
-    recordKeyDown,
-    recordKeyUp,
-    keypressTimings
+    initializeLetterClasses,
+    getLetterClass,
+    accuracy,
+    characterCounts,
+    clearAllInputData,
+    wpm,
+    raw,
+    wpmAndRaw,
+    isCharCorrect: memoizedIsCharCorrect.value,
+    handleInput,
+    wordInputs
   }
 })

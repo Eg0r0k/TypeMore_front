@@ -26,6 +26,9 @@ const props = defineProps<Props>()
 <style scoped lang="scss">
 .list {
   &__link {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
     text-decoration: none;
     display: flex;
     align-items: center;

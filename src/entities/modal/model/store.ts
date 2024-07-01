@@ -7,21 +7,28 @@ export const useModal = defineStore('modal', () => {
     isOpen: false,
     view: null,
     actions: [],
-    isCommandLine: false
+    alignment: 'center',
+    justify: 'center'
   })
 
-  const open = (view: any, actions?: ModalAction[], isCommandLine = false) => {
+  const open = (
+    view: any,
+    actions?: ModalAction[],
+    alignment: 'top' | 'bottom' | 'center' | 'none' = 'center',
+    justify: 'left' | 'right' | 'center' | 'none' = 'center'
+  ) => {
     modal.isOpen = true
     modal.view = markRaw(view)
     modal.actions = actions || []
-    modal.isCommandLine = isCommandLine
+    modal.alignment = alignment
+    modal.justify = justify
   }
 
   const close = () => {
     modal.isOpen = false
     modal.view = null
     modal.actions = []
-    modal.isCommandLine = false
+    modal.alignment = 'none'
   }
 
   return { ...toRefs(modal), open, close }

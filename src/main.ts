@@ -1,5 +1,5 @@
 import './app/main.scss'
-import { createApp } from 'vue'
+import { createApp, nextTick } from 'vue'
 import { createPinia } from 'pinia'
 import VueSplide from '@splidejs/vue-splide'
 import App from './app/App.vue'
@@ -13,12 +13,17 @@ import Popper from 'vue3-popper'
 import '@splidejs/vue-splide/css/core'
 
 const app = createApp(App)
+
+app.directive('focus', {
+  mounted: (el: HTMLInputElement) => {
+    nextTick(() => el.focus())
+  }
+})
 const options: InstallOptions = {
   sitekey: import.meta.env.VITE_RECAPTCHA_KEY,
   cnDomains: false
 }
 const pinia = createPinia()
-
 pinia.use(piniaPluginPersistedstate)
 app.use(install, options)
 app.use(pinia)
@@ -26,5 +31,3 @@ app.use(router)
 app.component('Popper', Popper)
 app.use(VueSplide)
 app.mount('#app')
-
-

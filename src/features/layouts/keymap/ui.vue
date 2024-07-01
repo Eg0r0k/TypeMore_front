@@ -14,7 +14,7 @@ import { onMounted, onUnmounted, reactive, ref } from 'vue'
 const el = ref<HTMLElement | null>(null)
 
 const { x, y, style } = useDraggable(el, {
-  initialValue: { x: (window.innerWidth - 650) / 2, y: (window.innerHeight + 55) / 2 },
+  initialValue: { x: (window.innerWidth - 600) / 2, y: (window.innerHeight + 55) / 2 },
   onMove: ({ x: newX, y: newY }) => {
     const maxX = window.innerWidth - el.value!.offsetWidth
     const maxY = window.innerHeight - el.value!.offsetHeight

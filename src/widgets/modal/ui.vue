@@ -1,8 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition @before-enter="onBeforeEnter" @enter="onEnter" @leave="onLeave" :css="false">
-      <div v-if="isOpen" @keydown.esc="modalStore.close()"
-        :class="{ 'align-start': isCommandLine, 'align-center': !isCommandLine }" tabindex="0" class="modal"
+      <div v-if="isOpen" @keydown.esc="modalStore.close()" :class="classes" tabindex="0" class="modal"
         aria-modal="true">
         <component ref="modal" @click.stop :is="view" :model="model"></component>
 
@@ -16,15 +15,20 @@ import { useModal } from '@/entities/modal/model/store'
 import { onClickOutside } from '@vueuse/core'
 import gsap from 'gsap'
 import { storeToRefs } from 'pinia'
-import { reactive, ref } from 'vue'
-
+import { computed, reactive, ref } from 'vue'
+const classes = computed(() => {
+  return [
+    `alignment-${alignment?.value || 'center'}`,
+    `justify-${justify?.value || 'center'}`
+  ]
+})
 //Provide model
 //Also can provide actions 
 const model = reactive({})
 // Ref to modal component
 const modal = ref(null)
 const modalStore = useModal()
-const { isOpen, isCommandLine, view } = storeToRefs(modalStore)
+const { isOpen, alignment, view, justify } = storeToRefs(modalStore)
 //Catch click outside modal window
 onClickOutside(modal, modalStore.close)
 // Animation for modal window
@@ -58,7 +62,7 @@ const onLeave = (el: Element, done: any) => {
 
 <style lang="scss" scoped>
 .modal {
-  padding: 60px;
+  padding: 60px 15px;
   box-sizing: border-box;
   width: 100%;
   height: 100%;
@@ -71,17 +75,45 @@ const onLeave = (el: Element, done: any) => {
   top: 0;
 
   display: flex;
-  justify-content: center;
-  align-items: center;
+
   overflow: auto;
   z-index: var(--modal-z);
 }
 
-.align-start {
-  align-items: start;
+
+.justify {
+  &-left {
+    justify-content: flex-start;
+  }
+
+  &-right {
+    justify-content: flex-end;
+  }
+
+  &-center {
+    justify-content: center;
+  }
+
+  &-none {
+    justify-content: unset;
+  }
 }
 
-.align-center {
-  align-items: center;
+.alignment {
+  &-top {
+    align-items: flex-start;
+  }
+
+  &-bottom {
+    align-items: flex-end;
+  }
+
+  &-center {
+    align-items: center;
+  }
+
+  &-none {
+    align-items: unset
+  }
 }
 </style>

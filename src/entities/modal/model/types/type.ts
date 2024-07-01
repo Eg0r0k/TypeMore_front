@@ -2,7 +2,8 @@ type Modal = {
   isOpen: boolean
   view: any
   actions?: ModalAction[]
-  isCommandLine?: boolean
+  alignment?: 'top' | 'bottom' | 'center' | 'none'
+  justify?: 'left' | 'right' | 'center' | 'none'
 }
 
 type ModalAction = {

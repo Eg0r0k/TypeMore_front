@@ -8,7 +8,19 @@
                 {{ configStore.config.language }}
             </Button>
             <Typography color="primary">
-                {{ configStore.config.time - timerStore.time }}
+                Timer:{{ configStore.config.time - timerStore.time }}
+            </Typography>
+            <Typography color="primary">
+                State:{{ testState.isActive }}
+            </Typography>
+            <Typography color="primary">
+                Acc:{{ accuracyTest }}% {{ inputStore.accuracy.correct }} {{ inputStore.accuracy.incorrect }}
+            </Typography>
+            <Typography color="primary">
+                Words: {{ testState.currentWordElementIndex }}/{{ configStore.config.words }}
+            </Typography>
+            <Typography color="primary">
+                Wpm/RawWpm: {{ inputStore.wpm }}/{{ inputStore.raw }}
             </Typography>
         </div>
         <Typography size="m" color="primary">
@@ -20,14 +32,11 @@
         </Typography>
         <p v-show="testState.isRepeated">is restarted</p>
         <div class="caps-detected" v-show="capsLockState">CAPS!</div>
-        <input ref="testInput" :disabled="!testState.isActive" @keydown.delete="inputStore.backspaceToPrevious"
-            type="text" v-model="inputStore.input.current" @keydown.space.prevent="inputStore.handleSpace">
-        <div class="words" :class="{ rightToLeft: isRightToLeft }">
-            <p v-for=" (word, index) in generator.retWords.words" :key="`${word}-${index}`" class="word"
-                :class="{ current: index === testState.currentWordElementIndex }">
-                {{ word }}
-            </p>
-        </div>
+        <input v-focus :disabled="!testState.isActive" :value="inputStore.input.current"
+            @input="inputStore.handleInput($event)" @keydown.delete="inputStore.backspaceToPrevious()"
+            @keydown.space.prevent="inputStore.handleSpace()" type="text">
+        <Test :isRightToLeft="isRightToLeft" />
+
 
         <Popper class="refresh__tip" hover arrow :interactive="false" content="Restart test">
             <button @click.stop="restartTest" class="refresh">
@@ -54,8 +63,8 @@ import { useModal } from '@/entities/modal/model/store'
 import { useTimerStore } from '@/entities/timer/model/store'
 import { useWordGeneratorStore } from '@/entities/generator/model/store'
 import { useInputStore } from '@/entities/input/model'
-
-
+import { roundTo2 } from '@/shared/lib/helpers/numbers'
+import { Test } from '@/widgets/test'
 const modal = useModal()
 const testState = useTestStateStore()
 const capsLockState = useKeyModifier('CapsLock')
@@ -64,23 +73,34 @@ const timerStore = useTimerStore()
 const generator = useWordGeneratorStore()
 
 const inputStore = useInputStore()
-
-const testInput = ref(null)
 const isRightToLeft = ref(false)
 const currentLanguage = computed(() => configStore.currentLang)
 
 
 
 
+
+const accuracyTest = computed(() => {
+    const acc = (inputStore.accuracy.correct / (inputStore.accuracy.correct + inputStore.accuracy.incorrect)) * 100
+    return isNaN(acc) ? 100 : roundTo2(acc)
+})
+
+
+
+
+
 const init = async (): Promise<void> => {
     testState.setCurrentWordElementIndex(0)
-    inputStore.reset()
+    inputStore.clearAllInputData()
+    timerStore.resetTimer()
+
     testState.setActive(true)
     generator.reset()
+    inputStore.initializeLetterClasses()
+    timerStore.startTimer()
     try {
         const lang = configStore.config.language
         await configStore.setLanguage(lang)
-
     }
     catch (e) {
         console.error(e)
@@ -93,13 +113,7 @@ const init = async (): Promise<void> => {
     try {
         await generator.generateWords(currentLanguage.value)
 
-        //TODO: Change later
-        if (currentLanguage.value.rightToleft) {
-            isRightToLeft.value = true
-        }
-        else {
-            isRightToLeft.value = false
-        }
+        isRightToLeft.value = !!currentLanguage.value.rightToleft
     }
     catch (e) {
         console.error(e)
@@ -108,7 +122,7 @@ const init = async (): Promise<void> => {
 }
 
 const handleOpenModalLang = (): void => {
-    modal.open(LangModal, [], true)
+    modal.open(LangModal, [], 'top')
 }
 //TODO: add support for: 
 // arabian   - 
@@ -122,7 +136,7 @@ const startTest = async () => {
         //Maybe change later
         if (!currentLanguage.value) return
         await generator.generateWords(currentLanguage.value)
-        timerStore.startTimer()
+
     } catch (error) {
         console.error('Произошла ошибка:', error)
     }
@@ -136,11 +150,12 @@ const restartTest = async (): Promise<void> => {
 }
 
 watch(() => configStore.currentLang, async () => {
+    inputStore.clearAllInputData()
     await init();
 })
-useFocus(testInput, { initialValue: true })
-onMounted(() => {
-    init()
+
+onMounted(async () => {
+    await init()
 })
 
 onUnmounted(() => {
@@ -173,33 +188,6 @@ onUnmounted(() => {
         align-items: center;
         gap: 20px;
     }
-}
-
-.words {
-    display: flex;
-    flex-wrap: wrap;
-    width: 100%;
-    align-content: flex-start;
-    overflow: hidden;
-    height: 142px;
-
-}
-
-.rightToLeft {
-    direction: rtl;
-}
-
-.current {
-    border-bottom: 2px solid var(--error-color);
-}
-
-.word {
-    position: relative;
-    font-size: 32px;
-    line-height: 1em;
-    margin: 8px;
-    color: var(--sub-color);
-    //user-select: none;
 }
 
 .caps-detected {

@@ -6,6 +6,8 @@ export interface Config {
   mode: 'words' | 'free' | 'time'
   backgroundImg: string
   showFps: boolean
+  playSound: boolean
+  soundVolume: number
 }
 //TODO: dont forget to change
 export type LanguageObj = {

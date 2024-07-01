@@ -5,7 +5,7 @@
         <Typography color="main" tag-name="h2" size="xl" class="login__title">Login</Typography>
         <Typography color="primary" size="m">Fill in all fields to login</Typography>
       </div>
-      <Form class="login__body" autocomplete="off" @submit="onSubmit">
+      <Form class="login__body" autocomplete="off" @submit="onSubmit()">
         <TextInput v-bind="emailProps" v-model="email" required placeholder="Email" :error-message="errors.email"
           name="email">
           <Typography color="primary">Email<Typography tagName="span" size="xs" color="error">*</Typography>
@@ -60,7 +60,7 @@ import { useAlertStore } from '@/entities/alert/model';
 import { AlertType } from '@/entities/alert/model/types/alertData';
 
 const schema = yup.object({
-  email: yup.string().email('Invalid email').required('Email is required'),
+  email: yup.string().matches(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/, 'Email must be correct').required('Email is required'),
   password: yup.string().min(6, 'Password must be at least 6 characters').required('Password is required')
 });
 const { handleSubmit, errors, defineField } = useForm({
@@ -88,9 +88,9 @@ const onSubmit = handleSubmit(() => {
   console.log(errors);
   alertStore.addAlert({
     type: AlertType.Error,
-    title: "Error",
+    title: "WTF",
     msg: "Please fill all fields correctly",
-    duration: 1500
+    duration: 0
   });
 });
 </script>

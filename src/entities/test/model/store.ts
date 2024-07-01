@@ -12,6 +12,9 @@ export const useTestStateStore = defineStore('test-state', () => {
   const incrementWordIndex = () => {
     currentWordElementIndex.value++
   }
+  const decrementWordIndex = () => {
+    currentWordElementIndex.value--
+  }
   const setActive = (value: boolean): void => {
     isActive.value = value
   }
@@ -24,10 +27,15 @@ export const useTestStateStore = defineStore('test-state', () => {
   const setCurrentWordElementIndex = (value: number): void => {
     currentWordElementIndex.value = value
   }
+  const finish = () => {
+    isActive.value = false
+  }
   return {
     setActive,
+    finish,
     setRepeated,
     isActive,
+    decrementWordIndex,
     isRepeated,
     setLoading,
     isLoading,
