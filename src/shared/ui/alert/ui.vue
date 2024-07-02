@@ -126,6 +126,7 @@ onMounted(() => {
   --info: #1f78d1;
   --main: #FFFFFF;
   min-width: 320px;
+  width: 100%;
   display: flex;
   flex-direction: row;
   justify-content: space-between;

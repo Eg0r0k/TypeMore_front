@@ -4,6 +4,13 @@ type Modal = {
   actions?: ModalAction[]
   alignment?: 'top' | 'bottom' | 'center' | 'none'
   justify?: 'left' | 'right' | 'center' | 'none'
+  closeOnClickOutside: boolean
+}
+
+interface ModalHandlers {
+  onVerified?: (token: string) => void
+  onError?: () => void
+  onExpired?: () => void
 }
 
 type ModalAction = {
@@ -11,4 +18,4 @@ type ModalAction = {
   callback: (props?: any) => void
 }
 
-export type { Modal, ModalAction }
+export type { Modal, ModalAction, ModalHandlers }

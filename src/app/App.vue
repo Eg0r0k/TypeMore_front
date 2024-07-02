@@ -42,6 +42,8 @@ import { useTestStateStore } from '@/entities/test'
 import { useThemes } from '@/shared/lib/hooks/useThemes'
 import { getLangList } from '@/shared/lib/helpers/json-files'
 import { defineAsyncComponent, onBeforeMount, onMounted, provide, ref } from 'vue'
+import { CookieModal } from '@/features/modal/cookie'
+import { useModal } from '@/entities/modal/model/store'
 
 
 const configStore = useConfigStore()
@@ -51,7 +53,7 @@ const ModalWindow = defineAsyncComponent(() =>
 )
 const { applyTheme, themesList } = useThemes()
 const { config } = useConfigStore()
-
+const modalStore = useModal()
 const lang = ref()
 provide('themes', themesList)
 provide('lang', lang)
@@ -63,9 +65,13 @@ onBeforeMount(async () => {
 onMounted(async () => {
   //Set platform on load window : 'desktop' | 'tablet' | 'mobile'
   lang.value = await getLangList()
-
+  if (!localStorage.getItem('cookieConsentGiven')) {
+    modalStore.open(CookieModal, [], 'bottom', 'right', false);
+  }
 
 })
+
+
 </script>
 <style lang="scss">
 .fade-enter-active,

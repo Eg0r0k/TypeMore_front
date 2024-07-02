@@ -1,10 +1,8 @@
 <template>
   <Teleport to="body">
     <Transition @before-enter="onBeforeEnter" @enter="onEnter" @leave="onLeave" :css="false">
-      <div v-if="isOpen" @keydown.esc="modalStore.close()" :class="classes" tabindex="0" class="modal"
-        aria-modal="true">
+      <div v-if="isOpen" @keydown.esc="handleEscapeKey" :class="classes" tabindex="0" class="modal" aria-modal="true">
         <component ref="modal" @click.stop :is="view" :model="model"></component>
-
       </div>
     </Transition>
   </Teleport>
@@ -28,9 +26,18 @@ const model = reactive({})
 // Ref to modal component
 const modal = ref(null)
 const modalStore = useModal()
-const { isOpen, alignment, view, justify } = storeToRefs(modalStore)
+const { isOpen, alignment, view, justify, closeOnClickOutside } = storeToRefs(modalStore)
 //Catch click outside modal window
-onClickOutside(modal, modalStore.close)
+onClickOutside(modal, () => {
+  if (closeOnClickOutside.value) {
+    modalStore.close()
+  }
+})
+const handleEscapeKey = () => {
+  if (closeOnClickOutside.value) {
+    modalStore.close()
+  }
+}
 // Animation for modal window
 const onBeforeEnter = (el: Element) => {
   gsap.set(el, {
@@ -58,6 +65,7 @@ const onLeave = (el: Element, done: any) => {
     onComplete: done
   })
 }
+
 </script>
 
 <style lang="scss" scoped>

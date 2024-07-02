@@ -58,9 +58,9 @@ import { Form, useForm } from 'vee-validate';
 import * as yup from 'yup';
 import { useAlertStore } from '@/entities/alert/model';
 import { AlertType } from '@/entities/alert/model/types/alertData';
-
+const emailReg = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/)
 const schema = yup.object({
-  email: yup.string().matches(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/, 'Email must be correct').required('Email is required'),
+  email: yup.string().matches(emailReg, 'Email must be correct').required('Email is required'),
   password: yup.string().min(6, 'Password must be at least 6 characters').required('Password is required')
 });
 const { handleSubmit, errors, defineField } = useForm({
