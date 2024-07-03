@@ -1,5 +1,5 @@
 <template>
-  <Teleport to="body">
+  <Teleport to="#app">
     <Transition @before-enter="onBeforeEnter" @enter="onEnter" @leave="onLeave" :css="false">
       <div v-if="isOpen" @keydown.esc="handleEscapeKey" :class="classes" tabindex="0" class="modal" aria-modal="true">
         <component ref="modal" @click.stop :is="view" :model="model"></component>

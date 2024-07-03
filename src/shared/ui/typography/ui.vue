@@ -1,5 +1,5 @@
 <template>
-  <component :is="props.tagName" :href="props.tagName === 'a' ? props.href : ''" :class="classes">
+  <component :is="props.tagName" v-bind="tagName === 'a' ? { href: props.href } : {}" :class="classes">
     <slot></slot>
   </component>
 </template>
@@ -69,7 +69,7 @@ const classes = computed(() => [
   --typography-size-s: 16px;
   --typography-size-xs: 13px;
   --typography-size-xxs: 10px;
-  
+
   margin-top: 0;
   font-style: normal;
 

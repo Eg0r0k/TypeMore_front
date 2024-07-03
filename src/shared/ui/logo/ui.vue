@@ -14,7 +14,6 @@
     </h1>
   </router-link>
 </template>
-<script></script>
 <style lang="scss" scoped>
 //TODO: IDK WHY link TOOOO BIG (its problem becose user can miss click on logo!)
 .logo {
