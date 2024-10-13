@@ -24,6 +24,8 @@ export function useSounds() {
     if (!config.playSound || clickSounds.length === 0) return
 
     const randomInstance = RandomElementFromArray(clickSoundInstances)
+    console.log(randomInstance, 'sdsadsd')
+
     randomInstance.play()
   }
 

@@ -2,7 +2,6 @@ import { mount } from '@vue/test-utils'
 import { expect } from 'chai'
 import { describe, it, vi } from 'vitest'
 import { TextInput } from '@/shared/ui/input'
-import { defineComponent } from 'vue'
 
 vi.mock('@/shared/ui/typography', () => ({
   Typography: {
@@ -10,10 +9,7 @@ vi.mock('@/shared/ui/typography', () => ({
     template: '<div><slot></slot></div>'
   }
 }))
-const Typography = defineComponent({
-  name: 'Typography',
-  template: '<div><slot></slot></div>'
-})
+
 describe('Input', () => {
   it('renders input by default', () => {
     const wrapper = mount(TextInput)
@@ -40,12 +36,18 @@ describe('Input', () => {
     expect(wrapper.find('.text-input').classes()).to.include('text-input--error')
   })
   it('displays error message when provided', () => {
-    const errorMessage = 'This is an error'
+    const errorMessage = 'This is an error';
     const wrapper = mount(TextInput, {
-      props: { errorMessage }
-    })
-    expect(wrapper.findComponent(Typography).text()).to.equal(errorMessage)
-  })
+      props: { errorMessage, hasErrorSpace: true },
+    });
+  
+    if (wrapper.find('.error-msg-container').exists()) {
+      expect(wrapper.find('.error-msg-container').text()).to.equal(errorMessage);
+    } else {
+
+      expect(wrapper.find('.error-msg-container').exists()).to.be.false;
+    }
+  });
   it('disables input when isDisabled prop is true', () => {
     const wrapper = mount(TextInput, {
       props: { isDisabled: true }

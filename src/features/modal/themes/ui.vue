@@ -1,9 +1,9 @@
 <template>
-  <ConsoleModal v-model="configStore.config.theme" :items="themeList" search-key="name"
+  <ConsoleModal :model="configStore.config.theme" :items="themeList" search-key="name"
     :active-item="configStore.config.theme" @item-selected="changeTheme">
-    <template #items="{ filteredItems, selectItems, focusedItems }">
+    <template #items="{ filteredItems, selectItem, focusedItems }">
       <div v-for="(theme, index) in filteredItems" :key="theme.name"
-        :aria-selected="theme.name === configStore.config.theme" role="option" class="theme" @click="selectItems(theme)"
+        :aria-selected="theme.name === configStore.config.theme" role="option" class="theme" @click="selectItem(theme)"
         :class="{
           active: theme.name === configStore.config.theme,
           focused: index === focusedItems
@@ -28,16 +28,13 @@ import { Theme } from './types/themes'
 import { Typography } from '@/shared/ui/typography'
 import { useConfigStore } from '@/entities/config/model/store'
 
-
 const configStore = useConfigStore()
 const themeList = inject<Ref<Theme[]>>('themes')
 
 const changeTheme = async (theme: Theme): Promise<void> => {
-
   await configStore.setTheme(theme.name)
 }
 </script>
-
 <style lang="scss" scoped>
 .active {
   background-color: var(--sub-color);

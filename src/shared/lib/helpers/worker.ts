@@ -7,7 +7,11 @@ interface WorkerMessage {
   command: string
   time?: number
 }
-
+/**
+ * Handles incoming messages to the worker and executes commands (start, reset, setTime).
+ * 
+ * @param event - The message event containing the command and optional time.
+ */
 self.onmessage = (event: MessageEvent<WorkerMessage>) => {
   const { command, time } = event.data
 
@@ -27,7 +31,12 @@ self.onmessage = (event: MessageEvent<WorkerMessage>) => {
       throw new Error(`Unknown command: ${command}`)
   }
 }
-
+/**
+ * Starts the timer with the specified configuration time.
+ * 
+ * @param time - The time duration for the timer.
+ * @returns Return void if timer <= 0
+ */
 function startTimer(time: number | undefined) {
   if (typeof time !== 'number' || time <= 0) return
   isRunning = true
@@ -35,7 +44,9 @@ function startTimer(time: number | undefined) {
   timer = 0
   timerStep()
 }
-
+/**
+ * Resets the timer, stopping it and clearing the timeout if it exists.
+ */
 function resetTimer() {
   timer = 0
   isRunning = false
@@ -44,10 +55,18 @@ function resetTimer() {
     clearTimeout(timeoutId)
   }
 }
+/**
+ * Sets the configuration time for the timer.
+ * 
+ * @param time - The time duration to set for the timer.
+ */
 function setConfigTime(time: number) {
   configTime = time
 }
-
+/**
+ * Increments the timer and posts the current timer value to the main thread.
+ * If the timer reaches the configured time, it stops and sends a stop command.
+ */
 function timerStep() {
   if (!isRunning) return
 

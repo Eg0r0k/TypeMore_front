@@ -6,9 +6,9 @@ export default {
   fontSize: 1,
   language: 'russian',
   theme: 'VS Code',
-  mode: 'words',
+  mode: 'time',
   backgroundImg: '',
-  showFps: false,
+  showFps: true,
   playSound: true,
   soundVolume: 0.5
 } as Config

@@ -1,7 +1,6 @@
 type Modal = {
   isOpen: boolean
   view: any
-  actions?: ModalAction[]
   alignment?: 'top' | 'bottom' | 'center' | 'none'
   justify?: 'left' | 'right' | 'center' | 'none'
   closeOnClickOutside: boolean
@@ -13,9 +12,5 @@ interface ModalHandlers {
   onExpired?: () => void
 }
 
-type ModalAction = {
-  label: string
-  callback: (props?: any) => void
-}
 
-export type { Modal, ModalAction, ModalHandlers }
+export type { Modal, ModalHandlers }

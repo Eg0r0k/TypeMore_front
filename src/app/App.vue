@@ -41,7 +41,7 @@ import { useConfigStore } from '@/entities/config/model/store'
 import { useTestStateStore } from '@/entities/test'
 import { useThemes } from '@/shared/lib/hooks/useThemes'
 import { getLangList } from '@/shared/lib/helpers/json-files'
-import { defineAsyncComponent, onBeforeMount, onMounted, provide, ref } from 'vue'
+import { defineAsyncComponent, onBeforeMount, onMounted, onUnmounted, provide, ref } from 'vue'
 import { CookieModal } from '@/features/modal/cookie'
 import { useModal } from '@/entities/modal/model/store'
 
@@ -51,7 +51,7 @@ const testState = useTestStateStore()
 const ModalWindow = defineAsyncComponent(() =>
   import('@/widgets/modal/ui.vue')
 )
-const { applyTheme, themesList } = useThemes()
+const { applyTheme, themesList, themesOnUnmounted } = useThemes()
 const { config } = useConfigStore()
 const modalStore = useModal()
 const lang = ref()
@@ -63,14 +63,17 @@ onBeforeMount(async () => {
 })
 
 onMounted(async () => {
+
   //Set platform on load window : 'desktop' | 'tablet' | 'mobile'
   lang.value = await getLangList()
   if (!localStorage.getItem('cookieConsentGiven')) {
-    modalStore.open(CookieModal, [], 'bottom', 'right', false);
+    modalStore.open(CookieModal, 'bottom', 'right', false);
   }
 
 })
-
+onUnmounted(() => {
+  themesOnUnmounted()
+})
 
 </script>
 <style lang="scss">

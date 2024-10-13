@@ -4,7 +4,6 @@ import { Alert } from '@/shared/ui/alert'
 import { expect } from 'chai'
 import { AlertType } from '@/entities/alert/model/types/alertData'
 import { createPinia, setActivePinia } from 'pinia'
-import { useConfigStore } from '@/entities/config/model/store'
 import { defineComponent } from 'vue'
 
 vi.mock('@/entities/config/model/store', () => ({

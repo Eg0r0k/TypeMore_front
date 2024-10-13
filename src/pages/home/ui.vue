@@ -1,5 +1,5 @@
 <template>
-    <div class="test">
+    <div class="test" v-if="testState.isActive">
         <div class="test__controls">
             <Button @click="handleOpenModalLang" size="s">
                 <template #left-icon>
@@ -27,14 +27,16 @@
             history: {{ inputStore.input.history }}
 
         </Typography>
+
         <Typography size="m" color="primary">
             miss: {{ inputStore.missedWords }}
         </Typography>
         <p v-show="testState.isRepeated">is restarted</p>
         <div class="caps-detected" v-show="capsLockState">CAPS!</div>
         <input v-focus :disabled="!testState.isActive" :value="inputStore.input.current"
-            @input="inputStore.handleInput($event)" @keydown.delete="inputStore.backspaceToPrevious()"
-            @keydown.space.prevent="inputStore.handleSpace()" type="text">
+            @input="inputStore.handleInput($event)" @keydown.delete="handleBackspace($event)"
+            @keydown.space.prevent="inputStore.handleSpace()" type="text"
+            :style="{ direction: isRightToLeft ? 'rtl' : 'ltr' }" />
         <Test :isRightToLeft="isRightToLeft" />
 
 
@@ -43,7 +45,16 @@
                 <Icon width="24" icon="eva:refresh-fill" />
             </button>
         </Popper>
+
         <KeyMap />
+    </div>
+
+    <div v-else>
+        <TestChart />
+
+        <Button @click="restartTest()">
+            Reapat
+        </Button>
     </div>
 </template>
 
@@ -57,7 +68,7 @@ import { Icon } from '@iconify/vue'
 import { Typography } from '@/shared/ui/typography'
 import { LangModal } from '@/features/modal/language'
 import Popper from 'vue3-popper'
-import { useFocus, useKeyModifier } from '@vueuse/core'
+import { useKeyModifier } from '@vueuse/core'
 import { onMounted, onUnmounted, computed, watch, ref } from 'vue'
 import { useModal } from '@/entities/modal/model/store'
 import { useTimerStore } from '@/entities/timer/model/store'
@@ -65,6 +76,7 @@ import { useWordGeneratorStore } from '@/entities/generator/model/store'
 import { useInputStore } from '@/entities/input/model'
 import { roundTo2 } from '@/shared/lib/helpers/numbers'
 import { Test } from '@/widgets/test'
+import { TestChart } from '@/shared/ui/chart'
 const modal = useModal()
 const testState = useTestStateStore()
 const capsLockState = useKeyModifier('CapsLock')
@@ -76,18 +88,20 @@ const inputStore = useInputStore()
 const isRightToLeft = ref(false)
 const currentLanguage = computed(() => configStore.currentLang)
 
-
-
-
-
 const accuracyTest = computed(() => {
     const acc = (inputStore.accuracy.correct / (inputStore.accuracy.correct + inputStore.accuracy.incorrect)) * 100
     return isNaN(acc) ? 100 : roundTo2(acc)
 })
 
+const handleBackspace = (event: KeyboardEvent) => {
+    if (event.key === "Backspace" && inputStore.input.current.length === 0) {
+        inputStore.backspaceToPrevious()
+        if (inputStore.input.current) {
+            inputStore.setWordToInput(inputStore.input.current + " ")
+        }
+    }
 
-
-
+}
 
 const init = async (): Promise<void> => {
     testState.setCurrentWordElementIndex(0)
@@ -122,7 +136,7 @@ const init = async (): Promise<void> => {
 }
 
 const handleOpenModalLang = (): void => {
-    modal.open(LangModal, [], 'top')
+    modal.open(LangModal, 'top')
 }
 //TODO: add support for: 
 // arabian   - 

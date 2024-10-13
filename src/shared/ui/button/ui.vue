@@ -19,17 +19,23 @@
 <script setup lang="ts">
 import { useSlots, computed } from 'vue'
 import { Typography } from '@/shared/ui/typography'
+
+
+type ButtonColor = 'main' | 'gray' | 'error' | 'main-outline' | 'error-outline';
+type ButtonSize = 's' | 'm' | 'l';
+type ButtonDecoration = 'default' | 'none';
+
 //Sizes:
 // s : padding - 4px 8px
 // m : padding - 8px 16px
 // l : padding - 16px 24px
 interface Props {
-  color?: 'main' | 'gray' | 'error' | 'main-outline' | 'error-outline'
-  size?: 's' | 'm' | 'l'
-  decoration?: 'default' | 'none'
-  isDisabled?: boolean
-  buttonLabel?: string
-  isLoading?: boolean
+  color?: ButtonColor;
+  size?: ButtonSize;
+  decoration?: ButtonDecoration;
+  isDisabled?: boolean;
+  buttonLabel?: string;
+  isLoading?: boolean;
 }
 
 const slots = useSlots()
@@ -41,13 +47,13 @@ const props = withDefaults(defineProps<Props>(), {
   buttonLabel: 'Button'
 })
 
-const classes = computed(() => [
-  'button',
-  `button--size-${props.size}`,
-  `button--color-${props.color}`,
-  `decoration--${props.decoration}`,
-  props.isLoading ? 'loading' : ''
-])
+const classes = computed(() => ({
+  button: true,
+  [`button--size-${props.size}`]: true,
+  [`button--color-${props.color}`]: true,
+  [`decoration--${props.decoration}`]: true,
+  loading: props.isLoading,
+}));
 </script>
 
 <style scoped lang="scss">

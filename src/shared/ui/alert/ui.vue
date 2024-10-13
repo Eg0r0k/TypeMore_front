@@ -47,12 +47,14 @@ const defaultTitles = {
   [AlertType.Success]: 'Success',
   [AlertType.Warning]: 'Warning',
 };
-const alertSounds = {
-  [AlertType.Error]: useSound(Info, { volume: config.soundVolume }),
+type AlertSound = ReturnType<typeof useSound>;
+
+const alertSounds: Record<AlertType, AlertSound> = {
+  [AlertType.Error]: useSound(Error, { volume: config.soundVolume }),
   [AlertType.Info]: useSound(Info, { volume: config.soundVolume }),
-  [AlertType.Success]: useSound(Error, { volume: config.soundVolume }),
+  [AlertType.Success]: useSound(Error, { volume: config.soundVolume }), // Возможно, здесь ошибка, должен быть другой звук
   [AlertType.Warning]: useSound(Info, { volume: config.soundVolume }),
-}
+};
 
 const isVisible = ref(true)
 const alertRef = ref(null)
@@ -64,20 +66,14 @@ const props = withDefaults(defineProps<Props>(), {
   duration: DEFAULT_ALERT_DURATION,
   closable: DEFAULT_ALERT_CLOSABLE,
 })
-const iconName = computed(() => {
-  switch (props.type) {
-    case AlertType.Error:
-      return 'pajamas:error';
-    case AlertType.Info:
-      return 'pajamas:information-o';
-    case AlertType.Success:
-      return 'pajamas:check-circle';
-    case AlertType.Warning:
-      return 'pajamas:warning';
-    default:
-      return '';
-  }
-});
+const alertIcons: Record<AlertType, string> = {
+  [AlertType.Error]: 'pajamas:error',
+  [AlertType.Info]: 'pajamas:information-o',
+  [AlertType.Success]: 'pajamas:check-circle',
+  [AlertType.Warning]: 'pajamas:warning',
+};
+const iconName = computed(() => alertIcons[props.type] || '');
+
 
 const emit = defineEmits<{
   (e: 'close'): void;
@@ -86,17 +82,14 @@ const emit = defineEmits<{
 
 const classes = computed(() => [`alert--${props.type}`])
 const playSound = () => {
-  const sound = alertSounds[props.type];
-  if (sound) {
-    sound.play();
-  }
+  alertSounds[props.type]?.play();
 };
 const close = () => {
-  if (!props.closable) return
-  isVisible.value = false
-  emit('close')
+  if (!props.closable) return;
 
-}
+  isVisible.value = false;
+  emit('close');
+};
 onMounted(() => {
   if (props.closable && props.duration > 0) {
     setTimeout(() => {

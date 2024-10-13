@@ -1,12 +1,11 @@
 import { defineStore } from 'pinia'
 import { markRaw, reactive, toRefs } from 'vue'
-import { Modal, ModalAction, ModalHandlers } from './types/type'
+import { Modal, ModalHandlers } from './types/type'
 
 export const useModal = defineStore('modal', () => {
   const modal = reactive<Modal & { handlers: ModalHandlers }>({
     isOpen: false,
     view: null,
-    actions: [],
     alignment: 'center',
     justify: 'center',
     closeOnClickOutside: true,
@@ -15,7 +14,6 @@ export const useModal = defineStore('modal', () => {
 
   const open = (
     view: any,
-    actions?: ModalAction[],
     alignment: 'top' | 'bottom' | 'center' | 'none' = 'center',
     justify: 'left' | 'right' | 'center' | 'none' = 'center',
     closeOnClickOutside: boolean = true,
@@ -23,7 +21,7 @@ export const useModal = defineStore('modal', () => {
   ) => {
     modal.isOpen = true
     modal.view = markRaw(view)
-    modal.actions = actions || []
+
     modal.alignment = alignment
     modal.justify = justify
     modal.closeOnClickOutside = closeOnClickOutside
@@ -33,7 +31,7 @@ export const useModal = defineStore('modal', () => {
   const close = () => {
     modal.isOpen = false
     modal.view = null
-    modal.actions = []
+
     modal.alignment = 'none'
     modal.handlers = {}
   }

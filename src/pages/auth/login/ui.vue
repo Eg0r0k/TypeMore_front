@@ -3,18 +3,18 @@
     <div class="login">
       <div class="login__header">
         <Typography color="main" tag-name="h2" size="xl" class="login__title">Login</Typography>
-        <Typography color="primary" size="m">Fill in all fields to login</Typography>
+  
       </div>
       <Form class="login__body" autocomplete="off" @submit="onSubmit()">
-        <TextInput v-bind="emailProps" v-model="email" required placeholder="Email" :error-message="errors.email"
-          name="email">
+        <TextInput v-bind="emailProps" v-model="email" :hasErrorSpace="true" required placeholder="Email"
+          :error-message="errors.email" name="email">
           <Typography color="primary">Email<Typography tagName="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
 
 
-        <TextInput v-bind="passwordProps" v-model="password" :error-message="errors.password" type="password"
-          placeholder="Password" label="Password*" name="password">
+        <TextInput v-bind="passwordProps" v-model="password" :hasErrorSpace="true" :error-message="errors.password"
+          type="password" placeholder="Password" label="Password*" name="password">
           <Typography color="primary">Password<Typography tagName="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
@@ -61,7 +61,7 @@ import { AlertType } from '@/entities/alert/model/types/alertData';
 const emailReg = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/)
 const schema = yup.object({
   email: yup.string().matches(emailReg, 'Email must be correct').required('Email is required'),
-  password: yup.string().min(6, 'Password must be at least 6 characters').required('Password is required')
+  password: yup.string().min(6, 'Min 6 characters for password').required('Password is required')
 });
 const { handleSubmit, errors, defineField } = useForm({
   validationSchema: schema,

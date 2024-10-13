@@ -1,8 +1,8 @@
 <template>
-  <Teleport to="#app">
-    <Transition @before-enter="onBeforeEnter" @enter="onEnter" @leave="onLeave" :css="false">
+  <Teleport to="#app" :disabled="!isTeleportAvailable">
+    <Transition :onBeforeEnter="onBeforeEnter" :onEnter="onEnter" :onLeave="onLeave" :css="false">
       <div v-if="isOpen" @keydown.esc="handleEscapeKey" :class="classes" tabindex="0" class="modal" aria-modal="true">
-        <component ref="modal" @click.stop :is="view" :model="model"></component>
+        <component ref="modal" @click.stop :is="view" v-bind="model"></component>
       </div>
     </Transition>
   </Teleport>
@@ -12,33 +12,39 @@
 import { useModal } from '@/entities/modal/model/store'
 import { onClickOutside } from '@vueuse/core'
 import gsap from 'gsap'
-import { storeToRefs } from 'pinia'
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+
+const modalStore = useModal()
+const isOpen = computed(() => modalStore.isOpen)
+const alignment = computed(() => modalStore.alignment)
+const view = computed(() => modalStore.view)
+const justify = computed(() => modalStore.justify)
+const closeOnClickOutside = computed(() => modalStore.closeOnClickOutside)
+
 const classes = computed(() => {
   return [
-    `alignment-${alignment?.value || 'center'}`,
-    `justify-${justify?.value || 'center'}`
+    `alignment-${alignment.value || 'center'}`,
+    `justify-${justify.value || 'center'}`
   ]
 })
-//Provide model
-//Also can provide actions 
-const model = reactive({})
-// Ref to modal component
+
+const model = reactive({
+})
+const isTeleportAvailable = ref(false)
 const modal = ref(null)
-const modalStore = useModal()
-const { isOpen, alignment, view, justify, closeOnClickOutside } = storeToRefs(modalStore)
-//Catch click outside modal window
+
 onClickOutside(modal, () => {
   if (closeOnClickOutside.value) {
     modalStore.close()
   }
 })
+
 const handleEscapeKey = () => {
   if (closeOnClickOutside.value) {
     modalStore.close()
   }
 }
-// Animation for modal window
+
 const onBeforeEnter = (el: Element) => {
   gsap.set(el, {
     scale: 0.8,
@@ -46,7 +52,7 @@ const onBeforeEnter = (el: Element) => {
   })
 }
 
-const onEnter = (el: Element, done: any) => {
+const onEnter = (el: Element, done: () => void) => {
   gsap.to(el, {
     duration: 0.35,
     scale: 1,
@@ -56,7 +62,7 @@ const onEnter = (el: Element, done: any) => {
   })
 }
 
-const onLeave = (el: Element, done: any) => {
+const onLeave = (el: Element, done: () => void) => {
   gsap.to(el, {
     duration: 0.35,
     scale: 0.9,
@@ -66,7 +72,13 @@ const onLeave = (el: Element, done: any) => {
   })
 }
 
+onMounted(() => {
+  if (typeof document !== 'undefined') {
+    isTeleportAvailable.value = !!document.querySelector('#app')
+  }
+})
 </script>
+
 
 <style lang="scss" scoped>
 .modal {

@@ -1,20 +1,21 @@
 import { mount } from '@vue/test-utils'
 import { CheckBox } from '@/shared/ui/checkbox'
-import { describe, it } from 'vitest'
-import { expect } from 'chai'
+import { describe, it, expect } from 'vitest'
 
 describe('Checkbox', () => {
   it('renders checkbox label when passed', () => {
     const label = 'Test Label'
     const wrapper = mount(CheckBox, {
-      props: { value: false, label }
+      props: { value: 'test', label },
+      modelValue: false
     })
     expect(wrapper.text()).to.include(label)
   })
 
   it('emits input event when value changes', async () => {
     const wrapper = mount(CheckBox, {
-      props: { value: false }
+      props: { value: 'test' },
+      modelValue: false
     })
     const input = wrapper.find('input')
     await input.setValue(true)
@@ -24,7 +25,8 @@ describe('Checkbox', () => {
 
   it('emits change event when value changes', async () => {
     const wrapper = mount(CheckBox, {
-      props: { value: false }
+      props: { value: 'test' },
+      modelValue: false
     })
     const input = wrapper.find('input')
     await input.setValue(true)
@@ -34,14 +36,18 @@ describe('Checkbox', () => {
 
   it('is disabled when isDisabled prop is true', () => {
     const wrapper = mount(CheckBox, {
-      props: { value: false, isDisabled: true }
+      props: { value: 'test', isDisabled: true },
+      modelValue: false
     })
     const input = wrapper.find('input')
     expect(input.attributes('disabled')).to.not.be.undefined
   })
 
   it('has correct default props', () => {
-    const wrapper = mount(CheckBox)
+    const wrapper = mount(CheckBox, {
+      props: { value: 'test' },
+      modelValue: false
+    })
     const input = wrapper.find('input')
     expect(input.attributes('name')).to.equal('checkbox')
     expect(wrapper.text()).to.be.empty
@@ -49,7 +55,8 @@ describe('Checkbox', () => {
 
   it('v-model works correctly', async () => {
     const wrapper = mount(CheckBox, {
-      props: { value: false }
+      props: { value: 'test' },
+      modelValue: false
     })
     const input = wrapper.find('input')
     await input.setValue(true)

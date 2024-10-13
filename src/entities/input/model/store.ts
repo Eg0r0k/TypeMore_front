@@ -8,6 +8,7 @@ import { useTimerStore } from '@/entities/timer/model/store'
 import { useAccuracy } from '@/shared/lib/hooks/useAccuracy'
 import { useInputState } from '@/shared/lib/hooks/useInputState'
 import { roundTo2 } from '@/shared/lib/helpers/numbers'
+import { useStats } from '@/shared/lib/hooks/useStats'
 
 // Keys kodes to track
 const KAYS_TO_TRACK = [
@@ -108,8 +109,6 @@ export const useInputStore = defineStore('input', () => {
   const letterClasses = shallowRef<string[][]>([])
   const currentWord = computed(() => generator.getCurrent())
 
-  const timerStore = useTimerStore()
-
   const characterCounts = ref({
     correct: 0,
     incorrect: 0,
@@ -136,32 +135,14 @@ export const useInputStore = defineStore('input', () => {
     pushToHistory
   } = useInputState()
   const { playClickSound } = useSounds()
-
+  const { wpm, raw, getStats } = useStats()
   const corrected = reactive({
     current: '',
     history: [] as string[]
   })
-  const calculateTestSeconds = computed(() => {
-    return testState.isActive ? timerStore.getTime() : timerStore.time
-  })
-  const wpmAndRaw = computed(() => {
-    console.log(calculateTestSeconds)
-    const testSeconds = calculateTestSeconds.value
-    const correctChars = characterCounts.value.correct + characterCounts.value.correctSpaces
-    const allChars = characterCounts.value.total
 
-    const wpm = roundTo2(correctChars / 5 / (testSeconds / 60))
-    const raw = roundTo2((allChars * (60 / testSeconds)) / 5)
-
-    return {
-      wpm: isNaN(Number(wpm)) ? 0 : wpm,
-      raw: isNaN(Number(raw)) ? 0 : raw
-    }
-  })
-
-  const wpm = computed(() => Math.round(wpmAndRaw.value.wpm))
-  const raw = computed(() => Math.round(wpmAndRaw.value.raw))
   const handleChar = (char: string, charIndex: number): void => {
+    console.log('char', char)
     if (char === '…' && generator.getCurrent()[charIndex] !== '…') {
       for (let i = 0; i < 3; i++) handleChar('.', charIndex + i)
       return
@@ -183,19 +164,20 @@ export const useInputStore = defineStore('input', () => {
       handleSpace()
       return
     }
-    console.debug(memoizedIsCharCorrect.value(char, charIndex), char, charIndex)
+
     const thisCharCorrect = memoizedIsCharCorrect.value(char, charIndex)
     incrementAccuracy(thisCharCorrect)
-    console.debug(char, thisCharCorrect, charIndex)
+
     incrementCharacterCount(char, thisCharCorrect, charIndex)
     if (!thisCharCorrect && generator.getCurrent().charAt(charIndex) === '\n') {
       if (input.current === '') return
       char = ' '
     }
+    playClickSound()
     if (thisCharCorrect) {
       //
     } else {
-      //
+      console.log('incorrect')
     }
   }
   const memoizedIsCharCorrect = computed(() => {
@@ -220,19 +202,20 @@ export const useInputStore = defineStore('input', () => {
       return
     }
 
-    const newValue = (event.target as HTMLInputElement).value.normalize()
-    const oldValue = input.current
-    const changedChars = newValue.slice(oldValue.length)
-    changedChars.split('').forEach((char, i) => handleChar(char, oldValue.length + i))
-    input.current = newValue
+    const newValue = ref((event.target as HTMLInputElement).value.normalize())
+    const oldValue = ref(input.current)
+    const changedChars = newValue.value.slice(oldValue.value.length)
+    changedChars.split('').forEach((char, i) => handleChar(char, oldValue.value.length + i))
+    input.current = newValue.value
+    console.log(input.current)
     wordInputs.value[testState.currentWordElementIndex] = input.current
+    console.log(wordInputs.value[testState.currentWordElementIndex])
     updateLetterClasses()
   }
   const incrementKeypressErrors = () => {
     errorHistory.value.count++
   }
   const handleSpace = () => {
-    console.debug('space')
     if (!testState.isActive || input.current === '') return
 
     const isWordCorrect = currentWord.value === input.current
@@ -293,6 +276,7 @@ export const useInputStore = defineStore('input', () => {
   }
 
   const initializeLetterClasses = () => {
+    if (letterClasses.value.length > 0) return
     letterClasses.value = generator.retWords.words.map((word) =>
       Array.from({ length: word.length }, () => '')
     )
@@ -321,14 +305,16 @@ export const useInputStore = defineStore('input', () => {
     const currentInput = wordInputs.value[wordIndex] || ''
     return currentInput.length > originalWord.length ? currentInput.slice(originalWord.length) : ''
   }
-
+  const setWordToInput = (value: string) => {
+    input.current = value
+  }
   const backspaceToPrevious = (): void => {
     if (!testState.isActive) return
-    console.log(input.current.length)
     if (input.current.length !== 0) return
 
     if (input.history.length === 0 || testState.currentWordElementIndex === 0) return
-    testState.setCurrentWordElementIndex(testState.currentWordElementIndex - 1)
+
+    testState.decrementWordIndex()
     input.current = popHistory()
 
     wordInputs.value[testState.currentWordElementIndex] = input.current
@@ -357,9 +343,10 @@ export const useInputStore = defineStore('input', () => {
     clearAllInputData,
     wpm,
     raw,
-    wpmAndRaw,
+    setWordToInput,
     isCharCorrect: memoizedIsCharCorrect.value,
     handleInput,
+    getStats,
     wordInputs
   }
 })

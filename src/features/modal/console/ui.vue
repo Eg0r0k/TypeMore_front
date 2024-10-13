@@ -11,7 +11,8 @@
       </div>
     </div>
     <div role="listbox" ref="itemsList" class="console-modal__body">
-      <slot name="items" :focused-items="focusedItemIndex" :select-items="selectItem" :filtered-items="filteredItems" />
+      <slot name="items" :focused-items="focusedItemIndex" :select-item="selectItem" :filtered-items="filteredItems" />
+
     </div>
   </div>
 </template>
@@ -21,19 +22,23 @@ import { Icon } from '@iconify/vue'
 import { computed, onMounted, ref, nextTick } from 'vue'
 import { useFocus } from '@vueuse/core'
 import { Theme } from '../themes/types/themes';
+
 enum NavigationDirection {
   Up = 'up',
   Down = 'down',
 }
+
 const searchQuery = ref('')
 const focusedItemIndex = ref(-1)
 const searchInput = ref<HTMLInputElement | null>(null)
 const itemsList = ref<HTMLElement | null>(null)
+
 interface Props {
   items: Theme[] | Record<string, any>[] | any[];
   searchKey?: string;
   activeItem?: Record<string, any> | string | null
 }
+
 const props = withDefaults(defineProps<Props>(), {
   items: () => [],
   searchKey: 'name',
@@ -54,14 +59,12 @@ const filteredItems = computed(() => {
   });
 });
 
-
-const navigateItems = (direction: NavigationDirection) => {
+const navigateItems = async (direction: NavigationDirection) => {
   const itemsLength = filteredItems.value.length
   if (itemsLength === 0) return
   focusedItemIndex.value = (focusedItemIndex.value + (direction === NavigationDirection.Up ? -1 : 1) + itemsLength) % itemsLength
-  nextTick(centerFocusedItem)
+  await nextTick(centerFocusedItem)
 }
-
 
 const selectItem = (item: any): void => {
   const index = props.items.findIndex((i) => i === item)
@@ -70,25 +73,27 @@ const selectItem = (item: any): void => {
     emit('item-selected', item)
   }
 }
+
 const selectFocusedItem = (): void => {
   if (focusedItemIndex.value >= 0 && focusedItemIndex.value < filteredItems.value.length) {
     selectItem(filteredItems.value[focusedItemIndex.value])
   }
 }
+
 const centerFocusedItem = () => {
   if (itemsList?.value && focusedItemIndex.value !== -1) {
     const focusedItem = itemsList.value.children[focusedItemIndex.value] as HTMLElement
-    const bodyHeight = itemsList.value.clientHeight - 240
-    const itemHeight = focusedItem.clientHeight
-    const offset = (bodyHeight - itemHeight) / 1.1
-    itemsList.value.scrollTop = focusedItem.offsetTop - offset
+    const bodyHeight = itemsList.value.clientHeight;
+
+    const itemHeight = focusedItem.clientHeight;
+    const offset = (bodyHeight - itemHeight) / 2;
+    itemsList.value.scrollTop = focusedItem.offsetTop - offset;
   }
 }
 
 useFocus(searchInput, { initialValue: true })
 
-
-onMounted(() => {
+onMounted(async () => {
   if (!props.items.length) return
   const activeIndex = props.items.findIndex((item) =>
     typeof item === 'string'
@@ -96,7 +101,7 @@ onMounted(() => {
       : props.searchKey && item[props.searchKey] === props.activeItem
   )
   focusedItemIndex.value = activeIndex !== -1 ? activeIndex : -1
-  if (activeIndex !== -1) nextTick(centerFocusedItem)
+  if (activeIndex !== -1) await nextTick(centerFocusedItem)
 })
 </script>
 

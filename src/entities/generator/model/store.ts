@@ -5,6 +5,7 @@ import { reactive, ref } from 'vue'
 import { useTestStateStore } from '../../test'
 import { LanguageObj } from '@/shared/constants/type'
 import { logRandomIndex } from '@/shared/lib/helpers/misc'
+import { getLastChar } from '@/shared/lib/helpers/string'
 
 export const useWordGeneratorStore = defineStore('word-gen', () => {
   const { config } = useConfigStore()
@@ -33,13 +34,7 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
     }
     return limit.value
   }
-  const getLastChar = (word: string): string => {
-    try {
-      return word.charAt(word.length - 1)
-    } catch {
-      return ''
-    }
-  }
+
   const punctuateWord = (previusWord: string, currentWord: string) => {
     const lastChar = getLastChar(previusWord)
   }
@@ -57,25 +52,30 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
   }
 
   const generateWords = async (lang: LanguageObj) => {
-    if (testState.isRepeated) {
-      return
-    }
+    if (testState.isRepeated) return
     reset()
-
     let stop = false
-    const limit = config.words - 1
+    const limit = config.words
     let i = 0
+
     while (!stop) {
-      const nextWord = getNextWord(lang, limit, i)
-      retWords.words.push(nextWord)
-      if (retWords.words.length > limit) {
+      const nextWordsBatch = []
+      for (let j = 0; j < 100 && !stop; j++) {
+        const nextWord = getNextWord(lang, limit, i)
+        nextWordsBatch.push(nextWord)
+        i++
+        if (nextWordsBatch.length >= limit) {
+          stop = true
+        }
+      }
+      retWords.words.push(...nextWordsBatch)
+
+      if (retWords.words.length >= limit) {
         stop = true
       }
-      i++
     }
   }
   const getCurrent = (): string => {
-    // console.log(testState.currentWordElementIndex)
     return retWords.words[testState.currentWordElementIndex] ?? ''
   }
 

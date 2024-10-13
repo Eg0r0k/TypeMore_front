@@ -3,27 +3,27 @@
     <div class="registration">
       <div class="registration__header">
         <Typography color="main" tag-name="h2" size="xl" class="registration__title">Registration</Typography>
-        <Typography color="primary" size="m">Fill in all fields to register</Typography>
+      
       </div>
       <Form class="login__body" autocomplete="off" @submit="onSubmit()">
-        <TextInput required v-bind="usernameProps" v-model="username" :error-message="errors.username"
-          placeholder="Username">
+        <TextInput required v-bind="usernameProps" :hasErrorSpace="true" v-model="username"
+          :error-message="errors.username" placeholder="Username">
           <Typography color="primary">Username<Typography tagName="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
-        <TextInput required v-bind="emailProps" v-model="email" :error-message="errors.email" name="email"
-          placeholder="Email">
+        <TextInput required v-bind="emailProps" v-model="email" :hasErrorSpace="true" :error-message="errors.email"
+          name="email" placeholder="Email">
           <Typography color="primary">Email<Typography tagName="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
-        <TextInput type="password" v-bind="passwordProps" v-model="password" name="password" required
-          :error-message="errors.password" placeholder="Password">
+        <TextInput type="password" v-bind="passwordProps" v-model="password" :hasErrorSpace="true" name="password"
+          required :error-message="errors.password" placeholder="Password">
           <Typography color="primary">Password<Typography tagName="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
-        <TextInput type="password" v-bind="passwordConfirmationProps" v-model="passwordConfirmation"
-          name="passwordConfirmation" required :error-message="errors.passwordConfirmation"
-          placeholder="Confirm password">
+        <TextInput type="password" v-bind="passwordConfirmationProps" :hasErrorSpace="true"
+          v-model="passwordConfirmation" name="passwordConfirmation" required
+          :error-message="errors.passwordConfirmation" placeholder="Confirm password">
           <Typography color="primary">Repeat password<Typography tagName="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
@@ -50,7 +50,7 @@ import { CaptchaModal } from '@/features/modal/captcha';
 import { useModal } from '@/entities/modal/model/store';
 import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
+
 
 const router = useRouter();
 const alertStore = useAlertStore();
@@ -59,9 +59,9 @@ const modalStore = useModal();
 const emailReg = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
 
 const schema = yup.object({
-  username: yup.string().min(3).max(16).required('Username required'),
+  username: yup.string().min(3, 'Username min 3 characters').max(16, 'Username max 16 characters').required('Username required'),
   email: yup.string().matches(emailReg, 'Email must be correct').required('Email is required'),
-  password: yup.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
+  password: yup.string().min(6, 'Min 6 characters for password').required('Password is required'),
   passwordConfirmation: yup.string().oneOf([yup.ref('password')], 'Passwords do not match').required('Password confirmation is required'),
 });
 
@@ -78,14 +78,14 @@ const isSubmitting = ref(false);
 const captchaToken = ref('');
 
 const onSubmit = handleSubmit(async (values) => {
-  console.log('onSubmit:', onSubmit); // Add this line to check if handleSubmit is called
-  console.log('values:', values); // Add this line to check if values are being passed
+  console.log('onSubmit:', onSubmit);
+  console.log('values:', values);
 
   if (isSubmitting.value) return;
   isSubmitting.value = true;
 
   try {
-    modalStore.open(CaptchaModal, [], 'center', 'center', true, {
+    modalStore.open(CaptchaModal, 'center', 'center', true, {
       onVerified: handleCaptchaVerified,
       onError: handleCaptchaError,
       onExpired: handleCaptchaExpired,
@@ -135,7 +135,7 @@ const handleCaptchaExpired = () => {
 };
 
 const submitForm = async (token: string) => {
-  console.log('submitForm:', submitForm); // Add this line to check if submitForm is called
+  console.log('submitForm:', submitForm);
   if (isSubmitting.value) return;
 
   try {
@@ -146,10 +146,10 @@ const submitForm = async (token: string) => {
       password: password.value,
       captchaToken: token
     };
-    console.log('formData:', formData); // Log formData before the API call
+    console.log('formData:', formData);
 
     const response = await mockApiResponse(formData);
-    console.log('response:', response); // Log response inside the promise
+    console.log('response:', response);
 
     if (response.status === 201) {
       alertStore.addAlert({
@@ -185,9 +185,8 @@ const submitForm = async (token: string) => {
   }
 };
 
-// Mock API response function
 const mockApiResponse = async (formData: any) => {
-  console.log('mockApiResponse:', mockApiResponse); // Add this line to check if mockApiResponse is called
+  console.log('mockApiResponse:', mockApiResponse);
 
   await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
 
@@ -199,7 +198,7 @@ const mockApiResponse = async (formData: any) => {
     return { status: 400, data: { error: 'Invalid captcha token' } };
   }
 
-  return { status: 201, data: {} }; // Successful registration
+  return { status: 201, data: {} }; 
 };
 
 watch(() => modalStore.isOpen, (isOpen) => {

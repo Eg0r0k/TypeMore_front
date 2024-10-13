@@ -1,11 +1,12 @@
 <template>
     <ConsoleModal @item-selected="changeLang" v-model="configStore.config.language" search-key="name" :items="langList"
         :active-item="configStore.config.language">
-        <template #items="{ filteredItems, focusedItems, selectItems }">
-            <div class="lang"   v-for="(lang, index) in filteredItems" :key="index" :class="{
+        <template #items="{ filteredItems, focusedItems, selectItem }">
+
+            <div class="lang" v-for="(lang, index) in filteredItems" :key="index" :class="{
                 active: lang == configStore.config.language,
                 focused: index === focusedItems
-            }" @click="selectItems(lang)">
+            }" @click="selectItem(lang)">
                 {{ lang.replace("_", ' ') }}
             </div>
         </template>
@@ -21,7 +22,7 @@ const langList = inject<Ref<string[]>>('lang')
 
 const changeLang = async (lang: string) => {
     await configStore.setLanguage(lang)
-   
+
 }
 </script>
 

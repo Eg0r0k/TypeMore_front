@@ -4,9 +4,7 @@
             <input v-model="modelValue" type="checkbox" :value="value" :name="name" :disabled="isDisabled"
                 class="checkbox-wrapper__input" @input="$emit('input', $event)" @change="$emit('change', $event)" />
             <span class="checkbox-wrapper__label">
-                <slot>
-                    {{ label }}
-                </slot>
+                <slot>{{ label }}</slot>
             </span>
         </label>
     </div>
@@ -15,21 +13,22 @@
 <script setup lang="ts" generic="T">
 interface Props {
     value: string | number | boolean;
-    label?: string
+    label?: string;
     name?: string;
     isDisabled?: boolean;
 }
-withDefaults(defineProps<Props>(), {
+
+const props = withDefaults(defineProps<Props>(), {
     name: "checkbox",
     label: ''
-})
+});
+
+const modelValue = defineModel<T>();
 
 defineEmits<{
-    (e: "update:modelValue", value: string): void;
     (e: "input", event: Event): void;
     (e: "change", event: Event): void;
 }>();
-const modelValue = defineModel<T>();
 </script>
 
 <style scoped lang="scss">

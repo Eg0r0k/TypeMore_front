@@ -10,7 +10,7 @@
       </li>
     </ul>
     <div class="navigation__controls">
-      <Button size="s">
+      <Button @click="handleOpenNews" size="s">
         <template #left-icon>
           <Icon :icon="'ion:notifications'" width="30" />
         </template>
@@ -20,12 +20,20 @@
       </router-link>
     </div>
   </nav>
+  <Transition name="slide-fade">
+    <NewsModal v-if="visible" @close="handleOpenNews" />
+  </Transition>
 </template>
 
 <script setup lang="ts">
+import { useModal } from '@/entities/modal/model/store';
+import { NewsModal } from '@/features/modal/news';
 import { Button } from '@/shared/ui/button'
 import { Icon } from '@iconify/vue'
+
+import { ref } from 'vue';
 import Popper from 'vue3-popper'
+
 interface Props {
   data: Array<{
     link: string
@@ -33,7 +41,13 @@ interface Props {
     label: string
   }>
 }
+const modal = useModal()
+const visible = ref(false)
 const props = defineProps<Props>()
+
+const handleOpenNews = (): void => {
+  visible.value = !visible.value;
+};
 </script>
 
 <style lang="scss" scoped>
@@ -60,5 +74,24 @@ const props = defineProps<Props>()
     display: flex;
     gap: 2px;
   }
+}
+
+
+.slide-fade-enter-active {
+  transition: all 0.2s ease-out;
+}
+
+.slide-fade-leave-active {
+  transition: all 0.2s ease-in;
+}
+
+.slide-fade-enter-from {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.slide-fade-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
 }
 </style>

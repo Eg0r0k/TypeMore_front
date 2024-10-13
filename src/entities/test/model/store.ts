@@ -5,6 +5,7 @@ export const useTestStateStore = defineStore('test-state', () => {
   const isActive = ref(false)
   const isRepeated = ref(false)
   const isLoading = ref(true)
+  //Отвечает за конкретный индекс слова
   const currentWordElementIndex = ref(0)
   const reset = () => {
     currentWordElementIndex.value = 0

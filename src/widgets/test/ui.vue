@@ -1,4 +1,5 @@
 <template>
+
     <div class="words" :class="{ rightToLeft: props.isRightToLeft }" ref="wordsContainer">
         <template v-for="(word, wordIndex) in generator.retWords.words" :key="`${word}-${wordIndex}`">
             <p class="word" :class="{ active: wordIndex === testState.currentWordElementIndex }" ref="wordElements">
@@ -16,12 +17,7 @@
 
 
     <div class="character-stats">
-        <p>Correct characters: {{ inputStore.characterCounts.correct }}</p>
-        <p>Incorrect characters: {{ inputStore.characterCounts.incorrect }}</p>
-        <p>Extra characters: {{ inputStore.characterCounts.extra }}</p>
-        <p>Total characters entered: {{ inputStore.characterCounts.total }}</p>
-        <p>Correct spaces: {{ inputStore.characterCounts.correctSpaces }}</p>
-        <p>Incorrect spaces: {{ inputStore.characterCounts.incorrectSpaces }}</p>
+        <p>Correct characters: {{ inputStore.getStats }}</p>
     </div>
 </template>
 
@@ -30,7 +26,7 @@
 import { useWordGeneratorStore } from '@/entities/generator/model/store';
 import { useInputStore } from '@/entities/input/model';
 import { useTestStateStore } from '@/entities/test';
-import { nextTick, onMounted, ref } from 'vue';
+import { ref } from 'vue';
 
 
 interface Props {
@@ -42,6 +38,10 @@ const generator = useWordGeneratorStore()
 const props = withDefaults(defineProps<Props>(), {
     isRightToLeft: false
 })
+
+const wordsContainer = ref<HTMLDivElement | null>(null);
+const wordElements = ref<HTMLParagraphElement[]>([]);
+const caret = ref<HTMLDivElement | null>(null);
 
 </script>
 
@@ -62,6 +62,20 @@ const props = withDefaults(defineProps<Props>(), {
     direction: rtl;
 }
 
+.caret {
+    height: 1.2em;
+    background-color: var(--main-color);
+    position: absolute;
+    transform-origin: top left;
+    border-radius: var(--border-radius);
+    font-size: 2rem;
+    top: 0;
+    transition: left 0.1s ease;
+    left: 0;
+    opacity: 1;
+    width: 2px;
+    animation: caretBlink 1s infinite;
+}
 
 .words {
     display: flex;

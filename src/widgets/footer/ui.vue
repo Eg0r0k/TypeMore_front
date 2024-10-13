@@ -40,10 +40,10 @@ const navLinks: FooterLink[] = FOOTER_LINKS
 const modal = useModal()
 const { config } = useConfigStore()
 const handleOnClickOpenTheme = () => {
-  modal.open(ThemesModal, [], 'center', 'center')
+  modal.open(ThemesModal,  'top', 'center')
 }
 const handleOnClickOpenInput = () => {
-  modal.open(InputModal, [], 'center', 'center')
+  modal.open(InputModal,  'center', 'center')
 }
 </script>
 

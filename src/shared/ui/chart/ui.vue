@@ -1,5 +1,5 @@
 <template>
-  <LineChart style="height: 170px" ref="doughnutChartRef" v-bind="doughnutChartProps" />
+  <LineChart style="height: 200px" ref="doughnutChartRef" v-bind="doughnutChartProps" />
 </template>
 
 <script setup lang="ts">
@@ -8,8 +8,18 @@ import { LineChart } from 'vue-chart-3'
 import { Chart, ChartData, ChartOptions, registerables } from 'chart.js'
 import { getColorWithOpacity } from '@/shared/lib/helpers/misc'
 import { useTimerStore } from '@/entities/timer/model/store'
-import {  useThemes } from '@/shared/lib/hooks/useThemes'
+import { useThemes } from '@/shared/lib/hooks/useThemes'
 Chart.register(...registerables)
+
+// interface Props {
+//   dataError: number[];
+//   dataWPM: number[];
+//   dataRAW: number[];
+//   dataLabels: number[];
+//   dataTimeLabel: number[]
+// }
+// const props = defineProps<Props>()
+
 const { refColors } = useThemes()
 const dataError = ref<number[]>([])
 const dataWPM = ref<number[]>([])
@@ -88,12 +98,14 @@ const doughnutChartProps = computed(() => ({
   options: options.value
 }))
 const timerStore = useTimerStore()
-watch(timerStore.getTime, (newTime) => {
-  dataLabels.value.push(newTime)
-  dataError.value.push(Math.floor(Math.random() * 100) + 1)
-  dataWPM.value.push(Math.floor(Math.random() * 100) + 1)
-  dataRAW.value.push(Math.floor(Math.random() * 100) + 1)
-})
+// watch(timerStore.getTime, (newTime) => {
+//   dataLabels.value.push(newTime)
+//   dataError.value.push(Math.floor(Math.random() * 100) + 1)
+//   dataWPM.value.push(Math.floor(Math.random() * 100) + 1)
+//   dataRAW.value.push(Math.floor(Math.random() * 100) + 1)
+//   console.log(refColors)
+
+// })
 </script>
 
 <style></style>

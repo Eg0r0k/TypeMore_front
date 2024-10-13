@@ -10,7 +10,6 @@ const options = {
 }
 export default defineConfig({
   plugins: [vue(), vueJsx(), FontaineTransform.vite(options)],
-
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
