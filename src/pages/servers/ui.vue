@@ -15,9 +15,9 @@
       </div>
     </div>
     <div class="serverPage__main main">
-      <Button color="main-outline">Create room</Button>
-      <Button color="main-outline">Browse lobbyes</Button>
-      <Button color="main-outline">Enter code </Button>
+      <Button size="l" color="main-outline">Create room</Button>
+      <Button size="l" color="main-outline">Browse lobbyes</Button>
+      <Button size="l" color="main-outline">Enter code </Button>
     </div>
   </div>
 </template>
