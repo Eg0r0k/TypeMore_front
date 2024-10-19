@@ -1,18 +1,31 @@
 <template>
-  <div class="console-modal" @keydown.tab.prevent="navigateItems(NavigationDirection.Down)"
+  <div
+    class="console-modal"
+    tabindex="0"
+    @keydown.tab.prevent="navigateItems(NavigationDirection.Down)"
     @keydown.up.prevent="navigateItems(NavigationDirection.Up)"
-    @keydown.down.prevent="navigateItems(NavigationDirection.Down)" @keydown.enter.prevent="selectFocusedItem"
-    tabindex="0">
+    @keydown.down.prevent="navigateItems(NavigationDirection.Down)"
+    @keydown.enter.prevent="selectFocusedItem"
+  >
     <div class="console-modal__header modal-header">
       <div class="modal-header__search-wrapper">
         <Icon width="20" icon="fluent:search-12-filled" class="modal-header__search-icon" />
-        <input ref="searchInput" type="text" v-model.trim="searchQuery" class="modal-header__search"
-          placeholder="Search..." />
+        <input
+          ref="searchInput"
+          v-model.trim="searchQuery"
+          type="text"
+          class="modal-header__search"
+          placeholder="Search..."
+        />
       </div>
     </div>
-    <div role="listbox" ref="itemsList" class="console-modal__body">
-      <slot name="items" :focused-items="focusedItemIndex" :select-item="selectItem" :filtered-items="filteredItems" />
-
+    <div ref="itemsList" role="listbox" class="console-modal__body">
+      <slot
+        name="items"
+        :focused-items="focusedItemIndex"
+        :select-item="selectItem"
+        :filtered-items="filteredItems"
+      />
     </div>
   </div>
 </template>
@@ -21,11 +34,11 @@
 import { Icon } from '@iconify/vue'
 import { computed, onMounted, ref, nextTick } from 'vue'
 import { useFocus } from '@vueuse/core'
-import { Theme } from '../themes/types/themes';
+import { Theme } from '../themes/types/themes'
 
 enum NavigationDirection {
   Up = 'up',
-  Down = 'down',
+  Down = 'down'
 }
 
 const searchQuery = ref('')
@@ -34,41 +47,44 @@ const searchInput = ref<HTMLInputElement | null>(null)
 const itemsList = ref<HTMLElement | null>(null)
 
 interface Props {
-  items: Theme[] | Record<string, any>[] | any[];
-  searchKey?: string;
+  items: Theme[] | Record<string, any>[] | any[]
+  searchKey?: string
   activeItem?: Record<string, any> | string | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
   items: () => [],
   searchKey: 'name',
-  activeItem: null,
-});
+  activeItem: null
+})
 
 const emit = defineEmits(['item-selected'])
 
 const filteredItems = computed(() => {
-  const searchTerm = searchQuery.value.toLowerCase();
+  const searchTerm = searchQuery.value.toLowerCase()
   return props.items.filter((item) => {
-    const searchableText = typeof item === 'string'
-      ? item
-      : props.searchKey && item[props.searchKey]
-        ? item[props.searchKey]
-        : '';
-    return searchableText.toLowerCase().includes(searchTerm);
-  });
-});
+    const searchableText =
+      typeof item === 'string'
+        ? item
+        : props.searchKey && item[props.searchKey]
+          ? item[props.searchKey]
+          : ''
+    return searchableText.toLowerCase().includes(searchTerm)
+  })
+})
 
 const navigateItems = async (direction: NavigationDirection) => {
   const itemsLength = filteredItems.value.length
   if (itemsLength === 0) return
-  focusedItemIndex.value = (focusedItemIndex.value + (direction === NavigationDirection.Up ? -1 : 1) + itemsLength) % itemsLength
+  focusedItemIndex.value =
+    (focusedItemIndex.value + (direction === NavigationDirection.Up ? -1 : 1) + itemsLength) %
+    itemsLength
   await nextTick(centerFocusedItem)
 }
 
 const selectItem = (item: any): void => {
   const index = props.items.findIndex((i) => i === item)
-  if (index !== -1 && (item !== props.activeItem && item[props.searchKey] !== props.activeItem)) {
+  if (index !== -1 && item !== props.activeItem && item[props.searchKey] !== props.activeItem) {
     focusedItemIndex.value = index
     emit('item-selected', item)
   }
@@ -83,11 +99,11 @@ const selectFocusedItem = (): void => {
 const centerFocusedItem = () => {
   if (itemsList?.value && focusedItemIndex.value !== -1) {
     const focusedItem = itemsList.value.children[focusedItemIndex.value] as HTMLElement
-    const bodyHeight = itemsList.value.clientHeight;
+    const bodyHeight = itemsList.value.clientHeight
 
-    const itemHeight = focusedItem.clientHeight;
-    const offset = (bodyHeight - itemHeight) / 2;
-    itemsList.value.scrollTop = focusedItem.offsetTop - offset;
+    const itemHeight = focusedItem.clientHeight
+    const offset = (bodyHeight - itemHeight) / 2
+    itemsList.value.scrollTop = focusedItem.offsetTop - offset
   }
 }
 
@@ -113,9 +129,6 @@ onMounted(async () => {
   &__search-wrapper {
     position: relative;
     width: 100%;
-
-
-
 
     &:focus-within {
       .modal-header__search-icon {
@@ -157,7 +170,6 @@ onMounted(async () => {
     }
   }
 }
-
 
 .console-modal {
   border-radius: var(--border-radius);

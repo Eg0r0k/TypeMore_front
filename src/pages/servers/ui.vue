@@ -1,12 +1,15 @@
 <template>
   <div class="test-color">
     <div class="test-color__container">
-      <Typography color="primary" size="xl" tagName="p">
+      <Typography color="primary" size="xl" tag-name="p">
         The
-        <Typography color="error" tagName="span" decoration="underline" size="xl">quick</Typography>
-        <Typography size="xl" tagName="span" color="sub"> brown </Typography>
-        <Typography tagName="span" color="extra-error" decoration="underline" size="xl">fox</Typography> jumps
-        <Typography tagName="span" color="main" size="xl"> over the lazy</Typography>
+        <Typography color="error" tag-name="span" decoration="underline" size="xl">quick</Typography>
+        <Typography size="xl" tag-name="span" color="sub"> brown </Typography>
+        <Typography tag-name="span" color="extra-error" decoration="underline" size="xl"
+          >fox</Typography
+        >
+        jumps
+        <Typography tag-name="span" color="main" size="xl"> over the lazy</Typography>
         dog
       </Typography>
       <div class="test">
@@ -38,12 +41,17 @@
     </div>
 
     <div class="controls">
-      <div class="theme-input" v-for="(color, index) in colors" :key="index">
+      <div v-for="(color, index) in colors" :key="index" class="theme-input">
         <Typography style="flex: 1" size="m" color="primary">{{ color.label }}</Typography>
         <TextInput v-model="color.hex" @input="debouncedUpdateColor(color)" />
         <div class="color">
           <Icon icon="mdi:color" width="30" />
-          <input class="input-color" type="color" v-model="color.hex" @input="debouncedUpdateColor(color)" />
+          <input
+            v-model="color.hex"
+            class="input-color"
+            type="color"
+            @input="debouncedUpdateColor(color)"
+          />
         </div>
       </div>
       <div></div>
@@ -112,14 +120,12 @@ const colors = ref([
   }
 ])
 
-
 const getTheme = (): Theme => {
   return colors.value.reduce((theme, color) => {
     theme[color.var as keyof Theme] = color.hex
     return theme
   }, {} as Theme)
 }
-
 
 let queuedUpdates: Color[] = []
 
@@ -146,7 +152,7 @@ const copyTheme = async () => {
   } catch (error) {
     alertStore.addAlert({
       type: AlertType.Error,
-      title: "Failed to copy theme",
+      title: 'Failed to copy theme',
       msg: `${error}`,
       duration: 2000
     })

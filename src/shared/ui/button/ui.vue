@@ -1,16 +1,27 @@
 <template>
-  <button :disabled="isLoading || isDisabled" :class="classes" role="button" :aria-label="buttonLabel"
-    :aria-busy="isLoading">
-    <span class="loader" v-if="isLoading" aria-hidden="true"></span>
-    <span class="icon" v-if="!isLoading">
+  <button
+    :disabled="isLoading || isDisabled"
+    :class="classes"
+    role="button"
+    :aria-label="buttonLabel"
+    :aria-busy="isLoading"
+  >
+    <span v-if="isLoading" class="loader" aria-hidden="true"></span>
+    <span v-if="!isLoading" class="icon">
       <slot name="left-icon" :aria-label="buttonLabel"></slot>
     </span>
 
-    <Typography v-if="slots.default" class="button__text" :class="isLoading ? 'invisible' : ''" tagName="p"
-      :size="props.size" :aria-hidden="isLoading">
+    <Typography
+      v-if="slots.default"
+      class="button__text"
+      :class="isLoading ? 'invisible' : ''"
+      tag-name="p"
+      :size="props.size"
+      :aria-hidden="isLoading"
+    >
       <slot></slot>
     </Typography>
-    <span class="icon" v-if="!isLoading">
+    <span v-if="!isLoading" class="icon">
       <slot name="right-icon" :aria-label="buttonLabel"></slot>
     </span>
   </button>
@@ -20,22 +31,21 @@
 import { useSlots, computed } from 'vue'
 import { Typography } from '@/shared/ui/typography'
 
-
-type ButtonColor = 'main' | 'gray' | 'error' | 'main-outline' | 'error-outline';
-type ButtonSize = 's' | 'm' | 'l';
-type ButtonDecoration = 'default' | 'none';
+type ButtonColor = 'main' | 'gray' | 'error' | 'main-outline' | 'error-outline'
+type ButtonSize = 's' | 'm' | 'l'
+type ButtonDecoration = 'default' | 'none'
 
 //Sizes:
 // s : padding - 4px 8px
 // m : padding - 8px 16px
 // l : padding - 16px 24px
 interface Props {
-  color?: ButtonColor;
-  size?: ButtonSize;
-  decoration?: ButtonDecoration;
-  isDisabled?: boolean;
-  buttonLabel?: string;
-  isLoading?: boolean;
+  color?: ButtonColor
+  size?: ButtonSize
+  decoration?: ButtonDecoration
+  isDisabled?: boolean
+  buttonLabel?: string
+  isLoading?: boolean
 }
 
 const slots = useSlots()
@@ -52,8 +62,8 @@ const classes = computed(() => ({
   [`button--size-${props.size}`]: true,
   [`button--color-${props.color}`]: true,
   [`decoration--${props.decoration}`]: true,
-  loading: props.isLoading,
-}));
+  loading: props.isLoading
+}))
 </script>
 
 <style scoped lang="scss">
@@ -101,8 +111,7 @@ $styles: (
         color: map-get($val, 'color');
       }
 
-      @media (hover: hover),
-      (pointer: fine) {
+      @media (hover: hover), (pointer: fine) {
         &:hover {
           background-color: map-get($val, 'hover');
 
@@ -141,8 +150,7 @@ $styles: (
         color: map-get($val, 'background');
       }
 
-      @media (hover: hover),
-      (pointer: fine) {
+      @media (hover: hover), (pointer: fine) {
         &:hover {
           background-color: map-get($val, 'background');
           box-shadow: 0 0 0 1px map-get($val, 'hover');
@@ -186,7 +194,6 @@ $styles: (
 }
 
 .button {
-
   display: flex;
   justify-content: center;
   align-items: center;

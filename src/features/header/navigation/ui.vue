@@ -1,7 +1,7 @@
 <template>
   <nav class="navigation header-navigation" role="navigation" aria-label="header navigation">
     <ul class="navigation__list" role="list">
-      <li class="list__item" role="listitem" v-for="link in props.data" :key="link.link">
+      <li v-for="link in props.data" :key="link.link" class="list__item" role="listitem">
         <Popper hover arrow offset-distance="6" class="registration__popper" :content="link.label">
           <router-link :to="link.link" class="list__link" :title="link.label" role="link">
             <Icon :icon="link.iconName" width="30" aria-hidden="true" />
@@ -10,7 +10,7 @@
       </li>
     </ul>
     <div class="navigation__controls">
-      <Button @click="handleOpenNews" size="s">
+      <Button size="s" @click="handleOpenNews">
         <template #left-icon>
           <Icon :icon="'ion:notifications'" width="30" />
         </template>
@@ -26,12 +26,12 @@
 </template>
 
 <script setup lang="ts">
-import { useModal } from '@/entities/modal/model/store';
-import { NewsModal } from '@/features/modal/news';
+import { useModal } from '@/entities/modal/model/store'
+import { NewsModal } from '@/features/modal/news'
 import { Button } from '@/shared/ui/button'
 import { Icon } from '@iconify/vue'
 
-import { ref } from 'vue';
+import { ref } from 'vue'
 import Popper from 'vue3-popper'
 
 interface Props {
@@ -46,8 +46,8 @@ const visible = ref(false)
 const props = defineProps<Props>()
 
 const handleOpenNews = (): void => {
-  visible.value = !visible.value;
-};
+  visible.value = !visible.value
+}
 </script>
 
 <style lang="scss" scoped>
@@ -67,7 +67,6 @@ const handleOpenNews = (): void => {
 
   &__controls {
     display: flex;
-
   }
 
   &__list {
@@ -75,7 +74,6 @@ const handleOpenNews = (): void => {
     gap: 2px;
   }
 }
-
 
 .slide-fade-enter-active {
   transition: all 0.2s ease-out;

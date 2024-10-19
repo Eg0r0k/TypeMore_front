@@ -1,13 +1,20 @@
 <template>
   <div class="input-modal" tabindex="0">
     <Typography color="primary" size="l"> Custom word amount </Typography>
-    <TextInput :min="0" :max="10000" @keydown.enter="saveWordAmount" ref="textInputRef" tagName="input"
-      v-model.number="wordAmount" placeholder="Enter word amount" />
+    <TextInput
+      ref="textInputRef"
+      v-model.number="wordAmount"
+      :min="0"
+      :max="10000"
+      tag-name="input"
+      placeholder="Enter word amount"
+      @keydown.enter="saveWordAmount"
+    />
     <Typography color="primary" size="xs">
       You can start an infinite test by inputting 0. Then, to stop the test, use the Bail Out
       feature
     </Typography>
-    <Button @click="saveWordAmount" size="m" color="gray"> ok </Button>
+    <Button size="m" color="gray" @click="saveWordAmount"> ok </Button>
   </div>
 </template>
 

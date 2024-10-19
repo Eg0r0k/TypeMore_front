@@ -1,86 +1,14 @@
-import { computed, ComputedRef, markRaw, reactive, Ref, ref, shallowRef } from 'vue'
-import { Input } from './types/input'
+import { computed, markRaw, reactive, ref, shallowRef } from 'vue'
+
 import { defineStore } from 'pinia'
 import { useTestStateStore } from '../../test'
 import { useWordGeneratorStore } from '../../generator/model/store'
 import { useSounds } from '@/shared/lib/hooks/useSounds'
-import { useTimerStore } from '@/entities/timer/model/store'
+
 import { useAccuracy } from '@/shared/lib/hooks/useAccuracy'
 import { useInputState } from '@/shared/lib/hooks/useInputState'
-import { roundTo2 } from '@/shared/lib/helpers/numbers'
-import { useStats } from '@/shared/lib/hooks/useStats'
 
-// Keys kodes to track
-const KAYS_TO_TRACK = [
-  'KeyA',
-  'KeyB',
-  'KeyC',
-  'KeyD',
-  'KeyE',
-  'KeyF',
-  'KeyG',
-  'KeyH',
-  'KeyI',
-  'KeyJ',
-  'KeyK',
-  'KeyL',
-  'KeyM',
-  'KeyN',
-  'KeyO',
-  'KeyP',
-  'KeyQ',
-  'KeyR',
-  'KeyS',
-  'KeyT',
-  'KeyU',
-  'KeyV',
-  'KeyW',
-  'KeyX',
-  'KeyY',
-  'KeyZ',
-  'NumpadDivide', //  key: "/"
-  'NumpadMultiply', // key: "*"
-  'NumpadDecimal', // key: "."
-  'NumpadAdd', // key: "+"
-  'NumpadEqual', // key: "="
-  'NumpadSubtract', //key: "-"
-  'Numpad0',
-  'Numpad1',
-  'Numpad2',
-  'Numpad3',
-  'Numpad4',
-  'Numpad5',
-  'Numpad6',
-  'Numpad7',
-  'Numpad8',
-  'Numpad9',
-  'Digit1',
-  'Digit2',
-  'Digit3',
-  'Digit4',
-  'Digit5',
-  'Digit6',
-  'Digit7',
-  'Digit8',
-  'Digit9',
-  'Digit0',
-  'Minus',
-  'Equal',
-  'Enter',
-  'Tab',
-  'Space',
-  'Slash',
-  'Backslash',
-  'Period',
-  'BracketLeft',
-  'BracketRight',
-  'Comma',
-  'Period',
-  'Quote',
-  'Semicolon',
-  'IntlBackslash',
-  'NoCode'
-]
+import { useStats } from '@/shared/lib/hooks/useStats'
 
 type Keydata = {
   timestamp: number
@@ -101,7 +29,7 @@ interface InputState {
   current: string
   history: string[]
 }
-
+//TODO: Decompose this store
 export const useInputStore = defineStore('input', () => {
   const keyDownData: Record<string, Keydata> = reactive({})
   const missedWords = ref<Record<string, number>>({})
@@ -173,9 +101,8 @@ export const useInputStore = defineStore('input', () => {
       if (input.current === '') return
       char = ' '
     }
-    playClickSound()
     if (thisCharCorrect) {
-      //
+      console.log('correct')
     } else {
       console.log('incorrect')
     }

@@ -1,8 +1,15 @@
 <template>
   <Teleport to="#app" :disabled="!isTeleportAvailable">
-    <Transition :onBeforeEnter="onBeforeEnter" :onEnter="onEnter" :onLeave="onLeave" :css="false">
-      <div v-if="isOpen" @keydown.esc="handleEscapeKey" :class="classes" tabindex="0" class="modal" aria-modal="true">
-        <component ref="modal" @click.stop :is="view" v-bind="model"></component>
+    <Transition :on-before-enter="onBeforeEnter" :on-enter="onEnter" :on-leave="onLeave" :css="false">
+      <div
+        v-if="isOpen"
+        :class="classes"
+        tabindex="0"
+        class="modal"
+        aria-modal="true"
+        @keydown.esc="handleEscapeKey"
+      >
+        <component :is="view" ref="modal" v-bind="model" @click.stop></component>
       </div>
     </Transition>
   </Teleport>
@@ -22,14 +29,10 @@ const justify = computed(() => modalStore.justify)
 const closeOnClickOutside = computed(() => modalStore.closeOnClickOutside)
 
 const classes = computed(() => {
-  return [
-    `alignment-${alignment.value || 'center'}`,
-    `justify-${justify.value || 'center'}`
-  ]
+  return [`alignment-${alignment.value || 'center'}`, `justify-${justify.value || 'center'}`]
 })
 
-const model = reactive({
-})
+const model = reactive({})
 const isTeleportAvailable = ref(false)
 const modal = ref(null)
 
@@ -79,7 +82,6 @@ onMounted(() => {
 })
 </script>
 
-
 <style lang="scss" scoped>
 .modal {
   padding: 60px 15px;
@@ -99,7 +101,6 @@ onMounted(() => {
   overflow: auto;
   z-index: var(--modal-z);
 }
-
 
 .justify {
   &-left {
@@ -133,7 +134,7 @@ onMounted(() => {
   }
 
   &-none {
-    align-items: unset
+    align-items: unset;
   }
 }
 </style>

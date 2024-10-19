@@ -4,8 +4,17 @@
       <slot></slot>
     </label>
     <div :class="containerClasses">
-      <component v-bind="$attrs" ref="inputEl" :is="props.tagName" :class="inputClasses" :value="modelValue"
-        :placeholder="placeholder" :disabled="isDisabled" @input="updateInput" @blur="$emit('blur')" />
+      <component
+        v-bind="$attrs"
+        :is="props.tagName"
+        ref="inputEl"
+        :class="inputClasses"
+        :value="modelValue"
+        :placeholder="placeholder"
+        :disabled="isDisabled"
+        @input="updateInput"
+        @blur="$emit('blur')"
+      />
 
       <div v-if="props.hasErrorSpace" class="error-msg-container">
         <Typography v-if="errorMessage" class="error-msg" tag-name="p" :size="'xs'" color="error">
@@ -18,41 +27,40 @@
 
 <script setup lang="ts" generic="T">
 import { Typography } from '@/shared/ui/typography'
-import { computed } from 'vue';
+import { computed } from 'vue'
 defineOptions({
   inheritAttrs: false
 })
 
-
 interface Props {
-  placeholder?: string;
-  isError?: boolean;
-  errorMessage?: string;
-  isDisabled?: boolean;
-  label?: string;
-  hasErrorSpace?: boolean;
-  tagName?: 'input' | 'textarea';
+  placeholder?: string
+  isError?: boolean
+  errorMessage?: string
+  isDisabled?: boolean
+  label?: string
+  hasErrorSpace?: boolean
+  tagName?: 'input' | 'textarea'
 }
-const modelValue = defineModel<string | number>();
+const modelValue = defineModel<string | number>()
 const props = withDefaults(defineProps<Props>(), {
   tagName: 'input',
-  hasErrorSpace: false,
+  hasErrorSpace: false
 })
 defineEmits<{
   (e: 'blur'): void
 }>()
 const wrapperClasses = computed(() => ({
   'text-input__wrapper': true,
-  'text-input__wrapper--no-error': !props.hasErrorSpace,
-}));
+  'text-input__wrapper--no-error': !props.hasErrorSpace
+}))
 const containerClasses = computed(() => ({
   'text-input__container': true,
-  'text-input__container--no-error': !props.hasErrorSpace,
-}));
+  'text-input__container--no-error': !props.hasErrorSpace
+}))
 const inputClasses = computed(() => ({
   'text-input': true,
-  'text-input--error': props.isError,
-}));
+  'text-input--error': props.isError
+}))
 
 const updateInput = (e: any) => {
   modelValue.value = e.target.value
@@ -87,9 +95,7 @@ textarea {
   }
 }
 
-
 .text-input__container {
-
   &--no-error {
     min-height: auto;
   }

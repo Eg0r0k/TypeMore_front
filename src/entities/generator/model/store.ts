@@ -6,7 +6,7 @@ import { useTestStateStore } from '../../test'
 import { LanguageObj } from '@/shared/constants/type'
 import { logRandomIndex } from '@/shared/lib/helpers/misc'
 import { getLastChar } from '@/shared/lib/helpers/string'
-
+//TODO: Make generator for quotes, and generator limit for optimisation
 export const useWordGeneratorStore = defineStore('word-gen', () => {
   const { config } = useConfigStore()
   const testState = useTestStateStore()

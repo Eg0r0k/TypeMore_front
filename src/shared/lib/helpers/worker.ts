@@ -9,7 +9,7 @@ interface WorkerMessage {
 }
 /**
  * Handles incoming messages to the worker and executes commands (start, reset, setTime).
- * 
+ *
  * @param event - The message event containing the command and optional time.
  */
 self.onmessage = (event: MessageEvent<WorkerMessage>) => {
@@ -33,7 +33,7 @@ self.onmessage = (event: MessageEvent<WorkerMessage>) => {
 }
 /**
  * Starts the timer with the specified configuration time.
- * 
+ *
  * @param time - The time duration for the timer.
  * @returns Return void if timer <= 0
  */
@@ -57,7 +57,7 @@ function resetTimer() {
 }
 /**
  * Sets the configuration time for the timer.
- * 
+ *
  * @param time - The time duration to set for the timer.
  */
 function setConfigTime(time: number) {

@@ -1,7 +1,7 @@
 <template>
   <footer class="footer-navigation" aria-label="footer navigation">
     <ul class="footer-navigation__list" role="navigation">
-      <li class="list__item" role="listitem" v-for="link in props.data" :key="link.label">
+      <li v-for="link in props.data" :key="link.label" class="list__item" role="listitem">
         <a :href="link.link" class="list__link" target="_blank" :title="link.label" role="link">
           <Icon :icon="link.iconName" width="18" aria-hidden="true" />
           {{ link.label }}
@@ -9,7 +9,8 @@
       </li>
     </ul>
   </footer>
-</template>>
+</template>
+>
 
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'

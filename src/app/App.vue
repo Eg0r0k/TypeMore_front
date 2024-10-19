@@ -1,6 +1,6 @@
 <template>
   <Transition name="fade" mode="out-in">
-    <div class="wrapper" v-if="!testState.isLoading" role="main">
+    <div v-if="!testState.isLoading" class="wrapper" role="main">
       <FpsIndecator v-if="configStore.config.showFps" />
       <Header />
       <main>
@@ -14,7 +14,6 @@
       <Alerts />
 
       <ModalWindow />
-
     </div>
     <div v-else class="loader-wrapper wrapper" role="loading">
       <header class="loader-wrapper__header">
@@ -27,9 +26,7 @@
       </div>
       <footer class="loader-wrapper__footer"></footer>
     </div>
-
   </Transition>
-
 </template>
 <script setup lang="ts">
 import { Header } from '@/widgets/header'
@@ -45,12 +42,9 @@ import { defineAsyncComponent, onBeforeMount, onMounted, onUnmounted, provide, r
 import { CookieModal } from '@/features/modal/cookie'
 import { useModal } from '@/entities/modal/model/store'
 
-
 const configStore = useConfigStore()
 const testState = useTestStateStore()
-const ModalWindow = defineAsyncComponent(() =>
-  import('@/widgets/modal/ui.vue')
-)
+const ModalWindow = defineAsyncComponent(() => import('@/widgets/modal/ui.vue'))
 const { applyTheme, themesList, themesOnUnmounted } = useThemes()
 const { config } = useConfigStore()
 const modalStore = useModal()
@@ -63,18 +57,15 @@ onBeforeMount(async () => {
 })
 
 onMounted(async () => {
-
   //Set platform on load window : 'desktop' | 'tablet' | 'mobile'
   lang.value = await getLangList()
   if (!localStorage.getItem('cookieConsentGiven')) {
-    modalStore.open(CookieModal, 'bottom', 'right', false);
+    modalStore.open(CookieModal, 'bottom', 'right', false)
   }
-
 })
 onUnmounted(() => {
   themesOnUnmounted()
 })
-
 </script>
 <style lang="scss">
 .fade-enter-active,

@@ -80,7 +80,7 @@ export function useThemes() {
   }
   /**
    * Fetches and returns a theme by name from the configuration, or returns the default theme if not found.
-   * 
+   *
    * @param name - The name of the theme to fetch.
    * @returns A promise that resolves to the fetched or default theme.
    */
@@ -94,7 +94,7 @@ export function useThemes() {
   })
   /**
    * Applies a theme based on its name and updates the test state loading status.
-   * 
+   *
    * @param name - The name of the theme to apply.
    *  @returns A promise that resolves when the theme is applied.
    */

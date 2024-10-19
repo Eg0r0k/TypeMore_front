@@ -23,7 +23,7 @@ export async function fetchJson<T>(url: string): Promise<T> {
 }
 /**
  * Memoizes an asynchronous function, caching its results based on provided arguments.
- * 
+ *
  * @template P - The type of the key used for caching.
  * @template T - The function type that returns a promise.
  * @param  fn - The asynchronous function to memoize.
@@ -57,7 +57,7 @@ export function memoizeAsync<P, T extends <B>(...args: P[]) => Promise<B>>(
 export const cachedFetchJson = memoizeAsync<string, typeof fetchJson>(fetchJson)
 /**
  * Fetches a list of available languages.
- * 
+ *
  * @returns A promise that resolves to an array of language codes.
  * @throws Will throw an error if the language list JSON fails to load.
  */
@@ -71,7 +71,7 @@ export const getLangList = async () => {
 }
 /**
  * Fetches the language object for a given language code.
- * 
+ *
  * @param lang - The language code.
  * @returns A promise that resolves to the language object.
  * @throws Will throw an error if the language JSON fails to load.

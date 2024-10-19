@@ -1,7 +1,11 @@
 import { defineStore } from 'pinia'
 import { markRaw, reactive, toRefs } from 'vue'
 import { Modal, ModalHandlers } from './types/type'
-
+/**
+ * Store for controlling the modal state.
+ * This store provides methods for opening and closing modals and allows configuring
+ * the modal's alignment, justification, and behavior when clicking outside.
+ */
 export const useModal = defineStore('modal', () => {
   const modal = reactive<Modal & { handlers: ModalHandlers }>({
     isOpen: false,
@@ -11,7 +15,10 @@ export const useModal = defineStore('modal', () => {
     closeOnClickOutside: true,
     handlers: {}
   })
-
+  /**
+   * Opens the modal with the specified configuration.
+   * @param  view - The component to render inside the modal.
+   */
   const open = (
     view: any,
     alignment: 'top' | 'bottom' | 'center' | 'none' = 'center',
@@ -27,7 +34,9 @@ export const useModal = defineStore('modal', () => {
     modal.closeOnClickOutside = closeOnClickOutside
     modal.handlers = handlers
   }
-
+  /**
+   * Closes the modal and resets its configuration.
+   */
   const close = () => {
     modal.isOpen = false
     modal.view = null

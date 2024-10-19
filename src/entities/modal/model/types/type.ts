@@ -12,5 +12,4 @@ interface ModalHandlers {
   onExpired?: () => void
 }
 
-
 export type { Modal, ModalHandlers }

@@ -1,8 +1,15 @@
 <template>
-  <div :style="style" ref="el" class="key-map" aria-label="Virtual key map">
+  <div ref="el" :style="style" class="key-map" aria-label="Virtual key map">
     <div v-for="row in keys" :key="row.id" class="key-map__row">
-      <div v-for="key in row.keys" :key="key.code" class="key-map__key key" :class="{ active: pressedKeys[key.code] }">
-        <kbd><b>{{ getLabel(key) }}</b></kbd>
+      <div
+        v-for="key in row.keys"
+        :key="key.code"
+        class="key-map__key key"
+        :class="{ active: pressedKeys[key.code] }"
+      >
+        <kbd
+          ><b>{{ getLabel(key) }}</b></kbd
+        >
       </div>
     </div>
   </div>

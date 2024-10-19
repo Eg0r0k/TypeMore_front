@@ -1,6 +1,6 @@
 /**
  * Generates a random integer within a specified range.
- * 
+ *
  * @param min - The minimum value (inclusive).
  * @param max - The maximum value (inclusive).
  * @returns A random integer between min and max.
@@ -12,17 +12,17 @@ export const randomIntFromRange = (min: number, max: number): number => {
 }
 /**
  * Rounds a number to two decimal places.
- * 
- * @param num 
- * @returns The number rounded to two decimal places. 
+ *
+ * @param num
+ * @returns The number rounded to two decimal places.
  */
 export const roundTo2 = (num: number): number => {
   return Math.round((num + Number.EPSILON) * 100) / 100
 }
 /**
  * Calculates the median of an array of numbers.
- * 
- * @param arr 
+ *
+ * @param arr
  * @returns The median of the array.
  */
 export const getMedian = (arr: number[]): number => {
@@ -36,7 +36,7 @@ export const getMedian = (arr: number[]): number => {
 }
 /**
  * Formats a number with spaces as thousand separators.
- * 
+ *
  * @param x - The number to format.
  * @returns - The formatted number with spaces.
  * @example

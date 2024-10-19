@@ -1,12 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import TheHome from '@pages/TheHome.vue'
 import { RegistrationPage } from '@pages/auth/registration'
 import { LoginPage } from '@pages/auth/login'
 import { SettingPage } from '@pages/settings'
 import { ServersPage } from '@pages/servers'
 import { ThemePage } from '@/pages/themes'
 import { MainPage } from '@/pages/home'
-//Routes on page
+import { ProfilePage } from '@/pages/profile'
+
 const routes = [
   {
     path: '/',
@@ -26,7 +26,8 @@ const routes = [
   {
     path: '/profile',
     name: 'profile',
-    component: TheHome
+    component: ProfilePage,
+    meta: { requiresAuth: true }
   },
   {
     path: '/settings',
@@ -45,7 +46,6 @@ const routes = [
   }
 ]
 
-//Create router instance
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes

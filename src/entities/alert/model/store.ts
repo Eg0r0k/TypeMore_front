@@ -2,8 +2,6 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { AlertData } from './types/alertData'
 
-
-
 export const useAlertStore = defineStore('alerts', () => {
   const alerts = ref<AlertData[]>([])
   const nextId = ref(0)

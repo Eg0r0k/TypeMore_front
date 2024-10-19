@@ -172,6 +172,6 @@ export const useStats = () => {
     wpm,
     raw,
 
-    calculateChars 
+    calculateChars
   }
 }

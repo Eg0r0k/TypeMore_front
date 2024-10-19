@@ -1,5 +1,9 @@
 <template>
-  <component :is="props.tagName" v-bind="tagName === 'a' ? { href: props.href } : {}" :class="classes">
+  <component
+    :is="props.tagName"
+    v-bind="tagName === 'a' ? { href: props.href } : {}"
+    :class="classes"
+  >
     <slot></slot>
   </component>
 </template>
@@ -136,12 +140,10 @@ const classes = computed(() => [
 
     &xs {
       font-size: var(--typography-size-xs);
-      ;
     }
 
     &xxs {
       font-size: var(--typography-size-xxs);
-      ;
     }
   }
 }

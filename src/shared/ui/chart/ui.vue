@@ -1,5 +1,5 @@
 <template>
-  <LineChart style="height: 200px" ref="doughnutChartRef" v-bind="doughnutChartProps" />
+  <LineChart ref="doughnutChartRef" style="height: 200px" v-bind="doughnutChartProps" />
 </template>
 
 <script setup lang="ts">

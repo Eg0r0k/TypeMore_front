@@ -1,15 +1,15 @@
 import { randomIntFromRange } from './numbers'
 /**
- * 
- * @param arr - any array 
+ *
+ * @param arr - any array
  * @returns random value from array
  */
 export const RandomElementFromArray = <T>(arr: T[]): T => {
   return arr[randomIntFromRange(0, arr.length) - 1]
 }
 /**
- * 
- * @param arr 
+ *
+ * @param arr
  * @returns last element of the array
  */
 export const LastElementFromArray = <T>(arr: T[]): T => {
@@ -17,7 +17,7 @@ export const LastElementFromArray = <T>(arr: T[]): T => {
 }
 
 /**
- *  Mutade array 
+ *  Mutade array
  * @param arr - array to shuffle
  */
 export const shuffle = <T>(arr: T[]): void => {
@@ -29,10 +29,10 @@ export const shuffle = <T>(arr: T[]): void => {
   }
 }
 /**
- *  Return element from array 
- * @param arr 
- * @param index 
- * @returns  array element 
+ *  Return element from array
+ * @param arr
+ * @param index
+ * @returns  array element
  */
 export const nthElementFromArray = <T>(arr: T[], index: number): T => {
   index = index < 0 ? arr.length + index : index
@@ -40,8 +40,8 @@ export const nthElementFromArray = <T>(arr: T[], index: number): T => {
 }
 /**
  * Сompares 2 arrays
- * @param arr1  
- * @param arr2 
+ * @param arr1
+ * @param arr2
  * @returns  is this the same array
  */
 export const isSameArray = <T>(arr1: T[], arr2: T[]): boolean => {

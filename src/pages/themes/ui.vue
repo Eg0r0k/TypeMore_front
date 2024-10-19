@@ -2,16 +2,16 @@
   <div>
     <div class="settings">
       <div style="width: 100%">
-        <CheckBox label="Enable Feature A" v-model="isFeatureAEnabled" value="Test" />
+        <CheckBox v-model="isFeatureAEnabled" label="Enable Feature A" value="Test" />
         {{ isFeatureAEnabled }}
         <p v-if="isFeatureAEnabled">Feature A is enabled!</p>
 
         <TextInput placeholder="Search..." />
-        <div><vue-slider height="6px" v-model="value" :lazy="true"></vue-slider></div>
+        <div><vue-slider v-model="value" height="6px" :lazy="true"></vue-slider></div>
       </div>
     </div>
     <div class="container">
-      <div class="card" v-for="i in 10" :key="i">
+      <div v-for="i in 10" :key="i" class="card">
         <Splide :has-track="false" :options="{ rewind: true }">
           <div class="sweeper-wrapper">
             <SplideTrack>
@@ -26,8 +26,8 @@
         </Splide>
         <div class="card__footer">
           <div class="card__desc">
-            <Typography tag="p" color="sub">Uploaded by <Typography decoration="underline" tagName="span"> nalyd_vs
-              </Typography>
+            <Typography tag="p" color="sub"
+              >Uploaded by <Typography decoration="underline" tag-name="span"> nalyd_vs </Typography>
             </Typography>
             <Typography tag="h2" color="primary" size="l" decoration="underline">
               Soyjak
@@ -39,7 +39,8 @@
               <template #left-icon>
                 <Icon width="16" icon="material-symbols:favorite-outline" />
               </template>
-              32</Button>
+              32</Button
+            >
             <Button color="main-outline" class="apply" size="m">
               <template #left-icon>
                 <Icon width="18" icon="mingcute:paint-2-fill" />
@@ -65,7 +66,7 @@ import { TextInput } from '@/shared/ui/input'
 import slide1 from './slide1.vue'
 import slide2 from './slide2.vue'
 import { ref } from 'vue'
-const isFeatureAEnabled = ref(false);
+const isFeatureAEnabled = ref(false)
 
 const value = ref([0, 100])
 </script>

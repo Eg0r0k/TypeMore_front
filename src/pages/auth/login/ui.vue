@@ -3,22 +3,21 @@
     <div class="login">
       <div class="login__header">
         <Typography color="main" tag-name="h2" size="xl" class="login__title">Login</Typography>
-  
       </div>
       <Form class="login__body" autocomplete="off" @submit="onSubmit()">
-        <TextInput v-bind="emailProps" v-model="email" :hasErrorSpace="true" required placeholder="Email"
+        <TextInput
+v-bind="emailProps" v-model="email" :has-error-space="true" required placeholder="Email"
           :error-message="errors.email" name="email">
-          <Typography color="primary">Email<Typography tagName="span" size="xs" color="error">*</Typography>
+          <Typography color="primary">Email<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
 
-
-        <TextInput v-bind="passwordProps" v-model="password" :hasErrorSpace="true" :error-message="errors.password"
+        <TextInput
+v-bind="passwordProps" v-model="password" :has-error-space="true" :error-message="errors.password"
           type="password" placeholder="Password" label="Password*" name="password">
-          <Typography color="primary">Password<Typography tagName="span" size="xs" color="error">*</Typography>
+          <Typography color="primary">Password<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
-
 
         <Button type="submit" class="login__sumbit">Login</Button>
       </Form>
@@ -54,45 +53,48 @@ import { Icon } from '@iconify/vue'
 import { Typography } from '@shared/ui/typography'
 import { TextInput } from '@shared/ui/input'
 import { Button } from '@shared/ui/button'
-import { Form, useForm } from 'vee-validate';
-import * as yup from 'yup';
-import { useAlertStore } from '@/entities/alert/model';
-import { AlertType } from '@/entities/alert/model/types/alertData';
-const emailReg = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/)
+import { Form, useForm } from 'vee-validate'
+import * as yup from 'yup'
+import { useAlertStore } from '@/entities/alert/model'
+import { AlertType } from '@/entities/alert/model/types/alertData'
+const emailReg = new RegExp(
+  /^(([^<>()[]+(\.[^<>()[]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+);
 const schema = yup.object({
   email: yup.string().matches(emailReg, 'Email must be correct').required('Email is required'),
   password: yup.string().min(6, 'Min 6 characters for password').required('Password is required')
-});
+})
 const { handleSubmit, errors, defineField } = useForm({
-  validationSchema: schema,
-});
+  validationSchema: schema
+})
 
 const alertStore = useAlertStore()
 const [email, emailProps] = defineField('email', {
-  validateOnModelUpdate: false,
-});
+  validateOnModelUpdate: false
+})
 const [password, passwordProps] = defineField('password', {
-  validateOnModelUpdate: false,
+  validateOnModelUpdate: false
 })
 
-
-const onSubmit = handleSubmit(() => {
-
-  alertStore.addAlert({
-    type: AlertType.Success,
-    title: "Success",
-    msg: "Form submitted successfully",
-    duration: 1500
-  });
-}, (errors) => {
-  console.log(errors);
-  alertStore.addAlert({
-    type: AlertType.Error,
-    title: "WTF",
-    msg: "Please fill all fields correctly",
-    duration: 0
-  });
-});
+const onSubmit = handleSubmit(
+  () => {
+    alertStore.addAlert({
+      type: AlertType.Success,
+      title: 'Success',
+      msg: 'Form submitted successfully',
+      duration: 1500
+    })
+  },
+  (errors) => {
+    console.log(errors)
+    alertStore.addAlert({
+      type: AlertType.Error,
+      title: 'WTF',
+      msg: 'Please fill all fields correctly',
+      duration: 0
+    })
+  }
+)
 </script>
 
 <style scoped lang="scss">
@@ -131,8 +133,6 @@ const onSubmit = handleSubmit(() => {
     flex-direction: column;
     gap: 12px;
   }
-
-
 
   &__title {
     margin-bottom: 8px;

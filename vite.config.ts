@@ -6,7 +6,7 @@ import vueJsx from '@vitejs/plugin-vue-jsx'
 import { FontaineTransform } from 'fontaine'
 const options = {
   fallbacks: ['BlinkMacSystemFont', 'Segoe UI', 'Helvetica Neue', 'Arial', 'Noto Sans'],
-  resolvePath: (id) => `file://${dirname(fileURLToPath(new URL(import.meta.url)))}public`
+  resolvePath: () => `file://${dirname(fileURLToPath(new URL(import.meta.url)))}public`
 }
 export default defineConfig({
   plugins: [vue(), vueJsx(), FontaineTransform.vite(options)],

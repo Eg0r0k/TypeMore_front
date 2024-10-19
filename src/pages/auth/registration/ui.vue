@@ -3,31 +3,34 @@
     <div class="registration">
       <div class="registration__header">
         <Typography color="main" tag-name="h2" size="xl" class="registration__title">Registration</Typography>
-      
       </div>
       <Form class="login__body" autocomplete="off" @submit="onSubmit()">
-        <TextInput required v-bind="usernameProps" :hasErrorSpace="true" v-model="username"
+        <TextInput
+v-bind="usernameProps" v-model="username" required :has-error-space="true"
           :error-message="errors.username" placeholder="Username">
-          <Typography color="primary">Username<Typography tagName="span" size="xs" color="error">*</Typography>
+          <Typography color="primary">Username<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
-        <TextInput required v-bind="emailProps" v-model="email" :hasErrorSpace="true" :error-message="errors.email"
+        <TextInput
+v-bind="emailProps" v-model="email" required :has-error-space="true" :error-message="errors.email"
           name="email" placeholder="Email">
-          <Typography color="primary">Email<Typography tagName="span" size="xs" color="error">*</Typography>
+          <Typography color="primary">Email<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
-        <TextInput type="password" v-bind="passwordProps" v-model="password" :hasErrorSpace="true" name="password"
+        <TextInput
+v-bind="passwordProps" v-model="password" type="password" :has-error-space="true" name="password"
           required :error-message="errors.password" placeholder="Password">
-          <Typography color="primary">Password<Typography tagName="span" size="xs" color="error">*</Typography>
+          <Typography color="primary">Password<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
-        <TextInput type="password" v-bind="passwordConfirmationProps" :hasErrorSpace="true"
-          v-model="passwordConfirmation" name="passwordConfirmation" required
-          :error-message="errors.passwordConfirmation" placeholder="Confirm password">
-          <Typography color="primary">Repeat password<Typography tagName="span" size="xs" color="error">*</Typography>
+        <TextInput
+v-bind="passwordConfirmationProps" v-model="passwordConfirmation" type="password"
+          :has-error-space="true" name="passwordConfirmation" required :error-message="errors.passwordConfirmation"
+          placeholder="Confirm password">
+          <Typography color="primary">Repeat password<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
-        <Button type="submit" class="registration__submit" :isLoading="isSubmitting">Create</Button>
+        <Button type="submit" class="registration__submit" :is-loading="isSubmitting">Create</Button>
       </Form>
       <div class="registration__footer">
         <Typography tag-name="p" color="primary">Has account?
@@ -39,174 +42,182 @@
 </template>
 
 <script setup lang="ts">
-import { Typography } from '@/shared/ui/typography';
-import { TextInput } from '@/shared/ui/input';
-import { Button } from '@/shared/ui/button';
-import { Form, useForm } from 'vee-validate';
-import * as yup from 'yup';
-import { useAlertStore } from '@/entities/alert/model';
-import { AlertType } from '@/entities/alert/model/types/alertData';
-import { CaptchaModal } from '@/features/modal/captcha';
-import { useModal } from '@/entities/modal/model/store';
-import { ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { Typography } from '@/shared/ui/typography'
+import { TextInput } from '@/shared/ui/input'
+import { Button } from '@/shared/ui/button'
+import { Form, useForm } from 'vee-validate'
+import * as yup from 'yup'
+import { useAlertStore } from '@/entities/alert/model'
+import { AlertType } from '@/entities/alert/model/types/alertData'
+import { CaptchaModal } from '@/features/modal/captcha'
+import { useModal } from '@/entities/modal/model/store'
+import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
+const alertStore = useAlertStore()
+const modalStore = useModal()
 
-const router = useRouter();
-const alertStore = useAlertStore();
-const modalStore = useModal();
-
-const emailReg = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
-
+const emailReg = new RegExp(
+  /^(([^<>()[]+(\.[^<>()[]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+);
 const schema = yup.object({
-  username: yup.string().min(3, 'Username min 3 characters').max(16, 'Username max 16 characters').required('Username required'),
+  username: yup
+    .string()
+    .min(3, 'Username min 3 characters')
+    .max(16, 'Username max 16 characters')
+    .required('Username required'),
   email: yup.string().matches(emailReg, 'Email must be correct').required('Email is required'),
   password: yup.string().min(6, 'Min 6 characters for password').required('Password is required'),
-  passwordConfirmation: yup.string().oneOf([yup.ref('password')], 'Passwords do not match').required('Password confirmation is required'),
-});
+  passwordConfirmation: yup
+    .string()
+    .oneOf([yup.ref('password')], 'Passwords do not match')
+    .required('Password confirmation is required')
+})
 
 const { handleSubmit, errors, defineField } = useForm({
-  validationSchema: schema,
-});
+  validationSchema: schema
+})
 
-const [email, emailProps] = defineField('email');
-const [username, usernameProps] = defineField('username');
-const [password, passwordProps] = defineField('password');
-const [passwordConfirmation, passwordConfirmationProps] = defineField('passwordConfirmation');
+const [email, emailProps] = defineField('email')
+const [username, usernameProps] = defineField('username')
+const [password, passwordProps] = defineField('password')
+const [passwordConfirmation, passwordConfirmationProps] = defineField('passwordConfirmation')
 
-const isSubmitting = ref(false);
-const captchaToken = ref('');
+const isSubmitting = ref(false)
+const captchaToken = ref('')
 
 const onSubmit = handleSubmit(async (values) => {
-  console.log('onSubmit:', onSubmit);
-  console.log('values:', values);
+  console.log('onSubmit:', onSubmit)
+  console.log('values:', values)
 
-  if (isSubmitting.value) return;
-  isSubmitting.value = true;
+  if (isSubmitting.value) return
+  isSubmitting.value = true
 
   try {
     modalStore.open(CaptchaModal, 'center', 'center', true, {
       onVerified: handleCaptchaVerified,
       onError: handleCaptchaError,
-      onExpired: handleCaptchaExpired,
-    });
+      onExpired: handleCaptchaExpired
+    })
   } catch (error) {
-    console.error('Error opening captcha modal:', error);
+    console.error('Error opening captcha modal:', error)
     alertStore.addAlert({
       type: AlertType.Error,
-      title: "Error",
-      msg: "An error occurred. Please try again.",
+      title: 'Error',
+      msg: 'An error occurred. Please try again.',
       duration: 3000
-    });
-    isSubmitting.value = false;
+    })
+    isSubmitting.value = false
+  } finally {
+    isSubmitting.value = false
+    captchaToken.value = ''
   }
-  finally {
-    isSubmitting.value = false;
-    captchaToken.value = '';
-  }
-});
+})
 
 const handleCaptchaVerified = (token: string) => {
-  captchaToken.value = token;
-  modalStore.close();
+  captchaToken.value = token
+  modalStore.close()
   submitForm(token).catch(() => {
-    isSubmitting.value = false;
-  });
-};
+    isSubmitting.value = false
+  })
+}
 
 const handleCaptchaError = () => {
-  isSubmitting.value = false;
+  isSubmitting.value = false
   alertStore.addAlert({
     type: AlertType.Error,
-    title: "Error",
-    msg: "CAPTCHA verification failed. Please try again.",
+    title: 'Error',
+    msg: 'CAPTCHA verification failed. Please try again.',
     duration: 3000
-  });
-};
+  })
+}
 
 const handleCaptchaExpired = () => {
-  isSubmitting.value = false;
+  isSubmitting.value = false
   alertStore.addAlert({
     type: AlertType.Warning,
-    title: "Warning",
-    msg: "CAPTCHA expired. Please try again.",
+    title: 'Warning',
+    msg: 'CAPTCHA expired. Please try again.',
     duration: 3000
-  });
-};
+  })
+}
 
 const submitForm = async (token: string) => {
-  console.log('submitForm:', submitForm);
-  if (isSubmitting.value) return;
+  console.log('submitForm:', submitForm)
+  if (isSubmitting.value) return
 
   try {
-    isSubmitting.value = true;
+    isSubmitting.value = true
     const formData = {
       username: username.value,
       email: email.value,
       password: password.value,
       captchaToken: token
-    };
-    console.log('formData:', formData);
+    }
+    console.log('formData:', formData)
 
-    const response = await mockApiResponse(formData);
-    console.log('response:', response);
+    const response = await mockApiResponse(formData)
+    console.log('response:', response)
 
     if (response.status === 201) {
       alertStore.addAlert({
         type: AlertType.Success,
-        title: "Success",
-        msg: "Registration successful",
+        title: 'Success',
+        msg: 'Registration successful',
         duration: 3000
-      });
-      username.value = '';
-      email.value = '';
-      password.value = '';
-      passwordConfirmation.value = '';
-      router.push('/login');
+      })
+      username.value = ''
+      email.value = ''
+      password.value = ''
+      passwordConfirmation.value = ''
+      router.push('/login')
     } else {
       alertStore.addAlert({
         type: AlertType.Error,
-        title: "Error",
-        msg: response.data.error || "Registration failed. Please try again.",
+        title: 'Error',
+        msg: response.data.error || 'Registration failed. Please try again.',
         duration: 5000
-      });
+      })
     }
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration error:', error)
     alertStore.addAlert({
       type: AlertType.Error,
-      title: "Error",
-      msg: "Registration failed. Please try again.",
+      title: 'Error',
+      msg: 'Registration failed. Please try again.',
       duration: 5000
-    });
+    })
   } finally {
-    isSubmitting.value = false;
-    captchaToken.value = '';
+    isSubmitting.value = false
+    captchaToken.value = ''
   }
-};
+}
 
 const mockApiResponse = async (formData: any) => {
-  console.log('mockApiResponse:', mockApiResponse);
+  console.log('mockApiResponse:', mockApiResponse)
 
-  await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 1500)) // Simulate API delay
 
   if (formData.username === 'admin' || formData.email === 'admin@example.com') {
-    return { status: 400, data: { error: 'Username or email already exists' } };
+    return { status: 400, data: { error: 'Username or email already exists' } }
   }
 
   if (formData.captchaToken.length < 10) {
-    return { status: 400, data: { error: 'Invalid captcha token' } };
+    return { status: 400, data: { error: 'Invalid captcha token' } }
   }
 
-  return { status: 201, data: {} }; 
-};
+  return { status: 201, data: {} }
+}
 
-watch(() => modalStore.isOpen, (isOpen) => {
-  if (!isOpen && captchaToken.value) {
-    submitForm(captchaToken.value);
+watch(
+  () => modalStore.isOpen,
+  (isOpen) => {
+    if (!isOpen && captchaToken.value) {
+      submitForm(captchaToken.value)
+    }
   }
-});
-
+)
 </script>
 
 <style scoped lang="scss">

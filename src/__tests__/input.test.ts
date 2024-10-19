@@ -36,18 +36,17 @@ describe('Input', () => {
     expect(wrapper.find('.text-input').classes()).to.include('text-input--error')
   })
   it('displays error message when provided', () => {
-    const errorMessage = 'This is an error';
+    const errorMessage = 'This is an error'
     const wrapper = mount(TextInput, {
-      props: { errorMessage, hasErrorSpace: true },
-    });
-  
-    if (wrapper.find('.error-msg-container').exists()) {
-      expect(wrapper.find('.error-msg-container').text()).to.equal(errorMessage);
-    } else {
+      props: { errorMessage, hasErrorSpace: true }
+    })
 
-      expect(wrapper.find('.error-msg-container').exists()).to.be.false;
+    if (wrapper.find('.error-msg-container').exists()) {
+      expect(wrapper.find('.error-msg-container').text()).to.equal(errorMessage)
+    } else {
+      expect(wrapper.find('.error-msg-container').exists()).to.be.false
     }
-  });
+  })
   it('disables input when isDisabled prop is true', () => {
     const wrapper = mount(TextInput, {
       props: { isDisabled: true }
