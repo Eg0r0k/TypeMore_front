@@ -2,38 +2,71 @@
   <div class="registration__wrapper">
     <div class="registration">
       <div class="registration__header">
-        <Typography color="main" tag-name="h2" size="xl" class="registration__title">Registration</Typography>
+        <Typography color="main" tag-name="h2" size="xl" class="registration__title"
+          >Registration</Typography
+        >
       </div>
       <Form class="login__body" autocomplete="off" @submit="onSubmit()">
         <TextInput
-v-bind="usernameProps" v-model="username" required :has-error-space="true"
-          :error-message="errors.username" placeholder="Username">
-          <Typography color="primary">Username<Typography tag-name="span" size="xs" color="error">*</Typography>
+          v-bind="usernameProps"
+          v-model="username"
+          required
+          :has-error-space="true"
+          :error-message="errors.username"
+          placeholder="Username"
+        >
+          <Typography color="primary"
+            >Username<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
         <TextInput
-v-bind="emailProps" v-model="email" required :has-error-space="true" :error-message="errors.email"
-          name="email" placeholder="Email">
-          <Typography color="primary">Email<Typography tag-name="span" size="xs" color="error">*</Typography>
+          v-bind="emailProps"
+          v-model="email"
+          required
+          :has-error-space="true"
+          :error-message="errors.email"
+          name="email"
+          placeholder="Email"
+        >
+          <Typography color="primary"
+            >Email<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
         <TextInput
-v-bind="passwordProps" v-model="password" type="password" :has-error-space="true" name="password"
-          required :error-message="errors.password" placeholder="Password">
-          <Typography color="primary">Password<Typography tag-name="span" size="xs" color="error">*</Typography>
+          v-bind="passwordProps"
+          v-model="password"
+          type="password"
+          :has-error-space="true"
+          name="password"
+          required
+          :error-message="errors.password"
+          placeholder="Password"
+        >
+          <Typography color="primary"
+            >Password<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
         <TextInput
-v-bind="passwordConfirmationProps" v-model="passwordConfirmation" type="password"
-          :has-error-space="true" name="passwordConfirmation" required :error-message="errors.passwordConfirmation"
-          placeholder="Confirm password">
-          <Typography color="primary">Repeat password<Typography tag-name="span" size="xs" color="error">*</Typography>
+          v-bind="passwordConfirmationProps"
+          v-model="passwordConfirmation"
+          type="password"
+          :has-error-space="true"
+          name="passwordConfirmation"
+          required
+          :error-message="errors.passwordConfirmation"
+          placeholder="Confirm password"
+        >
+          <Typography color="primary"
+            >Repeat password<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
-        <Button type="submit" class="registration__submit" :is-loading="isSubmitting">Create</Button>
+        <Button type="submit" class="registration__submit" :is-loading="isSubmitting"
+          >Create</Button
+        >
       </Form>
       <div class="registration__footer">
-        <Typography tag-name="p" color="primary">Has account?
+        <Typography tag-name="p" color="primary"
+          >Has account?
           <router-link to="/login" class="registration__link">Login</router-link>
         </Typography>
       </div>
@@ -60,7 +93,7 @@ const modalStore = useModal()
 
 const emailReg = new RegExp(
   /^(([^<>()[]+(\.[^<>()[]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-);
+)
 const schema = yup.object({
   username: yup
     .string()

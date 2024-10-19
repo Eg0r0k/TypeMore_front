@@ -27,9 +27,16 @@
     <Typography size="m" color="primary"> miss: {{ inputStore.missedWords }} </Typography>
     <p v-show="testState.isRepeated">is restarted</p>
     <div v-show="capsLockState" class="caps-detected">CAPS!</div>
-    <input v-focus :disabled="!testState.isActive" :value="inputStore.input.current" type="text"
-      :style="{ direction: isRightToLeft ? 'rtl' : 'ltr' }" @input="inputStore.handleInput($event)"
-      @keydown.delete="handleBackspace($event)" @keydown.space.prevent="inputStore.handleSpace()" />
+    <input
+      v-focus
+      :disabled="!testState.isActive"
+      :value="inputStore.input.current"
+      type="text"
+      :style="{ direction: isRightToLeft ? 'rtl' : 'ltr' }"
+      @input="inputStore.handleInput($event)"
+      @keydown.delete="handleBackspace($event)"
+      @keydown.space.prevent="inputStore.handleSpace()"
+    />
     <Test :is-right-to-left="isRightToLeft" />
 
     <Popper class="refresh__tip" hover arrow :interactive="false" content="Restart test">

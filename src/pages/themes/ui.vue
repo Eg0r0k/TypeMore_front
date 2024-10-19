@@ -27,7 +27,8 @@
         <div class="card__footer">
           <div class="card__desc">
             <Typography tag="p" color="sub"
-              >Uploaded by <Typography decoration="underline" tag-name="span"> nalyd_vs </Typography>
+              >Uploaded by
+              <Typography decoration="underline" tag-name="span"> nalyd_vs </Typography>
             </Typography>
             <Typography tag="h2" color="primary" size="l" decoration="underline">
               Soyjak

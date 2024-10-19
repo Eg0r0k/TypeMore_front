@@ -6,16 +6,31 @@
       </div>
       <Form class="login__body" autocomplete="off" @submit="onSubmit()">
         <TextInput
-v-bind="emailProps" v-model="email" :has-error-space="true" required placeholder="Email"
-          :error-message="errors.email" name="email">
-          <Typography color="primary">Email<Typography tag-name="span" size="xs" color="error">*</Typography>
+          v-bind="emailProps"
+          v-model="email"
+          :has-error-space="true"
+          required
+          placeholder="Email"
+          :error-message="errors.email"
+          name="email"
+        >
+          <Typography color="primary"
+            >Email<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
 
         <TextInput
-v-bind="passwordProps" v-model="password" :has-error-space="true" :error-message="errors.password"
-          type="password" placeholder="Password" label="Password*" name="password">
-          <Typography color="primary">Password<Typography tag-name="span" size="xs" color="error">*</Typography>
+          v-bind="passwordProps"
+          v-model="password"
+          :has-error-space="true"
+          :error-message="errors.password"
+          type="password"
+          placeholder="Password"
+          label="Password*"
+          name="password"
+        >
+          <Typography color="primary"
+            >Password<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
 
@@ -40,7 +55,8 @@ v-bind="passwordProps" v-model="password" :has-error-space="true" :error-message
         </Button>
       </div>
       <div class="login__footer">
-        <Typography tag-name="p" color="primary">No account?
+        <Typography tag-name="p" color="primary"
+          >No account?
           <router-link to="/registration" class="login__link">Create</router-link>
         </Typography>
       </div>
@@ -59,7 +75,7 @@ import { useAlertStore } from '@/entities/alert/model'
 import { AlertType } from '@/entities/alert/model/types/alertData'
 const emailReg = new RegExp(
   /^(([^<>()[]+(\.[^<>()[]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-);
+)
 const schema = yup.object({
   email: yup.string().matches(emailReg, 'Email must be correct').required('Email is required'),
   password: yup.string().min(6, 'Min 6 characters for password').required('Password is required')

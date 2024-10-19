@@ -1,6 +1,11 @@
 <template>
   <Teleport to="#app" :disabled="!isTeleportAvailable">
-    <Transition :on-before-enter="onBeforeEnter" :on-enter="onEnter" :on-leave="onLeave" :css="false">
+    <Transition
+      :on-before-enter="onBeforeEnter"
+      :on-enter="onEnter"
+      :on-leave="onLeave"
+      :css="false"
+    >
       <div
         v-if="isOpen"
         :class="classes"
