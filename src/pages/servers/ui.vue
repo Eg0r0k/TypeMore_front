@@ -15,9 +15,9 @@
       </div>
     </div>
     <div class="serverPage__main main">
-      <Button size="l" color="main-outline">Create room</Button>
-      <Button size="l" color="main-outline">Browse lobbyes</Button>
-      <Button size="l" color="main-outline">Enter code </Button>
+      <Button size="m" color="main-outline">Create room</Button>
+      <Button size="m" color="main-outline">Browse lobbyes</Button>
+      <Button size="m" color="main-outline">Enter code </Button>
     </div>
   </div>
 </template>
@@ -31,11 +31,14 @@ const ping = ref(20)
 </script>
 
 <style scoped lang="scss">
+@import '@app/main.scss';
+
 .serverPage {
   &__head {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-bottom: 24px;
   }
 
   &__main {
@@ -50,6 +53,7 @@ const ping = ref(20)
 
   &__title {
     margin-bottom: 0;
+
   }
 }
 </style>

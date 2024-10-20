@@ -120,6 +120,7 @@ export const useStats = () => {
         if (i === inputWords.value.length - 1 && config.mode === 'time') {
           if (toAdd.incorrect === 0) correctWordChars.value += toAdd.correct
         } else {
+          console.log('missed')
           missedChars.value += toAdd.missed
         }
       }
@@ -151,11 +152,11 @@ export const useStats = () => {
 
   const setEnd = () => {
     calculateChars()
-    // Additional end-of-test logic can be added here
+
   }
 
   const setStart = () => {
-    // Reset all counters
+
     correctWordChars.value = 0
     correctChars.value = 0
     incorrectChars.value = 0

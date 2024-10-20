@@ -29,10 +29,13 @@ export const useInputState = () => {
   }
 
   //? MB create this computed?
-  const pushToHistory = () => {
+  const pushToHistory = (): string => {
+    const previousInput = input.current
     input.history.push(input.current)
     resetCurrent()
+    return previousInput
   }
+
   const getHistory = (): string[] => {
     return input.history
   }

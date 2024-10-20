@@ -1,17 +1,17 @@
-@use 'sass:color';
+@use "sass:color";
 
-@import './reset';
-@import './normalize';
-@import './scroll';
-@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Lexend+Deca:wght@100..900&display=swap');
+@import "./reset";
+@import "./normalize";
+@import "./scroll";
+@import url("https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Lexend+Deca:wght@100..900&display=swap");
 
 @font-face {
-  font-family: 'Balsamiq Sans';
-  src: url('./fonts/BalsamiqSans-Regular.ttf') format('truetype');
+  font-family: "Balsamiq Sans";
+  src: url("./fonts/BalsamiqSans-Regular.ttf") format("truetype");
   font-weight: 400;
   font-display: block;
 }
-
+@import "./mixin";
 // Base colors
 :root {
   --bg-color: #121212;
@@ -138,7 +138,7 @@ body {
   font-size: 16px;
   min-height: 100vh;
   background-color: var(--bg-color);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   line-height: normal;
 }
 // Global styles for elements
