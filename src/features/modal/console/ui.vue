@@ -1,31 +1,16 @@
 <template>
-  <div
-    class="console-modal"
-    tabindex="0"
-    @keydown.tab.prevent="navigateItems(NavigationDirection.Down)"
+  <div class="console-modal" tabindex="0" @keydown.tab.prevent="navigateItems(NavigationDirection.Down)"
     @keydown.up.prevent="navigateItems(NavigationDirection.Up)"
-    @keydown.down.prevent="navigateItems(NavigationDirection.Down)"
-    @keydown.enter.prevent="selectFocusedItem"
-  >
+    @keydown.down.prevent="navigateItems(NavigationDirection.Down)" @keydown.enter.prevent="selectFocusedItem">
     <div class="console-modal__header modal-header">
       <div class="modal-header__search-wrapper">
         <Icon width="20" icon="fluent:search-12-filled" class="modal-header__search-icon" />
-        <input
-          ref="searchInput"
-          v-model.trim="searchQuery"
-          type="text"
-          class="modal-header__search"
-          placeholder="Search..."
-        />
+        <input ref="searchInput" :value="searchQuery" @input="onSearchInput" type="text" class="modal-header__search"
+          placeholder="Search..." />
       </div>
     </div>
     <div ref="itemsList" role="listbox" class="console-modal__body">
-      <slot
-        name="items"
-        :focused-items="focusedItemIndex"
-        :select-item="selectItem"
-        :filtered-items="filteredItems"
-      />
+      <slot name="items" :focused-items="focusedItemIndex" :select-item="selectItem" :filtered-items="filteredItems" />
     </div>
   </div>
 </template>
@@ -45,7 +30,10 @@ const searchQuery = ref('')
 const focusedItemIndex = ref(-1)
 const searchInput = ref<HTMLInputElement | null>(null)
 const itemsList = ref<HTMLElement | null>(null)
-
+const onSearchInput = (event: Event): void => {
+  const target = event.target as HTMLInputElement
+  searchQuery.value = target.value.trim()
+}
 interface Props {
   items: Theme[] | Record<string, any>[] | any[]
   searchKey?: string

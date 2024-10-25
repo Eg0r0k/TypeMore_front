@@ -152,11 +152,9 @@ export const useStats = () => {
 
   const setEnd = () => {
     calculateChars()
-
   }
 
   const setStart = () => {
-
     correctWordChars.value = 0
     correctChars.value = 0
     incorrectChars.value = 0

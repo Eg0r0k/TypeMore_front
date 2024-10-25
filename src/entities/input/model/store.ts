@@ -18,7 +18,6 @@ type Keydata = {
   index: number
 }
 
-
 export const useInputStore = defineStore('input', () => {
   const keyDownData: Record<string, Keydata> = reactive({})
 
@@ -107,8 +106,9 @@ export const useInputStore = defineStore('input', () => {
     }
     const newValue = (event.target as HTMLInputElement).value.normalize()
     const oldValue = input.current
-    const changedChars = newValue.slice(oldValue.length)
-    changedChars.split('').forEach((char, i) => handleChar(char, oldValue.length + i))
+
+    const charsToProcess = newValue.slice(oldValue.length).replace(' ', '')
+    charsToProcess.split('').forEach((char, i) => handleChar(char, oldValue.length + i))
     input.current = newValue
     console.log(input.current)
     wordInputs.value[testState.currentWordElementIndex] = input.current

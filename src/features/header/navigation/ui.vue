@@ -26,7 +26,6 @@
 </template>
 
 <script setup lang="ts">
-import { useModal } from '@/entities/modal/model/store'
 import { NewsModal } from '@/features/modal/news'
 import { Button } from '@/shared/ui/button'
 import { Icon } from '@iconify/vue'
@@ -41,7 +40,7 @@ interface Props {
     label: string
   }>
 }
-const modal = useModal()
+
 const visible = ref(false)
 const props = defineProps<Props>()
 
@@ -62,7 +61,7 @@ const handleOpenNews = (): void => {
   width: 100%;
   display: flex;
   gap: 8px;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
 
   &__controls {
@@ -91,5 +90,14 @@ const handleOpenNews = (): void => {
 .slide-fade-leave-to {
   transform: translateX(100%);
   opacity: 0;
+}
+
+@media (max-width: 375px) {
+
+  .navigation__controls .iconify,
+  .list__link .iconify {
+    width: 20px;
+    height: 20px;
+  }
 }
 </style>
