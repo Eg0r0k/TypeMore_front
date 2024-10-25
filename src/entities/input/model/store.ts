@@ -20,7 +20,7 @@ type Keydata = {
 
 export const useInputStore = defineStore('input', () => {
   const keyDownData: Record<string, Keydata> = reactive({})
-
+  const { accuracy, incrementAccuracy, resetAccuracy, accuracyPercentage } = useAccuracy()
   const currentWord = computed(() => generator.getCurrent())
 
   const { resetCharacterCounts, characterCounts, incrementCharacterCount } = useAccuracyHandler()
@@ -31,7 +31,7 @@ export const useInputStore = defineStore('input', () => {
   const currentKeypressCount = ref(0)
   const testState = useTestStateStore()
   const generator = markRaw(useWordGeneratorStore())
-  const { accuracy, incrementAccuracy, resetAccuracy } = useAccuracy()
+
   const {
     input,
     inputHistoryLength,
@@ -44,7 +44,7 @@ export const useInputStore = defineStore('input', () => {
     pushToHistory
   } = useInputState()
   const { playClickSound } = useSounds()
-  const { wpm, raw, getStats } = useStats()
+  const { getStats } = useStats()
   const corrected = reactive({
     current: '',
     history: [] as string[]
@@ -197,12 +197,10 @@ export const useInputStore = defineStore('input', () => {
     initializeLetterClasses,
     getLetterClass,
     accuracy,
+    accuracyPercentage,
     characterCounts,
     clearAllInputData,
-    wpm,
-    raw,
     setWordToInput,
-    isCharCorrect: memoizedIsCharCorrect.value,
     handleInput,
     getStats,
     wordInputs

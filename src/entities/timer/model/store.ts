@@ -28,8 +28,7 @@ export const useTimerStore = defineStore('timer', () => {
         stopTimer()
       } else if (typeof e.data.timer !== 'undefined') {
         time.value = e.data.timer
-        stats.calculateChars() 
-  
+        stats.calculateChars()
       }
     }
   }

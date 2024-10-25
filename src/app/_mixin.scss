@@ -1,64 +1,64 @@
 @mixin em-to-rem($property, $value) {
-    #{$property}: $value * 1rem;
+  #{$property}: $value * 1rem;
 }
 
 @mixin absolute-center {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 @mixin flex-center {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 @mixin hide-visually {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    border: 0;
-    clip: rect(0, 0, 0, 0);
-    overflow: hidden;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  overflow: hidden;
 }
 
 @mixin disable-selection {
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 @mixin hex-to-rgba($color, $alpha: 1) {
-    color: rgba(red($color), green($color), blue($color), $alpha);
+  color: rgba(red($color), green($color), blue($color), $alpha);
 }
 
 @mixin flexible-width($min: 300px, $max: 1000px) {
-    width: 100%;
-    max-width: $max;
-    min-width: $min;
+  width: 100%;
+  max-width: $max;
+  min-width: $min;
 }
 
 @mixin invisible {
-    visibility: hidden;
+  visibility: hidden;
 }
 
 @mixin text-overflow($no-wrap: true) {
-    @if type-of($no-wrap) == number {
-        display: -webkit-box;
-        -webkit-line-clamp: $no-wrap;
-        -webkit-box-orient: vertical;
-        word-break: break-word;
-    } @else if $no-wrap != false {
-        white-space: nowrap;
-    } @else {
-        word-break: break-word;
-    }
+  @if type-of($no-wrap) == number {
+    display: -webkit-box;
+    -webkit-line-clamp: $no-wrap;
+    -webkit-box-orient: vertical;
+    word-break: break-word;
+  } @else if $no-wrap != false {
+    white-space: nowrap;
+  } @else {
+    word-break: break-word;
+  }
 
-    text-overflow: ellipsis;
-    overflow: hidden;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }

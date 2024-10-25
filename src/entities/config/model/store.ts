@@ -5,11 +5,12 @@ import defaultConfig from '@shared/constants/default-config'
 
 import { defineStore } from 'pinia'
 import { reactive, ref } from 'vue'
-//Config storage
+/**
+ *
+ */
 export const useConfigStore = defineStore(
   'config',
   () => {
-    //Get default config
     const config = reactive<Config>({
       ...defaultConfig
     })
@@ -24,7 +25,9 @@ export const useConfigStore = defineStore(
         console.error(`Error fetching language file for ${lang}:`, error)
       }
     }
-
+    const setFontSize = (val: number) => {
+      config.fontSize = val
+    }
     const toggleFps = () => {
       config.showFps = !config.showFps
     }
@@ -36,7 +39,16 @@ export const useConfigStore = defineStore(
     const setWords = (amount: number) => {
       config.words = amount
     }
-    return { config, setLanguage, toggleFps, setTheme, setWords, currentLang, getLanguage }
+    return {
+      config,
+      setLanguage,
+      toggleFps,
+      setTheme,
+      setWords,
+      currentLang,
+      getLanguage,
+      setFontSize
+    }
   },
   //Saves only config to local storage
   {

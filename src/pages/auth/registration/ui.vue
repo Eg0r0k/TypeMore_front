@@ -6,7 +6,7 @@
           >Registration</Typography
         >
       </div>
-      <Form class="login__body" autocomplete="off" @submit="onSubmit()">
+      <Form class="registration__body" autocomplete="off" @submit="onSubmit()">
         <TextInput
           v-bind="usernameProps"
           v-model="username"
@@ -257,17 +257,17 @@ watch(
 .registration {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 12px;
   width: 100%;
   max-width: 359px;
-  padding: 32px;
+  padding: 20px;
   border: 2px solid var(--sub-alt-color);
   border-radius: var(--border-radius);
 
   &__body {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
   }
 
   &__wrapper {
@@ -288,7 +288,7 @@ watch(
 
   &__popper,
   &__sumbit {
-    width: 100%;
+    width: 100% !important;
   }
 }
 </style>

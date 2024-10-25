@@ -93,7 +93,6 @@ const handleOpenNews = (): void => {
 }
 
 @media (max-width: 375px) {
-
   .navigation__controls .iconify,
   .list__link .iconify {
     width: 20px;

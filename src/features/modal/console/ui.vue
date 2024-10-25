@@ -1,16 +1,32 @@
 <template>
-  <div class="console-modal" tabindex="0" @keydown.tab.prevent="navigateItems(NavigationDirection.Down)"
+  <div
+    class="console-modal"
+    tabindex="0"
+    @keydown.tab.prevent="navigateItems(NavigationDirection.Down)"
     @keydown.up.prevent="navigateItems(NavigationDirection.Up)"
-    @keydown.down.prevent="navigateItems(NavigationDirection.Down)" @keydown.enter.prevent="selectFocusedItem">
+    @keydown.down.prevent="navigateItems(NavigationDirection.Down)"
+    @keydown.enter.prevent="selectFocusedItem"
+  >
     <div class="console-modal__header modal-header">
       <div class="modal-header__search-wrapper">
         <Icon width="20" icon="fluent:search-12-filled" class="modal-header__search-icon" />
-        <input ref="searchInput" :value="searchQuery" @input="onSearchInput" type="text" class="modal-header__search"
-          placeholder="Search..." />
+        <input
+          ref="searchInput"
+          :value="searchQuery"
+          @input="onSearchInput"
+          type="text"
+          class="modal-header__search"
+          placeholder="Search..."
+        />
       </div>
     </div>
     <div ref="itemsList" role="listbox" class="console-modal__body">
-      <slot name="items" :focused-items="focusedItemIndex" :select-item="selectItem" :filtered-items="filteredItems" />
+      <slot
+        name="items"
+        :focused-items="focusedItemIndex"
+        :select-item="selectItem"
+        :filtered-items="filteredItems"
+      />
     </div>
   </div>
 </template>
@@ -20,6 +36,7 @@ import { Icon } from '@iconify/vue'
 import { computed, onMounted, ref, nextTick } from 'vue'
 import { useFocus } from '@vueuse/core'
 import { Theme } from '../themes/types/themes'
+import { Typography } from '@/shared/ui/typography'
 
 enum NavigationDirection {
   Up = 'up',

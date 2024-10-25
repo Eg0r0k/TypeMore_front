@@ -8,6 +8,7 @@ export interface Config {
   showFps: boolean
   playSound: boolean
   soundVolume: number
+  fontSize: number
 }
 //TODO: dont forget to change
 export type LanguageObj = {

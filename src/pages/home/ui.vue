@@ -7,29 +7,20 @@
         </template>
         {{ configStore.config.language }}
       </Button>
-      <Typography color="primary">
-        Timer:{{ configStore.config.time - timerStore.time }}
-      </Typography>
-      <Typography color="primary"> State:{{ testState.isActive }} </Typography>
-      <Typography color="primary">
-        Acc:{{ accuracyTest }}% {{ inputStore.accuracy.correct }}
-        {{ inputStore.accuracy.incorrect }}
-      </Typography>
-      <Typography color="primary">
-        Words: {{ testState.currentWordElementIndex }}/{{ configStore.config.words }}
-      </Typography>
-      <Typography color="primary">
-        Wpm/RawWpm: {{ inputStore.wpm }}/{{ inputStore.raw }}
-      </Typography>
     </div>
-    <Typography size="m" color="primary"> history: {{ inputStore.input.history }} </Typography>
 
-    <Typography size="m" color="primary"> miss: {{ inputStore.missedWords }} </Typography>
     <p v-show="testState.isRepeated">is restarted</p>
     <div v-show="capsLockState" class="caps-detected">CAPS!</div>
-    <input v-focus :disabled="!testState.isActive" :value="inputStore.input.current" type="text"
-      :style="{ direction: isRightToLeft ? 'rtl' : 'ltr' }" @input="inputStore.handleInput($event)"
-      @keydown.delete="handleBackspace($event)" @keydown.space.prevent="inputStore.handleSpace()" />
+    <input
+      v-focus
+      :disabled="!testState.isActive"
+      :value="inputStore.input.current"
+      type="text"
+      :style="{ direction: isRightToLeft ? 'rtl' : 'ltr' }"
+      @input="inputStore.handleInput($event)"
+      @keydown.delete="handleBackspace($event)"
+      @keydown.space.prevent="inputStore.handleSpace()"
+    />
     <Test :is-right-to-left="isRightToLeft" />
 
     <Popper class="refresh__tip" hover arrow :interactive="false" content="Restart test">
@@ -67,6 +58,7 @@ import { useInputStore } from '@/entities/input/model'
 import { roundTo2 } from '@/shared/lib/helpers/numbers'
 import { Test } from '@/widgets/test'
 import { TestChart } from '@/shared/ui/chart'
+import { useAccuracy } from '@/shared/lib/hooks/useAccuracy'
 const modal = useModal()
 const testState = useTestStateStore()
 const capsLockState = useKeyModifier('CapsLock')
@@ -78,13 +70,13 @@ const inputStore = useInputStore()
 const isRightToLeft = ref(false)
 const currentLanguage = computed(() => configStore.currentLang)
 
-const accuracyTest = computed(() => {
-  const acc =
-    (inputStore.accuracy.correct / (inputStore.accuracy.correct + inputStore.accuracy.incorrect)) *
-    100
-  return isNaN(acc) ? 100 : roundTo2(acc)
-})
-
+// const accuracyTest = computed(() => {
+//   const acc =
+//     (inputStore.accuracy.correct / (inputStore.accuracy.correct + inputStore.accuracy.incorrect)) *
+//     100
+//   return isNaN(acc) ? 100 : roundTo2(acc)
+// })
+const { accuracy, accuracyPercentage, incrementAccuracy } = useAccuracy()
 const handleBackspace = (event: KeyboardEvent) => {
   if (event.key === 'Backspace' && inputStore.input.current.length === 0) {
     inputStore.backspaceToPrevious()

@@ -135,10 +135,10 @@ const onSubmit = handleSubmit(
   max-width: 359px;
   display: flex;
   flex-direction: column;
-  padding: 32px;
+  padding: 20px;
   border: 2px solid var(--sub-alt-color);
   border-radius: var(--border-radius);
-  gap: 24px;
+  gap: 12px;
 
   &__header {
     text-align: center;
