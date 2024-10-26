@@ -10,29 +10,31 @@
       <dt>MIN:</dt>
       <dd>{{ minFps }}</dd>
     </dl>
-    <div>
-      <p color="primary">Timer:{{ configStore.config.time - timerStore.time }}</p>
-      <p color="primary">State:{{ testState.isActive }}</p>
-      <p color="primary">
-        Words: {{ testState.currentWordElementIndex }}/{{ configStore.config.words }}
-      </p>
-    </div>
-    <div class="character-stats">
-      <p>WPM: {{ getStats.wpm }}</p>
-      <p>Raw WPM: {{ getStats.wpmRaw }}</p>
-      <p>Correct Chars: {{ getStats.correctChars }}</p>
-      <p>Missed Chars: {{ getStats.missedChars }}</p>
-      <p>Extra Chars: {{ getStats.extraChars }}</p>
-      <p>Spaces: {{ getStats.spaces }}</p>
-    </div>
-    <div>
-      <p>Correct: {{ inputStore.accuracy.correct }}</p>
-      <p>Incorrect: {{ inputStore.accuracy.incorrect }}</p>
-      <p>Accuracy {{ inputStore.accuracyPercentage }}%</p>
-    </div>
-    <div style="max-width: 200px">
-      <small>Histroy: {{ inputStore.input.history }}</small>
-      <!-- <small>Miss: {{ inputStore.missedWords }} </small> -->
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div>
+        <p color="primary">Timer:{{ configStore.config.time - timerStore.time }}</p>
+        <p color="primary">State:{{ testState.isActive }}</p>
+        <p color="primary">
+          Words: {{ testState.currentWordElementIndex }}/{{ configStore.config.words }}
+        </p>
+      </div>
+      <div class="character-stats">
+        <p>WPM: {{ getStats.wpm }}</p>
+        <p>Raw WPM: {{ getStats.wpmRaw }}</p>
+        <p>Correct Chars: {{ getStats.correctChars }}</p>
+        <p>Missed Chars: {{ getStats.missedChars }}</p>
+        <p>Extra Chars: {{ getStats.extraChars }}</p>
+        <p>Spaces: {{ getStats.spaces }}</p>
+      </div>
+      <div>
+        <p>Correct: {{ inputStore.accuracy.correct }}</p>
+        <p>Incorrect: {{ inputStore.accuracy.incorrect }}</p>
+        <p>Accuracy {{ inputStore.accuracyPercentage }}%</p>
+      </div>
+      <div style="max-width: 200px">
+        <small>Histroy: {{ inputStore.input.history }}</small>
+        <!-- <small>Miss: {{ inputStore.missedWords }} </small> -->
+      </div>
     </div>
   </div>
 </template>

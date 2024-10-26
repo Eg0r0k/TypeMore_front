@@ -17,7 +17,6 @@ export const authInstance = axios.create({
 })
 
 export const getNewToken = async () => {
-  // const refreshToken
   const responce = await axios.post<TokenResponse>(
     `${import.meta.env.VITE_API_BASE_URL}/auth/access-token`,
     {}

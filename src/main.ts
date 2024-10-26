@@ -11,6 +11,7 @@ import Popper from 'vue3-popper'
 
 // or only core styles
 import '@splidejs/vue-splide/css/core'
+import { VueQueryPlugin } from '@tanstack/vue-query'
 
 const app = createApp(App)
 
@@ -28,6 +29,7 @@ pinia.use(piniaPluginPersistedstate)
 app.use(install, options)
 app.use(pinia)
 app.use(router)
+app.use(VueQueryPlugin)
 app.component('Popper', Popper)
 app.use(VueSplide)
 app.mount('#app')

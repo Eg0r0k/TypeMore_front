@@ -11,6 +11,7 @@ export const useTestStateStore = defineStore('test-state', () => {
   const isLoading = ref(true)
 
   const currentWordElementIndex = ref(0)
+  const currentTestLine = ref(0)
   /**
    * Resets the current word index to 0.
    */
@@ -69,6 +70,7 @@ export const useTestStateStore = defineStore('test-state', () => {
     reset,
     setCurrentWordElementIndex,
     currentWordElementIndex,
-    incrementWordIndex
+    incrementWordIndex,
+    currentTestLine
   }
 })

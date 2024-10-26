@@ -28,9 +28,9 @@ export interface AuthLoginResponse {
 }
 
 export interface LoginType {
-  email: string
+  username: string
   password: string
-  captchaToken: string
+  // captchaToken: string
 }
 
 export interface ApiResponce<T> {

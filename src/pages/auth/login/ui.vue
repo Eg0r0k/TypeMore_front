@@ -5,32 +5,15 @@
         <Typography color="main" tag-name="h2" size="xl" class="login__title">Login</Typography>
       </div>
       <Form class="login__body" autocomplete="off" @submit="onSubmit()">
-        <TextInput
-          v-bind="emailProps"
-          v-model="email"
-          :has-error-space="true"
-          required
-          placeholder="Email"
-          :error-message="errors.email"
-          name="email"
-        >
-          <Typography color="primary"
-            >Email<Typography tag-name="span" size="xs" color="error">*</Typography>
+        <TextInput v-bind="usernameProps" v-model="username" :has-error-space="true" required placeholder="Username"
+          :error-message="errors.username" name="username">
+          <Typography color="primary">Email<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
 
-        <TextInput
-          v-bind="passwordProps"
-          v-model="password"
-          :has-error-space="true"
-          :error-message="errors.password"
-          type="password"
-          placeholder="Password"
-          label="Password*"
-          name="password"
-        >
-          <Typography color="primary"
-            >Password<Typography tag-name="span" size="xs" color="error">*</Typography>
+        <TextInput v-bind="passwordProps" v-model="password" :has-error-space="true" :error-message="errors.password"
+          type="password" placeholder="Password" label="Password*" name="password">
+          <Typography color="primary">Password<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
 
@@ -55,8 +38,7 @@
         </Button>
       </div>
       <div class="login__footer">
-        <Typography tag-name="p" color="primary"
-          >No account?
+        <Typography tag-name="p" color="primary">No account?
           <router-link to="/registration" class="login__link">Create</router-link>
         </Typography>
       </div>
@@ -73,19 +55,20 @@ import { Form, useForm } from 'vee-validate'
 import * as yup from 'yup'
 import { useAlertStore } from '@/entities/alert/model'
 import { AlertType } from '@/entities/alert/model/types/alertData'
+import { useAuthStore } from '@/entities/auth/model/store'
 const emailReg = new RegExp(
   /^(([^<>()[]+(\.[^<>()[]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 )
 const schema = yup.object({
-  email: yup.string().matches(emailReg, 'Email must be correct').required('Email is required'),
+  username: yup.string().min(6, 'Min 6 characters for password').required('Username is required'),
   password: yup.string().min(6, 'Min 6 characters for password').required('Password is required')
 })
 const { handleSubmit, errors, defineField } = useForm({
   validationSchema: schema
 })
-
+const authStore = useAuthStore()
 const alertStore = useAlertStore()
-const [email, emailProps] = defineField('email', {
+const [username, usernameProps] = defineField('username', {
   validateOnModelUpdate: false
 })
 const [password, passwordProps] = defineField('password', {
@@ -93,24 +76,38 @@ const [password, passwordProps] = defineField('password', {
 })
 
 const onSubmit = handleSubmit(
-  () => {
-    alertStore.addAlert({
-      type: AlertType.Success,
-      title: 'Success',
-      msg: 'Form submitted successfully',
-      duration: 1500
-    })
+  async () => {
+    try {
+      await authStore.login({ username: username.value, password: password.value }); // Вызов метода логина
+      alertStore.addAlert({
+        type: AlertType.Success,
+        title: 'Success',
+        msg: 'Login successful',
+        duration: 1500,
+      });
+      // Здесь вы можете перенаправить пользователя на другую страницу после успешного входа
+      // Например:
+      // router.push('/dashboard');
+    } catch (error) {
+      console.error('Login error:', error);
+      alertStore.addAlert({
+        type: AlertType.Error,
+        title: 'Login Failed',
+        msg: 'Invalid email or password',
+        duration: 0,
+      });
+    }
   },
   (errors) => {
-    console.log(errors)
+    console.log(errors);
     alertStore.addAlert({
       type: AlertType.Error,
       title: 'WTF',
       msg: 'Please fill all fields correctly',
-      duration: 0
-    })
+      duration: 0,
+    });
   }
-)
+);
 </script>
 
 <style scoped lang="scss">

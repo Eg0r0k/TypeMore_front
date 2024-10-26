@@ -1,4 +1,4 @@
-import { computed, markRaw, reactive, ref, shallowRef } from 'vue'
+import { computed, markRaw, reactive, ref } from 'vue'
 
 import { defineStore } from 'pinia'
 import { useTestStateStore } from '../../test'

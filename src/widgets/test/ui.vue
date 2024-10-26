@@ -1,32 +1,20 @@
 <template>
   <div ref="wordsContainer" class="words" :class="{ rightToLeft: props.isRightToLeft }">
     <template v-for="(word, wordIndex) in generator.retWords.words" :key="`${word}-${wordIndex}`">
-      <p
-        ref="wordElements"
-        class="word"
-        :class="{ active: wordIndex === testState.currentWordElementIndex }"
-      >
-        <span
-          v-for="(letter, letterIndex) in word"
-          :key="`${letter}-${letterIndex}`"
-          :class="[
-            inputStore.getLetterClass(wordIndex, letterIndex),
-            { 'tab-character': letter === '\t', 'newline-character': letter === '\n' }
-          ]"
-        >
+      <p ref="wordsRef" class="word" :class="{ active: wordIndex === testState.currentWordElementIndex }">
+        <span v-for="(letter, letterIndex) in word" :key="`${letter}-${letterIndex}`" :class="[
+          inputStore.getLetterClass(wordIndex, letterIndex),
+          { 'tab-character': letter === '\t', 'newline-character': letter === '\n' }
+        ]">
           {{ letter === '\t' ? '→' : letter === '\n' ? '↵' : letter }}
         </span>
-        <span
-          v-for="(extraLetter, extraLetterIndex) in inputStore.getExtraLetters(wordIndex)"
-          :key="`extra-${extraLetter}-${extraLetterIndex}`"
-          class="over-incorrect"
-        >
+        <span v-for="(extraLetter, extraLetterIndex) in inputStore.getExtraLetters(wordIndex)"
+          :key="`extra-${extraLetter}-${extraLetterIndex}`" class="over-incorrect">
           {{ extraLetter }}
         </span>
       </p>
     </template>
   </div>
-  <div class="character-stats"></div>
 </template>
 
 <script lang="ts" setup>
@@ -34,9 +22,8 @@ import { ref, onMounted, watch, nextTick } from 'vue'
 import { useWordGeneratorStore } from '@/entities/generator/model/store'
 import { useInputStore } from '@/entities/input/model'
 import { useTestStateStore } from '@/entities/test'
-import { useStats } from '@/shared/lib/hooks/useStats'
-import { useAccuracy } from '@/shared/lib/hooks/useAccuracy'
-const { accuracy, accuracyPercentage, incrementAccuracy } = useAccuracy()
+import { useScrollTape } from '@/shared/lib/hooks/useScrollTape';
+
 
 interface Props {
   isRightToLeft?: boolean
@@ -53,6 +40,7 @@ const generator = useWordGeneratorStore()
 const wordsContainer = ref<HTMLDivElement | null>(null)
 const maxLines = 3
 
+const { scrollTape } = useScrollTape(wordsContainer)
 const calculateHeights = () => {
   const words = wordsContainer.value?.querySelectorAll('.word') || []
   if (words.length === 0) return
@@ -73,8 +61,13 @@ const updateHeights = async () => {
   })
 }
 
+
 onMounted(async () => {
   updateHeights()
+})
+
+watch([() => testState.currentWordElementIndex, () => inputStore.input.current, () => generator.retWords.words], () => {
+  scrollTape()
 })
 
 watch(
@@ -84,6 +77,7 @@ watch(
   },
   { immediate: true }
 )
+
 </script>
 
 <style lang="scss" scoped>
