@@ -1,24 +1,13 @@
 <template>
-  <button
-    :disabled="isLoading || isDisabled"
-    :class="classes"
-    role="button"
-    :aria-label="buttonLabel"
-    :aria-busy="isLoading"
-  >
+  <button :disabled="isLoading || isDisabled" :class="classes" role="button" :aria-label="buttonLabel"
+    :aria-busy="isLoading">
     <span v-if="isLoading" class="loader" aria-hidden="true"></span>
     <span v-if="!isLoading" class="icon">
       <slot name="left-icon" :aria-label="buttonLabel"></slot>
     </span>
 
-    <Typography
-      v-if="slots.default"
-      class="button__text"
-      :class="isLoading ? 'invisible' : ''"
-      tag-name="p"
-      :size="props.size"
-      :aria-hidden="isLoading"
-    >
+    <Typography v-if="slots.default" class="button__text" :class="isLoading ? 'invisible' : ''" tag-name="p"
+      :size="props.size" :aria-hidden="isLoading">
       <slot></slot>
     </Typography>
     <span v-if="!isLoading" class="icon">
@@ -31,7 +20,7 @@
 import { useSlots, computed } from 'vue'
 import { Typography } from '@/shared/ui/typography'
 
-type ButtonColor = 'main' | 'gray' | 'error' | 'main-outline' | 'error-outline'
+type ButtonColor = 'main' | 'gray' | 'error' | 'main-outline' | 'error-outline' | 'shadow'
 type ButtonSize = 's' | 'm' | 'l'
 type ButtonDecoration = 'default' | 'none'
 
@@ -75,6 +64,14 @@ $main: (
   'hover-color': var(--bg-color),
   'active-color': var(--bg-color)
 );
+$shadow: (
+  'background': transparent,
+  'hover': transparent,
+  'active': transparent,
+  'color': var(--sub-color),
+  'hover-color': var(--main-color),
+  'active-color': var(--main-color)
+);
 $error: (
   'background': var(--error-color),
   'hover': var(--text-color),
@@ -95,7 +92,8 @@ $gray: (
 $styles: (
   'main': $main,
   'gray': $gray,
-  'error': $error
+  'error': $error,
+  'shadow': $shadow
 );
 
 @mixin button-style($styles) {
@@ -111,7 +109,8 @@ $styles: (
         color: map-get($val, 'color');
       }
 
-      @media (hover: hover), (pointer: fine) {
+      @media (hover: hover),
+      (pointer: fine) {
         &:hover {
           background-color: map-get($val, 'hover');
 
@@ -150,7 +149,8 @@ $styles: (
         color: map-get($val, 'background');
       }
 
-      @media (hover: hover), (pointer: fine) {
+      @media (hover: hover),
+      (pointer: fine) {
         &:hover {
           background-color: map-get($val, 'background');
           box-shadow: 0 0 0 1px map-get($val, 'hover');

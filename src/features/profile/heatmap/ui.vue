@@ -8,7 +8,7 @@
             <Typography color="primary" size="s" tag="span" class="months">
                 <span v-for="month in 12" :key="month" aria-hidden="true">{{
                     new Date(0, month - 1).toLocaleString('en', { month: 'short' })
-                }}</span>
+                    }}</span>
             </Typography>
             <div class="grid" role="grid" aria-labelledby="id-heatmap-label">
                 <h2 class="sr-only" id="id-heatmap-label">Heatmap activity</h2>
@@ -17,30 +17,33 @@
                     :aria-label="`Date: ${day.date}. ${day.timesPlayed} games played`" role="gridcell" tabindex="0"
                     @mouseover="selectedCell = day" @mouseleave="selectedCell = null" @click="selectedCell = day"
                     @focus="selectedCell = day" @blur="selectedCell = null" @touchstart="selectedCell = day"
-                    @touchend="selectedCell = null">
-                </div>
+                    @touchend="selectedCell = null"></div>
             </div>
         </div>
         <div class="tooltip" role="tooltip" aria-live="polite" v-if="selectedCell" :style="tooltipStyle">
-            <span>{{ selectedCell.date }}:
-                {{
-                    selectedCell.timesPlayed > 0 ? selectedCell.timesPlayed + ' games' : 'no activity'
+            <span>{{ selectedCell.date }}: {{
+                selectedCell.timesPlayed > 0 ? selectedCell.timesPlayed + ' games' : 'no activity'
                 }}</span>
             <div class="arrow"></div>
         </div>
     </div>
 </template>
+
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, defineProps } from 'vue';
 import dayjs from 'dayjs';
 import { Typography } from '@/shared/ui/typography';
 import { useThemes } from '@/shared/lib/hooks/useThemes';
 import { lightenColor } from '@/shared/lib/helpers/colors';
-
+interface Props {
+    year: number
+}
 interface GameData {
     date: string;
     timesPlayed: number;
 }
+
+const props = defineProps<Props>()
 
 const data = ref<GameData[]>([
     { date: '2024-01-01', timesPlayed: 3 },
@@ -50,14 +53,16 @@ const data = ref<GameData[]>([
     { date: '2024-03-20', timesPlayed: 5 },
     { date: '2024-05-20', timesPlayed: 10 },
     { date: '2024-05-22', timesPlayed: 2 },
+    { date: '2023-04-22', timesPlayed: 10 }
 ]);
 
 const { refColors } = useThemes();
 const today = dayjs().format('YYYY-MM-DD');
 const selectedCell = ref<GameData | null>(null);
+
 const gridData = computed(() => {
     const daysInYear = Array.from({ length: 365 }, (_, i) => {
-        const date = dayjs('2024-01-01').add(i, 'day').format('YYYY-MM-DD');
+        const date = dayjs(`${props.year}-01-01`).add(i, 'day').format('YYYY-MM-DD');
         const timesPlayed = data.value.find(d => d.date === date)?.timesPlayed || 0;
         return { date, timesPlayed };
     });

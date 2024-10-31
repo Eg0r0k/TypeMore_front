@@ -16,12 +16,13 @@
 
 <script setup lang="ts">
 import { ref, watch, defineEmits } from 'vue';
-
+//TODO: make disabled states
 interface Props {
     options: string[];
     default?: string | null;
     tabindex?: number;
     label: string;
+    // disabled: boolean;
 }
 function generateId(prefix: string) {
     return `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
@@ -64,7 +65,7 @@ function selectOption(option: string) {
 
     .selected {
         background-color: var(--sub-alt-color);
-        border-radius: 6px;
+        border-radius: var(--border-radius);
         outline: 1px solid var(--sub-color);
         color: var(--text-color);
         padding-left: 8px;
@@ -81,13 +82,14 @@ function selectOption(option: string) {
 
         &.open {
             outline: 1px solid var(--main-color);
-            border-radius: 6px 6px 0 0;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
         }
 
         &::after {
             position: absolute;
             content: '';
             top: 15px;
+
             right: 1em;
             width: 0;
             height: 0;
@@ -98,7 +100,7 @@ function selectOption(option: string) {
 
     .items {
         color: var(--text-color);
-        border-radius: 0 0 6px 6px;
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
         overflow: hidden;
         outline: 1px solid var(--main-color);
         position: absolute;
@@ -107,12 +109,14 @@ function selectOption(option: string) {
         right: 0;
         z-index: 1;
 
+
         div {
             color: var(--text-color);
             padding-left: 8px;
             cursor: pointer;
             user-select: none;
-
+            overflow: hidden;
+            text-overflow: ellipsis;
             &:hover {
                 background-color: var(--sub-color);
             }

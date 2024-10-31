@@ -7,35 +7,51 @@
           <Typography color="primary" size="xl" tag="span">{{ username }}</Typography>
           <Typography color="sub" size="m" tag="span">{{ username }}</Typography>
         </h1>
+
       </div>
+      <ProfileStats />
       <Button buttonLabel="Open profile settings" class="profile__settings" size="s" color="gray">•••</Button>
     </div>
     <div style="
         background-color: var(--sub-alt-color);
         margin-top: 20px;
         border-radius: 6px;
-        padding: 20px 20px;
+       padding: 33px 38px;
         display:flex; 
         gap:14px;
         justify-content:space-between;
       ">
 
-      <HeatMap />
-      <Select label="Select year" style="max-width:100px; margin-bottom:10px;" :tabindex="-1"
-        :options="['2023', '2024']" :default="'2024'" />
+      <HeatMap :year="year" />
+      <Select 
+      label="Select year" 
+      style="max-width:100px; margin-bottom:10px;" 
+      :tabindex="-1"
+      :options="years" 
+      :default="year.toString()" 
+      @input="updateYear" 
+  />
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import { HeatMap } from '@/features/profile/heatmap'
+import { ProfileStats } from '@/features/profile/stats'
 import { UserAvatar } from '@/shared/ui/avatar'
 import { Button } from '@/shared/ui/button'
 import { Select } from '@/shared/ui/select'
 import { Typography } from '@/shared/ui/typography'
-import { ref } from 'vue'
-
+import dayjs from 'dayjs'
+import { computed, ref } from 'vue'
+const currentYear = dayjs().year();
+const years = computed(() => [currentYear.toString(), (currentYear - 1).toString()]);
+const year = ref<number>(currentYear);
+function updateYear(selectedYear: string) {
+  year.value = Number(selectedYear);
+}
 const username = ref('JohnDoe')
+
 </script>
 
 <style lang="scss" scoped>
@@ -53,10 +69,22 @@ const username = ref('JohnDoe')
   .user {
     flex-direction: column;
   }
+
+  .profile {
+    &__header {
+      flex-direction: column;
+    }
+  }
 }
 
 .profile {
   &__header {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 24px;
     margin-top: 20px;
     position: relative;
     background-color: var(--sub-alt-color);
@@ -70,5 +98,4 @@ const username = ref('JohnDoe')
     top: 14px;
   }
 }
-
 </style>

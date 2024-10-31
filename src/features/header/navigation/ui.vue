@@ -10,7 +10,7 @@
       </li>
     </ul>
     <div class="navigation__controls">
-      <Button size="s" @click="handleOpenNews">
+      <Button size="s" color="shadow" @click="handleOpenNews">
         <template #left-icon>
           <Icon :icon="'ion:notifications'" width="30" />
         </template>
