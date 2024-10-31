@@ -1,29 +1,7 @@
 <template>
   <div ref="wordsContainer" class="words" :class="{ rightToLeft: props.isRightToLeft }">
     <template v-for="(word, wordIndex) in generator.retWords.words" :key="`${word}-${wordIndex}`">
-      <p
-        ref="wordsRef"
-        class="word"
-        :class="{ active: wordIndex === testState.currentWordElementIndex }"
-      >
-        <span
-          v-for="(letter, letterIndex) in word"
-          :key="`${letter}-${letterIndex}`"
-          :class="[
-            inputStore.getLetterClass(wordIndex, letterIndex),
-            { 'tab-character': letter === '\t', 'newline-character': letter === '\n' }
-          ]"
-        >
-          {{ letter === '\t' ? '→' : letter === '\n' ? '↵' : letter }}
-        </span>
-        <span
-          v-for="(extraLetter, extraLetterIndex) in inputStore.getExtraLetters(wordIndex)"
-          :key="`extra-${extraLetter}-${extraLetterIndex}`"
-          class="over-incorrect"
-        >
-          {{ extraLetter }}
-        </span>
-      </p>
+      <TestWord :word="word" :wordIndex="wordIndex" />
     </template>
   </div>
 </template>
@@ -33,7 +11,9 @@ import { ref, onMounted, watch, nextTick } from 'vue'
 import { useWordGeneratorStore } from '@/entities/generator/model/store'
 import { useInputStore } from '@/entities/input/model'
 import { useTestStateStore } from '@/entities/test'
+
 import { useScrollTape } from '@/shared/lib/hooks/useScrollTape'
+import { TestWord } from '@/features/test/word'
 
 interface Props {
   isRightToLeft?: boolean
@@ -112,42 +92,12 @@ watch(
   direction: rtl;
 }
 
-.caret {
-  height: 1.2em;
-  background-color: var(--main-color);
-  position: absolute;
-  transform-origin: top left;
-  border-radius: var(--border-radius);
-  font-size: 2rem;
-  top: 0;
-  transition: left 0.1s ease;
-  left: 0;
-  opacity: 1;
-  width: 2px;
-  animation: caretBlink 1s infinite;
-}
-
 .words {
   display: flex;
   flex-wrap: wrap;
   width: 100%;
   align-content: flex-start;
   overflow: hidden;
-}
-
-.active {
-  position: relative;
-
-  /*&::before {
-        content: "";
-        position: absolute;
-        left: -5px;
-        height: 100%;
-        width: 3px;
-        animation: caretFlashSmooth 1s infinite;
-        background-color: red;
-    }
-        */
 }
 
 .word {
@@ -157,14 +107,9 @@ watch(
   margin: 0.25em 0.3em;
   border-bottom: 2px solid transparent;
   color: var(--sub-color);
-  //user-select: none;
+}
 
-  &:has(.over-incorrect) {
-    border-bottom: 2px solid var(--error-extra-color) !important;
-  }
-
-  &:has(.incorrect) {
-    border-bottom: 2px solid var(--error-color);
-  }
+.active {
+  position: relative;
 }
 </style>

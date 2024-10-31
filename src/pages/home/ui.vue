@@ -1,26 +1,10 @@
 <template>
   <div v-if="testState.isActive" class="test">
-    <div class="test__controls">
-      <Button size="s" @click="handleOpenModalLang">
-        <template #left-icon>
-          <Icon width="24" icon="solar:globus-bold" />
-        </template>
-        {{ configStore.config.language }}
-      </Button>
-    </div>
+    <TestControls />
 
     <p v-show="testState.isRepeated">is restarted</p>
     <div v-show="capsLockState" class="caps-detected">CAPS!</div>
-    <input
-      v-focus
-      :disabled="!testState.isActive"
-      :value="inputStore.input.current"
-      type="text"
-      :style="{ direction: isRightToLeft ? 'rtl' : 'ltr' }"
-      @input="inputStore.handleInput($event)"
-      @keydown.delete="handleBackspace($event)"
-      @keydown.space.prevent="inputStore.handleSpace()"
-    />
+    <TestInput />
     <Test :is-right-to-left="isRightToLeft" />
 
     <Popper class="refresh__tip" hover arrow :interactive="false" content="Restart test">
@@ -29,13 +13,13 @@
       </button>
     </Popper>
 
-    <!-- <KeyMap /> -->
+    <KeyMap />
   </div>
 
   <div v-else>
     <TestChart />
 
-    <Button @click="restartTest()"> Reapat </Button>
+    <Button @click="restartTest"> Reapat </Button>
   </div>
 </template>
 
@@ -46,20 +30,20 @@ import { useConfigStore } from '@/entities/config/model/store'
 
 import { useTestStateStore } from '@/entities/test'
 import { Icon } from '@iconify/vue'
-import { Typography } from '@/shared/ui/typography'
-import { LangModal } from '@/features/modal/language'
+
+
 import Popper from 'vue3-popper'
 import { useKeyModifier } from '@vueuse/core'
 import { onMounted, onUnmounted, computed, watch, ref } from 'vue'
-import { useModal } from '@/entities/modal/model/store'
+
 import { useTimerStore } from '@/entities/timer/model/store'
 import { useWordGeneratorStore } from '@/entities/generator/model/store'
 import { useInputStore } from '@/entities/input/model'
-import { roundTo2 } from '@/shared/lib/helpers/numbers'
 import { Test } from '@/widgets/test'
 import { TestChart } from '@/shared/ui/chart'
-import { useAccuracy } from '@/shared/lib/hooks/useAccuracy'
-const modal = useModal()
+import { TestInput } from '@/features/test/input'
+import { TestControls } from '@/features/test/controls'
+
 const testState = useTestStateStore()
 const capsLockState = useKeyModifier('CapsLock')
 const configStore = useConfigStore()
@@ -70,21 +54,8 @@ const inputStore = useInputStore()
 const isRightToLeft = ref(false)
 const currentLanguage = computed(() => configStore.currentLang)
 
-// const accuracyTest = computed(() => {
-//   const acc =
-//     (inputStore.accuracy.correct / (inputStore.accuracy.correct + inputStore.accuracy.incorrect)) *
-//     100
-//   return isNaN(acc) ? 100 : roundTo2(acc)
-// })
-const { accuracy, accuracyPercentage, incrementAccuracy } = useAccuracy()
-const handleBackspace = (event: KeyboardEvent) => {
-  if (event.key === 'Backspace' && inputStore.input.current.length === 0) {
-    inputStore.backspaceToPrevious()
-    if (inputStore.input.current) {
-      inputStore.setWordToInput(inputStore.input.current + ' ')
-    }
-  }
-}
+
+
 
 const init = async (): Promise<void> => {
   testState.setCurrentWordElementIndex(0)
@@ -115,9 +86,7 @@ const init = async (): Promise<void> => {
   }
 }
 
-const handleOpenModalLang = (): void => {
-  modal.open(LangModal, 'top')
-}
+
 //TODO: add support for:
 // arabian   -
 // hebrew   -
@@ -172,14 +141,6 @@ onUnmounted(() => {
     display: flex;
     width: 100%;
     justify-content: center;
-  }
-
-  &__controls {
-    margin-bottom: 8px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 20px;
   }
 }
 
