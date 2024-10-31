@@ -1,12 +1,24 @@
 <template>
-  <ConsoleModal :model="configStore.config.theme" :items="themeList" search-key="name"
-    :active-item="configStore.config.theme" @item-selected="changeTheme">
+  <ConsoleModal
+    :model="configStore.config.theme"
+    :items="themeList"
+    search-key="name"
+    :active-item="configStore.config.theme"
+    @item-selected="changeTheme"
+  >
     <template #items="{ filteredItems, selectItem, focusedItems }">
-      <div v-for="(theme, index) in filteredItems" :key="theme.name"
-        :aria-selected="theme.name === configStore.config.theme" role="option" class="theme" :class="{
+      <div
+        v-for="(theme, index) in filteredItems"
+        :key="theme.name"
+        :aria-selected="theme.name === configStore.config.theme"
+        role="option"
+        class="theme"
+        :class="{
           active: theme.name === configStore.config.theme,
           focused: index === focusedItems
-        }" @click="selectItem(theme)">
+        }"
+        @click="selectItem(theme)"
+      >
         <div class="theme__name">
           <Typography color="primary">{{ theme.name }}</Typography>
         </div>

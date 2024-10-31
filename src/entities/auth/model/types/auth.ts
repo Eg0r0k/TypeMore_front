@@ -1,5 +1,3 @@
-import { AxiosResponse } from 'axios'
-
 export interface RegistrationType {
   email: string
   password: string
@@ -33,8 +31,8 @@ export interface LoginType {
   // captchaToken: string
 }
 
-export interface ApiResponce<T> {
-  data: T
-  status: number
-  statusText: string
+export interface ApiResponse<T> {
+  data?: T
+  error?: string
+  success: boolean
 }

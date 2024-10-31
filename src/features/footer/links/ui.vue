@@ -26,12 +26,11 @@ const props = defineProps<Props>()
 </script>
 
 <style scoped lang="scss">
-@import '@app/main.scss';
+
 
 .sr-only {
-  @include hide-visually
+  @include hide-visually;
 }
-
 
 .list {
   &__link {
@@ -43,8 +42,6 @@ const props = defineProps<Props>()
     align-items: center;
     gap: 2px;
   }
-
-
 }
 
 .footer-navigation {

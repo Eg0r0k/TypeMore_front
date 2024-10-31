@@ -1,8 +1,22 @@
 <template>
   <Teleport to="#app" :disabled="!isTeleportAvailable">
-    <Transition :on-before-enter="onBeforeEnter" :on-enter="onEnter" :on-leave="onLeave" :css="false">
-      <div v-if="isOpen" :class="classes" tabindex="0" class="modal" aria-modal="true" :aria-hidden="!isOpen"
-        aria-labelledby="modal-title" role="dialog" @keydown.esc="handleEscapeKey">
+    <Transition
+      :on-before-enter="onBeforeEnter"
+      :on-enter="onEnter"
+      :on-leave="onLeave"
+      :css="false"
+    >
+      <div
+        v-if="isOpen"
+        :class="classes"
+        tabindex="0"
+        class="modal"
+        aria-modal="true"
+        :aria-hidden="!isOpen"
+        aria-labelledby="modal-title"
+        role="dialog"
+        @keydown.esc="handleEscapeKey"
+      >
         <h2 id="modal-title" class="sr-only">Modal window</h2>
 
         <component :is="view" ref="modal" v-bind="model" @click.stop></component>
@@ -79,10 +93,10 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '@app/main.scss';
+
 
 .sr-only {
-  @include hide-visually
+  @include hide-visually;
 }
 
 .modal {

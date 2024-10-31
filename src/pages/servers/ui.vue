@@ -84,7 +84,7 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-@import '@app/main.scss';
+
 
 .serverPage {
   &__head {

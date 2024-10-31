@@ -19,5 +19,12 @@ export default defineConfig({
       '@shared': fileURLToPath(new URL('./src/shared', import.meta.url)),
       '@widgets': fileURLToPath(new URL('./src/widgets', import.meta.url))
     }
+  },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        additionalData: '@import "@/app/_mixin.scss";',
+      }
+    }
   }
 })

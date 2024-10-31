@@ -1,11 +1,23 @@
 <template>
-  <ConsoleModal v-model="configStore.config.language" search-key="name" :items="langList"
-    :active-item="configStore.config.language" @item-selected="changeLang">
+  <ConsoleModal
+    v-model="configStore.config.language"
+    search-key="name"
+    :items="langList"
+    :active-item="configStore.config.language"
+    @item-selected="changeLang"
+  >
     <template #items="{ filteredItems, focusedItems, selectItem }">
-      <div role="option" v-for="(lang, index) in filteredItems" :key="index" class="lang" :class="{
-        active: lang == configStore.config.language,
-        focused: index === focusedItems
-      }" @click="selectItem(lang)">
+      <div
+        role="option"
+        v-for="(lang, index) in filteredItems"
+        :key="index"
+        class="lang"
+        :class="{
+          active: lang == configStore.config.language,
+          focused: index === focusedItems
+        }"
+        @click="selectItem(lang)"
+      >
         {{ lang.replace('_', ' ') }}
       </div>
     </template>

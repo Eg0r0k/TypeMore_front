@@ -5,15 +5,32 @@
         <Typography color="main" tag-name="h2" size="xl" class="login__title">Login</Typography>
       </div>
       <Form class="login__body" autocomplete="off" @submit="onSubmit()">
-        <TextInput v-bind="usernameProps" v-model="username" :has-error-space="true" required placeholder="Username"
-          :error-message="errors.username" name="username">
-          <Typography color="primary">Email<Typography tag-name="span" size="xs" color="error">*</Typography>
+        <TextInput
+          v-bind="usernameProps"
+          v-model="username"
+          :has-error-space="true"
+          required
+          placeholder="Username"
+          :error-message="errors.username"
+          name="username"
+        >
+          <Typography color="primary"
+            >Email<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
 
-        <TextInput v-bind="passwordProps" v-model="password" :has-error-space="true" :error-message="errors.password"
-          type="password" placeholder="Password" label="Password*" name="password">
-          <Typography color="primary">Password<Typography tag-name="span" size="xs" color="error">*</Typography>
+        <TextInput
+          v-bind="passwordProps"
+          v-model="password"
+          :has-error-space="true"
+          :error-message="errors.password"
+          type="password"
+          placeholder="Password"
+          label="Password*"
+          name="password"
+        >
+          <Typography color="primary"
+            >Password<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
 
@@ -38,7 +55,8 @@
         </Button>
       </div>
       <div class="login__footer">
-        <Typography tag-name="p" color="primary">No account?
+        <Typography tag-name="p" color="primary"
+          >No account?
           <router-link to="/registration" class="login__link">Create</router-link>
         </Typography>
       </div>
@@ -78,36 +96,36 @@ const [password, passwordProps] = defineField('password', {
 const onSubmit = handleSubmit(
   async () => {
     try {
-      await authStore.login({ username: username.value, password: password.value }); // Вызов метода логина
+      await authStore.login({ username: username.value, password: password.value }) // Вызов метода логина
       alertStore.addAlert({
         type: AlertType.Success,
         title: 'Success',
         msg: 'Login successful',
-        duration: 1500,
-      });
+        duration: 1500
+      })
       // Здесь вы можете перенаправить пользователя на другую страницу после успешного входа
       // Например:
       // router.push('/dashboard');
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login error:', error)
       alertStore.addAlert({
         type: AlertType.Error,
         title: 'Login Failed',
         msg: 'Invalid email or password',
-        duration: 0,
-      });
+        duration: 0
+      })
     }
   },
   (errors) => {
-    console.log(errors);
+    console.log(errors)
     alertStore.addAlert({
       type: AlertType.Error,
       title: 'WTF',
       msg: 'Please fill all fields correctly',
-      duration: 0,
-    });
+      duration: 0
+    })
   }
-);
+)
 </script>
 
 <style scoped lang="scss">

@@ -9,33 +9,36 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuth = computed(() => !!user.value)
   const isOnline = useOnline()
   const accessToken = ref<string | null>(null)
+
   const logout = () => {
     user.value = null
     accessToken.value = null
   }
+
   const register = async (args: RegistrationType) => {
-    try {
-      const response = await AuthApi.registration(args)
+    const response = await AuthApi.registration(args)
+    if (response.success && response.data) {
       user.value = response.data.user
-    } catch (error) {
-      console.error('Registration failed:', error)
-      throw error
+    } else {
+      console.error('Registration failed:', response.error)
+      throw new Error(response.error || 'Unknown error during registration')
     }
   }
 
-
   const login = async (args: LoginType) => {
-    try {
-      const response = await AuthApi.login(args)
+    const response = await AuthApi.login(args)
+    if (response.success && response.data) {
       user.value = response.data.user
-    } catch (error) {
-      console.error('Login failed:', error)
-      throw error
+      accessToken.value = response.data.accessToken
+    } else {
+      console.error('Login failed:', response.error)
+      throw new Error(response.error || 'Unknown error during login')
     }
   }
 
   const refreshAuthToken = () => {}
   const initializeAuth = async () => {}
+
   return {
     user,
     register,
@@ -43,7 +46,6 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     refreshAuthToken,
     initializeAuth,
-
     isAuth
   }
 })

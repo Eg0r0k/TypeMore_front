@@ -6,7 +6,7 @@ import { Cookie } from 'universal-cookie'
 
 const COOKIE_NAMES: Record<CookieType, string> = {
   [CookieType.METRICS]: 'yandex_metrics',
-  [CookieType.SECURITY]: 'jwt_auth'
+  [CookieType.SECURITY]: 'access_token'
 }
 
 export function useCookiesConsent() {

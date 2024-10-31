@@ -1,44 +1,62 @@
 import axios, { AxiosResponse } from 'axios'
-import type { LoginType, RegistrationType, AuthLoginResponse, ApiResponce } from '../types/auth'
+import type { LoginType, RegistrationType, AuthLoginResponse, ApiResponse } from '../types/auth'
 import { useAuthStore } from '../store'
 
 const API_URL = 'http://localhost:3000/api/v1'
 
 export const AuthApi = {
-  async login(args: LoginType): Promise<ApiResponce<AuthLoginResponse>> {
-    const response: AxiosResponse<AuthLoginResponse> = await axios.post(
-      `${API_URL}/auth/login`,
-      args,
-      { withCredentials: true }
-    )
-    return {
-      data: response.data,
-      status: response.status,
-      statusText: response.statusText
+  async login(args: LoginType): Promise<ApiResponse<AuthLoginResponse>> {
+    try {
+      const response: AxiosResponse<AuthLoginResponse> = await axios.post(
+        `${API_URL}/auth/login`,
+        args,
+        { withCredentials: true }
+      )
+      return {
+        data: response.data,
+        success: true
+      }
+    } catch (error: any) {
+      return {
+        error: error.response?.data?.error || 'An error occurred during login',
+        success: false
+      }
     }
   },
-  async refresh(): Promise<ApiResponce<{ accessToken: string }>> {
-    const response: AxiosResponse<{ accessToken: string }> = await axios.post(
-      `${API_URL}/auth/refresh`,
-      {},
-      { withCredentials: true }
-    )
-    return {
-      data: response.data,
-      status: response.status,
-      statusText: response.statusText
+  async refresh(): Promise<ApiResponse<{ accessToken: string }>> {
+    try {
+      const response: AxiosResponse<{ accessToken: string }> = await axios.post(
+        `${API_URL}/auth/refresh`,
+        {},
+        { withCredentials: true }
+      )
+      return {
+        data: response.data,
+        success: true
+      }
+    } catch (error: any) {
+      return {
+        error: error.response?.data?.error || 'An error occurred during refresh',
+        success: false
+      }
     }
   },
-  async registration(args: RegistrationType): Promise<ApiResponce<AuthLoginResponse>> {
-    const response: AxiosResponse<AuthLoginResponse> = await axios.post(
-      `${API_URL}/auth/signup`,
-      args,
-      { withCredentials: true }
-    )
-    return {
-      data: response.data,
-      status: response.status,
-      statusText: response.statusText
+  async registration(args: RegistrationType): Promise<ApiResponse<AuthLoginResponse>> {
+    try {
+      const response: AxiosResponse<AuthLoginResponse> = await axios.post(
+        `${API_URL}/auth/signup`,
+        args,
+        { withCredentials: true }
+      )
+      return {
+        data: response.data,
+        success: true
+      }
+    } catch (error: any) {
+      return {
+        error: error.response?.data?.error || 'An error occurred during registration',
+        success: false
+      }
     }
   }
 }
@@ -61,7 +79,7 @@ apiClient.interceptors.response.use(
 
       try {
         const response = await AuthApi.refresh()
-        const { accessToken } = response.data
+        const { accessToken } = response.data || {}
 
         if (accessToken) {
           originalRequest.headers['Authorization'] = `Bearer ${accessToken}`

@@ -10,7 +10,7 @@
       <dt>MIN:</dt>
       <dd>{{ minFps }}</dd>
     </dl>
-    <div style="display:flex; flex-direction:column; gap:10px;">
+    <div style="display: flex; flex-direction: column; gap: 10px">
       <div>
         <p color="primary">Timer:{{ configStore.config.time - timerStore.time }}</p>
         <p color="primary">State:{{ testState.isActive }}</p>
