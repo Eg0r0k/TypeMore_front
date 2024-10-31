@@ -35,7 +35,7 @@ import { Icon } from '@iconify/vue'
   flex-direction: column;
   position: fixed;
   height: 100%;
-
+  z-index: var(--news-z);
   right: 0;
   top: 0;
   box-shadow: 0 0 0 0.2em var(--sub-alt-color);

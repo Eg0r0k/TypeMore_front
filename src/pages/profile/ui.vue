@@ -49,7 +49,7 @@ const username = ref('JohnDoe')
   }
 }
 
-@media screen and (max-width: 400px) {
+@media screen and (max-width: 375px) {
   .user {
     flex-direction: column;
   }

@@ -8,7 +8,7 @@
             <Typography color="primary" size="s" tag="span" class="months">
                 <span v-for="month in 12" :key="month" aria-hidden="true">{{
                     new Date(0, month - 1).toLocaleString('en', { month: 'short' })
-                    }}</span>
+                }}</span>
             </Typography>
             <div class="grid" role="grid" aria-labelledby="id-heatmap-label">
                 <h2 class="sr-only" id="id-heatmap-label">Heatmap activity</h2>
@@ -125,7 +125,7 @@ const tooltipStyle = computed(() => {
         max-width: 1267px;
         overflow-x: auto;
         white-space: nowrap;
-        scrollbar-gutter: stable;
+
     }
 
     .grid {

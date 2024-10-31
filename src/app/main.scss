@@ -1,17 +1,15 @@
-
-
-@import './reset';
-@import './normalize';
-@import './scroll';
-@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Lexend+Deca:wght@100..900&display=swap');
+@import "./reset";
+@import "./normalize";
+@import "./scroll";
+@import url("https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Lexend+Deca:wght@100..900&display=swap");
 
 @font-face {
-  font-family: 'Balsamiq Sans';
-  src: url('./fonts/BalsamiqSans-Regular.ttf') format('truetype');
+  font-family: "Balsamiq Sans";
+  src: url("./fonts/BalsamiqSans-Regular.ttf") format("truetype");
   font-weight: 400;
   font-display: block;
 }
-@import './mixin';
+@import "./mixin";
 // Base colors
 :root {
   --bg-color: #121212;
@@ -23,13 +21,13 @@
   --error-extra-color: #791717;
   --border-radius: 6px;
   --transition-duration: 0.08s;
-  --navigation-z: 2;
+  --navigation-z:996;
   --key-map-z: 10;
+  --fps-z: 1000;
   --alert-z: 999;
   --modal-z: 998;
-  --fps-z: 1000;
   --news-z: 997;
-  --mobile-w: 375px;
+
 }
 
 // Color for popper plugin
@@ -140,7 +138,7 @@ body {
   min-height: 100vh;
   background-color: var(--bg-color);
   color: var(--text-color);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   line-height: normal;
 }
 // Global styles for elements
