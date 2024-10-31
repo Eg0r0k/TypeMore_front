@@ -26,8 +26,6 @@ const props = defineProps<Props>()
 </script>
 
 <style scoped lang="scss">
-
-
 .sr-only {
   @include hide-visually;
 }

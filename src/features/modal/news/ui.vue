@@ -34,10 +34,11 @@ import { Icon } from '@iconify/vue'
   display: flex;
   flex-direction: column;
   position: fixed;
-  height: 100%;
+  height: 100vh;
   z-index: var(--news-z);
   right: 0;
   top: 0;
+  bottom: 0;
   box-shadow: 0 0 0 0.2em var(--sub-alt-color);
   background-color: var(--bg-color);
   padding: 20px;

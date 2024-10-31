@@ -50,9 +50,7 @@ const handleOnClickOpenInput = () => {
 <style lang="scss" scoped>
 .footer {
   display: flex;
-
   flex-wrap: wrap;
-  z-index: var(--navigation-z);
 
   & kbd {
     background-color: var(--sub-color);
