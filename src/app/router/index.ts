@@ -7,6 +7,7 @@ import { ThemePage } from '@/pages/themes'
 import { MainPage } from '@/pages/home'
 import { ProfilePage } from '@/pages/profile'
 import { useTitle } from '@vueuse/core'
+import { ErrorPage } from '@/pages/error'
 
 const routes = [
   {
@@ -49,6 +50,12 @@ const routes = [
     name: 'themes',
     component: ThemePage,
     meta: { title: 'Theme' }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'error',
+    component: ErrorPage 
+
   }
 ]
 

@@ -16,7 +16,7 @@
     <KeyMap />
   </div>
 
-  <div v-else>
+  <div v-else   >
     <TestChart />
 
     <Button @click="restartTest"> Reapat </Button>
@@ -53,7 +53,6 @@ const generator = useWordGeneratorStore()
 const inputStore = useInputStore()
 const isRightToLeft = ref(false)
 const currentLanguage = computed(() => configStore.currentLang)
-
 
 
 

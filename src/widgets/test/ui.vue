@@ -62,7 +62,7 @@ watch(
     () => generator.retWords.words
   ],
   () => {
-    scrollTape()
+
   }
 )
 

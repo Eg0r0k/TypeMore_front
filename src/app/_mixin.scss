@@ -15,7 +15,11 @@
   justify-content: center;
   align-items: center;
 }
-
+@mixin flex-center{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 @mixin hide-visually {
   position: absolute;
   width: 1px;

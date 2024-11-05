@@ -4,7 +4,6 @@ import { shallowRef } from 'vue'
 
 export const useUIState = () => {
   const generator = useWordGeneratorStore()
-  const testState = useTestStateStore()
   const letterClasses = shallowRef<string[][]>([])
   const initializeLetterClasses = () => {
     if (letterClasses.value.length > 0) return
