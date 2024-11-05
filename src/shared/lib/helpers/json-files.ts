@@ -1,4 +1,5 @@
-import { LanguageObj } from '@/shared/constants/type'
+import { LanguageObj, QuoteData } from '../types/types'
+
 /**
  * Fetches JSON data from a given URL.
  * @template T - The expected type of the JSON response.
@@ -82,5 +83,14 @@ export const getLanguage = (lang: string): Promise<LanguageObj> => {
     return currentLang
   } catch (e) {
     throw Error(`No expected lang,${lang}`)
+  }
+}
+
+export const getQoutes = (lang: string): Promise<QuoteData> => {
+  try {
+    const currentQuote = cachedFetchJson<QuoteData>(`./static/languages/${lang}.json`)
+    return currentQuote
+  } catch (e) {
+    throw Error(`No expected qoutes, ${lang}`)
   }
 }

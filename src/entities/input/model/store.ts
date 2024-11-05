@@ -7,7 +7,14 @@ import { useSounds } from '@/shared/lib/hooks/useSounds'
 
 import { useAccuracy } from '@/shared/lib/hooks/useAccuracy'
 import { useInputState } from '@/shared/lib/hooks/useInputState'
+import click1 from '/static/sounds/click3/click6_1.wav'
+import click2 from '/static/sounds/click3/click6_2.wav'
+import click3 from '/static/sounds/click3/click6_3.wav'
+import click4 from '/static/sounds/click3/click6_11.wav'
+import click5 from '/static/sounds/click3/click6_22.wav'
+import click6 from '/static/sounds/click3/click6_33.wav'
 
+import errorSound from '/static/sounds/error/error1_1.wav'
 import { useStats } from '@/shared/lib/hooks/useStats'
 import { useErrorTracking } from '@/shared/lib/hooks/useErrorTracking'
 import { useAccuracyHandler } from '@/shared/lib/hooks/useAccuracyHandler'
@@ -43,7 +50,12 @@ export const useInputStore = defineStore('input', () => {
     popHistory,
     pushToHistory
   } = useInputState()
-  const { playClickSound } = useSounds()
+
+  const { playRandomClickSound, playErrorSound, setClickSounds, setErrorSound } = useSounds(
+    [click1, click2, click3, click4, click5, click6],
+    errorSound
+  )
+
   const { getStats } = useStats()
   const corrected = reactive({
     current: '',
@@ -74,7 +86,7 @@ export const useInputStore = defineStore('input', () => {
       return
     }
 
-    const thisCharCorrect = memoizedIsCharCorrect.value(char, charIndex)
+    const thisCharCorrect = isCharCorrect(char, charIndex)
     incrementAccuracy(thisCharCorrect)
 
     incrementCharacterCount(thisCharCorrect, charIndex, currentWord.value)
@@ -83,22 +95,16 @@ export const useInputStore = defineStore('input', () => {
       char = ' '
     }
     if (thisCharCorrect) {
-      console.log('correct')
+      playRandomClickSound()
     } else {
       console.log('incorrect')
+
+      playErrorSound()
     }
   }
-  const memoizedIsCharCorrect = computed(() => {
-    const memo = new Map<string, boolean>()
-    return (char: string, charIndex: number): boolean => {
-      const key = `${char}-${charIndex}`
-      if (!memo.has(key)) {
-        memo.set(key, generator.getCurrent()[charIndex] === char)
-      }
-      return memo.get(key)!
-    }
-  })
-
+  const isCharCorrect = (char: string, charIndex: number): boolean => {
+    return generator.getCurrent()[charIndex] === char
+  }
   const handleInput = (event: Event): void => {
     if (!event.isTrusted) {
       ;(event.target as HTMLInputElement).value = ''

@@ -54,7 +54,7 @@ export const useTimerStore = defineStore('timer', () => {
       terminateWorker()
     }
     input.handleSpace()
-    testState.isActive = false
+    testState.finish()
   }
   /**
    * Returns the current time value in the timer.

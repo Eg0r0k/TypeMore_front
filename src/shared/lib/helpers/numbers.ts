@@ -6,9 +6,9 @@
  * @returns A random integer between min and max.
  */
 export const randomIntFromRange = (min: number, max: number): number => {
-  const normMin = Math.ceil(min)
-  const normMax = Math.floor(max)
-  return Math.floor(Math.random() * (normMax - normMin + 1) + normMin)
+  const normMin = Math.ceil(min);
+  const normMax = Math.floor(max);
+  return Math.floor(Math.random() * (normMax - normMin + 1) + normMin);
 }
 /**
  * Rounds a number to two decimal places.

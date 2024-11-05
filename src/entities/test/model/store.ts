@@ -1,3 +1,6 @@
+import { useInputStore } from '@/entities/input/model'
+import { useReplayStore } from '@/entities/replay/model/store'
+
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 /**
@@ -9,7 +12,8 @@ export const useTestStateStore = defineStore('test-state', () => {
   const isActive = ref(false)
   const isRepeated = ref(false)
   const isLoading = ref(true)
-
+  const inputStore = useInputStore()
+  const replayStore = useReplayStore()
   const currentWordElementIndex = ref(0)
   const currentTestLine = ref(0)
   /**
@@ -18,6 +22,7 @@ export const useTestStateStore = defineStore('test-state', () => {
   const reset = () => {
     currentWordElementIndex.value = 0
   }
+
   const incrementWordIndex = () => {
     currentWordElementIndex.value++
   }
@@ -52,11 +57,18 @@ export const useTestStateStore = defineStore('test-state', () => {
   const setCurrentWordElementIndex = (value: number): void => {
     currentWordElementIndex.value = value
   }
+
   /**
    * Finishes the test by setting the active state to false.
    */
-  const finish = () => {
+  const finish = async () => {
+    if (!isActive.value) return
+    const now = performance.now()
+    console.log('Finish', now)
     isActive.value = false
+
+    console.log('Finish Replay')
+    replayStore.replayGetWordsList(inputStore.input.history) 
   }
   return {
     setActive,

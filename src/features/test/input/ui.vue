@@ -15,6 +15,7 @@ const handleBackspace = (event: KeyboardEvent) => {
     if (event.key === 'Backspace' && inputStore.input.current.length === 0) {
         inputStore.backspaceToPrevious()
         if (inputStore.input.current) {
+
             inputStore.setWordToInput(inputStore.input.current + ' ')
         }
     }

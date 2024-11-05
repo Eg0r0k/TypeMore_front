@@ -20,6 +20,9 @@ export default defineConfig({
       '@widgets': fileURLToPath(new URL('./src/widgets', import.meta.url))
     }
   },
+  server:{
+    host:'0.0.0.0',
+  },
   css: {
     preprocessorOptions: {
       scss: {

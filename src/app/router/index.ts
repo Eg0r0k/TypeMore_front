@@ -7,12 +7,18 @@ import { ThemePage } from '@/pages/themes'
 import { MainPage } from '@/pages/home'
 import { ProfilePage } from '@/pages/profile'
 import { useTitle } from '@vueuse/core'
+import TestComponent from '@/pages/test/TestComponent.vue'
 
 const routes = [
   {
     path: '/',
     name: 'home',
     component: MainPage
+  },
+  {
+    path: '/test',
+    name: 'test',
+    component: TestComponent
   },
   {
     path: '/registration',

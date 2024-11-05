@@ -20,6 +20,7 @@
     <TestChart />
 
     <Button @click="restartTest"> Reapat </Button>
+    {{ replayStore.wordList }}
   </div>
 </template>
 
@@ -43,18 +44,36 @@ import { Test } from '@/widgets/test'
 import { TestChart } from '@/shared/ui/chart'
 import { TestInput } from '@/features/test/input'
 import { TestControls } from '@/features/test/controls'
+import { useReplayStore } from '@/entities/replay/model/store'
+import { QuoteData } from '@/shared/lib/types/types'
 
 const testState = useTestStateStore()
 const capsLockState = useKeyModifier('CapsLock')
 const configStore = useConfigStore()
 const timerStore = useTimerStore()
 const generator = useWordGeneratorStore()
-
+const replayStore = useReplayStore()
 const inputStore = useInputStore()
 const isRightToLeft = ref(false)
 const currentLanguage = computed(() => configStore.currentLang)
 
-
+const russianQuotes: QuoteData = {
+  language: 'russian',
+  quotes: [
+    {
+      id: 1,
+      source: 'A. Чехов',
+      text: 'Луна стояла высоко над садом.',
+      length: 26
+    },
+    {
+      id: 2,
+      source: 'В. Даль',
+      text: 'Не может русский человек быть счастлив в одиночку.',
+      length: 50
+    }
+  ]
+}
 
 
 const init = async (): Promise<void> => {
@@ -78,7 +97,7 @@ const init = async (): Promise<void> => {
     return
   }
   try {
-    await generator.generateWords(currentLanguage.value)
+    await generator.generateQuotes(russianQuotes)
 
     isRightToLeft.value = !!currentLanguage.value.rightToleft
   } catch (e) {

@@ -5,8 +5,13 @@ import { randomIntFromRange } from './numbers'
  * @returns random value from array
  */
 export const RandomElementFromArray = <T>(arr: T[]): T => {
-  return arr[randomIntFromRange(0, arr.length) - 1]
+  if (arr.length === 0) {
+    throw new Error("Array cannot be empty");
+  }
+  const randomIndex = randomIntFromRange(0, arr.length - 1);
+  return arr[randomIndex];
 }
+
 /**
  *
  * @param arr

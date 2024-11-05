@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { markRaw, reactive, toRefs } from 'vue'
-import { Modal, ModalHandlers } from './types/type'
+import { Modal, ModalHandlers } from '../types/type'
 /**
  * Store for controlling the modal state.
  * This store provides methods for opening and closing modals and allows configuring

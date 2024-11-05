@@ -1,6 +1,7 @@
-import type { Config, LanguageObj } from '@/shared/constants/type'
+import { Config } from '@/shared/constants/type'
 import { getLanguage as getLanguageFromFile } from '@/shared/lib/helpers/json-files'
 import { useThemes } from '@/shared/lib/hooks/useThemes'
+import { LanguageObj } from '@/shared/lib/types/types'
 import defaultConfig from '@shared/constants/default-config'
 
 import { defineStore } from 'pinia'
