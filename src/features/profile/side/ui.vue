@@ -6,7 +6,7 @@
       <Typography color="primary" size="s">{{ item.accuracy }}</Typography>
     </div>
       <Button size="s" class="sideStats__open" >
-    •••
+        •••
       </Button>
     </div>
   </template>
