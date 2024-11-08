@@ -14,6 +14,7 @@ import { useTestStateStore } from '@/entities/test'
 
 import { useScrollTape } from '@/shared/lib/hooks/useScrollTape'
 import { TestWord } from '@/features/test/word'
+import { useLineJump } from '@/shared/lib/hooks/useLineJump'
 
 interface Props {
   isRightToLeft?: boolean
@@ -61,8 +62,9 @@ watch(
     () => inputStore.input.current,
     () => generator.retWords.words
   ],
-  () => {
-
+  async() => {
+    await nextTick() // Дожидаемся обновления DOM
+    useLineJump(wordsContainer) // 
   }
 )
 
