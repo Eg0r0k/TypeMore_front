@@ -6,6 +6,8 @@
         <h1 class="user__username">
           <Typography color="primary" size="xl" tag="span">{{ username }}</Typography>
           <Typography color="sub" size="m" tag="span">{{ username }}</Typography>
+          
+
         </h1>
 
       </div>
@@ -23,6 +25,7 @@
         >
         •••
       </Button>
+      
         <ul v-if="isDropdownOpen" id="profile-settings-dropdown" class="profile__settings-dropdown" role="menu" aria-labelledby="profile-settings-button">
           <li role="menuitem">
             <Typography color="primary" size="xs" tag="p">set</Typography>
@@ -87,12 +90,12 @@ export interface Statistic {
 const allStatistics: Statistic[] = [
   { mode: '15 seconds', value: 123, accuracy: 100 },
   { mode: '30 seconds', value: 15, accuracy: 100 },
-  { mode: '60 seconds', value: 123, accuracy: 10 },
+  { mode: '60 seconds', value: null, accuracy: null },
   { mode: '120 seconds', value: 123, accuracy: 100 },
-  { mode: '15 minutes', value: 45, accuracy: 75 },
-  { mode: '30 minutes', value: null, accuracy: null }, 
-  { mode: '60 minutes', value: 98, accuracy: 50 },
-  { mode: '120 minutes', value: 62, accuracy: 25 },
+  { mode: '10 words', value: 45, accuracy: 75 },
+  { mode: '30 words', value: null, accuracy: null }, 
+  { mode: '60 words', value: 98, accuracy: 50 },
+  { mode: '100 words', value: 62, accuracy: 25 },
 ];
 const firstFourStats = computed(() => {
   return prepareStats(allStatistics.slice(0, 4));
@@ -143,7 +146,6 @@ function prepareStats(stats: Statistic[]): Statistic[] {
 
 .profile {
   &__settings-wrapper {
-  
     position: absolute;
     right: 14px;
     top: 14px;

@@ -1,9 +1,9 @@
 <template>
     <div class="sideStats">
         <div v-for="(item, index) in statistics" :key="index" class="sideStats__statistic statistic">
-      <Typography color="sub" size="s">{{ item.mode }}</Typography>
-      <Typography color="primary" size="xl">{{ item.value }}</Typography>
-      <Typography color="primary" size="m">{{ item.accuracy }}</Typography>
+      <Typography color="sub" size="xs">{{ item.mode }}</Typography>
+      <Typography color="primary" size="l">{{ item.value }}</Typography>
+      <Typography color="primary" size="s">{{ item.accuracy }}</Typography>
     </div>
       <Button size="s" class="sideStats__open" >
     •••
@@ -29,16 +29,21 @@ import { Statistic } from '@/pages/profile/ui.vue';
   </script>
 
 <style lang="scss" scoped>
+@media screen and (max-width: 375px) {
+  .sideStats{
+    flex-direction: column;
+  }
+}
 .sideStats{
     display: flex;
     position: relative;
     justify-content: space-between;
     gap: 12px;
-    padding: 33px 19px 61px 19px;
+    padding: 33px 38px 61px 38px;
     
     background-color: var(--sub-alt-color);
     flex-grow: 1;
-    
+    flex-basis: 25%;
     border-radius: var(--border-radius);
     &__open{
         position: absolute;
