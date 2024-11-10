@@ -14,7 +14,9 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     accessToken.value = null
   }
-
+  const googleAuth = async () => {}
+  const githubAuth = async () => {}
+  const resetPassword = async () => {}
   const register = async (args: RegistrationType) => {
     const response = await AuthApi.registration(args)
     if (response.success && response.data) {
@@ -36,10 +38,9 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const refreshAuthToken = () => {}
   const initializeAuth = async () => {}
-  onMounted(()=>{
-     isMacOs.value = navigator.userAgent.includes('Mac')
+  onMounted(() => {
+    isMacOs.value = navigator.userAgent.includes('Mac')
   })
   return {
     user,
@@ -47,8 +48,10 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     isMacOs,
     logout,
-    refreshAuthToken,
+    googleAuth,
+    githubAuth,
     initializeAuth,
-    isAuth
+    isAuth,
+    resetPassword
   }
 })

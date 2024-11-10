@@ -55,18 +55,20 @@ export function useThemes() {
     })
   })
 
-  watchEffect(() => {
-    updateRefColors()
-  })
   /**
    * Fetches themes from a JSON file and sorts them by name.
    *
    * @returns A promise that resolves to a list of themes.
    */
-  const fetchThemes = async (): Promise<Theme[]> => {
-    const themes = await cachedFetchJson<Theme[]>('./static/themes/themes.json')
-    themesList.splice(0, themesList.length, ...themes.sort((a, b) => a.name.localeCompare(b.name)))
-    return themesList
+  const fetchThemes = async () => {
+    if (themesList.length === 0) {
+      const themes = await cachedFetchJson<Theme[]>('./static/themes/themes.json')
+      themesList.splice(
+        0,
+        themesList.length,
+        ...themes.sort((a, b) => a.name.localeCompare(b.name))
+      )
+    }
   }
   /**
    * Applies a theme by setting the CSS variables on the document root.
@@ -105,7 +107,9 @@ export function useThemes() {
 
     testState.setLoading(false)
   }
-
+  watchEffect(() => {
+    updateRefColors()
+  })
   styleObserver.observe(root, {
     attributes: true,
     attributeFilter: ['style']

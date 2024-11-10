@@ -5,7 +5,7 @@
         <Icon :icon="'mingcute:close-fill'" width="30" />
       </template>
     </Button>
-    
+
     <div class="modalNews__news news">
       <Typography class="news__title" color="primary" size="xl">
         <Icon icon="material-symbols:newsmode-outline-rounded" />News
@@ -37,15 +37,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { Button } from '@/shared/ui/button';
-import { Typography } from '@/shared/ui/typography';
-import { Icon } from '@iconify/vue';
+import { ref, onMounted } from 'vue'
+import { Button } from '@/shared/ui/button'
+import { Typography } from '@/shared/ui/typography'
+import { Icon } from '@iconify/vue'
 
-const loadingNews = ref(true);
-const loadingInvites = ref(true);
-const news = ref<{ id: number, content: string }[]>([]);
-const invites = ref<{ id: number, content: string }[]>([]);
+const loadingNews = ref(true)
+const loadingInvites = ref(true)
+const news = ref<{ id: number; content: string }[]>([])
+const invites = ref<{ id: number; content: string }[]>([])
 
 onMounted(() => {
   setTimeout(() => {
@@ -56,19 +56,19 @@ onMounted(() => {
       { id: 4, content: 'News item 2' },
       { id: 5, content: 'News item 2' },
       { id: 6, content: 'News item 2' },
-      { id: 7, content: 'News item 2' },
+      { id: 7, content: 'News item 2' }
     ]
-    loadingNews.value = false;
-  }, 2000);
+    loadingNews.value = false
+  }, 2000)
 
   setTimeout(() => {
     invites.value = [
       { id: 1, content: 'Invite item 1' },
-      { id: 2, content: 'Invite item 2' },
-    ];
-    loadingInvites.value = false;
-  }, 2000);
-});
+      { id: 2, content: 'Invite item 2' }
+    ]
+    loadingInvites.value = false
+  }, 2000)
+})
 </script>
 
 <style lang="scss" scoped>
@@ -87,7 +87,7 @@ onMounted(() => {
   background-color: var(--bg-color);
   padding: 54px 20px 20px 20px;
   border-radius: var(--border-radius) 0 0 var(--border-radius);
-  gap:20px;
+  gap: 20px;
   &__close {
     position: absolute;
     top: 10px;
@@ -95,13 +95,14 @@ onMounted(() => {
   }
 }
 
-.news, .invites {
+.news,
+.invites {
   &__title {
     display: flex;
     align-items: center;
     gap: 8px;
   }
-  
+
   &__data {
     display: flex;
     flex-direction: column;

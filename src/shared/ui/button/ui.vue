@@ -9,20 +9,25 @@
     :aria-busy="isLoading"
   >
     <span v-if="isLoading" class="loader" aria-hidden="true"></span>
-    <span v-if="!isLoading" class="icon">
+    <span class="icon" :class="{ invisible: isLoading }">
       <slot name="left-icon" :aria-label="buttonLabel"></slot>
     </span>
 
-    <Typography v-if="slots.default" class="button__text" :class="isLoading ? 'invisible' : ''" tag-name="p"
-      :size="props.size" :aria-hidden="isLoading">
+    <Typography
+      v-if="slots.default"
+      class="button__text"
+      :class="isLoading ? 'invisible' : ''"
+      tag-name="p"
+      :size="props.size"
+      :aria-hidden="isLoading"
+    >
       <slot></slot>
     </Typography>
-    <span v-if="!isLoading" class="icon">
+    <span class="icon" :class="{ invisible: isLoading }">
       <slot name="right-icon" :aria-label="buttonLabel"></slot>
     </span>
   </component>
 </template>
-
 
 <script setup lang="ts">
 import { useSlots, computed } from 'vue'
@@ -43,8 +48,8 @@ interface Props {
   isDisabled?: boolean
   buttonLabel?: string
   isLoading?: boolean
-  to?: string | null; 
-  isLink?: boolean; 
+  to?: string | null
+  isLink?: boolean
 }
 
 const slots = useSlots()
@@ -55,15 +60,16 @@ const props = withDefaults(defineProps<Props>(), {
   decoration: 'default',
   buttonLabel: 'Button',
   to: null,
-  isLink: false,
+  isLink: false
 })
-const isLink = computed(() => !!props.to);
+const isLink = computed(() => !!props.to)
 const classes = computed(() => ({
   button: true,
   [`button--size-${props.size}`]: true,
   [`button--color-${props.color}`]: true,
   [`decoration--${props.decoration}`]: true,
-  loading: props.isLoading
+  loading: props.isLoading,
+  'button--link': isLink.value
 }))
 </script>
 
@@ -121,8 +127,7 @@ $styles: (
         color: map-get($val, 'color');
       }
 
-      @media (hover: hover),
-      (pointer: fine) {
+      @media (hover: hover), (pointer: fine) {
         &:hover {
           background-color: map-get($val, 'hover');
 
@@ -161,8 +166,7 @@ $styles: (
         color: map-get($val, 'background');
       }
 
-      @media (hover: hover),
-      (pointer: fine) {
+      @media (hover: hover), (pointer: fine) {
         &:hover {
           background-color: map-get($val, 'background');
           box-shadow: 0 0 0 1px map-get($val, 'hover');
@@ -237,7 +241,9 @@ $styles: (
     background-color: unset;
     border-color: unset;
   }
-
+  &--link {
+    text-decoration: none;
+  }
   &--size {
     &-s {
       padding: 4px 8px;
@@ -266,9 +272,7 @@ $styles: (
 .invisible {
   visibility: hidden;
 }
-a {
-  text-decoration: none !important;
-}
+
 .loader {
   position: absolute;
   min-width: 20px;

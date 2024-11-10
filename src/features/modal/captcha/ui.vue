@@ -11,8 +11,8 @@
 
 <script setup lang="ts">
 import { useModal } from '@/entities/modal/model/store'
-import { useAlertStore } from '@/entities/alert/model'
-import { AlertType } from '@/entities/alert/model/types/alertData'
+import { useAlertStore } from '@/entities/alert'
+import { AlertType } from '@/entities/alert/types/alertData'
 import { RecaptchaV2 } from 'vue3-recaptcha-v2'
 
 const modalStore = useModal()
@@ -22,40 +22,34 @@ const handleWidgetId = (widgetId: number) => {
   console.log('Widget ID: ', widgetId)
 }
 
+const showAlert = (message: string): void => {
+  alertStore.addAlert({
+    type: AlertType.Error,
+    title: 'Error',
+    msg: message,
+    duration: 3000
+  })
+}
+
 const handleLoadCallback = (response: unknown) => {
-  console.log('Captcha Verified', response)
   if (typeof response === 'string') {
+    console.log('Captcha Verified', response)
     modalStore.handlers.onVerified?.(response)
   } else {
     console.error('Unexpected response type from reCAPTCHA')
-    alertStore.addAlert({
-      type: AlertType.Error,
-      title: 'Error',
-      msg: 'An unexpected error occurred. Please try again.',
-      duration: 3000
-    })
+    showAlert('An unexpected error occurred. Please try again.')
   }
 }
 
 const handleErrorCallback = () => {
   console.log('Error callback')
-  alertStore.addAlert({
-    type: AlertType.Error,
-    title: 'Error',
-    msg: 'CAPTCHA verification failed. Please try again.',
-    duration: 3000
-  })
+  showAlert('CAPTCHA verification failed. Please try again.')
   modalStore.handlers.onError?.()
 }
 
 const handleExpiredCallback = () => {
   console.log('Expired callback')
-  alertStore.addAlert({
-    type: AlertType.Error,
-    title: 'Error',
-    msg: 'CAPTCHA expired. Please try again.',
-    duration: 3000
-  })
+  showAlert('CAPTCHA expired. Please try again.')
   modalStore.handlers.onExpired?.()
 }
 </script>

@@ -3,14 +3,13 @@ import { useWordGeneratorStore } from '@/entities/generator/model/store'
 import { useInputStore } from '@/entities/input/model'
 import { useTestStateStore } from '@/entities/test'
 import { useTimerStore } from '@/entities/timer/model/store'
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch, watchEffect } from 'vue'
 import { roundTo2 } from '../helpers/numbers'
 import { getLastChar } from '../helpers/string'
 
 type Stats = {
   wpm: number
   wpmRaw: number
-
   correctChars: number
   missedChars: number
   extraChars: number
@@ -31,22 +30,12 @@ export const useStats = () => {
   const inputStore = useInputStore()
   const generator = useWordGeneratorStore()
 
-  const calculateTestSeconds = computed(() => {
-    return testState.isActive ? timerStore.getTime() : timerStore.time
-  })
-  // correctWordChars: correctWordChars,
-  // allCorrectChars: correctChars,
+  const calculateTestSeconds = computed(() =>
+    testState.isActive ? timerStore.getTime() : timerStore.time
+  )
+
   const targetWords = computed(() => generator.retWords.words)
   const inputWords = computed(() => (inputStore.input ? inputStore.input.history : []))
-
-  // const characterCounts = computed(() => ({
-  //   correct: correctChars.value,
-  //   incorrect: incorrectChars.value,
-  //   extra: extraChars.value,
-  //   missed: missedChars.value,
-  //   correctSpaces: correctSpaces.value,
-  //   total: correctChars.value + incorrectChars.value + extraChars.value + spaces.value
-  // }))
 
   const wpmAndRaw = computed(() => {
     const testSeconds = calculateTestSeconds.value
@@ -67,8 +56,7 @@ export const useStats = () => {
 
   const wpm = computed(() => wpmAndRaw.value.wpm)
   const raw = computed(() => wpmAndRaw.value.raw)
-
-  const calculateChars = () => {
+  const resetStats = () => {
     correctWordChars.value = 0
     correctChars.value = 0
     incorrectChars.value = 0
@@ -76,6 +64,9 @@ export const useStats = () => {
     missedChars.value = 0
     spaces.value = 0
     correctSpaces.value = 0
+  }
+  const calculateChars = () => {
+    resetStats()
 
     for (let i = 0; i < inputWords.value.length; i++) {
       const inputWord = inputWords.value[i] as string
@@ -142,7 +133,6 @@ export const useStats = () => {
     return {
       wpm: wpm.value,
       wpmRaw: raw.value,
-
       correctChars: correctChars.value,
       missedChars: missedChars.value,
       extraChars: extraChars.value,
@@ -153,15 +143,13 @@ export const useStats = () => {
   const setEnd = () => {
     calculateChars()
   }
-
+  watchEffect(() => {
+    if (testState.isActive) {
+      calculateChars()
+    }
+  })
   const setStart = () => {
-    correctWordChars.value = 0
-    correctChars.value = 0
-    incorrectChars.value = 0
-    extraChars.value = 0
-    missedChars.value = 0
-    spaces.value = 0
-    correctSpaces.value = 0
+    resetStats()
   }
 
   return {

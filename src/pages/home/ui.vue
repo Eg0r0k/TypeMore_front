@@ -16,7 +16,7 @@
     <KeyMap />
   </div>
 
-  <div v-else   >
+  <div v-else>
     <TestChart />
     <Button @click="playReplay">Test</Button>
     <Button @click="restartTest"> Reapat </Button>
@@ -24,7 +24,6 @@
       <p v-for="word in replayStore.wordList" :key="word">
         {{ word }}
       </p>
-
     </div>
   </div>
 </template>
@@ -36,7 +35,6 @@ import { useConfigStore } from '@/entities/config/model/store'
 
 import { useTestStateStore } from '@/entities/test'
 import { Icon } from '@iconify/vue'
-
 
 import Popper from 'vue3-popper'
 import { useKeyModifier } from '@vueuse/core'
@@ -60,6 +58,7 @@ const generator = useWordGeneratorStore()
 const replayStore = useReplayStore()
 const inputStore = useInputStore()
 const isRightToLeft = ref(false)
+
 const currentLanguage = computed(() => configStore.currentLang)
 const russianQuotes: QuoteData = {
   language: 'russian',
@@ -79,14 +78,13 @@ const russianQuotes: QuoteData = {
   ]
 }
 const playReplay = async () => {
-  replayStore.playReplay();
-
+  replayStore.playReplay()
 }
 const init = async (): Promise<void> => {
   testState.setCurrentWordElementIndex(0)
   inputStore.clearAllInputData()
   timerStore.resetTimer()
-  
+
   testState.setActive(true)
   generator.reset()
   inputStore.initializeLetterClasses()
@@ -103,7 +101,6 @@ const init = async (): Promise<void> => {
     return
   }
   try {
-
     await generator.generateWords(currentLanguage.value)
 
     isRightToLeft.value = !!currentLanguage.value.rightToleft
@@ -111,7 +108,6 @@ const init = async (): Promise<void> => {
     console.error(e)
   }
 }
-
 
 //TODO: add support for:
 // arabian   -
@@ -134,7 +130,7 @@ const reapeatTest = (): void => {
 }
 
 const restartTest = async (): Promise<void> => {
-  console.log("restart")
+  console.log('restart')
   await init()
 }
 

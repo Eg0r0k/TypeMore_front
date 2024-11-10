@@ -1,11 +1,10 @@
 <template>
   <div ref="el" :style="style" class="key-map" aria-label="Virtual key map">
-    <div v-for="row in keys" :key="row.id" class="key-map__row">
+    <div v-for="row in KEYS" :key="row.id" class="key-map__row">
       <div
         v-for="key in row.keys"
         :key="key.code"
-        class="key-map__key key"
-        :class="{ active: pressedKeys[key.code] }"
+        :class="['key-map__key key', pressedKeys[key.code] ? 'active' : '']"
       >
         <kbd
           ><b>{{ getLabel(key) }}</b></kbd
@@ -18,74 +17,19 @@
 <script lang="ts" setup>
 import { useDraggable } from '@vueuse/core'
 import { onMounted, onUnmounted, reactive, ref } from 'vue'
+import { KEYS } from './const/keys'
 const el = ref<HTMLElement | null>(null)
 
 const { x, y, style } = useDraggable(el, {
   initialValue: { x: (window.innerWidth - 600) / 2, y: (window.innerHeight + 55) / 2 },
   onMove: ({ x: newX, y: newY }) => {
+    if (!el.value) return
     const maxX = window.innerWidth - el.value!.offsetWidth
     const maxY = window.innerHeight - el.value!.offsetHeight
     x.value = Math.max(0, Math.min(newX, maxX))
     y.value = Math.max(0, Math.min(newY, maxY))
   }
 })
-
-//Keys to show
-const keys = [
-  {
-    id: 1,
-    keys: [
-      { code: 'KeyQ', label: 'q' },
-      { code: 'KeyW', label: 'w' },
-      { code: 'KeyE', label: 'e' },
-      { code: 'KeyR', label: 'r' },
-      { code: 'KeyT', label: 't' },
-      { code: 'KeyY', label: 'y' },
-      { code: 'KeyU', label: 'u' },
-      { code: 'KeyI', label: 'i' },
-      { code: 'KeyO', label: 'o' },
-      { code: 'KeyP', label: 'p' },
-      { code: 'BracketLeft', label: '[' },
-      { code: 'BracketRight', label: ']' }
-    ]
-  },
-  {
-    id: 2,
-    keys: [
-      { code: 'KeyA', label: 'a' },
-      { code: 'KeyS', label: 's' },
-      { code: 'KeyD', label: 'd' },
-      { code: 'KeyF', label: 'f' },
-      { code: 'KeyG', label: 'g' },
-      { code: 'KeyH', label: 'h' },
-      { code: 'KeyJ', label: 'j' },
-      { code: 'KeyK', label: 'k' },
-      { code: 'KeyL', label: 'l' },
-      { code: 'Semicolon', label: ';' },
-      { code: 'Quote', label: '\\' }
-    ]
-  },
-  {
-    id: 3,
-    keys: [
-      // { code: 'ShiftLeft', label: 'L Shift' },
-      { code: 'KeyZ', label: 'z' },
-      { code: 'KeyX', label: 'x' },
-      { code: 'KeyC', label: 'c' },
-      { code: 'KeyV', label: 'v' },
-      { code: 'KeyB', label: 'b' },
-      { code: 'KeyN', label: 'n' },
-      { code: 'KeyM', label: 'm' },
-      { code: 'Comma', label: ',' },
-      { code: 'Period', label: '.' },
-      { code: 'Slash', label: '/' }
-    ]
-  },
-  {
-    id: 4,
-    keys: [{ code: 'Space', label: 'Space' }]
-  }
-]
 
 //Object to contain keys
 const pressedKeys = reactive<Record<string, boolean>>({})

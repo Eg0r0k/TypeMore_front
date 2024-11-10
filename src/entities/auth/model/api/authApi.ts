@@ -41,6 +41,8 @@ export const AuthApi = {
       }
     }
   },
+  async googleAuth() {},
+  async githubAuth() {},
   async registration(args: RegistrationType): Promise<ApiResponse<AuthLoginResponse>> {
     try {
       const response: AxiosResponse<AuthLoginResponse> = await axios.post(

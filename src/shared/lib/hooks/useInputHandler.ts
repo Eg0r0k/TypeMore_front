@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue'
+import { computed, ref } from 'vue'
 
 import { useInputState } from '@/shared/lib/hooks/useInputState'
 import { useTestStateStore } from '@/entities/test'
@@ -10,22 +10,23 @@ export const useInputHandling = () => {
   const generator = useWordGeneratorStore()
   const { input, pushToHistory } = useInputState()
 
+  const isTestActive = computed(() => testState.isActive)
+  const currentWord = computed(() => generator.getCurrent())
+
   const handleSpace = () => {
     if (!testState.isActive || input.current === '') return
 
-    const isWordCorrect = generator.getCurrent() === input.current
+    const isWordCorrect = currentWord.value === input.current
     wordInputs.value[testState.currentWordElementIndex] = input.current
 
-    if (isWordCorrect) {
-      testState.incrementWordIndex()
-    } else {
+    testState.incrementWordIndex()
+    if (!isWordCorrect) {
       pushToHistory()
-      testState.incrementWordIndex()
     }
   }
 
   const backspaceToPrevious = () => {
-    if (!testState.isActive || input.current.length !== 0) return
+    if (!isTestActive.value || input.current.length !== 0) return
     if (input.history.length === 0 || testState.currentWordElementIndex === 0) return
     testState.decrementWordIndex()
     input.current = pushToHistory()

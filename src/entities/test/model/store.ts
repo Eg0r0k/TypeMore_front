@@ -68,7 +68,7 @@ export const useTestStateStore = defineStore('test-state', () => {
     isActive.value = false
 
     console.log('Finish Replay')
-    replayStore.replayGetWordsList(inputStore.input.history) 
+    replayStore.replayGetWordsList(inputStore.input.history)
   }
   return {
     setActive,

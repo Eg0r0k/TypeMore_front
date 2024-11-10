@@ -1,14 +1,13 @@
 <template>
   <div>
     <div class="settings">
-      <TextInput class="settings__search" placeholder="Search..." />  
-    <div class="settings__categories">
-      <CheckBox v-model="isFeatureAEnabled" label="Enable Feature A" value="Test" />
-      <CheckBox v-model="isFeatureAEnabled" label="Enable Feature A" value="Test" />
-      <CheckBox v-model="isFeatureAEnabled" label="Enable Feature A" value="Test" />
-   
-    </div>
-    <vue-slider v-model="value" height="6px" :lazy="true"></vue-slider>
+      <TextInput class="settings__search" placeholder="Search..." />
+      <div class="settings__categories">
+        <CheckBox v-model="isFeatureAEnabled" label="Enable Feature A" value="Test" />
+        <CheckBox v-model="isFeatureAEnabled" label="Enable Feature A" value="Test" />
+        <CheckBox v-model="isFeatureAEnabled" label="Enable Feature A" value="Test" />
+      </div>
+      <vue-slider v-model="value" height="6px" :lazy="true"></vue-slider>
     </div>
     <div class="container">
       <div v-for="i in 10" :key="i" class="card">
@@ -74,13 +73,12 @@ const value = ref([0, 100])
 
 <style scoped lang="scss">
 .settings {
-
   width: 100%;
   margin-bottom: 20px;
   background-color: var(--sub-alt-color);
   padding: 33px 38px;
   border-radius: var(--border-radius);
-  &__categories{
+  &__categories {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;

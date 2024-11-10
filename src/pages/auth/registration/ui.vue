@@ -65,7 +65,7 @@
         >
       </Form>
       <div class="registration__footer">
-        <Typography tag-name="p" color="primary"
+        <Typography tag-name="p" color="primary" size="xs"
           >Has account?
           <router-link to="/login" class="registration__link">Login</router-link>
         </Typography>
@@ -80,8 +80,8 @@ import { TextInput } from '@/shared/ui/input'
 import { Button } from '@/shared/ui/button'
 import { Form, useForm } from 'vee-validate'
 import * as yup from 'yup'
-import { useAlertStore } from '@/entities/alert/model'
-import { AlertType } from '@/entities/alert/model/types/alertData'
+import { useAlertStore } from '@/entities/alert'
+import { AlertType } from '@/entities/alert/types/alertData'
 import { CaptchaModal } from '@/features/modal/captcha'
 import { useModal } from '@/entities/modal/model/store'
 import { ref, watch } from 'vue'
@@ -267,7 +267,7 @@ watch(
   &__body {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0px;
   }
 
   &__wrapper {
@@ -283,7 +283,7 @@ watch(
   }
 
   &__title {
-    margin-bottom: 8px;
+    margin-bottom: 0px;
   }
 
   &__popper,

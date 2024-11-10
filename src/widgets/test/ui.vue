@@ -14,7 +14,6 @@ import { useTestStateStore } from '@/entities/test'
 
 import { useScrollTape } from '@/shared/lib/hooks/useScrollTape'
 import { TestWord } from '@/features/test/word'
-import { useLineJump } from '@/shared/lib/hooks/useLineJump'
 
 interface Props {
   isRightToLeft?: boolean

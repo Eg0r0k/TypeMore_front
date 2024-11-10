@@ -1,1 +1,1 @@
-export {default as SideStats} from './ui.vue'
+export { default as SideStats } from './ui.vue'

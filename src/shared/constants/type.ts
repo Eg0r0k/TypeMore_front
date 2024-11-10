@@ -10,5 +10,3 @@ export interface Config {
   soundVolume: number
   fontSize: number
 }
-
-

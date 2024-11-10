@@ -90,16 +90,19 @@ const filteredItems = computed(() => {
 const navigateItems = async (direction: NavigationDirection) => {
   const itemsLength = filteredItems.value.length
   if (itemsLength === 0) return
-  focusedItemIndex.value =
+
+  const newIndex =
     (focusedItemIndex.value + (direction === NavigationDirection.Up ? -1 : 1) + itemsLength) %
     itemsLength
-  await nextTick(centerFocusedItem)
+  if (newIndex !== focusedItemIndex.value) {
+    focusedItemIndex.value = newIndex
+    await nextTick(centerFocusedItem)
+  }
 }
 
 const selectItem = (item: any): void => {
-  const index = props.items.findIndex((i) => i === item)
-  if (index !== -1 && item !== props.activeItem && item[props.searchKey] !== props.activeItem) {
-    focusedItemIndex.value = index
+  if (item !== props.activeItem) {
+    focusedItemIndex.value = props.items.indexOf(item)
     emit('item-selected', item)
   }
 }
@@ -136,8 +139,6 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
-
-
 .modal-header {
   display: flex;
   align-items: center;

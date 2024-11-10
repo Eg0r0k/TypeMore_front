@@ -27,6 +27,15 @@
             <Icon width="24" icon="fluent:target-20-filled" />
           </template>
         </Button>
+        <Button to="/" class="test__btn" color="main">
+          <template #left-icon>
+            <Icon width="24" icon="fluent:target-20-filled" />
+          </template>
+          Link
+          <template #right-icon>
+            <Icon width="24" icon="fluent:target-20-filled" />
+          </template>
+        </Button>
         <Button color="error">
           <template #left-icon>
             <Icon width="24" icon="ic:round-warning" />
@@ -34,6 +43,23 @@
           Dunger
         </Button>
         <Button style="max-width: fit-content" size="s" color="error">
+          <template #left-icon>
+            <Icon width="24" icon="ic:round-warning" />
+          </template>
+        </Button>
+        <Button isLoading style="max-width: fit-content" size="s" color="error">
+          <template #left-icon>
+            <Icon width="24" icon="ic:round-warning" />
+          </template>
+          Test text
+        </Button>
+        <Button isLoading size="l" color="error">
+          <template #left-icon>
+            <Icon width="24" icon="ic:round-warning" />
+          </template>
+          Dunger
+        </Button>
+        <Button isLoading style="max-width: fit-content" size="s" color="error">
           <template #left-icon>
             <Icon width="24" icon="ic:round-warning" />
           </template>
@@ -74,8 +100,8 @@ import { Typography } from '@shared/ui/typography'
 import { Button } from '@shared/ui/button'
 import { onMounted, ref } from 'vue'
 import { Theme } from '@/features/modal/themes/types/themes'
-import { useAlertStore } from '@/entities/alert/model'
-import { AlertType } from '@/entities/alert/model/types/alertData'
+import { useAlertStore } from '@/entities/alert'
+import { AlertType } from '@/entities/alert/types/alertData'
 import { useDebounceFn } from '@vueuse/core'
 const root = document.documentElement
 const alertStore = useAlertStore()

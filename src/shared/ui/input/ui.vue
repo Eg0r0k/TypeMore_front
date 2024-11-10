@@ -28,10 +28,10 @@
 <script setup lang="ts" generic="T">
 import { Typography } from '@/shared/ui/typography'
 import { computed } from 'vue'
+import clsx from 'clsx'
 defineOptions({
   inheritAttrs: false
 })
-
 interface Props {
   placeholder?: string
   isError?: boolean
@@ -42,6 +42,7 @@ interface Props {
   tagName?: 'input' | 'textarea'
 }
 const modelValue = defineModel<string | number>()
+
 const props = withDefaults(defineProps<Props>(), {
   tagName: 'input',
   hasErrorSpace: false
@@ -49,18 +50,13 @@ const props = withDefaults(defineProps<Props>(), {
 defineEmits<{
   (e: 'blur'): void
 }>()
-const wrapperClasses = computed(() => ({
-  'text-input__wrapper': true,
-  'text-input__wrapper--no-error': !props.hasErrorSpace
-}))
-const containerClasses = computed(() => ({
-  'text-input__container': true,
-  'text-input__container--no-error': !props.hasErrorSpace
-}))
-const inputClasses = computed(() => ({
-  'text-input': true,
-  'text-input--error': props.isError
-}))
+const wrapperClasses = computed(() =>
+  clsx('text-input__wrapper', { 'text-input__wrapper--no-error': !props.hasErrorSpace })
+)
+const containerClasses = computed(() =>
+  clsx('text-input__container', { 'text-input__container--no-error': !props.hasErrorSpace })
+)
+const inputClasses = computed(() => clsx('text-input', { 'text-input--error': props.isError }))
 
 const updateInput = (e: any) => {
   modelValue.value = e.target.value

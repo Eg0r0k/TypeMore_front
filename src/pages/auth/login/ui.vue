@@ -15,7 +15,7 @@
           name="username"
         >
           <Typography color="primary"
-            >Email<Typography tag-name="span" size="xs" color="error">*</Typography>
+            >Username<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
 
@@ -45,19 +45,20 @@
           <template #left-icon>
             <Icon width="24" icon="ri:google-fill"></Icon>
           </template>
-          Google
         </Button>
         <Button color="gray" class="other__button other__button--github">
           <template #left-icon>
             <Icon width="24" icon="mdi:github"></Icon>
           </template>
-          GitHub
         </Button>
       </div>
       <div class="login__footer">
-        <Typography tag-name="p" color="primary"
+        <Typography tag-name="p" color="primary" size="xs"
           >No account?
           <router-link to="/registration" class="login__link">Create</router-link>
+        </Typography>
+        <Typography class="login__link" color="sub" size="xs" @click="openResetModal">
+          forgot password?
         </Typography>
       </div>
     </div>
@@ -71,19 +72,22 @@ import { TextInput } from '@shared/ui/input'
 import { Button } from '@shared/ui/button'
 import { Form, useForm } from 'vee-validate'
 import * as yup from 'yup'
-import { useAlertStore } from '@/entities/alert/model'
-import { AlertType } from '@/entities/alert/model/types/alertData'
+import { useAlertStore } from '@/entities/alert'
+import { AlertType } from '@/entities/alert/types/alertData'
 import { useAuthStore } from '@/entities/auth/model/store'
+import { useModal } from '@/entities/modal'
+import { ResetModal } from '@/features/modal/reset'
 const emailReg = new RegExp(
   /^(([^<>()[]+(\.[^<>()[]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 )
 const schema = yup.object({
-  username: yup.string().min(6, 'Min 6 characters for password').required('Username is required'),
+  username: yup.string().min(3, 'Min 3 characters for username').required('Username is required'),
   password: yup.string().min(6, 'Min 6 characters for password').required('Password is required')
 })
 const { handleSubmit, errors, defineField } = useForm({
   validationSchema: schema
 })
+const modalStore = useModal()
 const authStore = useAuthStore()
 const alertStore = useAlertStore()
 const [username, usernameProps] = defineField('username', {
@@ -92,20 +96,19 @@ const [username, usernameProps] = defineField('username', {
 const [password, passwordProps] = defineField('password', {
   validateOnModelUpdate: false
 })
-
+const openResetModal = () => {
+  modalStore.open(ResetModal, 'center', 'center')
+}
 const onSubmit = handleSubmit(
   async () => {
     try {
-      await authStore.login({ username: username.value, password: password.value }) // Вызов метода логина
+      await authStore.login({ username: username.value, password: password.value })
       alertStore.addAlert({
         type: AlertType.Success,
         title: 'Success',
         msg: 'Login successful',
         duration: 1500
       })
-      // Здесь вы можете перенаправить пользователя на другую страницу после успешного входа
-      // Например:
-      // router.push('/dashboard');
     } catch (error) {
       console.error('Login error:', error)
       alertStore.addAlert({
@@ -117,7 +120,7 @@ const onSubmit = handleSubmit(
     }
   },
   (errors) => {
-    console.log(errors)
+    console.error(errors)
     alertStore.addAlert({
       type: AlertType.Error,
       title: 'WTF',
@@ -131,7 +134,7 @@ const onSubmit = handleSubmit(
 <style scoped lang="scss">
 .other {
   display: flex;
-  flex-direction: column;
+
   gap: 12px;
 
   &__button {
@@ -153,7 +156,7 @@ const onSubmit = handleSubmit(
   padding: 20px;
   border: 2px solid var(--sub-alt-color);
   border-radius: var(--border-radius);
-  gap: 12px;
+  gap: 10px;
 
   &__header {
     text-align: center;
@@ -165,12 +168,28 @@ const onSubmit = handleSubmit(
     gap: 12px;
   }
 
+  &__footer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
   &__title {
-    margin-bottom: 8px;
+    margin-bottom: 0px;
   }
 
   &__sumbit {
     width: 100%;
+  }
+
+  &__link {
+    user-select: none;
+    transition: all var(--transition-duration);
+
+    &:hover {
+      cursor: pointer;
+      color: var(--main-color);
+    }
   }
 
   &__wrapper {

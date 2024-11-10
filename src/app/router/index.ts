@@ -1,13 +1,8 @@
 import { createRouter, createWebHistory, RouteLocationNormalizedLoaded } from 'vue-router'
-import { RegistrationPage } from '@pages/auth/registration'
-import { LoginPage } from '@pages/auth/login'
 import { SettingPage } from '@pages/settings'
 import { ServersPage } from '@pages/servers'
-import { ThemePage } from '@/pages/themes'
 import { MainPage } from '@/pages/home'
-import { ProfilePage } from '@/pages/profile'
 import { useTitle } from '@vueuse/core'
-import { ErrorPage } from '@/pages/error'
 
 const routes = [
   {
@@ -18,7 +13,7 @@ const routes = [
   {
     path: '/registration',
     name: 'registration',
-    component: RegistrationPage,
+    component: () => import('@pages/auth/registration/ui.vue'),
     meta: { title: 'Registration' }
   },
   {
@@ -30,7 +25,7 @@ const routes = [
   {
     path: '/profile',
     name: 'profile',
-    component: ProfilePage,
+    component: () => import('@/pages/profile/ui.vue'),
     meta: { requiresAuth: true, title: 'Profile' }
   },
   {
@@ -42,20 +37,19 @@ const routes = [
   {
     path: '/login',
     name: 'login',
-    component: LoginPage,
+    component: () => import('@pages/auth/login/ui.vue'),
     meta: { title: 'Login' }
   },
   {
     path: '/themes',
     name: 'themes',
-    component: ThemePage,
+    component: () => import('@/pages/themes/ui.vue'),
     meta: { title: 'Theme' }
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'error',
-    component: ErrorPage 
-
+    component: () => import('@/pages/error/ui.vue')
   }
 ]
 

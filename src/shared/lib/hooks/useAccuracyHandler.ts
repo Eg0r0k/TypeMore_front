@@ -1,7 +1,16 @@
 import { ref } from 'vue'
 
+interface CharacterCounts {
+  correct: number
+  incorrect: number
+  extra: number
+  total: number
+  correctSpaces: number
+  incorrectSpaces: number
+}
+
 export const useAccuracyHandler = () => {
-  const characterCounts = ref({
+  const characterCounts = ref<CharacterCounts>({
     correct: 0,
     incorrect: 0,
     extra: 0,
@@ -9,6 +18,7 @@ export const useAccuracyHandler = () => {
     correctSpaces: 0,
     incorrectSpaces: 0
   })
+
   const incrementCharacterCount = (isCorrect: boolean, charIndex: number, currentWord: string) => {
     characterCounts.value.total++
 
@@ -23,9 +33,14 @@ export const useAccuracyHandler = () => {
     }
   }
   const resetCharacterCounts = (): void => {
-    Object.keys(characterCounts.value).forEach((key) => {
-      characterCounts.value[key as keyof typeof characterCounts.value] = 0
-    })
+    characterCounts.value = {
+      correct: 0,
+      incorrect: 0,
+      extra: 0,
+      total: 0,
+      correctSpaces: 0,
+      incorrectSpaces: 0
+    }
   }
   return {
     characterCounts,

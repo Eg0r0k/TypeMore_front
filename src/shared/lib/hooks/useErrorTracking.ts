@@ -15,8 +15,17 @@ export const useErrorTracking = () => {
   const incrementKeypressErrors = () => {
     errorHistory.value.count++
   }
+  const resetMissedWords = (): void => {
+    missedWords.value = {}
+  }
+  const resetErrorHistory = (): void => {
+    errorHistory.value = { count: 0, words: [] }
+  }
   return {
     missedWords,
+    resetErrorHistory,
+    resetMissedWords,
+
     errorHistory,
     pushMissedWords,
     incrementKeypressErrors

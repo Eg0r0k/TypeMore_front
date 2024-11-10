@@ -1,4 +1,4 @@
-import { computed, ref, Ref } from 'vue'
+import { ref, Ref } from 'vue'
 import { useSound } from '@vueuse/sound'
 import { useConfigStore } from '@/entities/config/model/store'
 import { RandomElementFromArray } from '../helpers/arrays'
@@ -24,19 +24,19 @@ function createSoundInstance(soundPath: string, volume: Ref<number>): SoundInsta
 
 export function useSounds(initialClickSounds: string[] = [], initialErrorSound: string = '') {
   const { config } = useConfigStore()
-  const volume = computed(() => config.soundVolume)
+  const volume = ref(config.soundVolume)
 
-  const clickSounds: Ref<SoundInstance[]> = ref(
-    initialClickSounds.length > 0
-      ? initialClickSounds.map((soundPath) => createSoundInstance(soundPath, volume))
-      : []
-  )
+  const createSoundInstances = (soundPaths: string[]) =>
+    soundPaths.map((soundPath) => createSoundInstance(soundPath, volume))
+
+  const clickSounds: Ref<SoundInstance[]> = ref(createSoundInstances(initialClickSounds))
   const errorSound: Ref<SoundInstance | null> = ref(
     initialErrorSound ? createSoundInstance(initialErrorSound, volume) : null
   )
 
   const setVolume = (val: number): void => {
     config.soundVolume = val
+    volume.value = val
   }
 
   const playErrorSound = (): void => {
@@ -46,16 +46,12 @@ export function useSounds(initialClickSounds: string[] = [], initialErrorSound: 
   }
 
   const setClickSounds = (newClickSounds: string[]): void => {
-    clickSounds.value = newClickSounds.map((soundPath) => createSoundInstance(soundPath, volume))
+    clickSounds.value = createSoundInstances(newClickSounds)
   }
 
   const playRandomClickSound = (): void => {
-    if (clickSounds.value.length > 0) {
-      const randomSound = RandomElementFromArray(clickSounds.value)
-      if (randomSound) {
-        randomSound.play()
-      }
-    }
+    const randomSound = RandomElementFromArray(clickSounds.value)
+    randomSound?.play()
   }
 
   const setErrorSound = (newErrorSound: string): void => {

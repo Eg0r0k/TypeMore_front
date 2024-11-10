@@ -6,10 +6,10 @@ import { randomIntFromRange } from './numbers'
  */
 export const RandomElementFromArray = <T>(arr: T[]): T => {
   if (arr.length === 0) {
-    throw new Error("Array cannot be empty");
+    throw new Error('Array cannot be empty')
   }
-  const randomIndex = randomIntFromRange(0, arr.length - 1);
-  return arr[randomIndex];
+  const randomIndex = randomIntFromRange(0, arr.length - 1)
+  return arr[randomIndex]
 }
 
 /**

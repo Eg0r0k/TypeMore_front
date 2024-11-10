@@ -1,6 +1,6 @@
 /**
  * Make color (HEX) lighten and convert it in rgb.
- * 
+ *
  * @param color - Color to convert in rgb
  * @param amount - Shading coefficient
  * @returns - Shaded color in format rgb
@@ -16,7 +16,7 @@ export const lightenColor = (color: string, amount: number): string => {
 }
 /**
  * Make color (HEX) darken and convert it in rgb.
- * 
+ *
  * @param color - Color to convert in rgb
  * @param amount - Shading coefficient
  * @returns - Shaded color in format rgb

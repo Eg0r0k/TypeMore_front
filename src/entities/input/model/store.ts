@@ -50,7 +50,13 @@ export const useInputStore = defineStore('input', () => {
   const currentWord = computed(() => generator.getCurrent())
 
   const { resetCharacterCounts, characterCounts, incrementCharacterCount } = useAccuracyHandler()
-  const { missedWords, incrementKeypressErrors, pushMissedWords, errorHistory } = useErrorTracking()
+  const {
+    missedWords,
+    incrementKeypressErrors,
+    pushMissedWords,
+    resetErrorHistory,
+    resetMissedWords
+  } = useErrorTracking()
   const { letterClasses, initializeLetterClasses, updateLetterClasses, getLetterClass } =
     useUIState()
   const wordInputs = ref<string[]>([])
@@ -271,8 +277,8 @@ export const useInputStore = defineStore('input', () => {
     wordInputs.value = []
     resetCharacterCounts()
     resetAccuracy()
-    missedWords.value = {}
-    errorHistory.value = { count: 0, words: [] }
+    resetMissedWords()
+    resetErrorHistory()
     letterClasses.value = []
     resetKeypressTimings()
   }

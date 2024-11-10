@@ -32,7 +32,7 @@
 </template>
 
 <script lang="ts" setup>
-import { DEFAULT_ALERT_CLOSABLE, DEFAULT_ALERT_DURATION } from '@/entities/alert/model/const/values'
+import { DEFAULT_ALERT_CLOSABLE, DEFAULT_ALERT_DURATION } from '@/entities/alert/const/values'
 import { Icon } from '@iconify/vue'
 import { useSound } from '@vueuse/sound'
 import { computed, onMounted, ref } from 'vue'
@@ -66,9 +66,9 @@ type AlertSound = ReturnType<typeof useSound>
 const alertSounds: Record<AlertType, AlertSound> = {
   [AlertType.Error]: useSound(Error, { volume: config.soundVolume }),
   [AlertType.Info]: useSound(Info, { volume: config.soundVolume }),
-  [AlertType.Success]: useSound(Error, { volume: config.soundVolume }), // Возможно, здесь ошибка, должен быть другой звук
+  [AlertType.Success]: useSound(Error, { volume: config.soundVolume }), //TODO: Возможно, здесь ошибка, должен быть другой звук
   [AlertType.Warning]: useSound(Info, { volume: config.soundVolume })
-}
+} as const
 
 const isVisible = ref(true)
 const alertRef = ref(null)
@@ -85,8 +85,8 @@ const alertIcons: Record<AlertType, string> = {
   [AlertType.Info]: 'pajamas:information-o',
   [AlertType.Success]: 'pajamas:check-circle',
   [AlertType.Warning]: 'pajamas:warning'
-}
-const iconName = computed(() => alertIcons[props.type] || '')
+} as const
+const iconName = computed(() => alertIcons[props.type])
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -102,16 +102,15 @@ const close = () => {
   isVisible.value = false
   emit('close')
 }
+//На всякий случай
+defineExpose({
+  close
+})
 onMounted(() => {
   if (props.closable && props.duration > 0) {
-    setTimeout(() => {
-      close()
-    }, props.duration)
+    setTimeout(close, props.duration)
   }
-
-  setTimeout(() => {
-    playSound()
-  }, 100)
+  setTimeout(playSound, 100)
 })
 </script>
 

@@ -15,6 +15,7 @@ export const useTimerStore = defineStore('timer', () => {
   const input = useInputStore()
   const testState = useTestStateStore()
   const stats = useStats()
+
   const time = ref(0)
   let worker: Worker | null = null
   /**
@@ -22,6 +23,7 @@ export const useTimerStore = defineStore('timer', () => {
    * The worker listens for messages, updating the time or stopping the timer.
    */
   const createWorker = (): void => {
+    if (worker) return
     worker = new WebWorker()
     worker.onmessage = (e) => {
       if (e.data.command === 'stop') {

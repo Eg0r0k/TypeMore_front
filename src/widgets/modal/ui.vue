@@ -1,9 +1,10 @@
 <template>
   <Teleport to="#app" :disabled="!isTeleportAvailable">
     <Transition
-      :on-before-enter="onBeforeEnter"
-      :on-enter="onEnter"
-      :on-leave="onLeave"
+      :name="transitionName"
+      @before-enter="onBeforeEnter"
+      @enter="onEnter"
+      @leave="onLeave"
       :css="false"
     >
       <div
@@ -30,7 +31,6 @@ import { useModal } from '@/entities/modal/model/store'
 import { onClickOutside } from '@vueuse/core'
 import gsap from 'gsap'
 import { computed, onMounted, reactive, ref } from 'vue'
-
 const modalStore = useModal()
 const isOpen = computed(() => modalStore.isOpen)
 const alignment = computed(() => modalStore.alignment)
@@ -41,6 +41,7 @@ const closeOnClickOutside = computed(() => modalStore.closeOnClickOutside)
 const classes = computed(() => {
   return [`alignment-${alignment.value || 'center'}`, `justify-${justify.value || 'center'}`]
 })
+const transitionName = computed(() => (isOpen.value ? 'modal-enter' : 'modal-leave'))
 
 const model = reactive({})
 const isTeleportAvailable = ref(false)
@@ -86,15 +87,11 @@ const onLeave = (el: Element, done: () => void) => {
 }
 
 onMounted(() => {
-  if (typeof document !== 'undefined') {
-    isTeleportAvailable.value = !!document.querySelector('#app')
-  }
+  isTeleportAvailable.value = !!document.querySelector('#app')
 })
 </script>
 
 <style lang="scss" scoped>
-
-
 .sr-only {
   @include hide-visually;
 }

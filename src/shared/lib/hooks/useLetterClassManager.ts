@@ -5,24 +5,27 @@ import { ref } from 'vue'
 export const useLetterClassManagement = () => {
   const letterClasses = ref<string[][]>([])
   const wordInputs = ref<string[]>([])
-  const testState = useTestStateStore()
-  const generator = useWordGeneratorStore()
+  const { currentWordElementIndex } = useTestStateStore()
+  const { retWords } = useWordGeneratorStore()
 
   const updateLetterClasses = (): void => {
-    const currentWord = testState.currentWordElementIndex
-    if (currentWord >= generator.retWords.words.length) {
-      console.warn('Trying to access word beyond array length. Stopping update.')
+    const currentWord = currentWordElementIndex
+    const words = retWords.words
+    if (currentWord < 0 || currentWord >= words.length) {
       return
     }
 
-    const originalWord = generator.retWords.words[currentWord]
+    const originalWord = words[currentWord]
     const currentInput = wordInputs.value[currentWord] || ''
 
-    letterClasses.value[currentWord] = originalWord
-      .split('')
-      .map((char, index) =>
-        index >= currentInput.length ? '' : currentInput[index] === char ? 'correct' : 'incorrect'
-      )
+    letterClasses.value = [
+      ...letterClasses.value.slice(0, currentWord),
+      originalWord.split('').map((char, index) => {
+        if (index >= currentInput.length) return ''
+        return currentInput[index] === char ? 'correct' : 'incorrect'
+      }),
+      ...letterClasses.value.slice(currentWord + 1)
+    ]
   }
   return {
     letterClasses,

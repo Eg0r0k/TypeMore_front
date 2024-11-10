@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { markRaw, reactive, toRefs } from 'vue'
 import { Modal, ModalHandlers } from '../types/type'
+import { DEFAULT_MODAL_STATE } from '../const/defaultModal'
 /**
  * Store for controlling the modal state.
  * This store provides methods for opening and closing modals and allows configuring
@@ -38,11 +39,8 @@ export const useModal = defineStore('modal', () => {
    * Closes the modal and resets its configuration.
    */
   const close = () => {
-    modal.isOpen = false
-    modal.view = null
-
-    modal.alignment = 'none'
-    modal.handlers = {}
+    console.log(modal)
+    Object.assign(modal, DEFAULT_MODAL_STATE)
   }
 
   return { ...toRefs(modal), open, close }

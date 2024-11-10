@@ -10,7 +10,13 @@
       </li>
     </ul>
     <div class="navigation__controls controls">
-      <Button class="controls__alert" size="s" color="shadow" button-label="Open alerts" @click="handleOpenNews">
+      <Button
+        class="controls__alert"
+        size="s"
+        color="shadow"
+        button-label="Open alerts"
+        @click="handleOpenNews"
+      >
         <template #left-icon>
           <Icon :icon="'ion:notifications'" width="30" />
         </template>
@@ -57,8 +63,8 @@ const handleOpenNews = (): void => {
     padding: 4px;
   }
 }
-.controls{
-  &__user{
+.controls {
+  &__user {
     padding: 4px 8px;
   }
 }

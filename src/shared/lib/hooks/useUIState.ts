@@ -1,24 +1,28 @@
 import { useWordGeneratorStore } from '@/entities/generator/model/store'
-import { useTestStateStore } from '@/entities/test'
-import { shallowRef } from 'vue'
+
+import { computed, shallowRef } from 'vue'
 
 export const useUIState = () => {
   const generator = useWordGeneratorStore()
+  const words = computed(() => generator.retWords.words)
   const letterClasses = shallowRef<string[][]>([])
   const initializeLetterClasses = () => {
-    if (letterClasses.value.length > 0) return
-    letterClasses.value = generator.retWords.words.map((word) =>
-      Array.from({ length: word.length }, () => '')
-    )
+    if (letterClasses.value.length || !words.value.length) return
+    letterClasses.value = words.value.map((word) => Array(word.length).fill(''))
   }
   const updateLetterClasses = (currentWord: number, wordInputs: string[]) => {
-    if (currentWord >= generator.retWords.words.length) {
+    if (currentWord >= words.value.length) {
       console.warn('Trying to access word beyond array length. Stopping update.')
       return
     }
 
-    const originalWord = generator.retWords.words[currentWord]
+    const originalWord = words.value[currentWord]
     const currentInput = wordInputs[currentWord] || ''
+
+    if (!currentInput) {
+      letterClasses.value[currentWord] = Array(originalWord.length).fill('')
+      return
+    }
 
     letterClasses.value[currentWord] = originalWord
       .split('')
@@ -27,7 +31,7 @@ export const useUIState = () => {
       )
   }
   const getLetterClass = (wordIndex: number, letterIndex: number): string =>
-    letterClasses.value[wordIndex]?.[letterIndex] ?? ''
+    letterClasses.value[wordIndex]?.[letterIndex] || ''
 
   return {
     letterClasses,

@@ -3,12 +3,11 @@ export type Quote = {
   text: string
   source: string
   length: number
-  textSplit?: string[];
-
+  textSplit?: string[]
 }
 export type QuoteWithTextSplit = Quote & {
-    textSplit: string[];
-  };
+  textSplit: string[]
+}
 export type QuoteData = {
   language: string
   quotes: Quote[]

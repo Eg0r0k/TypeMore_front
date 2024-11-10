@@ -89,26 +89,19 @@ const lineChartOptions = computed<ChartOptions<'line'>>(() => ({
   }
 }))
 
-
 const lineChartProps = computed(() => ({
   chartData: lineChartData.value,
   options: lineChartOptions.value
 }))
 
-
 watch(timerStore.getTime, (newTime) => {
   dataLabels.value.push(newTime)
-  const currentStats = stats.getStats.value; 
+  const currentStats = stats.getStats.value
 
-  dataError.value.push(currentStats.missedChars + currentStats.extraChars);
-  dataWPM.value.push(currentStats.wpm);
-  dataRAW.value.push(currentStats.wpmRaw);
-
+  dataError.value.push(currentStats.missedChars + currentStats.extraChars)
+  dataWPM.value.push(currentStats.wpm)
+  dataRAW.value.push(currentStats.wpmRaw)
 })
-
-
-
-
 </script>
 
 <style></style>

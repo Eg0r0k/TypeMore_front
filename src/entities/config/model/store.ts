@@ -15,7 +15,8 @@ export const useConfigStore = defineStore(
     const config = reactive<Config>({
       ...defaultConfig
     })
-    const currentLang = ref<LanguageObj>()
+    const currentLang = ref<LanguageObj | null>(null)
+
     const getLanguage = (): string => config.language
     const setLanguage = async (lang: string): Promise<void> => {
       config.language = lang

@@ -28,7 +28,6 @@ export const useInputState = () => {
     return input.history.pop() ?? ''
   }
 
-  //? MB create this computed?
   const pushToHistory = (): string => {
     const previousInput = input.current
     console.trace('PUSHED TO HISTORY')

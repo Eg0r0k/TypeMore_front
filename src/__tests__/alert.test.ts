@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils'
 import { beforeEach, describe, it, vi } from 'vitest'
 import { Alert } from '@/shared/ui/alert'
 import { expect } from 'chai'
-import { AlertType } from '@/entities/alert/model/types/alertData'
+import { AlertType } from '@/entities/alert/types/alertData'
 import { createPinia, setActivePinia } from 'pinia'
 import { defineComponent } from 'vue'
 
