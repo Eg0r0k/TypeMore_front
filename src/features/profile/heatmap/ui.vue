@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineProps } from 'vue';
+import { ref, computed } from 'vue';
 import dayjs from 'dayjs';
 import { Typography } from '@/shared/ui/typography';
 import { useThemes } from '@/shared/lib/hooks/useThemes';

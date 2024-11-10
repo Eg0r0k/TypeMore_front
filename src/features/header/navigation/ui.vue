@@ -9,13 +9,14 @@
         </Popper>
       </li>
     </ul>
-    <div class="navigation__controls">
-      <Button size="s" color="shadow" @click="handleOpenNews">
+    <div class="navigation__controls controls">
+      <Button class="controls__alert" size="s" color="shadow" button-label="Open alerts" @click="handleOpenNews">
         <template #left-icon>
           <Icon :icon="'ion:notifications'" width="30" />
         </template>
       </Button>
-      <router-link to="/login" title="Login" aria-label="Login">
+
+      <router-link class="controls__user" to="/login" title="Login" aria-label="Login">
         <Icon :icon="'mdi:user'" width="30" aria-hidden="true" />
       </router-link>
     </div>
@@ -56,7 +57,11 @@ const handleOpenNews = (): void => {
     padding: 4px;
   }
 }
-
+.controls{
+  &__user{
+    padding: 4px 8px;
+  }
+}
 .navigation {
   width: 100%;
   display: flex;
@@ -66,6 +71,7 @@ const handleOpenNews = (): void => {
 
   &__controls {
     display: flex;
+    align-items: center;
   }
 
   &__list {

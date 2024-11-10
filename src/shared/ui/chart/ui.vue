@@ -1,5 +1,5 @@
 <template>
-  <LineChart ref="doughnutChartRef" style="height: 200px" v-bind="doughnutChartProps" />
+  <LineChart ref="lineChartRef" style="height: 200px" v-bind="lineChartProps" />
 </template>
 
 <script setup lang="ts">
@@ -9,28 +9,24 @@ import { Chart, ChartData, ChartOptions, registerables } from 'chart.js'
 import { getColorWithOpacity } from '@/shared/lib/helpers/misc'
 import { useTimerStore } from '@/entities/timer/model/store'
 import { useThemes } from '@/shared/lib/hooks/useThemes'
+import { useStats } from '@/shared/lib/hooks/useStats'
+
 Chart.register(...registerables)
 
-// interface Props {
-//   dataError: number[];
-//   dataWPM: number[];
-//   dataRAW: number[];
-//   dataLabels: number[];
-//   dataTimeLabel: number[]
-// }
-// const props = defineProps<Props>()
-
 const { refColors } = useThemes()
+const timerStore = useTimerStore()
+const stats = useStats()
+
+const dataLabels = ref<number[]>([])
 const dataError = ref<number[]>([])
 const dataWPM = ref<number[]>([])
 const dataRAW = ref<number[]>([])
-const dataLabels = ref<number[]>([])
 
-const testData = computed<ChartData<'line'>>(() => ({
+const lineChartData = computed<ChartData<'line'>>(() => ({
   labels: dataLabels.value,
   datasets: [
     {
-      label: 'Error',
+      label: 'Errors', // Опечатка исправлена
       data: dataError.value,
       borderColor: refColors['--error-color'],
       backgroundColor: refColors['--error-color'],
@@ -50,7 +46,7 @@ const testData = computed<ChartData<'line'>>(() => ({
       pointBorderColor: refColors['--main-color']
     },
     {
-      label: 'RAW',
+      label: 'RAW WPM', // Добавлено "WPM" для ясности
       data: dataRAW.value,
       borderColor: refColors['--sub-alt-color'],
       backgroundColor: getColorWithOpacity(refColors['--sub-alt-color'], 0.4),
@@ -62,7 +58,7 @@ const testData = computed<ChartData<'line'>>(() => ({
   ]
 }))
 
-const options = computed<ChartOptions<'line'>>(() => ({
+const lineChartOptions = computed<ChartOptions<'line'>>(() => ({
   scales: {
     x: {
       type: 'category',
@@ -93,19 +89,26 @@ const options = computed<ChartOptions<'line'>>(() => ({
   }
 }))
 
-const doughnutChartProps = computed(() => ({
-  chartData: testData.value,
-  options: options.value
-}))
-const timerStore = useTimerStore()
-// watch(timerStore.getTime, (newTime) => {
-//   dataLabels.value.push(newTime)
-//   dataError.value.push(Math.floor(Math.random() * 100) + 1)
-//   dataWPM.value.push(Math.floor(Math.random() * 100) + 1)
-//   dataRAW.value.push(Math.floor(Math.random() * 100) + 1)
-//   console.log(refColors)
 
-// })
+const lineChartProps = computed(() => ({
+  chartData: lineChartData.value,
+  options: lineChartOptions.value
+}))
+
+
+watch(timerStore.getTime, (newTime) => {
+  dataLabels.value.push(newTime)
+  const currentStats = stats.getStats.value; 
+
+  dataError.value.push(currentStats.missedChars + currentStats.extraChars);
+  dataWPM.value.push(currentStats.wpm);
+  dataRAW.value.push(currentStats.wpmRaw);
+
+})
+
+
+
+
 </script>
 
 <style></style>

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { LoginType, RegistrationType, UserSchema } from './types/auth'
 import { useOnline } from '@vueuse/core'
 import { AuthApi } from './api/authApi'
@@ -9,7 +9,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuth = computed(() => !!user.value)
   const isOnline = useOnline()
   const accessToken = ref<string | null>(null)
-
+  const isMacOs = ref(false)
   const logout = () => {
     user.value = null
     accessToken.value = null
@@ -38,11 +38,14 @@ export const useAuthStore = defineStore('auth', () => {
 
   const refreshAuthToken = () => {}
   const initializeAuth = async () => {}
-
+  onMounted(()=>{
+     isMacOs.value = navigator.userAgent.includes('Mac')
+  })
   return {
     user,
     register,
     login,
+    isMacOs,
     logout,
     refreshAuthToken,
     initializeAuth,

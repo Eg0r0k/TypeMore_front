@@ -54,8 +54,8 @@ defineEmits<{
 .checkbox-wrapper__input {
   box-shadow: 0 0 0 1px var(--main-color);
   appearance: none;
-  width: 20px;
-  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
   background-color: var(--sub-alt-color);
   border-radius: 3px;
   cursor: pointer;

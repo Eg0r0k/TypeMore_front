@@ -1,6 +1,13 @@
 <template>
-  <button :disabled="isLoading || isDisabled" :class="classes" role="button" :aria-label="buttonLabel"
-    :aria-busy="isLoading">
+  <component
+    :is="isLink ? 'a' : 'button'"
+    :href="isLink ? to : undefined"
+    :disabled="isDisabled || isLoading"
+    :class="classes"
+    role="button"
+    :aria-label="buttonLabel"
+    :aria-busy="isLoading"
+  >
     <span v-if="isLoading" class="loader" aria-hidden="true"></span>
     <span v-if="!isLoading" class="icon">
       <slot name="left-icon" :aria-label="buttonLabel"></slot>
@@ -13,8 +20,9 @@
     <span v-if="!isLoading" class="icon">
       <slot name="right-icon" :aria-label="buttonLabel"></slot>
     </span>
-  </button>
+  </component>
 </template>
+
 
 <script setup lang="ts">
 import { useSlots, computed } from 'vue'
@@ -35,6 +43,8 @@ interface Props {
   isDisabled?: boolean
   buttonLabel?: string
   isLoading?: boolean
+  to?: string | null; 
+  isLink?: boolean; 
 }
 
 const slots = useSlots()
@@ -43,9 +53,11 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'm',
   isDisabled: false,
   decoration: 'default',
-  buttonLabel: 'Button'
+  buttonLabel: 'Button',
+  to: null,
+  isLink: false,
 })
-
+const isLink = computed(() => !!props.to);
 const classes = computed(() => ({
   button: true,
   [`button--size-${props.size}`]: true,
@@ -254,7 +266,9 @@ $styles: (
 .invisible {
   visibility: hidden;
 }
-
+a {
+  text-decoration: none !important;
+}
 .loader {
   position: absolute;
   min-width: 20px;

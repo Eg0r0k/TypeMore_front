@@ -16,7 +16,7 @@
     <KeyMap />
   </div>
 
-  <div v-else>
+  <div v-else   >
     <TestChart />
     <Button @click="playReplay">Test</Button>
     <Button @click="restartTest"> Reapat </Button>
@@ -61,7 +61,6 @@ const replayStore = useReplayStore()
 const inputStore = useInputStore()
 const isRightToLeft = ref(false)
 const currentLanguage = computed(() => configStore.currentLang)
-
 const russianQuotes: QuoteData = {
   language: 'russian',
   quotes: [

@@ -32,7 +32,7 @@ const initials = computed(() => {
   background-color: var(--sub-alt-color);
   aspect-ratio: 1/1;
   border-radius: 9999px;
-  outline: 4px solid var(--sub-color);
+  outline: 4px solid var(--main-color);
 
   &__initials {
     font-size: 40px !important;
