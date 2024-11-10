@@ -18,9 +18,14 @@
 
   <div v-else>
     <TestChart />
-
+    <Button @click="playReplay">Test</Button>
     <Button @click="restartTest"> Reapat </Button>
-    {{ replayStore.wordList }}
+    <div id="replayWords">
+      <p v-for="word in replayStore.wordList" :key="word">
+        {{ word }}
+      </p>
+
+    </div>
   </div>
 </template>
 
@@ -74,13 +79,15 @@ const russianQuotes: QuoteData = {
     }
   ]
 }
+const playReplay = async () => {
+  replayStore.playReplay();
 
-
+}
 const init = async (): Promise<void> => {
   testState.setCurrentWordElementIndex(0)
   inputStore.clearAllInputData()
   timerStore.resetTimer()
-
+  
   testState.setActive(true)
   generator.reset()
   inputStore.initializeLetterClasses()
@@ -97,7 +104,8 @@ const init = async (): Promise<void> => {
     return
   }
   try {
-    await generator.generateQuotes(russianQuotes)
+
+    await generator.generateWords(currentLanguage.value)
 
     isRightToLeft.value = !!currentLanguage.value.rightToleft
   } catch (e) {
@@ -127,6 +135,7 @@ const reapeatTest = (): void => {
 }
 
 const restartTest = async (): Promise<void> => {
+  console.log("restart")
   await init()
 }
 

@@ -1,7 +1,7 @@
 <template>
-    <input v-focus :disabled="!testState.isActive" :value="inputStore.input.current" type="text" dir=auto
-        @input="inputStore.handleInput($event)" @keydown.delete="handleBackspace($event)"
-        @keydown.space.prevent="inputStore.handleSpace()" />
+    <input v-focus :disabled="!testState.isActive" :value="inputStore.input.current" type="text" dir="auto"
+        @input="inputStore.handleInput($event)" @keydown="inputStore.handleKeyDown" @keyup="inputStore.handleKeyUp"
+        @keydown.delete="handleBackspace($event)" @keydown.space.prevent="inputStore.handleSpace()" />
 </template>
 
 <script setup lang="ts">

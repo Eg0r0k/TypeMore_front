@@ -19,14 +19,33 @@ import { useStats } from '@/shared/lib/hooks/useStats'
 import { useErrorTracking } from '@/shared/lib/hooks/useErrorTracking'
 import { useAccuracyHandler } from '@/shared/lib/hooks/useAccuracyHandler'
 import { useUIState } from '@/shared/lib/hooks/useUIState'
+import { KAYS_TO_TRACK, MAX_OVERINCORRECT_LETTERS } from './const/keys'
+import { roundTo2 } from '@/shared/lib/helpers/numbers'
+import { useReplayStore } from '@/entities/replay/model/store'
 
 type Keydata = {
   timestamp: number
   index: number
 }
 
+type KeypressTimings = {
+  spacing: {
+    first: number
+    last: number
+    array: number[]
+  }
+  duration: {
+    array: number[]
+  }
+}
 export const useInputStore = defineStore('input', () => {
-  const keyDownData: Record<string, Keydata> = reactive({})
+  let keyDownData: Record<string, Keydata> = reactive({})
+  let keypressTimings: KeypressTimings = reactive({
+    spacing: { first: -1, last: -1, array: [] },
+    duration: { array: [] }
+  })
+  let noCodeIndex = 0
+  let keyOverlap = { total: 0, lastStartTime: -1 }
   const { accuracy, incrementAccuracy, resetAccuracy, accuracyPercentage } = useAccuracy()
   const currentWord = computed(() => generator.getCurrent())
 
@@ -38,7 +57,7 @@ export const useInputStore = defineStore('input', () => {
   const currentKeypressCount = ref(0)
   const testState = useTestStateStore()
   const generator = markRaw(useWordGeneratorStore())
-
+  const replayStore = useReplayStore()
   const {
     input,
     inputHistoryLength,
@@ -63,29 +82,6 @@ export const useInputStore = defineStore('input', () => {
   })
 
   const handleChar = (char: string, charIndex: number): void => {
-    console.log('char', char)
-    if (char === '…' && generator.getCurrent()[charIndex] !== '…') {
-      for (let i = 0; i < 3; i++) handleChar('.', charIndex + i)
-      return
-    }
-
-    if (char === 'œ' && generator.getCurrent()[charIndex] !== 'œ') {
-      handleChar('o', charIndex)
-      handleChar('e', charIndex + 1)
-      return
-    }
-
-    if (char === 'æ' && generator.getCurrent()[charIndex] !== 'æ') {
-      handleChar('a', charIndex)
-      handleChar('e', charIndex + 1)
-      return
-    }
-
-    if (char !== '\n' && char !== '\t' && /\s/.test(char)) {
-      handleSpace()
-      return
-    }
-
     const thisCharCorrect = isCharCorrect(char, charIndex)
     incrementAccuracy(thisCharCorrect)
 
@@ -94,6 +90,7 @@ export const useInputStore = defineStore('input', () => {
       if (input.current === '') return
       char = ' '
     }
+    replayStore.addReplayEvent(thisCharCorrect ? 'correctLetter' : 'incorrectLetter', char)
     if (thisCharCorrect) {
       playRandomClickSound()
     } else {
@@ -102,6 +99,39 @@ export const useInputStore = defineStore('input', () => {
       playErrorSound()
     }
   }
+  function resetKeypressTimings(): void {
+    keypressTimings = {
+      spacing: {
+        first: -1,
+        last: -1,
+        array: []
+      },
+      duration: {
+        array: []
+      }
+    }
+    keyOverlap = {
+      total: 0,
+      lastStartTime: -1
+    }
+    keyDownData = {}
+    noCodeIndex = 0
+    console.debug('Keypress timings reset')
+  }
+  function updateOverlap(now: number): void {
+    const keys = Object.keys(keyDownData)
+    if (keys.length > 1) {
+      if (keyOverlap.lastStartTime === -1) {
+        keyOverlap.lastStartTime = now
+      }
+    } else {
+      if (keyOverlap.lastStartTime !== -1) {
+        keyOverlap.total += now - keyOverlap.lastStartTime
+        keyOverlap.lastStartTime = -1
+      }
+    }
+  }
+
   const isCharCorrect = (char: string, charIndex: number): boolean => {
     return generator.getCurrent()[charIndex] === char
   }
@@ -110,16 +140,96 @@ export const useInputStore = defineStore('input', () => {
       ;(event.target as HTMLInputElement).value = ''
       return
     }
+
     const newValue = (event.target as HTMLInputElement).value.normalize()
     const oldValue = input.current
 
+    const originalWord = generator.retWords.words[testState.currentWordElementIndex] || ''
+
+    const maxLength = originalWord.length + MAX_OVERINCORRECT_LETTERS
+
+    if (newValue.length > maxLength) {
+      ;(event.target as HTMLInputElement).value = newValue.slice(0, maxLength)
+      return
+    }
     const charsToProcess = newValue.slice(oldValue.length).replace(' ', '')
     charsToProcess.split('').forEach((char, i) => handleChar(char, oldValue.length + i))
+
     input.current = newValue
     console.log(input.current)
     wordInputs.value[testState.currentWordElementIndex] = input.current
     console.log(wordInputs.value[testState.currentWordElementIndex])
     updateLetterClasses(testState.currentWordElementIndex, wordInputs.value)
+  }
+
+  const handleKeyDown = (event: KeyboardEvent): void => {
+    const now = performance.now()
+    recordKeydownTime(now, event.key)
+    console.log(keyDownData, keypressTimings)
+  }
+
+  const handleKeyUp = (event: KeyboardEvent): void => {
+    const now = performance.now()
+    recordKeyupTime(now, event.key)
+  }
+
+  const recordKeyupTime = (now: number, key: string) => {
+    // if (!KAYS_TO_TRACK.includes(key)) {
+    //   console.debug('Key not tracked', key)
+    //   return
+    // }
+
+    if (key === 'NoCode') {
+      key = `NoCode${noCodeIndex--}`
+    }
+
+    const keyDownDataForKey = keyDownData[key]
+    if (!keyDownDataForKey) return
+
+    const diff = Math.abs(keyDownDataForKey.timestamp - now)
+    keypressTimings.duration.array[keyDownDataForKey.index] = diff
+    console.debug('Keyup recorded', key, diff)
+
+    delete keyDownData[key]
+
+    updateOverlap(now)
+  }
+
+  const recordKeydownTime = (now: number, key: string) => {
+    // if (!KAYS_TO_TRACK.includes(key)) {
+    //   console.debug('Key not tracked', key)
+    //   return
+    // }
+
+    if (key === 'NoCode') {
+      key = `NoCode${noCodeIndex++}`
+    }
+
+    if (keyDownData[key]) {
+      console.debug('Key already down', key)
+      return
+    }
+
+    keyDownData[key] = {
+      timestamp: now,
+      index: keypressTimings.duration.array.length
+    }
+
+    keypressTimings.duration.array.push(0)
+    updateOverlap(now)
+
+    if (keypressTimings.spacing.last !== -1) {
+      const diff = Math.abs(now - keypressTimings.spacing.last)
+      keypressTimings.spacing.array.push(roundTo2(diff))
+      console.debug('Keydown recorded', key, diff)
+    }
+
+    if (keypressTimings.spacing.first === -1) {
+      keypressTimings.spacing.first = now
+      console.debug('First keydown recorded', key, now)
+    }
+
+    keypressTimings.spacing.last = now
   }
 
   const handleSpace = () => {
@@ -134,10 +244,12 @@ export const useInputStore = defineStore('input', () => {
 
       pushToHistory()
       testState.incrementWordIndex()
+      replayStore.addReplayEvent('submitCorrectWord')
     } else {
       characterCounts.value.incorrectSpaces++
       pushMissedWords(currentWord.value)
       testState.incrementWordIndex()
+      replayStore.addReplayEvent('submitErrorWord')
       incrementKeypressErrors()
       pushToHistory()
     }
@@ -162,6 +274,7 @@ export const useInputStore = defineStore('input', () => {
     missedWords.value = {}
     errorHistory.value = { count: 0, words: [] }
     letterClasses.value = []
+    resetKeypressTimings()
   }
 
   const getExtraLetters = (wordIndex: number): string => {
@@ -183,6 +296,7 @@ export const useInputStore = defineStore('input', () => {
 
     wordInputs.value[testState.currentWordElementIndex] = input.current
     updateLetterClasses(testState.currentWordElementIndex, wordInputs.value)
+    replayStore.addReplayEvent('backWord')
   }
 
   const incrementKeypressCount = () => {
@@ -206,6 +320,8 @@ export const useInputStore = defineStore('input', () => {
     accuracyPercentage,
     characterCounts,
     clearAllInputData,
+    handleKeyDown,
+    handleKeyUp,
     setWordToInput,
     handleInput,
     getStats,
