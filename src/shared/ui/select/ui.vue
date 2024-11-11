@@ -7,7 +7,7 @@
       {{ selected }}
     </div>
     <div class="items" :class="{ selectHide: !open }" role="listbox">
-      <div v-for="(option, index) in options" :key="option" @click="selectOption(option)"
+      <div v-for="(option, index) in options" :role="'option'" :key="option" @click="selectOption(option, index)"
         :aria-selected="selected === option" :class="{ selectedOption: index === selectedIndex, disabled: disabled }"
         :aria-disabled="disabled">
         {{ option }}
@@ -15,9 +15,10 @@
     </div>
   </div>
 </template>
-<script setup lang="ts">
-import { ref, watch } from 'vue'
 
+<script setup lang="ts">
+import { nextTick, ref, watch } from 'vue'
+import { v4 as uuidv4 } from 'uuid';
 interface Props {
   options: string[]
   default?: string | null
@@ -26,11 +27,11 @@ interface Props {
   disabled?: boolean
 }
 function generateId(prefix: string) {
-  return `${prefix}-${Date.now()}`
+  return `${prefix}-${uuidv4()}`;
 }
-
-const selectedIndex = ref(0)
+const selectedIndex = ref(-1);
 const props = defineProps<Props>()
+
 const emit = defineEmits<{
   (e: 'input', value: string): void
 }>()
@@ -44,19 +45,21 @@ watch(selected, (newValue: string | null) => {
   if (!newValue) return
   emit('input', newValue)
 })
-const toggleDropdown = (): void => {
+const toggleDropdown = async (): Promise<void> => {
   if (!disabled.value) {
     open.value = !open.value
+    await nextTick()
   }
 }
 
-const selectOption = (option: string): void => {
+const selectOption = (option: string, index: number): void => {
   if (!disabled.value) {
     selected.value = option
+    selectedIndex.value = index;
     open.value = false
   }
 }
-const handleKeydown = (event: KeyboardEvent): void => {
+const handleKeydown = async (event: KeyboardEvent): Promise<void> => {
   if (!open.value) return
   if (event.key === 'Escape') {
     open.value = false
@@ -68,8 +71,11 @@ const handleKeydown = (event: KeyboardEvent): void => {
     selectedIndex.value = (selectedIndex.value - 1 + props.options.length) % props.options.length
   }
   if (event.key === 'Enter') {
-    selectOption(props.options[selectedIndex.value])
+    console.log('Selected option:', props.options[selectedIndex.value]);
+    selectOption(props.options[selectedIndex.value], selectedIndex.value);
+    open.value = false;
   }
+  await nextTick();
 }
 const handleBlur = (): void => {
   open.value = false

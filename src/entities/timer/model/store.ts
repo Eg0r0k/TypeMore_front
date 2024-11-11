@@ -100,7 +100,9 @@ export const useTimerStore = defineStore('timer', () => {
 
   return {
     getTime,
+    createWorker,
     setTime,
+    worker,
     time,
     startTimer,
     stopTimer,

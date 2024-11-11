@@ -10,6 +10,7 @@ interface ModalHandlers {
   onVerified?: (token: string) => void
   onError?: () => void
   onExpired?: () => void
+  onClose?: () => void
 }
 
 export type { Modal, ModalHandlers }

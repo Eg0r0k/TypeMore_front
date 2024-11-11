@@ -12,13 +12,13 @@ describe('Button', () => {
     expect(wrapper.text()).toContain('Click')
   })
 
-  it('Disabled button when loading is true', async () => {
+  it('Disabled button when loading is true', () => {
     const wrapper = mount(Button, {
       props: {
         isLoading: true
       }
     })
-    expect(wrapper.attributes('disabled')).toBeTruthy()
+    expect(wrapper.attributes('disabled')).toBeDefined()
   })
 
   it('Disabled button from props', () => {
@@ -27,9 +27,8 @@ describe('Button', () => {
         isDisabled: true
       }
     })
-    expect(wrapper.attributes('disabled')).toBeTruthy()
+    expect(wrapper.attributes('disabled')).toBeDefined()
   })
-
   it('Check no conflict with isLoading and isDisabled', () => {
     const wrapper = mount(Button, {
       props: {
@@ -37,7 +36,7 @@ describe('Button', () => {
         isLoading: true
       }
     })
-    expect(wrapper.attributes('disabled')).toBeTruthy()
+    expect(wrapper.attributes('disabled')).toBeDefined()
   })
 
   it('Check correct classes based on props', async () => {
@@ -61,7 +60,7 @@ describe('Button', () => {
     expect(wrapper.classes()).toContain('button')
     expect(wrapper.classes()).toContain('button--size-m')
     expect(wrapper.classes()).toContain('button--color-main')
-    expect(wrapper.attributes('disabled')).toBe('false')
+    expect(wrapper.attributes('disabled')).toBeUndefined()
     expect(wrapper.attributes('role')).toBe('button')
     expect(wrapper.attributes('aria-label')).toBe('Button')
   })
