@@ -2,13 +2,38 @@
 <html lang="en" xml:lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Type More | Typing speed training</title>
+    <!-- SEO Meta Tags -->
     <meta
       name="description"
-      content="Игра для тренеровки скорости печатания, с возможностью соревнований с игроками."
+      content="Игра для тренировки скорости печатания с возможностью соревнований с игроками."
     />
+    <meta
+      name="keywords"
+      content="typing game, typing speed, typing competition, тренировка печати"
+    />
+    <meta name="robots" content="index, follow" />
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="Type More | Typing Speed Training" />
+    <meta
+      property="og:description"
+      content="Соревнуйтесь в скорости печатания с другими игроками."
+    />
+    <!-- Favicon and Icon -->
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="/favicon.svg" as="image" />
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta http-equiv="Referrer-Policy" content="no-referrer" />
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+
+    <!-- <meta name="theme-color" content="#121212" /> -->
+
     <style>
       :root {
         --bg-color: #121212;
@@ -27,11 +52,13 @@
         visibility: hidden;
       }
     </style>
-    <script src="https://www.google.com/recaptcha/enterprise.js" async defer></script>
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
-    <meta property="og:type" content="website" />
-    <meta property="og:locale" content="en_US" />
-    <meta name="robots" content="index" />
+    <script
+      src="https://www.google.com/recaptcha/enterprise.js"
+      integrity="sha384-XXX"
+      crossorigin="anonymous"
+      async
+      defer
+    ></script>
   </head>
   <body>
     <noscript>
@@ -95,6 +122,7 @@
         justify-content: center;
       "
     ></div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -27,6 +27,15 @@ export const useConfigStore = defineStore(
         console.error(`Error fetching language file for ${lang}:`, error)
       }
     }
+    const setFontFamily = (font: string) => {
+      const currentFont = getComputedStyle(document.documentElement)
+        .getPropertyValue('--font')
+        .trim()
+      const fonts = currentFont.split(',').map((font) => font.trim())
+      fonts[0] = font
+
+      document.documentElement.style.setProperty('--font', fonts.join(', '))
+    }
     const setFontSize = (val: number) => {
       config.fontSize = val
     }
@@ -45,6 +54,7 @@ export const useConfigStore = defineStore(
       config,
       setLanguage,
       toggleFps,
+      setFontFamily,
       setTheme,
       setWords,
       currentLang,

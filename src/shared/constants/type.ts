@@ -9,4 +9,5 @@ export interface Config {
   playSound: boolean
   soundVolume: number
   fontSize: number
+  fontFamily: string
 }

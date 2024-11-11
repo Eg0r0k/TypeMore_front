@@ -55,7 +55,7 @@ const configStore = useConfigStore()
 const testState = useTestStateStore()
 const ModalWindow = defineAsyncComponent(() => import('@/widgets/modal/ui.vue'))
 const { applyTheme, themesList, themesOnUnmounted, refColors } = useThemes()
-const { config } = useConfigStore()
+const { config, setFontFamily } = useConfigStore()
 const modalStore = useModal()
 const lang = ref()
 provide('themes', themesList)
@@ -76,6 +76,7 @@ onBeforeMount(async () => {
 
 onMounted(async () => {
   lang.value = await getLangList()
+  setFontFamily(config.fontFamily)
   if (!localStorage.getItem('cookieConsentGiven')) {
     modalStore.open(CookieModal, 'bottom', 'right', false)
   }

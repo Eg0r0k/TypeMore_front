@@ -1,34 +1,15 @@
 <template>
-  <div
-    class="custom-select"
-    :tabindex="tabindex"
-    @blur="handleBlur"
-    role="combobox"
-    :aria-expanded="open"
-    :aria-labelledby="labelId"
-    @keydown="handleKeydown"
-    :aria-disabled="disabled"
-  >
+  <div class="custom-select" :tabindex="tabindex" @blur="handleBlur" role="combobox" :aria-expanded="open"
+    :aria-labelledby="labelId" @keydown="handleKeydown" :aria-disabled="disabled">
     <label :id="labelId" class="sr-only">{{ label }}</label>
-    <div
-      class="selected"
-      :class="{ open, disabled }"
-      @click="toggleDropdown"
-      role="button"
-      aria-haspopup="listbox"
-      :aria-disabled="disabled"
-    >
+    <div class="selected" :class="{ open, disabled }" @click="toggleDropdown" role="button" aria-haspopup="listbox"
+      :aria-disabled="disabled">
       {{ selected }}
     </div>
     <div class="items" :class="{ selectHide: !open }" role="listbox">
-      <div
-        v-for="(option, index) in options"
-        :key="option"
-        @click="selectOption(option)"
-        :aria-selected="selected === option"
-        :class="{ selectedOption: index === selectedIndex, disabled: disabled }"
-        :aria-disabled="disabled"
-      >
+      <div v-for="(option, index) in options" :key="option" @click="selectOption(option)"
+        :aria-selected="selected === option" :class="{ selectedOption: index === selectedIndex, disabled: disabled }"
+        :aria-disabled="disabled">
         {{ option }}
       </div>
     </div>
@@ -163,7 +144,7 @@ const handleBlur = (): void => {
       }
 
       &.selectedOption {
-        background-color: var(--main-color);
+        background-color: var(--bg-color);
         color: var(--text-color);
       }
     }

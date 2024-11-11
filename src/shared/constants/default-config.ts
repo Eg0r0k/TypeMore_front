@@ -4,6 +4,7 @@ export default {
   words: 50,
   time: 10,
   fontSize: 16,
+  fontFamily: 'Hack',
   language: 'russian',
   theme: 'VS Code',
   mode: 'time',
