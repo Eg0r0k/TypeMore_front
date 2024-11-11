@@ -28,6 +28,7 @@ export const useConfigStore = defineStore(
       }
     }
     const setFontFamily = (font: string) => {
+      config.fontFamily = font
       const currentFont = getComputedStyle(document.documentElement)
         .getPropertyValue('--font')
         .trim()

@@ -3,6 +3,9 @@
     <div v-if="!testState.isLoading" class="wrapper" role="main">
       <FpsIndecator v-if="configStore.config.showFps" />
       <Header />
+      <button @click="test">
+        ababa
+      </button>
       <main>
         <router-view v-slot="{ Component, route }">
           <transition name="fade" mode="out-in">
@@ -50,7 +53,6 @@ import {
 import { CookieModal } from '@/features/modal/cookie'
 import { useModal } from '@/entities/modal/model/store'
 import { useFavicon } from '@vueuse/core'
-
 const configStore = useConfigStore()
 const testState = useTestStateStore()
 const ModalWindow = defineAsyncComponent(() => import('@/widgets/modal/ui.vue'))
@@ -58,6 +60,10 @@ const { applyTheme, themesList, themesOnUnmounted, refColors } = useThemes()
 const { config, setFontFamily } = useConfigStore()
 const modalStore = useModal()
 const lang = ref()
+
+const test = () => {
+  setFontFamily("Lobster")
+}
 provide('themes', themesList)
 provide('lang', lang)
 onBeforeMount(async () => {

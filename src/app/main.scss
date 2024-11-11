@@ -9,7 +9,8 @@ $fonts: (
   "Mononoki": "./fonts/Mononoki-Regular",
   "Montserrat": "./fonts/Montserrat-Regular",
   "ShantellSans": "./fonts/Shantell_Sans-Normal-Regular",
-  "Vazirmatn": "./fonts/Vazirmatn-Regular"
+  "Vazirmatn": "./fonts/Vazirmatn-Regular",
+  "Lobster": "./fonts/Lobster"
 );
 @mixin font-face($font-name, $font-path) {
   @font-face {
