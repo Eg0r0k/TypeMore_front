@@ -42,7 +42,7 @@ const changeLang = async (lang: string) => {
 }
 
 .active {
-  background-color: var(--sub-color);
+  background-color: var(--sub-alt-color) !important;
 }
 
 .lang {
