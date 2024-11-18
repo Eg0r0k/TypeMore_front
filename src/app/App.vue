@@ -3,9 +3,7 @@
     <div v-if="!testState.isLoading" class="wrapper" role="main">
       <FpsIndecator v-if="configStore.config.showFps" />
       <Header />
-      <button @click="test">
-        ababa
-      </button>
+   
       <main>
         <router-view v-slot="{ Component, route }">
           <transition name="fade" mode="out-in">
@@ -62,7 +60,7 @@ const modalStore = useModal()
 const lang = ref()
 
 const test = () => {
-  setFontFamily("Lobster")
+  setFontFamily("JetBrainsMono")
 }
 provide('themes', themesList)
 provide('lang', lang)

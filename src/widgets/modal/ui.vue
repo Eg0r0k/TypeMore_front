@@ -1,5 +1,8 @@
 <template>
   <Teleport to="#app" :disabled="!isTeleportAvailable">
+    <div v-if="isOpen" class="modal-wrapper">
+
+    </div>
     <Transition
       :name="transitionName"
       @before-enter="onBeforeEnter"
@@ -23,6 +26,7 @@
         <component :is="view" ref="modal" v-bind="model" @click.stop></component>
       </div>
     </Transition>
+
   </Teleport>
 </template>
 
@@ -104,17 +108,18 @@ onMounted(() => {
   max-width: 100%;
   max-height: 100%;
   position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  top: 0;
+  inset: 0;
 
   display: flex;
-
   overflow: auto;
   z-index: var(--modal-z);
 }
-
+.modal-wrapper{
+  background-color: #00000070;
+  position: fixed;
+  inset: 0;
+  z-index: var(--modal-z);
+}
 .justify {
   &-left {
     justify-content: flex-start;
