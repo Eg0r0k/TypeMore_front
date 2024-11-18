@@ -1,5 +1,8 @@
 <template>
-  <div class="modalNews">
+
+
+
+    <div   class="modalNews">
     <Button color="shadow" class="modalNews__close" size="s" @click="$emit('close')">
       <template #left-icon>
         <Icon :icon="'mingcute:close-fill'" width="30" />
@@ -34,6 +37,7 @@
       </div>
     </div>
   </div>
+
 </template>
 
 <script setup lang="ts">

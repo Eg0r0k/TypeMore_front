@@ -3,7 +3,7 @@
     <div v-if="!testState.isLoading" class="wrapper" role="main">
       <FpsIndecator v-if="configStore.config.showFps" />
       <Header />
-  
+   
       <main>
         <router-view v-slot="{ Component, route }">
           <transition name="fade" mode="out-in">

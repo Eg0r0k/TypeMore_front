@@ -65,10 +65,10 @@ const classes = computed(() => ({
 $main: (
   'background': var(--main-color),
   'hover': var(--text-color),
-  'active': var(--sub-color),
+  'active': var(--sub-alt-color),
   'color': var(--bg-color),
   'hover-color': var(--bg-color),
-  'active-color': var(--bg-color)
+  'active-color': var(--text-color)
 );
 $shadow: (
   'background': transparent,
@@ -76,20 +76,20 @@ $shadow: (
   'active': transparent,
   'color': var(--sub-color),
   'hover-color': var(--main-color),
-  'active-color': var(--main-color)
+  'active-color': var(--sub-color)
 );
 $error: (
   'background': var(--error-color),
   'hover': var(--text-color),
-  'active': var(--sub-color),
+  'active': var(--error-extra-color),
   'color': var(--text-color),
   'hover-color': var(--bg-color),
-  'active-color': var(--bg-color)
+  'active-color': var(--text-color)
 );
 $gray: (
   'background': var(--sub-alt-color),
   'hover': var(--text-color),
-  'active': var(--sub-alt-color),
+  'active': var(--sub-color),
   'color': var(--text-color),
   'hover-color': var(--bg-color),
   'active-color': var(--text-color)

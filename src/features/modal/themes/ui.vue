@@ -48,7 +48,7 @@ const changeTheme = async (theme: Theme): Promise<void> => {
 </script>
 <style lang="scss" scoped>
 .active {
-  background-color: var(--sub-color);
+  background-color: var(--sub-alt-color) !important;
 }
 
 .focused {

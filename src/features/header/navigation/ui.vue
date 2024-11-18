@@ -28,8 +28,10 @@
     </div>
   </nav>
   <Transition name="slide-fade">
-    <NewsModal v-if="visible" @close="handleOpenNews" />
-  </Transition>
+  <NewsModal v-if="isVisible" @close="handleOpenNews" />
+</Transition>
+
+
 </template>
 
 <script setup lang="ts">
@@ -48,11 +50,11 @@ interface Props {
   }>
 }
 
-const visible = ref(false)
+const isVisible = ref(false)
 const props = defineProps<Props>()
 
 const handleOpenNews = (): void => {
-  visible.value = !visible.value
+  isVisible.value = !isVisible.value
 }
 </script>
 
