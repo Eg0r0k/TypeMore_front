@@ -161,7 +161,6 @@ export const useStats = () => {
     setStart,
     wpm,
     raw,
-
     calculateChars
   }
 }

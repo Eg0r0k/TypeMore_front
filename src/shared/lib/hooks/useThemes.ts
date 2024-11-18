@@ -5,17 +5,13 @@ import { useTestStateStore } from '@/entities/test'
 import { useConfigStore } from '@/entities/config/model/store'
 
 const root = document.documentElement
-const cssVariables = [
-  '--bg-color',
-  '--text-color',
-  '--error-color',
-  '--main-color',
-  '--sub-color',
-  '--sub-alt-color',
-  '--error-extra-color'
-] as const
 
-const defaultTheme: Theme = {
+interface ThemeInterface {
+  name: string
+  [key: `--${string}`]: string
+}
+
+const DEFAULT_THEME: ThemeInterface = {
   name: 'default',
   '--bg-color': '#121212',
   '--text-color': '#eeeeee',
@@ -24,36 +20,40 @@ const defaultTheme: Theme = {
   '--sub-color': '#3a3a3a',
   '--sub-alt-color': '#1c1c1c',
   '--error-extra-color': '#791717'
-} as const
+}
 
-type CSSVariable = (typeof cssVariables)[number]
-/**
- * Provides theme management functionality, including fetching themes, applying themes, and observing style changes.
- *
- * @returns An object containing reactive properties and methods for theme management.
- */
-export function useThemes() {
-  const themesList = reactive<Theme[]>([])
-  const refColors = reactive<Record<CSSVariable, string>>({} as Record<CSSVariable, string>)
-  const configStore = useConfigStore()
+const useThemeCSSVaribales = () => {
+  const cssVariables = [
+    '--bg-color',
+    '--text-color',
+    '--error-color',
+    '--main-color',
+    '--sub-color',
+    '--sub-alt-color',
+    '--error-extra-color'
+  ] as const
 
-  /**
-   * Updates the reactive reference colors based on the current CSS variables.
-   */
+  const refColors = reactive<Record<(typeof cssVariables)[number], string>>(
+    {} as Record<(typeof cssVariables)[number], string>
+  )
   const updateRefColors = () => {
     const computedStyle = getComputedStyle(root)
     cssVariables.forEach((variable) => {
       refColors[variable] = computedStyle.getPropertyValue(variable)
     })
   }
+  return { refColors, updateRefColors }
+}
 
-  const styleObserver = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-        updateRefColors()
-      }
-    })
-  })
+/**
+ * Provides theme management functionality, including fetching themes, applying themes, and observing style changes.
+ *
+ * @returns An object containing reactive properties and methods for theme management.
+ */
+export function useThemes() {
+  const { refColors, updateRefColors } = useThemeCSSVaribales()
+  const themesList = reactive<ThemeInterface[]>([])
+  const configStore = useConfigStore()
 
   /**
    * Fetches themes from a JSON file and sorts them by name.
@@ -62,7 +62,7 @@ export function useThemes() {
    */
   const fetchThemes = async () => {
     if (themesList.length === 0) {
-      const themes = await cachedFetchJson<Theme[]>('./static/themes/themes.json')
+      const themes = await cachedFetchJson<ThemeInterface[]>('./static/themes/themes.json')
       themesList.splice(
         0,
         themesList.length,
@@ -70,12 +70,8 @@ export function useThemes() {
       )
     }
   }
-  /**
-   * Applies a theme by setting the CSS variables on the document root.
-   *
-   * @param theme - The theme to apply.
-   */
-  const applyColor = (theme: Theme): void => {
+
+  const applyColor = (theme: ThemeInterface) => {
     Object.entries(theme).forEach(([key, val]) => {
       root.style.setProperty(key, val)
     })
@@ -86,13 +82,13 @@ export function useThemes() {
    * @param name - The name of the theme to fetch.
    * @returns A promise that resolves to the fetched or default theme.
    */
-  const useConfigTheme = async (name: string): Promise<Theme> => {
+  const getConfigTheme = async (name: string): Promise<ThemeInterface> => {
     await fetchThemes()
-    return themesList.find((theme) => theme.name === name) || defaultTheme
+    return themesList.find((theme) => theme.name === name) || DEFAULT_THEME
   }
 
   const currentTheme = computed(() => {
-    return themesList.find((theme) => theme.name === configStore.config.theme) || defaultTheme
+    return themesList.find((theme) => theme.name === configStore.config.theme) || DEFAULT_THEME
   })
   /**
    * Applies a theme based on its name and updates the test state loading status.
@@ -102,18 +98,27 @@ export function useThemes() {
    */
   const applyTheme = async (name: string): Promise<void> => {
     const testState = useTestStateStore()
-    const theme = await useConfigTheme(name)
+    const theme = await getConfigTheme(name)
     applyColor(theme)
 
     testState.setLoading(false)
   }
-  watchEffect(() => {
-    updateRefColors()
+
+  watchEffect(updateRefColors)
+
+  const styleObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+        updateRefColors()
+      }
+    })
   })
+
   styleObserver.observe(root, {
     attributes: true,
     attributeFilter: ['style']
   })
+
   /**
    * Disconnects the style observer when the component is unmounted.
    */
@@ -126,7 +131,6 @@ export function useThemes() {
     refColors,
     applyTheme,
     fetchThemes,
-    useConfigTheme,
     currentTheme,
     themesOnUnmounted
   }

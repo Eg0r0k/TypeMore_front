@@ -27,7 +27,7 @@ export const useInputHandling = () => {
 
   const backspaceToPrevious = () => {
     if (!isTestActive.value || input.current.length !== 0) return
-    if (input.history.length === 0 || testState.currentWordElementIndex === 0) return
+    if (testState.currentWordElementIndex === 0) return
     testState.decrementWordIndex()
     input.current = pushToHistory()
   }

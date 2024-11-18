@@ -12,18 +12,18 @@ export const useInputState = () => {
   const inputHistoryLength: ComputedRef<number> = computed(() => input.history.length)
   const inputLength: ComputedRef<number> = computed(() => input.current.length)
 
-  const resetCurrent = (): void => {
+  const resetInput = () => {
     input.current = ''
+    input.history = []
   }
+
   const setCurrent = (val: string): void => {
     input.current = val
   }
   const getCurrent = (): string => {
     return input.current
   }
-  const resetHistory = (): void => {
-    input.history = []
-  }
+
   function popHistory(): string {
     return input.history.pop() ?? ''
   }
@@ -31,9 +31,10 @@ export const useInputState = () => {
   const pushToHistory = (): string => {
     const previousInput = input.current
     console.trace('PUSHED TO HISTORY')
-    input.history.push(input.current)
-
-    resetCurrent()
+    if (previousInput) {
+      input.history.push(previousInput)
+    }
+    input.current = ''
     return previousInput
   }
 
@@ -44,10 +45,10 @@ export const useInputState = () => {
     input,
     inputHistoryLength,
     inputLength,
-    resetCurrent,
+    resetInput,
     setCurrent,
     getCurrent,
-    resetHistory,
+
     popHistory,
     pushToHistory,
     getHistory

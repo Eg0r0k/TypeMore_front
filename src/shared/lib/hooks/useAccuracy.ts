@@ -14,6 +14,18 @@ interface Accuracy {
  */
 export const useAccuracy = (initialValues: Accuracy = { correct: 0, incorrect: 0 }) => {
   const accuracy: Ref<Readonly<Accuracy>> = ref({ ...initialValues })
+  /**
+   * Updates the accuracy count for a given category.
+   *
+   * @param category - The category to update ('correct' or 'incorrect').
+   * @param incrementBy - The amount to increment (defaults to 1).
+   */
+  const updateAccuracy = (category: keyof Accuracy, incrementBy: number = 1): void => {
+    accuracy.value = {
+      ...accuracy.value,
+      [category]: accuracy.value[category] + incrementBy
+    }
+  }
 
   /**
    * Increments the accuracy counts based on whether the given answer is correct.
@@ -21,10 +33,10 @@ export const useAccuracy = (initialValues: Accuracy = { correct: 0, incorrect: 0
    * @param isCorrect - Whether the answer is correct.
    */
   const incrementAccuracy = (isCorrect: boolean): void => {
-    const { correct, incorrect } = accuracy.value
-    accuracy.value = {
-      correct: isCorrect ? correct + 1 : correct,
-      incorrect: isCorrect ? incorrect : incorrect + 1
+    if (isCorrect) {
+      updateAccuracy('correct')
+    } else {
+      updateAccuracy('incorrect')
     }
   }
 

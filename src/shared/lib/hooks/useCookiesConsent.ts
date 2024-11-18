@@ -9,34 +9,38 @@ const COOKIE_NAMES: Record<CookieType, string> = {
   [CookieType.SECURITY]: 'access_token'
 }
 
-export function useCookiesConsent() {
-  const { get, set, remove } = useCookies([
-    COOKIE_NAMES[CookieType.METRICS],
-    COOKIE_NAMES[CookieType.SECURITY]
-  ])
-  const modalStore = useModal()
-  const showDefaultView = ref(true)
-
-  const cookies = reactive<Record<CookieType, Cookie>>({
-    [CookieType.SECURITY]: {
-      name: COOKIE_NAMES[CookieType.SECURITY],
-      enabled: !!get(COOKIE_NAMES[CookieType.SECURITY]),
-      type: CookieType.SECURITY
-    },
-    [CookieType.METRICS]: {
-      name: COOKIE_NAMES[CookieType.METRICS],
-      enabled: !!get(COOKIE_NAMES[CookieType.METRICS]),
-      type: CookieType.METRICS
-    }
+export const useCookieManager = () => {
+  const { get, set, remove } = useCookies(Object.values(COOKIE_NAMES))
+  const getCookie = (type: CookieType): Cookie => ({
+    name: COOKIE_NAMES[type],
+    enabled: !!get(COOKIE_NAMES[type]),
+    type
   })
-
-  const updateCookie = (cookie: Cookie) => {
+  const setCookie = (cookie: Cookie): void => {
     if (cookie.enabled) {
       set(cookie.name, 'enabled')
     } else {
       remove(cookie.name)
     }
   }
+  return { getCookie, setCookie }
+}
+export const useCookieStore = () => {
+  const { getCookie, setCookie } = useCookieManager()
+  const cookies = reactive<Record<CookieType, Cookie>>({
+    [CookieType.SECURITY]: getCookie(CookieType.SECURITY),
+    [CookieType.METRICS]: getCookie(CookieType.METRICS)
+  })
+  const updateCookie = (cookie: Cookie): void => {
+    setCookie(cookie)
+  }
+  return { cookies, updateCookie }
+}
+
+export const useCookieConsentLogic = () => {
+  const { cookies, updateCookie } = useCookieStore()
+  const modalStore = useModal()
+  const showDefaultView = ref(true)
 
   watch(
     () => Object.values(cookies),
@@ -77,6 +81,26 @@ export function useCookiesConsent() {
     setConsentFlag()
     modalStore.close()
   }
+
+  return {
+    cookies,
+    showDefaultView,
+    toggleView,
+    acceptAllCookies,
+    rejectNonEssentialCookies,
+    acceptSelectedCookies
+  }
+}
+
+export const useCookiesConsent = () => {
+  const {
+    cookies,
+    showDefaultView,
+    toggleView,
+    acceptAllCookies,
+    rejectNonEssentialCookies,
+    acceptSelectedCookies
+  } = useCookieConsentLogic()
 
   return {
     cookies,

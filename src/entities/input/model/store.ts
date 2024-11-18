@@ -16,7 +16,7 @@ import click6 from '/static/sounds/click3/click6_33.wav'
 
 import errorSound from '/static/sounds/error/error1_1.wav'
 import { useStats } from '@/shared/lib/hooks/useStats'
-import { useErrorTracking } from '@/shared/lib/hooks/useErrorTracking'
+import { useErrorHistory, useErrorTracking } from '@/shared/lib/hooks/useErrorTracking'
 import { useAccuracyHandler } from '@/shared/lib/hooks/useAccuracyHandler'
 import { useUIState } from '@/shared/lib/hooks/useUIState'
 import { KAYS_TO_TRACK, MAX_OVERINCORRECT_LETTERS } from './const/keys'
@@ -50,15 +50,9 @@ export const useInputStore = defineStore('input', () => {
   const currentWord = computed(() => generator.getCurrent())
 
   const { resetCharacterCounts, characterCounts, incrementCharacterCount } = useAccuracyHandler()
-  const {
-    missedWords,
-    incrementKeypressErrors,
-    pushMissedWords,
-    resetErrorHistory,
-    resetMissedWords
-  } = useErrorTracking()
-  const { letterClasses, initializeLetterClasses, updateLetterClasses, getLetterClass } =
-    useUIState()
+  const { missedWords, pushMissedWordWithHistory, resetAllErrors } = useErrorTracking()
+  const { letterClasses, updateLetterClasses, getLetterClass } = useUIState()
+  const { incrementKeypressErrors } = useErrorHistory()
   const wordInputs = ref<string[]>([])
   const currentKeypressCount = ref(0)
   const testState = useTestStateStore()
@@ -68,8 +62,8 @@ export const useInputStore = defineStore('input', () => {
     input,
     inputHistoryLength,
     inputLength,
-    resetCurrent,
-    resetHistory,
+    resetInput,
+
     getCurrent,
     setCurrent,
     popHistory,
@@ -253,7 +247,7 @@ export const useInputStore = defineStore('input', () => {
       replayStore.addReplayEvent('submitCorrectWord')
     } else {
       characterCounts.value.incorrectSpaces++
-      pushMissedWords(currentWord.value)
+      pushMissedWordWithHistory(currentWord.value)
       testState.incrementWordIndex()
       replayStore.addReplayEvent('submitErrorWord')
       incrementKeypressErrors()
@@ -270,15 +264,13 @@ export const useInputStore = defineStore('input', () => {
   }
 
   const clearAllInputData = () => {
-    resetCurrent()
-    resetHistory()
+    resetInput()
     corrected.current = ''
     corrected.history = []
     wordInputs.value = []
     resetCharacterCounts()
     resetAccuracy()
-    resetMissedWords()
-    resetErrorHistory()
+    resetAllErrors()
     letterClasses.value = []
     resetKeypressTimings()
   }
@@ -311,16 +303,14 @@ export const useInputStore = defineStore('input', () => {
 
   return {
     setCurrent,
-    resetCurrent,
     getCurrent,
     pushToHistory,
     missedWords,
-    resetHistory,
+    resetInput,
     input,
     getExtraLetters,
     backspaceToPrevious,
     handleSpace,
-    initializeLetterClasses,
     getLetterClass,
     accuracy,
     accuracyPercentage,

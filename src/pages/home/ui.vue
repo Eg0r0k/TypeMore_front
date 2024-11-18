@@ -87,7 +87,7 @@ const init = async (): Promise<void> => {
 
   testState.setActive(true)
   generator.reset()
-  inputStore.initializeLetterClasses()
+
   timerStore.startTimer()
   try {
     const lang = configStore.config.language
