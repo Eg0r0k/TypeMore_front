@@ -1,7 +1,6 @@
 <template>
   <Teleport to="#app" :disabled="!isTeleportAvailable">
     <div v-if="isOpen" class="modal-wrapper">
-
     </div>
     <Transition
       :name="transitionName"
