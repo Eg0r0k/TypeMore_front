@@ -64,6 +64,18 @@
             <Icon width="24" icon="ic:round-warning" />
           </template>
         </Button>
+        <Button  style="max-width: fit-content" size="s" color="shadow">
+          Shadow
+        </Button>
+        <Button isLoading  size="s" color="shadow">
+          Shadow
+        </Button>
+        <Button   size="s" color="shadow">
+          <template #left-icon>
+            <Icon width="24" icon="ic:round-warning" />
+          </template>
+          Shadow
+        </Button>
         <TextInput placeholder="Some text" />
       </div>
     </div>
