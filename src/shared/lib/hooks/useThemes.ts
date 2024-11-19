@@ -1,4 +1,3 @@
-import { Theme } from '@/features/modal/themes/types/themes'
 import { cachedFetchJson } from '../helpers/json-files'
 import { computed, reactive, watchEffect } from 'vue'
 import { useTestStateStore } from '@/entities/test'
