@@ -8,7 +8,7 @@ import { useTestStateStore } from '@/entities/test'
 describe('TestStateStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    vi.useFakeTimers() 
+    vi.useFakeTimers()
   })
 
   it('should correctly initialize store values', () => {
@@ -69,7 +69,6 @@ describe('TestStateStore', () => {
     const testStateStore = useTestStateStore()
     const inputStore = useInputStore()
     const replayStore = useReplayStore()
-
 
     inputStore.input.history = ['word1', 'word2']
 

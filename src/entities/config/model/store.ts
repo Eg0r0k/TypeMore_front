@@ -1,58 +1,25 @@
-import { Config } from '@/shared/constants/type'
-import { getLanguage as getLanguageFromFile } from '@/shared/lib/helpers/json-files'
-import { useThemes } from '@/shared/lib/hooks/useThemes'
-import { LanguageObj } from '@/shared/lib/types/types'
-import defaultConfig from '@shared/constants/default-config'
+import { configState } from '@/shared/lib/helpers/config'
+import { getLanguage, getLanguage as getLanguageFromFile } from '@/shared/lib/helpers/json-files'
+import {
+  currentLang,
+  setFontFamily,
+  setFontSize,
+  setLanguage,
+  setTheme,
+  setWords,
+  toggleFps
+} from '@/shared/lib/helpers/setConfigSettings'
 
 import { defineStore } from 'pinia'
-import { reactive, ref } from 'vue'
+
 /**
  *
  */
 export const useConfigStore = defineStore(
   'config',
   () => {
-    const config = reactive<Config>({
-      ...defaultConfig
-    })
-    const currentLang = ref<LanguageObj | null>(null)
-
-    const getLanguage = (): string => config.language
-    const setLanguage = async (lang: string): Promise<void> => {
-      config.language = lang
-      try {
-        const languageObj = await getLanguageFromFile(lang)
-        currentLang.value = languageObj
-      } catch (error) {
-        console.error(`Error fetching language file for ${lang}:`, error)
-      }
-    }
-    const setFontFamily = (font: string) => {
-      config.fontFamily = font
-      const currentFont = getComputedStyle(document.documentElement)
-        .getPropertyValue('--font')
-        .trim()
-      const fonts = currentFont.split(',').map((font) => font.trim())
-      fonts[0] = font
-
-      document.documentElement.style.setProperty('--font', fonts.join(', '))
-    }
-    const setFontSize = (val: number) => {
-      config.fontSize = val
-    }
-    const toggleFps = () => {
-      config.showFps = !config.showFps
-    }
-    const setTheme = async (name: string) => {
-      const { applyTheme } = useThemes()
-      config.theme = name
-      await applyTheme(name)
-    }
-    const setWords = (amount: number) => {
-      config.words = amount
-    }
     return {
-      config,
+      config: configState,
       setLanguage,
       toggleFps,
       setFontFamily,
@@ -63,7 +30,6 @@ export const useConfigStore = defineStore(
       setFontSize
     }
   },
-  //Saves only config to local storage
   {
     persist: {
       storage: localStorage,

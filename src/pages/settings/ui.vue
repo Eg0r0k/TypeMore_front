@@ -3,13 +3,9 @@
     <div class="test-color__container">
       <Typography color="primary" size="xl" tag-name="p">
         The
-        <Typography color="error" tag-name="span" decoration="underline" size="xl"
-          >quick</Typography
-        >
+        <Typography color="error" tag-name="span" decoration="underline" size="xl">quick</Typography>
         <Typography size="xl" tag-name="span" color="sub"> brown </Typography>
-        <Typography tag-name="span" color="extra-error" decoration="underline" size="xl"
-          >fox</Typography
-        >
+        <Typography tag-name="span" color="extra-error" decoration="underline" size="xl">fox</Typography>
         jumps
         <Typography tag-name="span" color="main" size="xl"> over the lazy</Typography>
         dog
@@ -64,19 +60,16 @@
             <Icon width="24" icon="ic:round-warning" />
           </template>
         </Button>
-        <Button  style="max-width: fit-content" size="s" color="shadow">
-          Shadow
-        </Button>
-        <Button isLoading  size="s" color="shadow">
-          Shadow
-        </Button>
-        <Button   size="s" color="shadow">
+        <Button style="max-width: fit-content" size="s" color="shadow"> Shadow </Button>
+        <Button isLoading size="s" color="shadow"> Shadow </Button>
+        <Button size="s" color="shadow">
           <template #left-icon>
             <Icon width="24" icon="ic:round-warning" />
           </template>
           Shadow
         </Button>
         <TextInput placeholder="Some text" />
+        <TextInput :is-disabled="true" placeholder="Some text" />
       </div>
     </div>
 
@@ -86,12 +79,7 @@
         <TextInput v-model="color.hex" @input="debouncedUpdateColor(color)" />
         <div class="color">
           <Icon icon="mdi:color" width="30" />
-          <input
-            v-model="color.hex"
-            class="input-color"
-            type="color"
-            @input="debouncedUpdateColor(color)"
-          />
+          <input v-model="color.hex" class="input-color" type="color" @input="debouncedUpdateColor(color)" />
         </div>
       </div>
       <div></div>

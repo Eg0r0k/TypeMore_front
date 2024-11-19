@@ -4,17 +4,8 @@
       <slot></slot>
     </label>
     <div :class="containerClasses">
-      <component
-        v-bind="$attrs"
-        :is="props.tagName"
-        ref="inputEl"
-        :class="inputClasses"
-        :value="modelValue"
-        :placeholder="placeholder"
-        :disabled="isDisabled"
-        @input="updateInput"
-        @blur="$emit('blur')"
-      />
+      <component v-bind="$attrs" :is="props.tagName" ref="inputEl" :class="inputClasses" :value="modelValue"
+        :placeholder="placeholder" :disabled="isDisabled" @input="updateInput" @blur="$emit('blur')" />
 
       <div v-if="props.hasErrorSpace" class="error-msg-container">
         <Typography v-if="errorMessage" class="error-msg" tag-name="p" :size="'xs'" color="error">
@@ -56,7 +47,7 @@ const wrapperClasses = computed(() =>
 const containerClasses = computed(() =>
   clsx('text-input__container', { 'text-input__container--no-error': !props.hasErrorSpace })
 )
-const inputClasses = computed(() => clsx('text-input', { 'text-input--error': props.isError }))
+const inputClasses = computed(() => clsx('text-input', { 'text-input--error': props.isError }, { 'text-input--disabled': props.isDisabled }))
 
 const updateInput = (e: any) => {
   modelValue.value = e.target.value
@@ -89,6 +80,7 @@ textarea {
   &--error {
     outline: 1px solid var(--error-color) !important;
   }
+
 }
 
 .text-input__container {
@@ -137,6 +129,11 @@ textarea {
 
   &--error {
     outline: 1px solid var(--error-color) !important;
+  }
+
+  &--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 </style>

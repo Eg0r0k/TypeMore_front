@@ -1,14 +1,26 @@
 <template>
-  <component :is="isLink ? 'a' : 'button'" :href="isLink ? to : undefined"
-    :disabled="!isLink && (isDisabled || isLoading)" :class="classes" role="button" :aria-label="buttonLabel"
-    :aria-busy="isLoading">
+  <component
+    :is="isLink ? 'a' : 'button'"
+    :href="isLink ? to : undefined"
+    :disabled="!isLink && (isDisabled || isLoading)"
+    :class="classes"
+    role="button"
+    :aria-label="buttonLabel"
+    :aria-busy="isLoading"
+  >
     <span v-if="isLoading" class="loader" aria-hidden="true"></span>
     <span class="icon" :class="{ invisible: isLoading }">
       <slot name="left-icon" :aria-label="buttonLabel"></slot>
     </span>
 
-    <Typography v-if="slots.default" class="button__text" :class="isLoading ? 'invisible' : ''" tag-name="p"
-      :size="props.size" :aria-hidden="isLoading">
+    <Typography
+      v-if="slots.default"
+      class="button__text"
+      :class="isLoading ? 'invisible' : ''"
+      tag-name="p"
+      :size="props.size"
+      :aria-hidden="isLoading"
+    >
       <slot></slot>
     </Typography>
     <span class="icon" :class="{ invisible: isLoading }">
@@ -115,8 +127,7 @@ $styles: (
         color: map-get($val, 'color');
       }
 
-      @media (hover: hover),
-      (pointer: fine) {
+      @media (hover: hover), (pointer: fine) {
         &:hover {
           background-color: map-get($val, 'hover');
 
@@ -155,8 +166,7 @@ $styles: (
         color: map-get($val, 'background');
       }
 
-      @media (hover: hover),
-      (pointer: fine) {
+      @media (hover: hover), (pointer: fine) {
         &:hover {
           background-color: map-get($val, 'background');
           box-shadow: 0 0 0 1px map-get($val, 'hover');

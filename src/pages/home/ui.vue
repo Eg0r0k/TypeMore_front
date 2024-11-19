@@ -83,6 +83,7 @@ const playReplay = async () => {
 const init = async (): Promise<void> => {
   testState.setCurrentWordElementIndex(0)
   inputStore.clearAllInputData()
+
   timerStore.resetTimer()
 
   testState.setActive(true)
@@ -147,7 +148,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  timerStore.terminateWorker()
+  timerStore.resetTimer()
 })
 </script>
 

@@ -8,24 +8,29 @@
       </div>
       <Form class="registration__body" autocomplete="off" @submit="onSubmit()">
         <TextInput
+          :is-disabled="isSubmitting"
           v-bind="usernameProps"
           v-model="username"
           required
           :has-error-space="true"
           :error-message="errors.username"
           placeholder="Username"
+          autocomplete="username"
         >
           <Typography color="primary"
             >Username<Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
         </TextInput>
         <TextInput
+        :is-disabled="isSubmitting"
+
           v-bind="emailProps"
           v-model="email"
           required
           :has-error-space="true"
           :error-message="errors.email"
           name="email"
+          autocomplete="off"
           placeholder="Email"
         >
           <Typography color="primary"
@@ -33,12 +38,15 @@
           </Typography>
         </TextInput>
         <TextInput
+        :is-disabled="isSubmitting"
+
           v-bind="passwordProps"
           v-model="password"
           type="password"
           :has-error-space="true"
           name="password"
           required
+          autocomplete="new-password"
           :error-message="errors.password"
           placeholder="Password"
         >
@@ -47,11 +55,14 @@
           </Typography>
         </TextInput>
         <TextInput
+        :is-disabled="isSubmitting"
+
           v-bind="passwordConfirmationProps"
           v-model="passwordConfirmation"
           type="password"
           :has-error-space="true"
           name="passwordConfirmation"
+          autocomplete="new-password"
           required
           :error-message="errors.passwordConfirmation"
           placeholder="Confirm password"

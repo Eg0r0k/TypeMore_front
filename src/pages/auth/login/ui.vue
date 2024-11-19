@@ -11,6 +11,7 @@
           :has-error-space="true"
           required
           placeholder="Username"
+          autocomplete="username"
           :error-message="errors.username"
           name="username"
         >
@@ -27,6 +28,7 @@
           type="password"
           placeholder="Password"
           label="Password*"
+          autocomplete="new-password"
           name="password"
         >
           <Typography color="primary"

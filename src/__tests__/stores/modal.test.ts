@@ -25,11 +25,11 @@ describe('useModal store', () => {
     const handlers: ModalHandlers = { onClose: () => {} }
     modalStore.open(TestComponent, 'top', 'left', false, handlers)
     expect(modalStore.isOpen).toBe(true)
-    expect(modalStore.view).toBe(TestComponent) 
+    expect(modalStore.view).toBe(TestComponent)
     expect(modalStore.alignment).toBe('top')
     expect(modalStore.justify).toBe('left')
     expect(modalStore.closeOnClickOutside).toBe(false)
-    expect(modalStore.handlers).toStrictEqual(handlers) 
+    expect(modalStore.handlers).toStrictEqual(handlers)
   })
 
   it('should close the modal and reset state', () => {

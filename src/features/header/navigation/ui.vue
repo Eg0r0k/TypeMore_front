@@ -28,10 +28,8 @@
     </div>
   </nav>
   <Transition name="slide-fade">
-  <NewsModal v-if="isVisible" @close="handleOpenNews" />
-</Transition>
-
-
+    <NewsModal v-if="isVisible" @close="handleOpenNews" />
+  </Transition>
 </template>
 
 <script setup lang="ts">

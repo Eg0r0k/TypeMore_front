@@ -68,7 +68,7 @@ export const useStats = () => {
   const calculateChars = () => {
     resetStats()
     if (!inputWords.value.length || !targetWords.value.length) {
-      return; 
+      return
     }
 
     for (let i = 0; i < inputWords.value.length; i++) {

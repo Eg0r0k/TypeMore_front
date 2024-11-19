@@ -1,15 +1,35 @@
 <template>
-  <div class="custom-select" :tabindex="tabindex" @blur="handleBlur" role="combobox" :aria-expanded="open"
-    :aria-labelledby="labelId" @keydown="handleKeydown" :aria-disabled="disabled">
+  <div
+    class="custom-select"
+    :tabindex="tabindex"
+    @blur="handleBlur"
+    role="combobox"
+    :aria-expanded="open"
+    :aria-labelledby="labelId"
+    @keydown="handleKeydown"
+    :aria-disabled="disabled"
+  >
     <label :id="labelId" class="sr-only">{{ label }}</label>
-    <div class="selected" :class="{ open, disabled }" @click="toggleDropdown" role="button" aria-haspopup="listbox"
-      :aria-disabled="disabled">
+    <div
+      class="selected"
+      :class="{ open, disabled }"
+      @click="toggleDropdown"
+      role="button"
+      aria-haspopup="listbox"
+      :aria-disabled="disabled"
+    >
       {{ selected }}
     </div>
     <div class="items" :class="{ selectHide: !open }" role="listbox">
-      <div v-for="(option, index) in options" :role="'option'" :key="option" @click="selectOption(option, index)"
-        :aria-selected="selected === option" :class="{ selectedOption: index === selectedIndex, disabled: disabled }"
-        :aria-disabled="disabled">
+      <div
+        v-for="(option, index) in options"
+        :role="'option'"
+        :key="option"
+        @click="selectOption(option, index)"
+        :aria-selected="selected === option"
+        :class="{ selectedOption: index === selectedIndex, disabled: disabled }"
+        :aria-disabled="disabled"
+      >
         {{ option }}
       </div>
     </div>
@@ -18,7 +38,7 @@
 
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid'
 interface Props {
   options: string[]
   default?: string | null
@@ -27,9 +47,9 @@ interface Props {
   disabled?: boolean
 }
 function generateId(prefix: string) {
-  return `${prefix}-${uuidv4()}`;
+  return `${prefix}-${uuidv4()}`
 }
-const selectedIndex = ref(-1);
+const selectedIndex = ref(-1)
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
@@ -55,7 +75,7 @@ const toggleDropdown = async (): Promise<void> => {
 const selectOption = (option: string, index: number): void => {
   if (!disabled.value) {
     selected.value = option
-    selectedIndex.value = index;
+    selectedIndex.value = index
     open.value = false
   }
 }
@@ -71,11 +91,11 @@ const handleKeydown = async (event: KeyboardEvent): Promise<void> => {
     selectedIndex.value = (selectedIndex.value - 1 + props.options.length) % props.options.length
   }
   if (event.key === 'Enter') {
-    console.log('Selected option:', props.options[selectedIndex.value]);
-    selectOption(props.options[selectedIndex.value], selectedIndex.value);
-    open.value = false;
+    console.log('Selected option:', props.options[selectedIndex.value])
+    selectOption(props.options[selectedIndex.value], selectedIndex.value)
+    open.value = false
   }
-  await nextTick();
+  await nextTick()
 }
 const handleBlur = (): void => {
   open.value = false

@@ -68,9 +68,7 @@ export const useTimerStore = defineStore('timer', () => {
   /**
    * Terminates the Web Worker.  Important for cleanup and resource management
    */
-  const terminateWorker = () => {
-    workerService.terminateWorker
-  }
+
   /**
    * Sets the timer to a specific value.  The value must be non-negative
    * @param {number} val - The new time value in seconds
@@ -87,7 +85,6 @@ export const useTimerStore = defineStore('timer', () => {
     time,
     startTimer,
     stopTimer,
-    resetTimer,
-    terminateWorker
+    resetTimer
   }
 })

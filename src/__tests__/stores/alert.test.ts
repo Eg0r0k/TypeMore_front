@@ -59,10 +59,10 @@ describe('useAlertStore', () => {
     const alertStore = useAlertStore()
     alertStore.addAlert({ type: AlertType.Info, msg: 'Test message' })
 
-    alertStore.removeAlert(999) 
+    alertStore.removeAlert(999)
 
     expect(alertStore.alerts).toHaveLength(1)
-    expect(alertStore.queuedAlerts).toHaveLength(1) 
+    expect(alertStore.queuedAlerts).toHaveLength(1)
   })
 
   it('should limit queued alerts to 5', () => {

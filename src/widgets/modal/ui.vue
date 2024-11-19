@@ -1,7 +1,6 @@
 <template>
   <Teleport to="#app" :disabled="!isTeleportAvailable">
-    <div v-if="isOpen" class="modal-wrapper">
-    </div>
+    <div v-if="isOpen" class="modal-wrapper"></div>
     <Transition
       :name="transitionName"
       @before-enter="onBeforeEnter"
@@ -25,7 +24,6 @@
         <component :is="view" ref="modal" v-bind="model" @click.stop></component>
       </div>
     </Transition>
-
   </Teleport>
 </template>
 
@@ -113,7 +111,7 @@ onMounted(() => {
   overflow: auto;
   z-index: var(--modal-z);
 }
-.modal-wrapper{
+.modal-wrapper {
   background-color: #00000070;
   position: fixed;
   inset: 0;

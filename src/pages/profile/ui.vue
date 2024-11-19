@@ -9,23 +9,19 @@
 </template>
 
 <script setup lang="ts">
-
 import { HeatStat } from '@/widgets/heatStat'
 import { SideStatsContainer } from '@/widgets/sideStat'
 import { UserStat } from '@/widgets/user'
-
 
 export interface Statistic {
   mode: string
   value: number | string | null
   accuracy: number | string | null
 }
-
 </script>
 
 <style lang="scss" scoped>
 @media screen and (max-width: 375px) {
-
   .profile {
     &__header {
       flex-direction: column;
@@ -34,7 +30,6 @@ export interface Statistic {
 }
 
 .profile {
-
   &__header {
     display: flex;
 
@@ -48,9 +43,5 @@ export interface Statistic {
     padding: 33px 38px;
     border-radius: var(--border-radius);
   }
-
-
-
-
 }
 </style>

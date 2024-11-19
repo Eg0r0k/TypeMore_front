@@ -5,7 +5,6 @@ interface ErrorHistoryObject {
   words: string[]
 }
 
-
 export const useErrorHistory = () => {
   const errorHistory = ref<ErrorHistoryObject>({ count: 0, words: [] })
   const incrementKeypressErrors = (): void => {

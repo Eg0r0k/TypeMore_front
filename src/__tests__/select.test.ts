@@ -24,13 +24,13 @@ describe('Select Component', () => {
 
   it('renders the component correctly', () => {
     expect(wrapper.find('.custom-select').exists()).toBe(true)
-    expect(wrapper.find('.selected').text()).toBe('Option 1') 
-    expect(wrapper.find('.items').classes()).toContain('selectHide') 
+    expect(wrapper.find('.selected').text()).toBe('Option 1')
+    expect(wrapper.find('.items').classes()).toContain('selectHide')
   })
 
   it('emits the correct input event on option selection', async () => {
     await wrapper.find('.selected').trigger('click')
-    await wrapper.findAll('.items > div')[1].trigger('click') 
+    await wrapper.findAll('.items > div')[1].trigger('click')
     expect(wrapper.emitted('input')[0]).toEqual(['Option 2'])
     expect(wrapper.find('.selected').text()).toBe('Option 2')
   })
@@ -106,7 +106,7 @@ describe('Select Component', () => {
   it('handles Escape key correctly', async () => {
     await wrapper.find('.selected').trigger('click')
     await wrapper.find('.custom-select').trigger('keydown', { key: 'Escape' })
-    expect(wrapper.find('.items').classes()).toContain('selectHide') 
+    expect(wrapper.find('.items').classes()).toContain('selectHide')
   })
 
   it('should generate a unique labelId', () => {
@@ -136,7 +136,7 @@ describe('Select Component', () => {
   it('should set aria-expanded correctly', async () => {
     const selectElement = wrapper.find('.custom-select')
     expect(selectElement.attributes('aria-expanded')).toBe('false')
-    await wrapper.find('.selected').trigger('click') 
+    await wrapper.find('.selected').trigger('click')
     expect(selectElement.attributes('aria-expanded')).toBe('true')
   })
 
@@ -159,11 +159,11 @@ describe('Select Component', () => {
   })
 
   it('should set role and aria-selected correctly for the options', async () => {
-    await wrapper.find('.selected').trigger('click') 
+    await wrapper.find('.selected').trigger('click')
     await wrapper.findAll('.items > div')[2].trigger('click')
-    await nextTick() 
+    await nextTick()
 
-    await wrapper.find('.selected').trigger('click') 
+    await wrapper.find('.selected').trigger('click')
 
     const options = wrapper.findAll('.items > div')
     const wrapperVm = wrapper.vm as unknown as SelectComponentSetup
