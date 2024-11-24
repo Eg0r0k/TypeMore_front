@@ -112,7 +112,8 @@ We welcome contributions to the project! If you'd like to help:
 
 ## License
 
-[MIT](https://choosealicense.com/licenses/mit/)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 
 ## Authors
 
