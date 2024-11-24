@@ -107,7 +107,7 @@ We welcome contributions to the project! If you'd like to help:
 - [ ] Add new testing modes
 - [ ] Improve speed calculation algorithm
 - [ ] Social media integration
-- [+] Mobile version
+- [x] Mobile version
 - [ ] Offline mode
 
 ## License
