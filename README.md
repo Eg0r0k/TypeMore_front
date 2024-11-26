@@ -9,8 +9,8 @@ TypeMore is a modern web application for testing and improving typing skills. Th
 - **Multiple Test Modes**:
   - Time Mode
   - Word Count Mode
-  - Free Mode
-  - Custom Text Mode
+  - Free Mode - `in DEV` 
+  - Custom Text Mode - `in DEV`
 
 - **Personalization**:
   - Customizable Themes

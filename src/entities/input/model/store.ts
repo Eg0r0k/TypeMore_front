@@ -23,18 +23,18 @@ import { KAYS_TO_TRACK, MAX_OVERINCORRECT_LETTERS } from '../const/keys'
 import { useReplayStore } from '@/entities/replay/model/store'
 import { useKeypressTracking } from '@/shared/lib/hooks/useKeypressTracking'
 
-
 //TODO: Make delete events for replay. Make ctr + delete events for replay. Handle special chars ☻
 export const useInputStore = defineStore('input', () => {
   const { recordKeydownTime, recordKeyupTime, resetKeypressTimings } = useKeypressTracking()
   const { input, resetInput, getCurrent, setCurrent, popHistory, pushToHistory } = useInputState()
   const { accuracy, incrementAccuracy, resetAccuracy, accuracyPercentage } = useAccuracy()
-  const { resetCharacterCounts, characterCounts, incrementSpaces, incrementCharacterCount } = useAccuracyHandler()
+  const { resetCharacterCounts, characterCounts, incrementSpaces, incrementCharacterCount } =
+    useAccuracyHandler()
   const { missedWords, pushMissedWordWithHistory, resetAllErrors } = useErrorTracking()
   const { letterClasses, updateLetterClasses, getLetterClass } = useUIState()
   const { incrementKeypressErrors } = useErrorHistory()
   const { getStats } = useStats()
-  
+
   //TODO: Remake this shit, make change sound in config store!
   const { playRandomClickSound, playErrorSound } = useSounds(
     [click1, click2, click3, click4, click5, click6],
@@ -48,7 +48,7 @@ export const useInputStore = defineStore('input', () => {
   const currentWord = computed(() => generator.getCurrent())
 
   const wordInputs = ref<string[]>([])
-  //! What is it do? 
+  //! What is it do?
   const currentKeypressCount = ref(0)
   const corrected = reactive({
     current: '',
@@ -76,7 +76,6 @@ export const useInputStore = defineStore('input', () => {
   const isCharCorrect = (char: string, charIndex: number): boolean => {
     return generator.getCurrent()[charIndex] === char
   }
-
 
   const handleInput = (event: Event): void => {
     if (!event.isTrusted) {
@@ -136,9 +135,8 @@ export const useInputStore = defineStore('input', () => {
     }
     incrementSpaces(isWordCorrect)
 
-    //! What is it do? IDK 
+    //! What is it do? iDK
     incrementKeypressCount()
-   
 
     if (testState.currentWordElementIndex === generator.retWords.words.length) {
       console.debug('test finished')
@@ -160,7 +158,7 @@ export const useInputStore = defineStore('input', () => {
       nextTop = 0
     }
     if (nextTop > currentTop) {
-      //TODO: End hook "useLineJump" and call it here! 
+      //TODO: End hook "useLineJump" and call it here!
       console.log('JUMP')
     }
   }
@@ -198,7 +196,7 @@ export const useInputStore = defineStore('input', () => {
     updateLetterClasses(testState.currentWordElementIndex, wordInputs.value)
     replayStore.addReplayEvent('backWord')
   }
-  //! What is it do? 
+  //! What is it do?
   const incrementKeypressCount = () => {
     currentKeypressCount.value++
   }

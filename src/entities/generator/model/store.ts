@@ -8,6 +8,15 @@ import { logRandomIndex } from '@/shared/lib/helpers/misc'
 import { getLastChar } from '@/shared/lib/helpers/string'
 import { LanguageObj } from '@/shared/lib/types/types'
 
+interface Ret {
+  words: string[]
+  sectionIndexes: number[]
+  hasTab: boolean
+  hasNewline: boolean
+}
+
+//TODO: Qoute and random modes render. punctuateWord mode, relax mode, free mode.
+//TODO:
 export const useWordGeneratorStore = defineStore('word-gen', () => {
   const { config } = useConfigStore()
   const testState = useTestStateStore()
@@ -15,19 +24,13 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
   const words = ref<any>([])
   const limit = ref(100)
 
-  const retWords: ret = reactive({
+  const retWords: Ret = reactive({
     words: [],
     sectionIndexes: [],
     hasTab: false,
     hasNewline: false
   })
 
-  interface ret {
-    words: string[]
-    sectionIndexes: number[]
-    hasTab: boolean
-    hasNewline: boolean
-  }
   //Limit of first generated words
   const getWordsLimit = (): number => {
     if (config.mode === 'free' && config.words === 0) {
