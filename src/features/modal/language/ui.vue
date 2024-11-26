@@ -25,30 +25,31 @@
 </template>
 
 <script lang="ts" setup>
-import { inject, Ref } from 'vue'
-import { ConsoleModal } from '../console'
-import { useConfigStore } from '@/entities/config/model/store'
-const configStore = useConfigStore()
-const langList = inject<Ref<string[]>>('lang')
+  import { inject, Ref } from 'vue'
+  import { ConsoleModal } from '../console'
+  import { useConfigStore } from '@/entities/config/model/store'
+  import { LANG_KEY } from '@/shared/constants/inject-keys'
+  const configStore = useConfigStore()
+  const langList = inject<Ref<string[]>>(LANG_KEY) as Ref<string[]>
 
-const changeLang = async (lang: string) => {
-  await configStore.setLanguage(lang)
-}
+  const changeLang = async (lang: string) => {
+    await configStore.setLanguage(lang)
+  }
 </script>
 
 <style lang="scss" scoped>
-.focused {
-  border: 2px solid var(--main-color);
-}
+  .focused {
+    border: 2px solid var(--main-color);
+  }
 
-.active {
-  background-color: var(--sub-alt-color) !important;
-}
+  .active {
+    background-color: var(--sub-alt-color) !important;
+  }
 
-.lang {
-  cursor: pointer;
-  display: flex;
-  padding: 4px 20px;
-  color: var(--text-color);
-}
+  .lang {
+    cursor: pointer;
+    display: flex;
+    padding: 4px 20px;
+    color: var(--text-color);
+  }
 </style>

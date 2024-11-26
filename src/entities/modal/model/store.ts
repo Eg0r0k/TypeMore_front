@@ -39,7 +39,6 @@ export const useModal = defineStore('modal', () => {
    * Closes the modal and resets its configuration.
    */
   const close = () => {
-    console.log(modal)
     Object.assign(modal, DEFAULT_MODAL_STATE)
   }
 

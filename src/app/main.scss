@@ -1,6 +1,7 @@
-@import './reset';
-@import './normalize';
-@import './scroll';
+@use 'sass:meta';
+@use 'reset';
+@use 'normalize';
+@use 'scroll';
 
 $fonts: (
   'Geist': './fonts/Geist-Regular',
@@ -10,7 +11,8 @@ $fonts: (
   'Montserrat': './fonts/Montserrat-Regular',
   'ShantellSans': './fonts/Shantell_Sans-Normal-Regular',
   'Vazirmatn': './fonts/Vazirmatn-Regular',
-  'Lobster': './fonts/Lobster'
+  'Lobster': './fonts/Lobster',
+  'BalsamiqSans': './fonts/BalsamiqSans-Regular'
 );
 @mixin font-face($font-name, $font-path) {
   @font-face {
@@ -25,7 +27,7 @@ $fonts: (
   @include font-face($font-name, $font-path);
 }
 
-@import './mixin';
+@include meta.load-css('mixin');
 // Base colors
 :root {
   --bg-color: #121212;
@@ -59,7 +61,7 @@ $fonts: (
   --popper-theme-padding: 6px;
   --popper-theme-box-shadow: 0;
 }
-//TODO add font
+
 .splide__arrow--next {
   right: 8px;
 }
@@ -174,7 +176,18 @@ input {
 a {
   color: var(--sub-color);
   transition: all var(--transition-duration);
+  border-radius: var(--border-radius);
   &:hover {
     color: var(--main-color);
+  }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  &:focus-visible {
+    box-shadow:
+      0 0 0 1.5px var(--bg-color),
+      0 0 0 3px var(--text-color);
+    outline: none;
   }
 }

@@ -1,6 +1,6 @@
 import { useConfigStore } from '@/entities/config/model/store'
 import { useWordGeneratorStore } from '@/entities/generator/model/store'
-import { useInputStore } from '@/entities/input/model'
+import { useInputStore } from '@/entities/input'
 import { useTestStateStore } from '@/entities/test'
 import { useTimerStore } from '@/entities/timer/model/store'
 import { computed, onUnmounted, ref, watch, watchEffect } from 'vue'
@@ -114,7 +114,7 @@ export const useStats = () => {
         if (i === inputWords.value.length - 1 && config.mode === 'time') {
           if (toAdd.incorrect === 0) correctWordChars.value += toAdd.correct
         } else {
-          console.log('missed')
+          // console.log('missed')
           missedChars.value += toAdd.missed
         }
       }

@@ -30,18 +30,18 @@
 </template>
 
 <script setup lang="ts">
-import { Typography } from '@/shared/ui/typography'
+  import { Typography } from '@/shared/ui/typography'
 </script>
 
 <style scoped lang="scss">
-.statistic {
-  display: flex;
-  justify-content: space-between;
-  gap: 40px;
-  flex-wrap: wrap;
-}
+  .statistic {
+    display: flex;
+    justify-content: space-between;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
 
-.sr-only {
-  @include hide-visually;
-}
+  .sr-only {
+    @include hide-visually;
+  }
 </style>

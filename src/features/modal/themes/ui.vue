@@ -33,51 +33,52 @@
 </template>
 
 <script lang="ts" setup>
-import { inject, Ref } from 'vue'
-import { ConsoleModal } from '../console'
-import { Theme } from './types/themes'
-import { Typography } from '@/shared/ui/typography'
-import { useConfigStore } from '@/entities/config/model/store'
+  import { inject, Ref } from 'vue'
+  import { ConsoleModal } from '../console'
+  import { Theme } from './types/themes'
+  import { Typography } from '@/shared/ui/typography'
+  import { useConfigStore } from '@/entities/config/model/store'
+  import { THEMES_KEY } from '@/shared/constants/inject-keys'
 
-const configStore = useConfigStore()
-const themeList = inject<Ref<Theme[]>>('themes')
+  const configStore = useConfigStore()
+  const themeList = inject<Ref<Theme[]>>(THEMES_KEY) as Ref<Theme[]>
 
-const changeTheme = async (theme: Theme): Promise<void> => {
-  await configStore.setTheme(theme.name)
-}
+  const changeTheme = async (theme: Theme): Promise<void> => {
+    await configStore.setTheme(theme.name)
+  }
 </script>
 <style lang="scss" scoped>
-.active {
-  background-color: var(--sub-alt-color) !important;
-}
-
-.focused {
-  border: 2px solid var(--main-color);
-}
-
-.theme {
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 20px;
-  color: var(--sub-color);
-
-  &:hover {
-    background-color: var(--sub-color);
+  .active {
+    background-color: var(--sub-alt-color) !important;
   }
 
-  &__icon {
-    border-radius: var(--border-radius);
-    padding: 4px;
+  .focused {
+    border: 2px solid var(--main-color);
+  }
+
+  .theme {
+    cursor: pointer;
     display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+    justify-content: space-between;
+    padding: 4px 20px;
+    color: var(--sub-color);
 
-  &__color {
-    aspect-ratio: 1/1;
-    width: 15px;
-    border-radius: 50%;
+    &:hover {
+      background-color: var(--sub-color);
+    }
+
+    &__icon {
+      border-radius: var(--border-radius);
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    &__color {
+      aspect-ratio: 1/1;
+      width: 15px;
+      border-radius: 50%;
+    }
   }
-}
 </style>

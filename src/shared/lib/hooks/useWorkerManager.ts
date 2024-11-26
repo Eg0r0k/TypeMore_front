@@ -29,9 +29,9 @@ export const useWorkerService = (workerScript: new () => Worker): WorkerService 
   const start = (time: number) => {
     worker?.postMessage({ command: 'start', time })
   }
+  //TODO: Think about this :D (mb later...)
   const stop = () => {
     worker?.postMessage({ command: 'reset' })
-    terminateWorker()
   }
   const reset = () => {
     worker?.postMessage({ command: 'reset' })

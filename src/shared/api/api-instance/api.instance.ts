@@ -21,4 +21,5 @@ export const getNewToken = async () => {
     `${import.meta.env.VITE_API_BASE_URL}/auth/access-token`,
     {}
   )
+  console.log(responce)
 }

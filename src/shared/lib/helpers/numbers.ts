@@ -17,7 +17,9 @@ export const randomIntFromRange = (min: number, max: number): number => {
  * @returns The number rounded to two decimal places.
  */
 export const roundTo2 = (num: number): number => {
-  return Math.round((num + Number.EPSILON) * 100) / 100
+  const sign = num < 0 ? -1 : 1
+  const absNum = Math.abs(num)
+  return (sign * Math.round((absNum + Number.EPSILON) * 100)) / 100
 }
 /**
  * Calculates the median of an array of numbers.
@@ -27,11 +29,12 @@ export const roundTo2 = (num: number): number => {
  */
 export const getMedian = (arr: number[]): number => {
   const sortedArr = arr.slice().sort((a, b) => a - b)
-  const middleIndex = Math.floor(sortedArr[sortedArr.length] / 2)
-  if (middleIndex % 2 === 0) {
-    return sortedArr[middleIndex - 1] + sortedArr[middleIndex] / 2
+  const middle = Math.floor(sortedArr.length / 2)
+
+  if (sortedArr.length % 2 === 0) {
+    return (sortedArr[middle - 1] + sortedArr[middle]) / 2
   } else {
-    return sortedArr[middleIndex]
+    return sortedArr[middle]
   }
 }
 /**

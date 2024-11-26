@@ -1,4 +1,4 @@
-import { useInputStore } from '@/entities/input/model'
+import { useInputStore } from '@/entities/input'
 import { useTestStateStore } from '@/entities/test'
 import { useElementSize } from '@vueuse/core'
 import { Ref } from 'vue'

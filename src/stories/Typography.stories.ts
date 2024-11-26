@@ -1,6 +1,6 @@
 import { Typography } from '@/shared/ui/typography'
 import '@/app/main.scss'
-import type { Meta, StoryFn } from '@storybook/vue3'
+import type { Meta } from '@storybook/vue3'
 const meta = {
   title: 'Typography',
   component: Typography,
@@ -16,17 +16,17 @@ const meta = {
 
 export default meta
 
-const Template: StoryFn = (args: any) => ({
-  components: { Typography },
-  setup() {
-    return { args }
-  },
-  template: `
-  <Typography v-bind="args">
-    {{args.slotText }}
-  </Typography>
-  `
-})
+// const Template: StoryFn = (args: any) => ({
+//   components: { Typography },
+//   setup() {
+//     return { args }
+//   },
+//   template: `
+//   <Typography v-bind="args">
+//     {{args.slotText }}
+//   </Typography>
+//   `
+// })
 export const LevelAlieses = () => ({
   components: { Typography },
   setup() {

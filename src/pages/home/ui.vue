@@ -1,154 +1,54 @@
 <template>
   <div v-if="testState.isActive" class="test">
-    <TestControls />
-
     <p v-show="testState.isRepeated">is restarted</p>
     <div v-show="capsLockState" class="caps-detected">CAPS!</div>
+    <TestControls />
     <TestInput />
-    <Test :is-right-to-left="isRightToLeft" />
-
+    <Test :is-right-to-left="testState.isRightToLeft" />
     <Popper class="refresh__tip" hover arrow :interactive="false" content="Restart test">
-      <button class="refresh" @click.stop="restartTest" label="reapeat test">
+      <button role="button" class="refresh" @click.stop="testState.restartTest" aria-label="Reapeat test">
         <Icon width="24" icon="eva:refresh-fill" />
       </button>
     </Popper>
-
     <KeyMap />
   </div>
-
-  <div v-else>
-    <TestChart />
-    <Button @click="playReplay">Test</Button>
-    <Button @click="restartTest"> Reapat </Button>
-    <div id="replayWords">
-      <p v-for="word in replayStore.wordList" :key="word">
-        {{ word }}
-      </p>
-    </div>
-  </div>
+  <FinalScreen v-else />
 </template>
 
 <script lang="ts" setup>
 import { KeyMap } from '@/features/layouts/keymap'
-import { Button } from '@/shared/ui/button'
 import { useConfigStore } from '@/entities/config/model/store'
-
 import { useTestStateStore } from '@/entities/test'
 import { Icon } from '@iconify/vue'
-
-import Popper from 'vue3-popper'
 import { useKeyModifier } from '@vueuse/core'
-import { onMounted, onUnmounted, computed, watch, ref } from 'vue'
-
-import { useTimerStore } from '@/entities/timer/model/store'
-import { useWordGeneratorStore } from '@/entities/generator/model/store'
-import { useInputStore } from '@/entities/input/model'
+import { onMounted, onUnmounted, watch } from 'vue'
+import { useInputStore } from '@/entities/input'
 import { Test } from '@/widgets/test'
-import { TestChart } from '@/shared/ui/chart'
 import { TestInput } from '@/features/test/input'
 import { TestControls } from '@/features/test/controls'
-import { useReplayStore } from '@/entities/replay/model/store'
-import { QuoteData } from '@/shared/lib/types/types'
+import { FinalScreen } from '@/features/home/final'
 
 const testState = useTestStateStore()
-const capsLockState = useKeyModifier('CapsLock')
 const configStore = useConfigStore()
-const timerStore = useTimerStore()
-const generator = useWordGeneratorStore()
-const replayStore = useReplayStore()
 const inputStore = useInputStore()
-const isRightToLeft = ref(false)
 
-const currentLanguage = computed(() => configStore.currentLang)
-const russianQuotes: QuoteData = {
-  language: 'russian',
-  quotes: [
-    {
-      id: 1,
-      source: 'A. Чехов',
-      text: 'Луна стояла высоко над садом.',
-      length: 26
-    },
-    {
-      id: 2,
-      source: 'В. Даль',
-      text: 'Не может русский человек быть счастлив в одиночку.',
-      length: 50
-    }
-  ]
-}
-const playReplay = async () => {
-  replayStore.playReplay()
-}
-const init = async (): Promise<void> => {
-  testState.setCurrentWordElementIndex(0)
-  inputStore.clearAllInputData()
-
-  timerStore.resetTimer()
-
-  testState.setActive(true)
-  generator.reset()
-
-  timerStore.startTimer()
-  try {
-    const lang = configStore.config.language
-    await configStore.setLanguage(lang)
-  } catch (e) {
-    console.error(e)
-  }
-  if (!currentLanguage.value) {
-    await configStore.setLanguage('russian')
-    await init()
-    return
-  }
-  try {
-    await generator.generateWords(currentLanguage.value)
-
-    isRightToLeft.value = !!currentLanguage.value.rightToleft
-  } catch (e) {
-    console.error(e)
-  }
-}
-
-//TODO: add support for:
-// arabian   -
-// hebrew   -
-const startTest = async () => {
-  try {
-    timerStore.resetTimer()
-
-    await configStore.setLanguage(configStore.config.language)
-
-    //Maybe change later
-    if (!currentLanguage.value) return
-    await generator.generateWords(currentLanguage.value)
-  } catch (error) {
-    console.error('Произошла ошибка:', error)
-  }
-}
-const reapeatTest = (): void => {
-  testState.setRepeated(true)
-}
-
-const restartTest = async (): Promise<void> => {
-  console.log('restart')
-  await init()
-}
+const capsLockState = useKeyModifier('CapsLock')
 
 watch(
-  () => configStore.currentLang,
+  () => configStore.config,
   async () => {
     inputStore.clearAllInputData()
-    await init()
-  }
+    await testState.init()
+  },
+  { deep: true }
 )
 
 onMounted(async () => {
-  await init()
+  await testState.init()
 })
 
 onUnmounted(() => {
-  timerStore.resetTimer()
+  testState.clear()
 })
 </script>
 

@@ -28,128 +28,131 @@
 </template>
 
 <script setup lang="ts">
-import { useModal } from '@/entities/modal/model/store'
-import { onClickOutside } from '@vueuse/core'
-import gsap from 'gsap'
-import { computed, onMounted, reactive, ref } from 'vue'
-const modalStore = useModal()
-const isOpen = computed(() => modalStore.isOpen)
-const alignment = computed(() => modalStore.alignment)
-const view = computed(() => modalStore.view)
-const justify = computed(() => modalStore.justify)
-const closeOnClickOutside = computed(() => modalStore.closeOnClickOutside)
+  import { useModal } from '@/entities/modal/model/store'
+  import { onClickOutside } from '@vueuse/core'
+  import clsx from 'clsx'
+  import gsap from 'gsap'
+  import { computed, onMounted, reactive, ref } from 'vue'
+  const modalStore = useModal()
+  const isOpen = computed(() => modalStore.isOpen)
+  const alignment = computed(() => modalStore.alignment)
+  const view = computed(() => modalStore.view)
+  const justify = computed(() => modalStore.justify)
+  const closeOnClickOutside = computed(() => modalStore.closeOnClickOutside)
 
-const classes = computed(() => {
-  return [`alignment-${alignment.value || 'center'}`, `justify-${justify.value || 'center'}`]
-})
-const transitionName = computed(() => (isOpen.value ? 'modal-enter' : 'modal-leave'))
+  const classes = computed(() =>
+    clsx(`alignment-${alignment.value || 'center'}`, `justify-${justify.value || 'center'}`)
+  )
+  const transitionName = computed(() => (isOpen.value ? 'modal-enter' : 'modal-leave'))
 
-const model = reactive({})
-const isTeleportAvailable = ref(false)
-const modal = ref(null)
+  const model = reactive({})
+  const isTeleportAvailable = ref(false)
+  const modal = ref(null)
 
-onClickOutside(modal, () => {
-  if (closeOnClickOutside.value) {
-    modalStore.close()
+  onClickOutside(modal, () => {
+    if (closeOnClickOutside.value) {
+      modalStore.close()
+    }
+  })
+
+  const handleEscapeKey = () => {
+    if (closeOnClickOutside.value) {
+      modalStore.close()
+    }
   }
-})
 
-const handleEscapeKey = () => {
-  if (closeOnClickOutside.value) {
-    modalStore.close()
+  const onBeforeEnter = (el: Element) => {
+    gsap.set(el, {
+      scale: 0.8,
+      opacity: 0
+    })
   }
-}
 
-const onBeforeEnter = (el: Element) => {
-  gsap.set(el, {
-    scale: 0.8,
-    opacity: 0
+  const onEnter = (el: Element, done: () => void) => {
+    gsap.to(el, {
+      duration: 0.35,
+      scale: 1,
+      opacity: 1,
+      ease: 'back.out(2)',
+      onComplete: done
+    })
+  }
+
+  const onLeave = (el: Element, done: () => void) => {
+    gsap.to(el, {
+      duration: 0.35,
+      scale: 0.9,
+      opacity: 0,
+      ease: 'back.out(2)',
+      onComplete: done
+    })
+  }
+
+  onMounted(() => {
+    isTeleportAvailable.value = !!document.querySelector('#app')
   })
-}
-
-const onEnter = (el: Element, done: () => void) => {
-  gsap.to(el, {
-    duration: 0.35,
-    scale: 1,
-    opacity: 1,
-    ease: 'back.out(2)',
-    onComplete: done
-  })
-}
-
-const onLeave = (el: Element, done: () => void) => {
-  gsap.to(el, {
-    duration: 0.35,
-    scale: 0.9,
-    opacity: 0,
-    ease: 'back.out(2)',
-    onComplete: done
-  })
-}
-
-onMounted(() => {
-  isTeleportAvailable.value = !!document.querySelector('#app')
-})
 </script>
 
 <style lang="scss" scoped>
-.sr-only {
-  @include hide-visually;
-}
-
-.modal {
-  padding: 60px 15px;
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
-  max-height: 100%;
-  position: fixed;
-  inset: 0;
-
-  display: flex;
-  overflow: auto;
-  z-index: var(--modal-z);
-}
-.modal-wrapper {
-  background-color: #00000070;
-  position: fixed;
-  inset: 0;
-  z-index: var(--modal-z);
-}
-.justify {
-  &-left {
-    justify-content: flex-start;
+  .sr-only {
+    @include hide-visually;
   }
 
-  &-right {
-    justify-content: flex-end;
+  .modal {
+    padding: 60px 15px;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    position: fixed;
+    inset: 0;
+
+    display: flex;
+    overflow: auto;
+    z-index: var(--modal-z);
   }
 
-  &-center {
-    justify-content: center;
+  .modal-wrapper {
+    background-color: #00000070;
+    position: fixed;
+    inset: 0;
+    z-index: var(--modal-z);
   }
 
-  &-none {
-    justify-content: unset;
-  }
-}
+  .justify {
+    &-left {
+      justify-content: flex-start;
+    }
 
-.alignment {
-  &-top {
-    align-items: flex-start;
+    &-right {
+      justify-content: flex-end;
+    }
+
+    &-center {
+      justify-content: center;
+    }
+
+    &-none {
+      justify-content: unset;
+    }
   }
 
-  &-bottom {
-    align-items: flex-end;
-  }
+  .alignment {
+    &-top {
+      align-items: flex-start;
+    }
 
-  &-center {
-    align-items: center;
-  }
+    &-bottom {
+      align-items: flex-end;
+    }
 
-  &-none {
-    align-items: unset;
+    &-center {
+      align-items: center;
+    }
+
+    &-none {
+      align-items: unset;
+    }
   }
-}
 </style>

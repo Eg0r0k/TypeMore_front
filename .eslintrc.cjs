@@ -11,6 +11,7 @@ module.exports = {
   extends: [
     'plugin:vue/vue3-essential',
     'eslint:recommended',
+    'prettier',
     '@vue/eslint-config-typescript',
     '@vue/eslint-config-prettier/skip-formatting',
     'plugin:storybook/recommended'
@@ -18,8 +19,19 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 'latest'
   },
-  plugins: ['vue', '@typescript-eslint', 'storybook'],
+  plugins: ['vue', '@typescript-eslint', 'storybook', 'import', 'vuejs-accessibility', 'security'],
   rules: {
-    'vue/multi-word-component-names': 'off'
+    'vue/multi-word-component-names': 'off',
+    eqeqeq: 'error',
+    'vue/max-attributes-per-line': [
+      'error',
+      {
+        singleline: 1, // Один атрибут на одной строке для однострочного элемента
+        multiline: {
+          max: 1, // Один атрибут на строку для многострочных элементов
+          allowFirstLine: false
+        }
+      }
+    ]
   }
 }

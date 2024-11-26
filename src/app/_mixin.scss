@@ -1,3 +1,4 @@
+@use 'sass:meta';
 @use 'sass:color';
 @mixin em-to-rem($property, $value) {
   #{$property}: $value * 1rem;
@@ -39,7 +40,7 @@
 }
 
 @mixin hex-to-rgba($color, $alpha: 1) {
-  color: rgba(red($color), green($color), blue($color), $alpha);
+  color: rgba(color.red($color), color.green($color), color.blue($color), $alpha);
 }
 
 @mixin flexible-width($min: 300px, $max: 1000px) {
@@ -53,7 +54,7 @@
 }
 
 @mixin text-overflow($no-wrap: true) {
-  @if type-of($no-wrap) == number {
+  @if meta.type-of($no-wrap) == number {
     display: -webkit-box;
     -webkit-line-clamp: $no-wrap;
     -webkit-box-orient: vertical;
@@ -66,14 +67,4 @@
 
   text-overflow: ellipsis;
   overflow: hidden;
-}
-
-@mixin background-gradient {
-  background-image: linear-gradient(
-    90deg,
-    var(--sub-color) 0px,
-    var(--sub-color) 40px,
-    var(--main-color) 80px
-  );
-  background-size: 700px;
 }

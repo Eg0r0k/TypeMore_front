@@ -10,6 +10,16 @@
     "--error-extra-color": "#a12828"
   },
   {
+    "name": "VS Code 2",
+    "--bg-color": "#181818",
+    "--main-color": "#007aCC",
+    "--sub-color": "#3a3a3a",
+    "--sub-alt-color": "#1f1f1f",
+    "--text-color": "#cccccc",
+    "--error-color": "#f14c4c",
+    "--error-extra-color": "#eb5c39"
+  },
+  {
     "name": "Neo",
     "--bg-color": "#000000",
     "--main-color": "#15ff00",

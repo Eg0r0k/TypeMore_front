@@ -2,298 +2,288 @@
   <component
     :is="isLink ? 'a' : 'button'"
     :href="isLink ? to : undefined"
-    :disabled="!isLink && (isDisabled || isLoading)"
+    :disabled="isButtonDisabled"
     :class="classes"
     role="button"
     :aria-label="buttonLabel"
     :aria-busy="isLoading"
   >
-    <span v-if="isLoading" class="loader" aria-hidden="true"></span>
-    <span class="icon" :class="{ invisible: isLoading }">
-      <slot name="left-icon" :aria-label="buttonLabel"></slot>
+    <span v-if="props.isLoading" class="loader" aria-hidden="true"></span>
+    <span class="icon" :class="{ invisible: props.isLoading }">
+      <slot name="left-icon" :aria-label="props.buttonLabel"></slot>
     </span>
 
     <Typography
       v-if="slots.default"
       class="button__text"
-      :class="isLoading ? 'invisible' : ''"
+      :class="{ invisible: props.isLoading }"
       tag-name="p"
       :size="props.size"
-      :aria-hidden="isLoading"
+      :aria-hidden="props.isLoading"
     >
       <slot></slot>
     </Typography>
-    <span class="icon" :class="{ invisible: isLoading }">
-      <slot name="right-icon" :aria-label="buttonLabel"></slot>
+    <span class="icon" :class="{ invisible: props.isLoading }">
+      <slot name="right-icon" :aria-label="props.buttonLabel"></slot>
     </span>
   </component>
 </template>
 
 <script setup lang="ts">
-import { useSlots, computed } from 'vue'
-import { Typography } from '@/shared/ui/typography'
+  import { useSlots, computed } from 'vue'
+  import { Typography } from '@/shared/ui/typography'
+  import clsx from 'clsx'
 
-type ButtonColor = 'main' | 'gray' | 'error' | 'main-outline' | 'error-outline' | 'shadow'
-type ButtonSize = 's' | 'm' | 'l'
-type ButtonDecoration = 'default' | 'none'
+  type ButtonColor = 'main' | 'gray' | 'error' | 'main-outline' | 'error-outline' | 'shadow'
+  type ButtonSize = 's' | 'm' | 'l'
+  type ButtonDecoration = 'default' | 'none'
 
-//Sizes:
-// s : padding - 4px 8px
-// m : padding - 8px 16px
-// l : padding - 16px 24px
-interface Props {
-  color?: ButtonColor
-  size?: ButtonSize
-  decoration?: ButtonDecoration
-  isDisabled?: boolean
-  buttonLabel?: string
-  isLoading?: boolean
-  to?: string | null
-  isLink?: boolean
-}
+  //Sizes:
+  // s : padding - 4px 8px
+  // m : padding - 8px 16px
+  // l : padding - 16px 24px
+  interface Props {
+    color?: ButtonColor
+    size?: ButtonSize
+    decoration?: ButtonDecoration
+    isDisabled?: boolean
+    buttonLabel?: string
+    isLoading?: boolean
+    to?: string | null
+    isLink?: boolean
+  }
 
-const slots = useSlots()
-const props = withDefaults(defineProps<Props>(), {
-  color: 'main',
-  size: 'm',
-  isDisabled: false,
-  decoration: 'default',
-  buttonLabel: 'Button',
-  to: null,
-  isLink: false
-})
-const isLink = computed(() => !!props.to)
-const classes = computed(() => ({
-  button: true,
-  [`button--size-${props.size}`]: true,
-  [`button--color-${props.color}`]: true,
-  [`decoration--${props.decoration}`]: true,
-  loading: props.isLoading,
-  'button--link': isLink.value
-}))
+  const slots = useSlots()
+  const props = withDefaults(defineProps<Props>(), {
+    color: 'main',
+    size: 'm',
+    isDisabled: false,
+    decoration: 'default',
+    buttonLabel: 'Button',
+    to: null,
+    isLink: false
+  })
+  const isLink = computed(() => !!props.to)
+  const isButtonDisabled = computed(() => !isLink.value && (props.isDisabled || props.isLoading))
+
+  const classes = computed(() =>
+    clsx(
+      'button',
+      `button--size-${props.size}`,
+      `button--color-${props.color}`,
+      `decoration--${props.decoration}`,
+      {
+        loading: props.isLoading,
+        'button--link': isLink.value
+      }
+    )
+  )
 </script>
 
 <style scoped lang="scss">
-$main: (
-  'background': var(--main-color),
-  'hover': var(--text-color),
-  'active': var(--sub-alt-color),
-  'color': var(--bg-color),
-  'hover-color': var(--bg-color),
-  'active-color': var(--text-color)
-);
-$shadow: (
-  'background': transparent,
-  'hover': transparent,
-  'active': transparent,
-  'color': var(--sub-color),
-  'hover-color': var(--main-color),
-  'active-color': var(--sub-color)
-);
-$error: (
-  'background': var(--error-color),
-  'hover': var(--text-color),
-  'active': var(--error-extra-color),
-  'color': var(--text-color),
-  'hover-color': var(--bg-color),
-  'active-color': var(--text-color)
-);
-$gray: (
-  'background': var(--sub-alt-color),
-  'hover': var(--text-color),
-  'active': var(--sub-color),
-  'color': var(--text-color),
-  'hover-color': var(--bg-color),
-  'active-color': var(--text-color)
-);
+  @use 'sass:map';
+  $main: (
+    'background': var(--main-color),
+    'hover': var(--text-color),
+    'active': var(--sub-alt-color),
+    'color': var(--bg-color),
+    'hover-color': var(--bg-color),
+    'active-color': var(--text-color)
+  );
+  $shadow: (
+    'background': transparent,
+    'hover': transparent,
+    'active': transparent,
+    'color': var(--sub-color),
+    'hover-color': var(--main-color),
+    'active-color': var(--sub-color)
+  );
+  $error: (
+    'background': var(--error-color),
+    'hover': var(--text-color),
+    'active': var(--error-extra-color),
+    'color': var(--text-color),
+    'hover-color': var(--bg-color),
+    'active-color': var(--text-color)
+  );
+  $gray: (
+    'background': var(--sub-alt-color),
+    'hover': var(--text-color),
+    'active': var(--sub-color),
+    'color': var(--text-color),
+    'hover-color': var(--bg-color),
+    'active-color': var(--text-color)
+  );
 
-$styles: (
-  'main': $main,
-  'gray': $gray,
-  'error': $error,
-  'shadow': $shadow
-);
+  $styles: (
+    'main': $main,
+    'gray': $gray,
+    'error': $error,
+    'shadow': $shadow
+  );
 
-@mixin button-style($styles) {
-  @each $key, $val in $styles {
-    .button--color-#{$key} {
-      background-color: map-get($val, 'background');
+  @mixin button-style($styles) {
+    @each $key, $val in $styles {
+      .button--color-#{$key} {
+        background-color: map.get($val, 'background');
 
-      p {
-        color: map-get($val, 'color');
-      }
-
-      .icon {
-        color: map-get($val, 'color');
-      }
-
-      @media (hover: hover), (pointer: fine) {
-        &:hover {
-          background-color: map-get($val, 'hover');
-
-          p {
-            color: map-get($val, 'hover-color');
-          }
-
-          .icon {
-            color: map-get($val, 'hover-color');
-          }
-        }
-      }
-
-      &:active {
-        background-color: map-get($val, 'active');
-
-        p {
-          color: map-get($val, 'active-color');
-        }
-
+        p,
         .icon {
-          color: map-get($val, 'active-color');
+          color: map.get($val, 'color');
         }
-      }
-    }
 
-    .button--color-#{$key}-outline {
-      background-color: transparent;
-      box-shadow: 0 0 0 1px map-get($val, 'background');
+        @media (hover: hover), (pointer: fine) {
+          &:hover {
+            background-color: map.get($val, 'hover');
 
-      p {
-        color: map-get($val, 'background');
-      }
-
-      .icon {
-        color: map-get($val, 'background');
-      }
-
-      @media (hover: hover), (pointer: fine) {
-        &:hover {
-          background-color: map-get($val, 'background');
-          box-shadow: 0 0 0 1px map-get($val, 'hover');
-
-          p {
-            color: map-get($val, 'hover-color');
+            p,
+            .icon {
+              color: map.get($val, 'hover-color');
+            }
           }
+        }
 
+        &:active {
+          background-color: map.get($val, 'active');
+
+          p,
           .icon {
-            color: map-get($val, 'hover-color');
+            color: map.get($val, 'active-color');
           }
         }
       }
 
-      &:active {
-        background-color: map-get($val, 'active');
-        box-shadow: 0 0 0 1px map-get($val, 'active');
+      .button--color-#{$key}-outline {
+        background-color: transparent;
+        box-shadow: 0 0 0 1px map.get($val, 'background');
 
-        p {
-          color: map-get($val, 'active-color');
+        p,
+        .icon {
+          color: map.get($val, 'background');
         }
 
-        .icon {
-          color: map-get($val, 'active-color');
+        @media (hover: hover), (pointer: fine) {
+          &:hover {
+            background-color: map.get($val, 'background');
+            box-shadow: 0 0 0 1px map.get($val, 'hover');
+
+            p,
+            .icon {
+              color: map.get($val, 'hover-color');
+            }
+          }
+        }
+
+        &:active {
+          background-color: map.get($val, 'active');
+          box-shadow: 0 0 0 1px map.get($val, 'active');
+
+          p,
+          .icon {
+            color: map.get($val, 'active-color');
+          }
         }
       }
     }
   }
-}
 
-@include button-style($styles);
+  @include button-style($styles);
 
-.icon {
-  transition: var(--transition-duration) ease-in;
-  display: flex;
-
-  &:empty {
-    // If only one Icon sets to ignore second Icon block
-    display: none;
-  }
-}
-
-.button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: min-content;
-  border: none;
-  border-radius: var(--border-radius);
-  -webkit-user-select: none;
-  appearance: none;
-  user-select: none;
-  cursor: pointer;
-  line-height: 1.3;
-  font-family: inherit;
-  transition: var(--transition-duration) ease-in;
-  gap: 8px;
-
-  &:focus-visible {
-    box-shadow:
-      0 0 0 1.5px var(--bg-color),
-      0 0 0 3px var(--text-color);
-    outline: none;
-  }
-
-  &__text {
-    text-align: center;
+  .icon {
     transition: var(--transition-duration) ease-in;
-  }
+    display: flex;
 
-  & &.decoration--none {
-    background-color: unset;
-    border-color: unset;
-  }
-
-  &--link {
-    text-decoration: none;
-  }
-
-  &--size {
-    &-s {
-      padding: 4px 8px;
-      gap: 4px;
-    }
-
-    &-m {
-      padding: 8px 16px;
-    }
-
-    &-l {
-      padding: 12px 24px;
+    &:empty {
+      // If only one Icon sets to ignore second Icon block
+      display: none;
     }
   }
 
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
+  .button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: min-content;
+    border: none;
+    border-radius: var(--border-radius);
+    -webkit-user-select: none;
+    appearance: none;
+    user-select: none;
+    cursor: pointer;
+    line-height: 1.3;
+    font-family: inherit;
+    transition: var(--transition-duration) ease-in;
+    gap: 8px;
+
+    &:focus-visible {
+      box-shadow:
+        0 0 0 1.5px var(--bg-color),
+        0 0 0 3px var(--text-color);
+      outline: none;
+    }
+
+    &__text {
+      text-align: center;
+      transition: var(--transition-duration) ease-in;
+    }
+
+    & &.decoration--none {
+      background-color: unset;
+      border-color: unset;
+    }
+
+    &--link {
+      text-decoration: none;
+    }
+
+    &--size {
+      &-s {
+        padding: 4px 8px;
+        gap: 4px;
+      }
+
+      &-m {
+        padding: 8px 16px;
+      }
+
+      &-l {
+        padding: 12px 24px;
+      }
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
   }
-}
 
-.loading {
-  cursor: progress !important;
-}
-
-.invisible {
-  visibility: hidden;
-}
-
-.loader {
-  position: absolute;
-  min-width: 20px;
-  min-height: 20px;
-  border: 3px solid var(--bg-color);
-  border-bottom-color: var(--text-color);
-  border-radius: 100%;
-  display: inline-block;
-  box-sizing: border-box;
-  animation: rotation 1.5s linear infinite;
-}
-
-@keyframes rotation {
-  0% {
-    transform: rotate(0deg);
+  .loading {
+    cursor: progress !important;
   }
 
-  100% {
-    transform: rotate(360deg);
+  .invisible {
+    visibility: hidden;
   }
-}
+
+  .loader {
+    position: absolute;
+    min-width: 20px;
+    min-height: 20px;
+    border: 3px solid var(--bg-color);
+    border-bottom-color: var(--text-color);
+    border-radius: 100%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: rotation 1.5s linear infinite;
+  }
+
+  @keyframes rotation {
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(360deg);
+    }
+  }
 </style>

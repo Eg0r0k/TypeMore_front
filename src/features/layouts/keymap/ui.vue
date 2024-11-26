@@ -1,14 +1,10 @@
 <template>
-  <div ref="el" :style="style" class="key-map" aria-label="Virtual key map">
+  <div ref="mapRef" :style="style" class="key-map" aria-label="Virtual key map">
     <div v-for="row in KEYS" :key="row.id" class="key-map__row">
-      <div
-        v-for="key in row.keys"
-        :key="key.code"
-        :class="['key-map__key key', pressedKeys[key.code] ? 'active' : '']"
-      >
-        <kbd
-          ><b>{{ getLabel(key) }}</b></kbd
-        >
+      <div v-for="key in row.keys" :key="key.code" :class="['key-map__key key', pressedKeys[key.code] ? 'active' : '']">
+        <kbd>
+          <b>{{ getLabel(key) }}</b>
+        </kbd>
       </div>
     </div>
   </div>
@@ -18,14 +14,14 @@
 import { useDraggable } from '@vueuse/core'
 import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import { KEYS } from './const/keys'
-const el = ref<HTMLElement | null>(null)
+const mapRef = ref<HTMLElement | null>(null)
 
-const { x, y, style } = useDraggable(el, {
+const { x, y, style } = useDraggable(mapRef, {
   initialValue: { x: (window.innerWidth - 600) / 2, y: (window.innerHeight + 55) / 2 },
   onMove: ({ x: newX, y: newY }) => {
-    if (!el.value) return
-    const maxX = window.innerWidth - el.value!.offsetWidth
-    const maxY = window.innerHeight - el.value!.offsetHeight
+    if (!mapRef.value) return
+    const maxX = window.innerWidth - mapRef.value!.offsetWidth
+    const maxY = window.innerHeight - mapRef.value!.offsetHeight
     x.value = Math.max(0, Math.min(newX, maxX))
     y.value = Math.max(0, Math.min(newY, maxY))
   }
@@ -43,7 +39,9 @@ const handleKeyUp = (event: KeyboardEvent): void => {
 }
 //If shift is down UpperCase labels in keys
 const getLabel = (key: { code: string; label: string }): string => {
-  return pressedKeys['ShiftLeft'] || pressedKeys['ShiftRight'] ? key.label.toUpperCase() : key.label
+  return pressedKeys['ShiftLeft'] || pressedKeys['ShiftRight']
+    ? key.label.toUpperCase()
+    : key.label
 }
 
 onMounted(() => {

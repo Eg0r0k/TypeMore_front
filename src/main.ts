@@ -1,17 +1,14 @@
 import './app/main.scss'
-import { createApp, nextTick } from 'vue'
+import { createApp, nextTick, defineAsyncComponent } from 'vue'
 import { createPinia } from 'pinia'
-import VueSplide from '@splidejs/vue-splide'
-import App from './app/App.vue'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+import App from './app/App.vue'
 import router from './app/router'
 import { install } from 'vue3-recaptcha-v2'
 import { InstallOptions } from 'vue3-recaptcha-v2/dist/types'
-import Popper from 'vue3-popper'
-
-// or only core styles
-import '@splidejs/vue-splide/css/core'
 import { VueQueryPlugin } from '@tanstack/vue-query'
+
+import '@splidejs/vue-splide/css/core'
 
 const app = createApp(App)
 
@@ -26,10 +23,16 @@ const options: InstallOptions = {
 }
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
+
 app.use(install, options)
 app.use(pinia)
 app.use(router)
 app.use(VueQueryPlugin)
-app.component('Popper', Popper)
-app.use(VueSplide)
+
+const AsyncVueSplide = defineAsyncComponent(() => import('@splidejs/vue-splide'))
+const AsyncPopper = defineAsyncComponent(() => import('vue3-popper'))
+
+app.component('Popper', AsyncPopper)
+app.use(AsyncVueSplide)
+
 app.mount('#app')

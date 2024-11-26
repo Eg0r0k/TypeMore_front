@@ -9,11 +9,11 @@
 <script lang="ts" setup>
 import { ref, onMounted, watch, nextTick } from 'vue'
 import { useWordGeneratorStore } from '@/entities/generator/model/store'
-import { useInputStore } from '@/entities/input/model'
+import { useInputStore } from '@/entities/input'
 import { useTestStateStore } from '@/entities/test'
 
-import { useScrollTape } from '@/shared/lib/hooks/useScrollTape'
 import { TestWord } from '@/features/test/word'
+import { useLineJump } from '@/shared/lib/hooks/useLineJump'
 
 interface Props {
   isRightToLeft?: boolean
@@ -28,9 +28,9 @@ const testState = useTestStateStore()
 const generator = useWordGeneratorStore()
 
 const wordsContainer = ref<HTMLDivElement | null>(null)
-const maxLines = 3
+const MAX_LINES = 3
 
-const { scrollTape } = useScrollTape(wordsContainer)
+const { lineJump } = useLineJump(wordsContainer)
 const calculateHeights = () => {
   const words = wordsContainer.value?.querySelectorAll('.word') || []
   if (words.length === 0) return
@@ -40,7 +40,7 @@ const calculateHeights = () => {
   const wordTopMargin = parseFloat(wordComputedStyle.marginTop) || 0
   const wordBottomMargin = parseFloat(wordComputedStyle.marginBottom) || 0
 
-  const maxHeight = (lineHeight + wordTopMargin + wordBottomMargin) * maxLines
+  const maxHeight = (lineHeight + wordTopMargin + wordBottomMargin) * MAX_LINES
 
   wordsContainer.value!.style.height = `${maxHeight}px`
   wordsContainer.value!.style.overflow = 'hidden'
@@ -62,7 +62,7 @@ watch(
     () => generator.retWords.words
   ],
   () => {
-    //
+    lineJump()
   }
 )
 
@@ -94,10 +94,13 @@ watch(
 
 .words {
   display: flex;
+  height: fit-content;
+  align-content: flex-start;
   flex-wrap: wrap;
   width: 100%;
   align-content: flex-start;
   overflow: hidden;
+  overflow: visible clip;
 }
 
 .word {

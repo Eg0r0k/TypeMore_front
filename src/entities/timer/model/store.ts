@@ -2,7 +2,7 @@ import { useConfigStore } from '@/entities/config/model/store'
 import { useTestStateStore } from '@/entities/test'
 import { defineStore } from 'pinia'
 import WebWorker from '@/shared/lib/helpers/worker?worker'
-import { useInputStore } from '@/entities/input/model'
+import { useInputStore } from '@/entities/input'
 import { useStats } from '@/shared/lib/hooks/useStats'
 import { WorkerService, useWorkerService } from '@/shared/lib/hooks/useWorkerManager'
 import { ref } from 'vue'
@@ -64,10 +64,6 @@ export const useTimerStore = defineStore('timer', () => {
   const resetTimer = (): void => {
     workerService.reset()
   }
-
-  /**
-   * Terminates the Web Worker.  Important for cleanup and resource management
-   */
 
   /**
    * Sets the timer to a specific value.  The value must be non-negative

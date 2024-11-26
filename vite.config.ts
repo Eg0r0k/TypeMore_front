@@ -20,13 +20,14 @@ export default defineConfig({
       '@widgets': fileURLToPath(new URL('./src/widgets', import.meta.url))
     }
   },
-  server:{
-    host:'0.0.0.0',
+  server: {
+    host: '0.0.0.0'
   },
   css: {
     preprocessorOptions: {
       scss: {
-        additionalData: '@import "@/app/_mixin.scss";',
+        api: 'modern',
+        additionalData: '@use  "@/app/_mixin.scss" as *;'
       }
     }
   }

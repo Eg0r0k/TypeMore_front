@@ -43,9 +43,8 @@
 import { ref, computed, watch } from 'vue'
 import { useFps } from '@vueuse/core'
 import { useStats } from '@/shared/lib/hooks/useStats'
-import { useAccuracy } from '@/shared/lib/hooks/useAccuracy'
-import logger from '@/shared/lib/helpers/logger'
-import { useInputStore } from '@/entities/input/model'
+
+import { useInputStore } from '@/entities/input'
 import { useTestStateStore } from '@/entities/test'
 import { useConfigStore } from '@/entities/config/model/store'
 import { useTimerStore } from '@/entities/timer/model/store'
@@ -56,7 +55,9 @@ const minFps = ref(0)
 const maxFps = ref(0)
 
 // Calc AVG FPS
-const avgFps = computed(() => Math.round(((minFps.value + fps.value + maxFps.value) / 3) * 10) / 10)
+const avgFps = computed(
+  () => Math.round(((minFps.value + fps.value + maxFps.value) / 3) * 10) / 10
+)
 
 // Watch changes FPS to update values
 watch(fps, (value: number) => {

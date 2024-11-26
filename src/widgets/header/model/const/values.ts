@@ -1,4 +1,6 @@
-export const NAV_LINKS = [
+import { HeaderLink } from '../../types/links'
+
+export const NAV_LINKS: readonly HeaderLink[] = [
   {
     iconName: 'material-symbols:keyboard-outline',
     label: 'Game',

@@ -4,7 +4,7 @@
       <FpsIndecator v-if="configStore.config.showFps" />
       <Header />
 
-      <main>
+      <main role="main">
         <router-view v-slot="{ Component, route }">
           <transition name="fade" mode="out-in">
             <component :is="Component" :key="route.path" />
@@ -39,18 +39,11 @@ import { useConfigStore } from '@/entities/config/model/store'
 import { useTestStateStore } from '@/entities/test'
 import { useThemes } from '@/shared/lib/hooks/useThemes'
 import { getLangList } from '@/shared/lib/helpers/json-files'
-import {
-  computed,
-  defineAsyncComponent,
-  onBeforeMount,
-  onMounted,
-  onUnmounted,
-  provide,
-  ref
-} from 'vue'
+import { defineAsyncComponent, onBeforeMount, onMounted, onUnmounted, provide, ref } from 'vue'
 import { CookieModal } from '@/features/modal/cookie'
 import { useModal } from '@/entities/modal/model/store'
 import { useFavicon } from '@vueuse/core'
+import { LANG_KEY, THEMES_KEY } from '@/shared/constants/inject-keys'
 const configStore = useConfigStore()
 const testState = useTestStateStore()
 const ModalWindow = defineAsyncComponent(() => import('@/widgets/modal/ui.vue'))
@@ -59,8 +52,8 @@ const { config, setFontFamily } = useConfigStore()
 const modalStore = useModal()
 const lang = ref()
 
-provide('themes', themesList)
-provide('lang', lang)
+provide(THEMES_KEY, themesList)
+provide(LANG_KEY, lang)
 onBeforeMount(async () => {
   await applyTheme(config.theme)
   document.querySelector('#app')?.classList.remove('hidden')
@@ -70,8 +63,13 @@ onBeforeMount(async () => {
 onMounted(async () => {
   lang.value = await getLangList()
   setFontFamily(config.fontFamily)
-  if (!localStorage.getItem('cookieConsentGiven')) {
-    modalStore.open(CookieModal, 'bottom', 'right', false)
+  try {
+    if (!localStorage.getItem('cookieConsentGiven')) {
+      modalStore.open(CookieModal, 'bottom', 'right', false)
+    }
+  }
+  catch (e) {
+    console.error("Failed to get localstorage", e)
   }
 })
 onUnmounted(() => {

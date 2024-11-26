@@ -1,13 +1,13 @@
 import { defineStore } from 'pinia'
 import { computed, onMounted, ref } from 'vue'
 import { LoginType, RegistrationType, UserSchema } from './types/auth'
-import { useOnline } from '@vueuse/core'
+// import { useOnline } from '@vueuse/core'
 import { AuthApi } from './api/authApi'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<UserSchema | null>(null)
   const isAuth = computed(() => !!user.value)
-  const isOnline = useOnline()
+  // const isOnline = useOnline()
   const accessToken = ref<string | null>(null)
   const isMacOs = ref(false)
   const logout = () => {

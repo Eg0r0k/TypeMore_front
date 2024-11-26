@@ -25,3 +25,7 @@ export const validateConfig = (key: keyof Config, value: any): boolean | string 
   const validator = validators[key]
   return validator ? validator(value) : true
 }
+
+export const emailReg = new RegExp(
+  /^(([^<>()[]+(\.[^<>()[]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+)

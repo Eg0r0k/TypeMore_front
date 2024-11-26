@@ -1,5 +1,5 @@
 import { configState } from '@/shared/lib/helpers/config'
-import { getLanguage, getLanguage as getLanguageFromFile } from '@/shared/lib/helpers/json-files'
+import { getLanguage } from '@/shared/lib/helpers/json-files'
 import {
   currentLang,
   setFontFamily,
@@ -11,6 +11,7 @@ import {
 } from '@/shared/lib/helpers/setConfigSettings'
 
 import { defineStore } from 'pinia'
+import { computed } from 'vue'
 
 /**
  *
@@ -18,6 +19,11 @@ import { defineStore } from 'pinia'
 export const useConfigStore = defineStore(
   'config',
   () => {
+    const setMode = (mode: 'words' | 'free' | 'time') => {
+      configState.mode = mode
+    }
+    const currentLanguage = computed(() => currentLang)
+
     return {
       config: configState,
       setLanguage,
@@ -27,13 +33,15 @@ export const useConfigStore = defineStore(
       setWords,
       currentLang,
       getLanguage,
-      setFontSize
+      setFontSize,
+      currentLanguage,
+      setMode
     }
   },
   {
     persist: {
       storage: localStorage,
-      paths: ['config'],
+      key: 'config',
       serializer: {
         serialize: (store) => {
           return JSON.stringify({

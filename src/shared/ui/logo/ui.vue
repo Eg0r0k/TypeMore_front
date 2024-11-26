@@ -1,8 +1,9 @@
 <template>
-  <router-link :to="'/'" class="logo">
+  <router-link :to="'/'" aria-label="TypeMore" class="logo">
     <h1>
       <div class="icon">
         <svg
+          aria-hidden="true"
           width="42"
           height="42"
           viewBox="0 0 42 42"
@@ -24,56 +25,56 @@
   </router-link>
 </template>
 <style lang="scss" scoped>
-//TODO: IDK WHY link TOOOO BIG (its problem becose user can miss click on logo!)
-.logo {
-  text-decoration: none;
-  margin-right: 10px;
-  display: flex;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  user-select: none;
-
-  & .icon {
-    display: flex;
-  }
-
-  &__text {
-    @media screen and (max-width: 539px) {
-      display: none;
-    }
-  }
-}
-
-h1 {
-  color: var(--text-color);
-  font-family: 'Balsamiq Sans';
-  transform: translateY(23%);
-  position: relative;
-  margin: 0;
-
-  & .icon {
-    position: absolute;
-    transform: translate(50%, 50%);
-    right: 50%;
-    top: -50px;
-  }
-}
-
-@media screen and (max-width: 539px) {
-  h1 {
-    transform: none;
-  }
-
+  //TODO: IDK WHY link TOOOO BIG (its problem becose user can miss click on logo!)
   .logo {
+    text-decoration: none;
+    margin-right: 10px;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-right: 4px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
 
     & .icon {
-      position: unset;
-      transform: rotate(-60deg);
+      display: flex;
+    }
+
+    &__text {
+      @media screen and (max-width: 539px) {
+        display: none;
+      }
     }
   }
-}
+
+  h1 {
+    color: var(--text-color);
+    font-family: 'Balsamiq Sans';
+    transform: translateY(23%);
+    position: relative;
+    margin: 0;
+
+    & .icon {
+      position: absolute;
+      transform: translate(50%, 50%);
+      right: 50%;
+      top: -50px;
+    }
+  }
+
+  @media screen and (max-width: 539px) {
+    h1 {
+      transform: none;
+    }
+
+    .logo {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-right: 4px;
+
+      & .icon {
+        position: unset;
+        transform: rotate(-60deg);
+      }
+    }
+  }
 </style>

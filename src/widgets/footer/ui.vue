@@ -7,7 +7,7 @@
     </div>
     <div class="footer__bottom">
       <div class="footer__left">
-        <FooterLinks :data="navLinks" />
+        <FooterLinks :links="navLinks" />
       </div>
       <div class="footer__right">
         <Button size="s" @click="handleOnClickOpenTheme">
@@ -16,72 +16,62 @@
           </template>
           {{ config.theme }}
         </Button>
-        <Button size="s" @click="handleOnClickOpenInput">
-          <template #left-icon>
-            <Icon width="12" icon="ic:outline-bookmark"></Icon>
-          </template>
-        </Button>
       </div>
     </div>
   </footer>
 </template>
 
 <script lang="ts" setup>
-import { Icon } from '@iconify/vue'
-import { Button } from '@/shared/ui/button'
-import { FooterLinks } from '@/features/footer/links'
-import { FOOTER_LINKS } from '../footer/model/const/values'
-import { useModal } from '@/entities/modal/model/store'
-import { FooterLink } from './model/types/links'
-import { ThemesModal } from '@/features/modal/themes'
-import { InputModal } from '@/features/modal/input'
-import { useConfigStore } from '@/entities/config/model/store'
-const navLinks: FooterLink[] = FOOTER_LINKS
-const modal = useModal()
-const { config } = useConfigStore()
-const handleOnClickOpenTheme = () => {
-  modal.open(ThemesModal, 'top', 'center')
-}
-const handleOnClickOpenInput = () => {
-  modal.open(InputModal, 'center', 'center')
-}
+  import { Icon } from '@iconify/vue'
+  import { Button } from '@/shared/ui/button'
+  import { FooterLinks } from '@/features/footer/links'
+  import { FOOTER_LINKS } from '../footer/model/const/values'
+  import { useModal } from '@/entities/modal/model/store'
+  import { ThemesModal } from '@/features/modal/themes'
+  import { useConfigStore } from '@/entities/config/model/store'
+  const navLinks = FOOTER_LINKS
+  const modal = useModal()
+  const { config } = useConfigStore()
+  const handleOnClickOpenTheme = () => {
+    modal.open(ThemesModal, 'top', 'center')
+  }
 </script>
 
 <style lang="scss" scoped>
-.footer {
-  display: flex;
-  flex-wrap: wrap;
-
-  & kbd {
-    background-color: var(--sub-color);
-    border-radius: 2px;
-    padding: 2px 4px;
-  }
-
-  &__top {
-    width: 100%;
-    display: inline-flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  }
-
-  &__bottom {
-    width: 100%;
+  .footer {
     display: flex;
-  }
+    flex-wrap: wrap;
 
-  &__left {
-    display: flex;
-    align-items: center;
-    flex: 1;
-  }
+    & kbd {
+      background-color: var(--sub-color);
+      border-radius: 2px;
+      padding: 2px 4px;
+    }
 
-  &__right {
-    flex: 1;
-    display: flex;
-    justify-content: end;
-    align-items: stretch;
+    &__top {
+      width: 100%;
+      display: inline-flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    &__bottom {
+      width: 100%;
+      display: flex;
+    }
+
+    &__left {
+      display: flex;
+      align-items: center;
+      flex: 1;
+    }
+
+    &__right {
+      flex: 1;
+      display: flex;
+      justify-content: end;
+      align-items: stretch;
+    }
   }
-}
 </style>

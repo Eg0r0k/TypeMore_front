@@ -1,4 +1,4 @@
-import { computed, markRaw, reactive, ref } from 'vue'
+import { computed, inject, markRaw, reactive, ref } from 'vue'
 
 import { defineStore } from 'pinia'
 import { useTestStateStore } from '../../test'
@@ -19,63 +19,37 @@ import { useStats } from '@/shared/lib/hooks/useStats'
 import { useErrorHistory, useErrorTracking } from '@/shared/lib/hooks/useErrorTracking'
 import { useAccuracyHandler } from '@/shared/lib/hooks/useAccuracyHandler'
 import { useUIState } from '@/shared/lib/hooks/useUIState'
-import { KAYS_TO_TRACK, MAX_OVERINCORRECT_LETTERS } from './const/keys'
-import { roundTo2 } from '@/shared/lib/helpers/numbers'
+import { KAYS_TO_TRACK, MAX_OVERINCORRECT_LETTERS } from '../const/keys'
 import { useReplayStore } from '@/entities/replay/model/store'
+import { useKeypressTracking } from '@/shared/lib/hooks/useKeypressTracking'
 
-type Keydata = {
-  timestamp: number
-  index: number
-}
 
-type KeypressTimings = {
-  spacing: {
-    first: number
-    last: number
-    array: number[]
-  }
-  duration: {
-    array: number[]
-  }
-}
+//TODO: Make delete events for replay. Make ctr + delete events for replay. Handle special chars ☻
 export const useInputStore = defineStore('input', () => {
-  let keyDownData: Record<string, Keydata> = reactive({})
-  let keypressTimings: KeypressTimings = reactive({
-    spacing: { first: -1, last: -1, array: [] },
-    duration: { array: [] }
-  })
-  let noCodeIndex = 0
-  let keyOverlap = { total: 0, lastStartTime: -1 }
+  const { recordKeydownTime, recordKeyupTime, resetKeypressTimings } = useKeypressTracking()
+  const { input, resetInput, getCurrent, setCurrent, popHistory, pushToHistory } = useInputState()
   const { accuracy, incrementAccuracy, resetAccuracy, accuracyPercentage } = useAccuracy()
-  const currentWord = computed(() => generator.getCurrent())
-
-  const { resetCharacterCounts, characterCounts, incrementCharacterCount } = useAccuracyHandler()
+  const { resetCharacterCounts, characterCounts, incrementSpaces, incrementCharacterCount } = useAccuracyHandler()
   const { missedWords, pushMissedWordWithHistory, resetAllErrors } = useErrorTracking()
   const { letterClasses, updateLetterClasses, getLetterClass } = useUIState()
   const { incrementKeypressErrors } = useErrorHistory()
-  const wordInputs = ref<string[]>([])
-  const currentKeypressCount = ref(0)
-  const testState = useTestStateStore()
-  const generator = markRaw(useWordGeneratorStore())
-  const replayStore = useReplayStore()
-  const {
-    input,
-    inputHistoryLength,
-    inputLength,
-    resetInput,
-
-    getCurrent,
-    setCurrent,
-    popHistory,
-    pushToHistory
-  } = useInputState()
-
-  const { playRandomClickSound, playErrorSound, setClickSounds, setErrorSound } = useSounds(
+  const { getStats } = useStats()
+  
+  //TODO: Remake this shit, make change sound in config store!
+  const { playRandomClickSound, playErrorSound } = useSounds(
     [click1, click2, click3, click4, click5, click6],
     errorSound
   )
 
-  const { getStats } = useStats()
+  const replayStore = useReplayStore()
+  const testState = useTestStateStore()
+  const generator = markRaw(useWordGeneratorStore())
+
+  const currentWord = computed(() => generator.getCurrent())
+
+  const wordInputs = ref<string[]>([])
+  //! What is it do? 
+  const currentKeypressCount = ref(0)
   const corrected = reactive({
     current: '',
     history: [] as string[]
@@ -94,47 +68,16 @@ export const useInputStore = defineStore('input', () => {
     if (thisCharCorrect) {
       playRandomClickSound()
     } else {
-      console.log('incorrect')
-
+      // console.log('incorrect')
       playErrorSound()
-    }
-  }
-  function resetKeypressTimings(): void {
-    keypressTimings = {
-      spacing: {
-        first: -1,
-        last: -1,
-        array: []
-      },
-      duration: {
-        array: []
-      }
-    }
-    keyOverlap = {
-      total: 0,
-      lastStartTime: -1
-    }
-    keyDownData = {}
-    noCodeIndex = 0
-    console.debug('Keypress timings reset')
-  }
-  function updateOverlap(now: number): void {
-    const keys = Object.keys(keyDownData)
-    if (keys.length > 1) {
-      if (keyOverlap.lastStartTime === -1) {
-        keyOverlap.lastStartTime = now
-      }
-    } else {
-      if (keyOverlap.lastStartTime !== -1) {
-        keyOverlap.total += now - keyOverlap.lastStartTime
-        keyOverlap.lastStartTime = -1
-      }
     }
   }
 
   const isCharCorrect = (char: string, charIndex: number): boolean => {
     return generator.getCurrent()[charIndex] === char
   }
+
+
   const handleInput = (event: Event): void => {
     if (!event.isTrusted) {
       ;(event.target as HTMLInputElement).value = ''
@@ -156,80 +99,21 @@ export const useInputStore = defineStore('input', () => {
     charsToProcess.split('').forEach((char, i) => handleChar(char, oldValue.length + i))
 
     input.current = newValue
-    console.log(input.current)
+    // console.log(input.current)
     wordInputs.value[testState.currentWordElementIndex] = input.current
-    console.log(wordInputs.value[testState.currentWordElementIndex])
+    // console.log(wordInputs.value[testState.currentWordElementIndex])
     updateLetterClasses(testState.currentWordElementIndex, wordInputs.value)
   }
 
   const handleKeyDown = (event: KeyboardEvent): void => {
     const now = performance.now()
     recordKeydownTime(now, event.key)
-    console.log(keyDownData, keypressTimings)
+    // console.log(keyDownData, keypressTimings)
   }
 
   const handleKeyUp = (event: KeyboardEvent): void => {
     const now = performance.now()
     recordKeyupTime(now, event.key)
-  }
-
-  const recordKeyupTime = (now: number, key: string) => {
-    // if (!KAYS_TO_TRACK.includes(key)) {
-    //   console.debug('Key not tracked', key)
-    //   return
-    // }
-
-    if (key === 'NoCode') {
-      key = `NoCode${noCodeIndex--}`
-    }
-
-    const keyDownDataForKey = keyDownData[key]
-    if (!keyDownDataForKey) return
-
-    const diff = Math.abs(keyDownDataForKey.timestamp - now)
-    keypressTimings.duration.array[keyDownDataForKey.index] = diff
-    console.debug('Keyup recorded', key, diff)
-
-    delete keyDownData[key]
-
-    updateOverlap(now)
-  }
-
-  const recordKeydownTime = (now: number, key: string) => {
-    // if (!KAYS_TO_TRACK.includes(key)) {
-    //   console.debug('Key not tracked', key)
-    //   return
-    // }
-
-    if (key === 'NoCode') {
-      key = `NoCode${noCodeIndex++}`
-    }
-
-    if (keyDownData[key]) {
-      console.debug('Key already down', key)
-      return
-    }
-
-    keyDownData[key] = {
-      timestamp: now,
-      index: keypressTimings.duration.array.length
-    }
-
-    keypressTimings.duration.array.push(0)
-    updateOverlap(now)
-
-    if (keypressTimings.spacing.last !== -1) {
-      const diff = Math.abs(now - keypressTimings.spacing.last)
-      keypressTimings.spacing.array.push(roundTo2(diff))
-      console.debug('Keydown recorded', key, diff)
-    }
-
-    if (keypressTimings.spacing.first === -1) {
-      keypressTimings.spacing.first = now
-      console.debug('First keydown recorded', key, now)
-    }
-
-    keypressTimings.spacing.last = now
   }
 
   const handleSpace = () => {
@@ -240,27 +124,45 @@ export const useInputStore = defineStore('input', () => {
     wordInputs.value[testState.currentWordElementIndex] = input.current
 
     if (isWordCorrect) {
-      characterCounts.value.correctSpaces++
-
       pushToHistory()
       testState.incrementWordIndex()
       replayStore.addReplayEvent('submitCorrectWord')
     } else {
-      characterCounts.value.incorrectSpaces++
       pushMissedWordWithHistory(currentWord.value)
       testState.incrementWordIndex()
       replayStore.addReplayEvent('submitErrorWord')
       incrementKeypressErrors()
       pushToHistory()
     }
+    incrementSpaces(isWordCorrect)
+
+    //! What is it do? IDK 
     incrementKeypressCount()
-    characterCounts.value.total++
+   
+
     if (testState.currentWordElementIndex === generator.retWords.words.length) {
       console.debug('test finished')
       testState.finish()
       return
     }
     updateLetterClasses(testState.currentWordElementIndex, wordInputs.value)
+    const currentTop: number = Math.floor(
+      document.querySelectorAll<HTMLElement>('.words .word')[testState.currentWordElementIndex - 1]
+        ?.offsetTop ?? 0
+    )
+    let nextTop: number
+    try {
+      nextTop = Math.floor(
+        document.querySelectorAll<HTMLElement>('.words .word')[testState.currentWordElementIndex]
+          ?.offsetTop ?? 0
+      )
+    } catch (e) {
+      nextTop = 0
+    }
+    if (nextTop > currentTop) {
+      //TODO: End hook "useLineJump" and call it here! 
+      console.log('JUMP')
+    }
   }
 
   const clearAllInputData = () => {
@@ -296,7 +198,7 @@ export const useInputStore = defineStore('input', () => {
     updateLetterClasses(testState.currentWordElementIndex, wordInputs.value)
     replayStore.addReplayEvent('backWord')
   }
-
+  //! What is it do? 
   const incrementKeypressCount = () => {
     currentKeypressCount.value++
   }

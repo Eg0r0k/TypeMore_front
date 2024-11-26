@@ -4,9 +4,9 @@
 }
 ::-webkit-scrollbar-thumb {
   border-radius: var(--border-radius);
-  background: (--sub-color);
+  background: var(--sub-color);
   &:hover {
-    background: (--text-color);
+    background: var(--text-color);
   }
 }
 //Mozilla & Firefox

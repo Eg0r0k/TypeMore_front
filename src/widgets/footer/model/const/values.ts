@@ -1,4 +1,6 @@
-export const FOOTER_LINKS = [
+import { FooterLink } from '../types/links'
+
+export const FOOTER_LINKS: readonly FooterLink[] = [
   {
     iconName: 'mingcute:github-fill',
     label: 'GitHub',

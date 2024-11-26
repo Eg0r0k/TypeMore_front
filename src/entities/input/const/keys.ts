@@ -69,5 +69,5 @@ export const KAYS_TO_TRACK = [
   'IntlBackslash',
   'NoCode'
 ]
-
+//? Delete this later mb 
 export const MAX_OVERINCORRECT_LETTERS = 19

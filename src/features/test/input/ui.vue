@@ -1,20 +1,12 @@
 <template>
-  <input
-    v-focus
-    :disabled="!testState.isActive"
-    :value="inputStore.input.current"
-    type="text"
-    dir="auto"
-    @input="inputStore.handleInput($event)"
-    @keydown="inputStore.handleKeyDown"
-    @keyup="inputStore.handleKeyUp"
-    @keydown.delete="handleBackspace($event)"
-    @keydown.space.prevent="inputStore.handleSpace()"
-  />
+  <input aria-label="Type here" v-focus :disabled="!testState.isActive" :value="inputStore.input.current" type="text"
+    dir="auto" @input="inputStore.handleInput($event)" @keydown="inputStore.handleKeyDown"
+    @keyup="inputStore.handleKeyUp" @keydown.delete="handleBackspace($event)"
+    @keydown.space.prevent="inputStore.handleSpace()" />
 </template>
 
 <script setup lang="ts">
-import { useInputStore } from '@/entities/input/model'
+import { useInputStore } from '@/entities/input'
 import { useTestStateStore } from '@/entities/test'
 
 const inputStore = useInputStore()

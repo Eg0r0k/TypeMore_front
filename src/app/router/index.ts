@@ -57,7 +57,7 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
-router.beforeEach((to: RouteLocationNormalizedLoaded, from) => {
+router.beforeEach((to: RouteLocationNormalizedLoaded) => {
   const title = to.meta.title ? `Type More | ${to.meta.title}` : 'Type More | Typing speed training'
   useTitle(title)
 })

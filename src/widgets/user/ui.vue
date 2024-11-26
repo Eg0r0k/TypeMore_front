@@ -41,63 +41,63 @@
 </template>
 
 <script setup lang="ts">
-import { ProfileStats } from '@/features/profile/stats'
-import { UserAvatar } from '@/shared/ui/avatar'
-import { Button } from '@/shared/ui/button'
-import { Typography } from '@/shared/ui/typography'
-import { ref } from 'vue'
-const isDropdownOpen = ref(false)
-const username = ref('JohnDoe')
-const openDropDown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value
-}
+  import { ProfileStats } from '@/features/profile/stats'
+  import { UserAvatar } from '@/shared/ui/avatar'
+  import { Button } from '@/shared/ui/button'
+  import { Typography } from '@/shared/ui/typography'
+  import { ref } from 'vue'
+  const isDropdownOpen = ref(false)
+  const username = ref('JohnDoe')
+  const openDropDown = () => {
+    isDropdownOpen.value = !isDropdownOpen.value
+  }
 </script>
 
 <style lang="scss" scoped>
-@media screen and (max-width: 375px) {
-  .user {
-    flex-direction: column;
-  }
-}
-
-.profile {
-  &__settings-dropdown {
-    position: absolute;
-    right: 0;
-    top: 100%;
-    background-color: var(--sub-alt-color);
-    outline: 2px solid var(--sub-color);
-    border-radius: 4px;
-    list-style: none;
-    padding: 4px 0;
-    margin: 0;
-    z-index: 10;
-    min-width: 120px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-
-    li {
-      padding: 4px 16px;
-
-      &:hover {
-        background-color: var(--bg-color);
-      }
+  @media screen and (max-width: 375px) {
+    .user {
+      flex-direction: column;
     }
   }
 
-  &__settings-wrapper {
-    position: absolute;
-    right: 14px;
-    top: 14px;
-  }
-}
+  .profile {
+    &__settings-dropdown {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background-color: var(--sub-alt-color);
+      outline: 2px solid var(--sub-color);
+      border-radius: 4px;
+      list-style: none;
+      padding: 4px 0;
+      margin: 0;
+      z-index: 10;
+      min-width: 120px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
-.user {
-  display: flex;
-  align-items: center;
-  gap: 32px;
+      li {
+        padding: 4px 16px;
 
-  &__username {
-    margin: 10px;
+        &:hover {
+          background-color: var(--bg-color);
+        }
+      }
+    }
+
+    &__settings-wrapper {
+      position: absolute;
+      right: 14px;
+      top: 14px;
+    }
   }
-}
+
+  .user {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+
+    &__username {
+      margin: 10px;
+    }
+  }
 </style>

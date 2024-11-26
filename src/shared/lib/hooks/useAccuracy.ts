@@ -5,20 +5,21 @@ interface Accuracy {
   correct: number
   incorrect: number
 }
+type AccuracyState = Ref<Readonly<Accuracy>>
 
 /**
- * Provides reactive state and methods for tracking accuracy.
+ * Provides reactive state and methods for tracking accuracy
  *
- * @param initialValues - Optional initial values for correct and incorrect counts.
- * @returns An object containing the accuracy state, a method to increment accuracy, and a method to reset accuracy.
+ * @param initialValues - Optional initial values for correct and incorrect counts
+ * @returns An object containing the accuracy state, a method to increment accuracy, and a method to reset accuracy
  */
 export const useAccuracy = (initialValues: Accuracy = { correct: 0, incorrect: 0 }) => {
-  const accuracy: Ref<Readonly<Accuracy>> = ref({ ...initialValues })
+  const accuracy: AccuracyState = ref({ ...initialValues })
   /**
-   * Updates the accuracy count for a given category.
+   * Updates the accuracy count for a given category
    *
-   * @param category - The category to update ('correct' or 'incorrect').
-   * @param incrementBy - The amount to increment (defaults to 1).
+   * @param category - The category to update ('correct' or 'incorrect')
+   * @param incrementBy - The amount to increment (defaults to 1)
    */
   const updateAccuracy = (category: keyof Accuracy, incrementBy: number = 1): void => {
     accuracy.value = {
@@ -28,9 +29,9 @@ export const useAccuracy = (initialValues: Accuracy = { correct: 0, incorrect: 0
   }
 
   /**
-   * Increments the accuracy counts based on whether the given answer is correct.
+   * Increments the accuracy counts based on whether the given answer is correct
    *
-   * @param isCorrect - Whether the answer is correct.
+   * @param isCorrect - Whether the answer is correct
    */
   const incrementAccuracy = (isCorrect: boolean): void => {
     if (isCorrect) {
@@ -41,7 +42,7 @@ export const useAccuracy = (initialValues: Accuracy = { correct: 0, incorrect: 0
   }
 
   /**
-   * Resets the accuracy counts to zero.
+   * Resets the accuracy counts to zero
    */
   const resetAccuracy = (): void => {
     accuracy.value = { correct: 0, incorrect: 0 }
