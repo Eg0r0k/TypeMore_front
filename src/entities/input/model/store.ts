@@ -1,7 +1,7 @@
-import { computed, inject, markRaw, reactive, ref } from 'vue'
+import { computed, markRaw, reactive, ref } from 'vue'
 
 import { defineStore } from 'pinia'
-import { useTestStateStore } from '../../test'
+
 import { useWordGeneratorStore } from '../../generator/model/store'
 import { useSounds } from '@/shared/lib/hooks/useSounds'
 
@@ -22,6 +22,7 @@ import { useUIState } from '@/shared/lib/hooks/useUIState'
 import { KAYS_TO_TRACK, MAX_OVERINCORRECT_LETTERS } from '../const/keys'
 import { useReplayStore } from '@/entities/replay/model/store'
 import { useKeypressTracking } from '@/shared/lib/hooks/useKeypressTracking'
+import { useTestStateStore } from '@/entities/test/model/store'
 
 //TODO: Make delete events for replay. Make ctr + delete events for replay. Handle special chars ☻
 export const useInputStore = defineStore('input', () => {
@@ -155,6 +156,7 @@ export const useInputStore = defineStore('input', () => {
           ?.offsetTop ?? 0
       )
     } catch (e) {
+      console.error(e)
       nextTop = 0
     }
     if (nextTop > currentTop) {

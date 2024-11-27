@@ -1,7 +1,8 @@
 import { useConfigStore } from '@/entities/config/model/store'
 import { useWordGeneratorStore } from '@/entities/generator/model/store'
-import { useInputStore } from '@/entities/input'
-import { useTestStateStore } from '@/entities/test'
+import { useInputStore } from '@entities/input/model/store'
+import { useTestStateStore } from '@/entities/test/model/store'
+
 import { useTimerStore } from '@/entities/timer/model/store'
 import { computed, onUnmounted, ref, watch, watchEffect } from 'vue'
 import { roundTo2 } from '../helpers/numbers'
@@ -13,6 +14,7 @@ type Stats = {
   correctChars: number
   missedChars: number
   extraChars: number
+  incorrectChars: number
   spaces: number
 }
 
@@ -136,6 +138,7 @@ export const useStats = () => {
     return {
       wpm: wpm.value,
       wpmRaw: raw.value,
+      incorrectChars: incorrectChars.value,
       correctChars: correctChars.value,
       missedChars: missedChars.value,
       extraChars: extraChars.value,

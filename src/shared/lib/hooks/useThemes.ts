@@ -1,6 +1,7 @@
 import { cachedFetchJson } from '../helpers/json-files'
 import { computed, reactive, watchEffect } from 'vue'
-import { useTestStateStore } from '@/entities/test'
+import { useTestStateStore } from '@/entities/test/model/store'
+
 import { useConfigStore } from '@/entities/config/model/store'
 
 const root = document.documentElement

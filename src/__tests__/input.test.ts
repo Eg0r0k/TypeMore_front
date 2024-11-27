@@ -13,13 +13,13 @@ vi.mock('@/shared/ui/typography', () => ({
 describe('Input', () => {
   it('renders input by default', () => {
     const wrapper = mount(TextInput)
-    expect(wrapper.find('input').exists()).to.be.true
+    expect(wrapper.find('input').exists()).to.equal(true)
   })
   it('renders textarea when tagName prop is textarea', () => {
     const wrapper = mount(TextInput, {
       props: { tagName: 'textarea' }
     })
-    expect(wrapper.find('textarea').exists()).to.be.true
+    expect(wrapper.find('textarea').exists()).to.equal(true)
   })
 
   it('updates modelValue on input', async () => {
@@ -44,14 +44,14 @@ describe('Input', () => {
     if (wrapper.find('.error-msg-container').exists()) {
       expect(wrapper.find('.error-msg-container').text()).to.equal(errorMessage)
     } else {
-      expect(wrapper.find('.error-msg-container').exists()).to.be.false
+      expect(wrapper.find('.error-msg-container').exists()).to.equal(false)
     }
   })
   it('disables input when isDisabled prop is true', () => {
     const wrapper = mount(TextInput, {
       props: { isDisabled: true }
     })
-    expect(wrapper.find('input').element.disabled).to.be.true
+    expect(wrapper.find('input').element.disabled).to.equal(true)
   })
   it('emits blur event when input is blurred', async () => {
     const wrapper = mount(TextInput)

@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { CheckBox } from '@/shared/ui/checkbox'
 import { describe, it, expect } from 'vitest'
+import { assert } from 'chai'
 
 describe('Checkbox', () => {
   it('renders checkbox label when passed', () => {
@@ -19,7 +20,7 @@ describe('Checkbox', () => {
     })
     const input = wrapper.find('input')
     await input.setValue(true)
-    expect(wrapper.emitted('input')).to.not.be.undefined
+    expect(wrapper.emitted('input')).to.have.lengthOf.above(0)
     expect(wrapper.emitted('input')![0]).to.have.lengthOf(1)
   })
 
@@ -30,7 +31,7 @@ describe('Checkbox', () => {
     })
     const input = wrapper.find('input')
     await input.setValue(true)
-    expect(wrapper.emitted('change')).to.not.be.undefined
+    expect(wrapper.emitted('change')).to.have.lengthOf.above(0)
     expect(wrapper.emitted('change')![0]).to.have.lengthOf(1)
   })
 
@@ -40,7 +41,7 @@ describe('Checkbox', () => {
       modelValue: false
     })
     const input = wrapper.find('input')
-    expect(input.attributes('disabled')).to.not.be.undefined
+    assert.isDefined(input.attributes('disabled'))
   })
 
   it('has correct default props', () => {
@@ -50,7 +51,7 @@ describe('Checkbox', () => {
     })
     const input = wrapper.find('input')
     expect(input.attributes('name')).to.equal('checkbox')
-    expect(wrapper.text()).to.be.empty
+    expect(wrapper.text()).to.have.lengthOf(0)
   })
 
   it('v-model works correctly', async () => {
@@ -60,7 +61,7 @@ describe('Checkbox', () => {
     })
     const input = wrapper.find('input')
     await input.setValue(true)
-    expect(wrapper.emitted('update:modelValue')).to.not.be.undefined
+    expect(wrapper.emitted('update:modelValue')).to.have.lengthOf.above(0)
     expect(wrapper.emitted('update:modelValue')![0]).to.deep.equal([true])
   })
 })

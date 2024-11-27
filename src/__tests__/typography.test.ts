@@ -5,7 +5,7 @@ import { expect } from 'chai'
 describe('Typography', () => {
   it('renders default paragraph element', () => {
     const wrapper = mount(Typography)
-    expect(wrapper.find('p').exists()).to.be.true
+    expect(wrapper.find('p').exists()).to.equal(true)
   })
   it('renders correct tag based on tagName prop', () => {
     const tags: Array<'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'a'> = [
@@ -23,7 +23,7 @@ describe('Typography', () => {
       const wrapper = mount(Typography, {
         props: { tagName: tag }
       })
-      expect(wrapper.find(tag).exists()).to.be.true
+      expect(wrapper.find(tag).exists()).to.equal(true)
     })
   })
   it('applies correct class size', () => {

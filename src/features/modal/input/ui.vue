@@ -8,6 +8,8 @@
       v-model.number="wordAmount"
       :min="0"
       :max="10000"
+      v-max-chars="5"
+      type="number"
       tag-name="input"
       placeholder="Enter word amount"
       @keydown.enter="saveWordAmount"

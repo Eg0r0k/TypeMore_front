@@ -1,6 +1,6 @@
 import { useConfigStore } from '@/entities/config/model/store'
 import { useWordGeneratorStore } from '@/entities/generator/model/store'
-import { useInputStore } from '@/entities/input'
+import { useInputStore } from '@entities/input/model/store'
 import { useReplayStore } from '@/entities/replay/model/store'
 import { useTimerStore } from '@/entities/timer/model/store'
 

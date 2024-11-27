@@ -1,8 +1,7 @@
 import { Ref, ref } from 'vue'
-import { useTestStateStore } from '@/entities/test'
+import { useTestStateStore } from '@/entities/test/model/store'
 
-
-//TODO: Add hide from DOM elements out of bounce 
+//TODO: Add hide from DOM elements out of bounce
 //TODO: Make 'jump' after second line
 export const useLineJump = (wordsRef: Ref<HTMLElement | null>) => {
   const testStore = useTestStateStore()

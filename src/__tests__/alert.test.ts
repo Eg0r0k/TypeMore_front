@@ -84,7 +84,7 @@ describe('Alert', () => {
       global: { plugins: [createPinia()] }
     })
     await wrapper.find('.alert__close-btn').trigger('click')
-    expect(wrapper.emitted('close')).to.exist
+    expect(wrapper.emitted('close')).to.have.lengthOf.above(0)
   })
   it('applies correct CSS class based on alert type', () => {
     const wrapper = mount(Alert, {

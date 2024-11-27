@@ -24,9 +24,9 @@ describe('getLastChar', () => {
   })
 
   it('should handle null and undefined gracefully', () => {
-    // @ts-expect-error
+    // @ts-expect-error function cant accept this args
     expect(getLastChar(null)).toBe('')
-    // @ts-expect-error
+    // @ts-expect-error function cant accept this args
     expect(getLastChar(undefined)).toBe('')
   })
 })

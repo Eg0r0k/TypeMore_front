@@ -173,6 +173,17 @@ input {
   color: var(--text-color);
   caret-color: var(--main-color);
 }
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 a {
   color: var(--sub-color);
   transition: all var(--transition-duration);

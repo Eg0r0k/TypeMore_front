@@ -122,7 +122,7 @@
   .alert {
     --warn: #fc9403;
     --error: #b82e2e;
-    --success: #1aaa55;
+    --success: #2aaf31;
     --info: #1f78d1;
     --main: #ffffff;
     min-width: 320px;

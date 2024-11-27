@@ -2,7 +2,7 @@ import { shuffle } from '@/shared/lib/helpers/arrays'
 import { useConfigStore } from '../../config/model/store'
 import { defineStore } from 'pinia'
 import { reactive, ref } from 'vue'
-import { useTestStateStore } from '../../test'
+import { useTestStateStore } from '@/entities/test/model/store'
 
 import { logRandomIndex } from '@/shared/lib/helpers/misc'
 import { getLastChar } from '@/shared/lib/helpers/string'

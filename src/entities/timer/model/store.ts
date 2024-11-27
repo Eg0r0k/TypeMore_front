@@ -1,8 +1,9 @@
 import { useConfigStore } from '@/entities/config/model/store'
-import { useTestStateStore } from '@/entities/test'
+import { useTestStateStore } from '@/entities/test/model/store'
+
 import { defineStore } from 'pinia'
 import WebWorker from '@/shared/lib/helpers/worker?worker'
-import { useInputStore } from '@/entities/input'
+import { useInputStore } from '@entities/input/model/store'
 import { useStats } from '@/shared/lib/hooks/useStats'
 import { WorkerService, useWorkerService } from '@/shared/lib/hooks/useWorkerManager'
 import { ref } from 'vue'

@@ -6,106 +6,115 @@
     <TestInput />
     <Test :is-right-to-left="testState.isRightToLeft" />
     <Popper class="refresh__tip" hover arrow :interactive="false" content="Restart test">
-      <button role="button" class="refresh" @click.stop="testState.restartTest" aria-label="Reapeat test">
+      <button
+        role="button"
+        class="refresh"
+        @click.stop="testState.restartTest"
+        aria-label="Reapeat test"
+      >
         <Icon width="24" icon="eva:refresh-fill" />
       </button>
     </Popper>
     <KeyMap />
   </div>
-  <FinalScreen v-else />
+  <asyncFinalScreen v-else />
 </template>
 
 <script lang="ts" setup>
-import { KeyMap } from '@/features/layouts/keymap'
-import { useConfigStore } from '@/entities/config/model/store'
-import { useTestStateStore } from '@/entities/test'
-import { Icon } from '@iconify/vue'
-import { useKeyModifier } from '@vueuse/core'
-import { onMounted, onUnmounted, watch } from 'vue'
-import { useInputStore } from '@/entities/input'
-import { Test } from '@/widgets/test'
-import { TestInput } from '@/features/test/input'
-import { TestControls } from '@/features/test/controls'
-import { FinalScreen } from '@/features/home/final'
+  import { KeyMap } from '@/features/layouts/keymap'
+  import { useConfigStore } from '@/entities/config/model/store'
+  import { useTestStateStore } from '@/entities/test/model/store'
 
-const testState = useTestStateStore()
-const configStore = useConfigStore()
-const inputStore = useInputStore()
+  import { Icon } from '@iconify/vue'
+  import { useKeyModifier } from '@vueuse/core'
+  import { defineAsyncComponent, onMounted, onUnmounted, watch } from 'vue'
+  import { useInputStore } from '@entities/input/model/store'
+  import { Test } from '@/widgets/test'
+  import { TestInput } from '@/features/test/input'
+  import { TestControls } from '@/features/test/controls'
 
-const capsLockState = useKeyModifier('CapsLock')
+  //? ID how critical is it (mb change it back later)
+  // btw in async save 500kb in bundle
+  const asyncFinalScreen = defineAsyncComponent(() => import('@widgets/final'))
 
-watch(
-  () => configStore.config,
-  async () => {
-    inputStore.clearAllInputData()
+  const testState = useTestStateStore()
+  const configStore = useConfigStore()
+  const inputStore = useInputStore()
+
+  const capsLockState = useKeyModifier('CapsLock')
+
+  watch(
+    () => configStore.config,
+    async () => {
+      inputStore.clearAllInputData()
+      await testState.init()
+    },
+    { deep: true }
+  )
+
+  onMounted(async () => {
     await testState.init()
-  },
-  { deep: true }
-)
+  })
 
-onMounted(async () => {
-  await testState.init()
-})
-
-onUnmounted(() => {
-  testState.clear()
-})
+  onUnmounted(() => {
+    testState.clear()
+  })
 </script>
 
 <style lang="scss" scoped>
-.test {
-  padding-top: 100px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-
-  &__container {
+  .test {
+    padding-top: 100px;
     display: flex;
+    flex-direction: column;
+    align-items: center;
     width: 100%;
-    justify-content: center;
-  }
-}
+    height: 100%;
 
-.caps-detected {
-  width: -moz-fit-content;
-  width: fit-content;
-  padding: 4px;
-  border-radius: var(--border-radius);
-  color: var(--text-color);
-  background-color: var(--error-color);
-  align-self: flex-start;
-}
-
-.refresh {
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: var(--border-radius);
-  border: 0px;
-  padding: 6px 16px;
-  background-color: transparent;
-  transition: all var(--transition-duration);
-
-  svg {
-    transition: all var(--transition-duration);
-    color: var(--sub-color);
-  }
-
-  &:active {
-    box-shadow: 0 0 0 1px var(--text-color);
-  }
-
-  &:hover {
-    svg {
-      color: var(--text-color);
+    &__container {
+      display: flex;
+      width: 100%;
+      justify-content: center;
     }
   }
 
-  &__tip {
-    margin-top: 20px;
+  .caps-detected {
+    width: -moz-fit-content;
+    width: fit-content;
+    padding: 4px;
+    border-radius: var(--border-radius);
+    color: var(--text-color);
+    background-color: var(--error-color);
+    align-self: flex-start;
   }
-}
+
+  .refresh {
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: var(--border-radius);
+    border: 0px;
+    padding: 6px 16px;
+    background-color: transparent;
+    transition: all var(--transition-duration);
+
+    svg {
+      transition: all var(--transition-duration);
+      color: var(--sub-color);
+    }
+
+    &:active {
+      box-shadow: 0 0 0 1px var(--text-color);
+    }
+
+    &:hover {
+      svg {
+        color: var(--text-color);
+      }
+    }
+
+    &__tip {
+      margin-top: 20px;
+    }
+  }
 </style>

@@ -5,7 +5,7 @@ interface Accuracy {
   correct: number
   incorrect: number
 }
-type AccuracyState = Ref<Readonly<Accuracy>>
+export type AccuracyState = Ref<Readonly<Accuracy>>
 
 /**
  * Provides reactive state and methods for tracking accuracy
