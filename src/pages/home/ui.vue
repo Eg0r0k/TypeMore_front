@@ -21,22 +21,26 @@ import { useConfigStore } from '@/entities/config/model/store'
 import { useTestStateStore } from '@/entities/test/model/store'
 
 import { Icon } from '@iconify/vue'
-import { useKeyModifier } from '@vueuse/core'
+import { useKeyModifier, useMagicKeys } from '@vueuse/core'
 import { onMounted, onUnmounted, watch } from 'vue'
 import { useInputStore } from '@entities/input/model/store'
 import { Test } from '@/widgets/test'
 import { TestInput } from '@/features/test/input'
 import { TestControls } from '@/features/test/controls'
 import { FinalScreen } from '@/widgets/final'
-
-
-
-
 const testState = useTestStateStore()
 const configStore = useConfigStore()
 const inputStore = useInputStore()
 
 const capsLockState = useKeyModifier('CapsLock')
+const keys = useMagicKeys();
+const ctrlEnterPressed = keys['ctrl+enter'];
+watch(ctrlEnterPressed, (isPressed) => {
+  if (isPressed) {
+    testState.restartTest();
+  }
+});
+
 
 watch(
   () => configStore.config,

@@ -2,7 +2,6 @@
     <div class="devtools" :style="style">
         <div ref="devtoolsRef" class="devtools__head">
             <div class="dot--group" @click="toggleDevtools">
-
                 <span class="dot"></span>
                 <span class="dot"></span>
                 <span class="dot"></span>
@@ -35,8 +34,9 @@
             </div>
             <div style="max-width: 200px">
                 <small>Histroy: {{ inputStore.input.history }}</small>
-                <!-- <small>Miss: {{ inputStore.missedWords }} </small> -->
+
             </div>
+            <small>Miss: {{ inputStore.missedWords }} </small>
         </div>
 
 
@@ -80,6 +80,7 @@ const { x, y, style } = useDraggable(devtoolsRef, {
 
 <style lang="scss" scoped>
 .devtools {
+    outline: 2px solid var(--sub-color);
     min-width: 300px;
     position: fixed;
     z-index: var(--fps-z);
@@ -113,9 +114,8 @@ const { x, y, style } = useDraggable(devtoolsRef, {
 
     &--group {
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        grid-template-rows: 1fr 1fr;
-
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(2, 1fr);
         gap: 4px;
         padding: 2px;
     }

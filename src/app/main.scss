@@ -61,7 +61,7 @@ $fonts: (
   --popper-theme-padding: 6px;
   --popper-theme-box-shadow: 0;
 }
-
+//TODO: Delte all styles for slider!
 .splide__arrow--next {
   right: 8px;
 }
@@ -136,7 +136,7 @@ $fonts: (
   transform: scale(1.2);
   z-index: 1;
 }
-
+//-------------------------------------------------------
 main {
   display: grid;
   height: 100%;
@@ -150,7 +150,6 @@ html {
   scrollbar-width: thin;
   line-height: normal;
   -webkit-text-size-adjust: 100%;
-
 }
 body {
   overflow-x: hidden;
@@ -184,7 +183,16 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
-
+key {
+  color: var(--bg-color);
+  background-color: var(--sub-color);
+  padding: 0.1rem 0.3rem;
+  margin: 0rem;
+  border-radius: 0.1rem;
+  display: inline-block;
+  font-size: 0.7rem;
+  line-height: 0.7rem;
+}
 a {
   color: var(--sub-color);
   transition: all var(--transition-duration);
