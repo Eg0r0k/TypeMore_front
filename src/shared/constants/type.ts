@@ -1,5 +1,6 @@
 export interface Config {
   words: number
+  devTools: boolean
   time: number
   language: string
   theme: string

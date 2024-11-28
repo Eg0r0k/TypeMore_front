@@ -1,6 +1,7 @@
 import { Config } from './type'
 
 export default {
+  devTools: false,
   words: 50,
   time: 10,
   fontSize: 16,
