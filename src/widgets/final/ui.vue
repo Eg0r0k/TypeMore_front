@@ -60,88 +60,88 @@
 </template>
 
 <script setup lang="ts">
-import { useAlertStore } from '@/entities/alert'
-import { AlertType } from '@/entities/alert/types/alertData'
-import { useInputStore } from '@entities/input/model/store'
-import { FinalControls } from '@/features/final/controls'
-import { useStats } from '@/shared/lib/hooks/useStats'
-import { TestChart } from '@/shared/ui/chart'
-import { Typography } from '@/shared/ui/typography'
+  import { useAlertStore } from '@/entities/alert'
+  import { AlertType } from '@/entities/alert/types/alertData'
+  import { useInputStore } from '@entities/input/model/store'
+  import { FinalControls } from '@/features/final/controls'
+  import { useStats } from '@/shared/lib/hooks/useStats'
+  import { TestChart } from '@/shared/ui/chart'
+  import { Typography } from '@/shared/ui/typography'
 
-import html2canvas from 'html2canvas'
-import { computed, ref } from 'vue'
-import Popper from 'vue3-popper'
-import { useDebounceFn } from '@vueuse/core'
-const { getStats } = useStats()
-const rawWpm = computed(() => Math.floor(getStats.value.wpmRaw))
-const wpm = computed(() => Math.floor(getStats.value.wpm))
-const accuracy = computed(() => inputStore.accuracy)
-const accuracyPercentage = computed(() => Math.floor(inputStore.accuracyPercentage))
-const characterStats = computed(
-  () =>
-    `${getStats.value.correctChars}/${getStats.value.incorrectChars}/${getStats.value.missedChars}/${getStats.value.extraChars}`
-)
+  import html2canvas from 'html2canvas'
+  import { computed, ref } from 'vue'
 
-const inputStore = useInputStore()
+  import { useDebounceFn } from '@vueuse/core'
+  const { getStats } = useStats()
+  const rawWpm = computed(() => Math.floor(getStats.value.wpmRaw))
+  const wpm = computed(() => Math.floor(getStats.value.wpm))
+  const accuracy = computed(() => inputStore.accuracy)
+  const accuracyPercentage = computed(() => Math.floor(inputStore.accuracyPercentage))
+  const characterStats = computed(
+    () =>
+      `${getStats.value.correctChars}/${getStats.value.incorrectChars}/${getStats.value.missedChars}/${getStats.value.extraChars}`
+  )
 
-const alertStore = useAlertStore()
-const finalScreenRef = ref<HTMLElement | null>(null)
-const captureScreenshot = async (el: HTMLElement | null): Promise<string | null> => {
-  if (!el) return null
-  const canvas = await html2canvas(el)
-  return canvas.toDataURL('image/png')
-}
+  const inputStore = useInputStore()
 
-const handleCopyScreenshot = async (): Promise<void> => {
-  const image = await captureScreenshot(finalScreenRef.value)
-  if (!image) return
-
-  try {
-    const clipboardItem = new ClipboardItem({
-      'image/png': await fetch(image).then((res) => res.blob())
-    })
-    await navigator.clipboard.write([clipboardItem])
-    alertStore.addAlert({
-      msg: 'Stats copied to clipboard',
-      type: AlertType.Success,
-      duration: 2000
-    })
-  } catch (err: any) {
-    alertStore.addAlert({
-      title: 'Failed to copy to clipboard',
-      msg: err.message || String(err),
-      type: AlertType.Error,
-      duration: 2000
-    })
+  const alertStore = useAlertStore()
+  const finalScreenRef = ref<HTMLElement | null>(null)
+  const captureScreenshot = async (el: HTMLElement | null): Promise<string | null> => {
+    if (!el) return null
+    const canvas = await html2canvas(el)
+    return canvas.toDataURL('image/png')
   }
-}
-const debounceScreenshot = useDebounceFn(handleCopyScreenshot, 250)
 
+  const handleCopyScreenshot = async (): Promise<void> => {
+    const image = await captureScreenshot(finalScreenRef.value)
+    if (!image) return
+
+    try {
+      const clipboardItem = new ClipboardItem({
+        'image/png': await fetch(image).then((res) => res.blob())
+      })
+      await navigator.clipboard.write([clipboardItem])
+      alertStore.addAlert({
+        msg: 'Stats copied to clipboard',
+        type: AlertType.Success,
+        duration: 2000
+      })
+    } catch (err: any) {
+      alertStore.addAlert({
+        title: 'Failed to copy to clipboard',
+        msg: err.message || String(err),
+        type: AlertType.Error,
+        duration: 2000
+      })
+    }
+  }
+  const debounceScreenshot = useDebounceFn(handleCopyScreenshot, 250)
 </script>
 
 <style lang="scss" scoped>
-@media screen and (max-width: 375px) {}
-
-.wideStats {
-  display: flex;
-  justify-content: space-between;
-}
-
-.final-screen {
-  &__result {
-    display: grid;
-    gap: 1rem;
-    align-items: center;
-    grid-template-columns: auto 1fr;
-    grid-template-areas:
-      'stats chart'
-      'morestats morestats';
-
-    padding: 15px 25px 15px 25px;
+  @media screen and (max-width: 375px) {
   }
 
-  &__chart {
-    height: 200px;
+  .wideStats {
+    display: flex;
+    justify-content: space-between;
   }
-}
+
+  .final-screen {
+    &__result {
+      display: grid;
+      gap: 1rem;
+      align-items: center;
+      grid-template-columns: auto 1fr;
+      grid-template-areas:
+        'stats chart'
+        'morestats morestats';
+
+      padding: 15px 25px 15px 25px;
+    }
+
+    &__chart {
+      height: 200px;
+    }
+  }
 </style>

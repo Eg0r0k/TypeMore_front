@@ -1,23 +1,23 @@
-@use "sass:meta";
-@use "reset";
-@use "normalize";
-@use "scroll";
+@use 'sass:meta';
+@use 'reset';
+@use 'normalize';
+@use 'scroll';
 
 $fonts: (
-  "Geist": "./fonts/Geist-Regular",
-  "Hack": "./fonts/hack-regular",
-  "JetBrainsMono": "./fonts/JetBrainsMono-Regular",
-  "Mononoki": "./fonts/Mononoki-Regular",
-  "Montserrat": "./fonts/Montserrat-Regular",
-  "ShantellSans": "./fonts/Shantell_Sans-Normal-Regular",
-  "Vazirmatn": "./fonts/Vazirmatn-Regular",
-  "Lobster": "./fonts/Lobster",
-  "BalsamiqSans": "./fonts/BalsamiqSans-Regular"
+  'Geist': './fonts/Geist-Regular',
+  'Hack': './fonts/hack-regular',
+  'JetBrainsMono': './fonts/JetBrainsMono-Regular',
+  'Mononoki': './fonts/Mononoki-Regular',
+  'Montserrat': './fonts/Montserrat-Regular',
+  'ShantellSans': './fonts/Shantell_Sans-Normal-Regular',
+  'Vazirmatn': './fonts/Vazirmatn-Regular',
+  'Lobster': './fonts/Lobster',
+  'BalsamiqSans': './fonts/BalsamiqSans-Regular'
 );
 @mixin font-face($font-name, $font-path) {
   @font-face {
-    font-family: "#{$font-name}";
-    src: url("#{$font-path}.woff2") format("woff2");
+    font-family: '#{$font-name}';
+    src: url('#{$font-path}.woff2') format('woff2');
     font-weight: normal;
     font-style: normal;
   }
@@ -27,7 +27,7 @@ $fonts: (
   @include font-face($font-name, $font-path);
 }
 
-@include meta.load-css("mixin");
+@include meta.load-css('mixin');
 // Base colors
 :root {
   --bg-color: #121212;
@@ -37,7 +37,7 @@ $fonts: (
   --text-color: #eeeeee;
   --error-color: #da3333;
   --error-extra-color: #791717;
-  --font: "JetBrainsMono", "Vazirmatn", monospace;
+  --font: 'JetBrainsMono', 'Vazirmatn', monospace;
   --border-radius: 6px;
   --transition-duration: 0.08s;
   --navigation-z: 2;
@@ -179,7 +179,7 @@ input::-webkit-inner-spin-button {
   margin: 0;
 }
 
-input[type="number"] {
+input[type='number'] {
   -moz-appearance: textfield;
   appearance: textfield;
 }

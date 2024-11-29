@@ -1,14 +1,14 @@
-import { Ref, ref } from 'vue'
+import { Ref } from 'vue'
 import { useTestStateStore } from '@/entities/test/model/store'
 
 //TODO: Add hide from DOM elements out of bounce
 //TODO: Make 'jump' after second line
 export const useLineJump = (wordsRef: Ref<HTMLElement | null>) => {
   const testStore = useTestStateStore()
-  const currentTestLine = ref(0)
+
   let lineTransition = false
 
-  const lineJump = async () => {
+  const lineJump = async (currentTop: number) => {
     if (!wordsRef.value || lineTransition) return
 
     const wordElements = wordsRef.value.querySelectorAll('.word')
@@ -17,36 +17,28 @@ export const useLineJump = (wordsRef: Ref<HTMLElement | null>) => {
     const currentWordElement = wordElements[testStore.currentWordElementIndex] as HTMLElement
     if (!currentWordElement) return
 
-    const currentWordTop = currentWordElement.offsetTop
+    const currentWordTop = currentTop
 
-    // Only proceed if we're past the first line
-    if (currentTestLine.value > 0) {
-      // Find words to hide
-      const toHide: HTMLElement[] = []
-      for (let i = 0; i < testStore.currentWordElementIndex; i++) {
-        const word = wordElements[i] as HTMLElement
-        if (word.style.display === 'none') continue
+    const toHide: HTMLElement[] = []
+    for (let i = 0; i < testStore.currentWordElementIndex; i++) {
+      const word = wordElements[i] as HTMLElement
+      if (word.style.display === 'none') continue
 
-        const wordTop = Math.floor(word.offsetTop)
-        if (wordTop < currentWordTop - 10) {
-          toHide.push(word)
-        }
+      const wordTop = Math.floor(word.offsetTop)
+
+      if (wordTop < currentWordTop - 10) {
+        toHide.push(word)
       }
-
-      // Hide words immediately
-      lineTransition = true
-      toHide.forEach((word) => {
-        word.style.display = 'none'
-      })
-      lineTransition = false
     }
 
-    // Increment line counter after processing
-    currentTestLine.value++
+    lineTransition = true
+    toHide.forEach((word) => {
+      word.style.display = 'none'
+    })
+    lineTransition = false
   }
 
   return {
-    lineJump,
-    currentTestLine
+    lineJump
   }
 }

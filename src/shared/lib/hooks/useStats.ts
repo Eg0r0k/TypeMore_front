@@ -16,6 +16,7 @@ type Stats = {
   extraChars: number
   incorrectChars: number
   spaces: number
+  correctSpaces: number
 }
 
 export const useStats = () => {
@@ -142,7 +143,8 @@ export const useStats = () => {
       correctChars: correctChars.value,
       missedChars: missedChars.value,
       extraChars: extraChars.value,
-      spaces: spaces.value
+      spaces: spaces.value,
+      correctSpaces: correctSpaces.value
     }
   })
 

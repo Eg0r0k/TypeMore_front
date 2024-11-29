@@ -10,8 +10,8 @@ import VFocus from './shared/directives/VFocus'
 
 export const installPlugins = (app: App) => {
   const pinia = createPinia()
-  pinia.use(piniaPluginPersistedstate)
   app.use(pinia)
+  pinia.use(piniaPluginPersistedstate)
   app.use(VueReCaptcha, recaptchaOptions)
   app.use(VueQueryPlugin)
   app.directive('focus', VFocus)

@@ -145,24 +145,6 @@ export const useInputStore = defineStore('input', () => {
       return
     }
     updateLetterClasses(testState.currentWordElementIndex, wordInputs.value)
-    const currentTop: number = Math.floor(
-      document.querySelectorAll<HTMLElement>('.words .word')[testState.currentWordElementIndex - 1]
-        ?.offsetTop ?? 0
-    )
-    let nextTop: number
-    try {
-      nextTop = Math.floor(
-        document.querySelectorAll<HTMLElement>('.words .word')[testState.currentWordElementIndex]
-          ?.offsetTop ?? 0
-      )
-    } catch (e) {
-      console.error(e)
-      nextTop = 0
-    }
-    if (nextTop > currentTop) {
-      //TODO: End hook "useLineJump" and call it here!
-      console.log('JUMP')
-    }
   }
 
   const clearAllInputData = () => {

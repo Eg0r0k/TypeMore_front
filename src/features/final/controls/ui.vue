@@ -34,10 +34,8 @@
 <script setup lang="ts">
   import { useReplayStore } from '@/entities/replay/model/store'
   import { useTestStateStore } from '@/entities/test/model/store'
-
   import { Button } from '@/shared/ui/button'
   import { Icon } from '@iconify/vue'
-  import Popper from 'vue3-popper'
   const replayStore = useReplayStore()
   const testState = useTestStateStore()
 

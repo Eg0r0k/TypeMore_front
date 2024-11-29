@@ -9,11 +9,12 @@
 <script lang="ts" setup>
   import { ref, onMounted, watch, nextTick } from 'vue'
   import { useWordGeneratorStore } from '@/entities/generator/model/store'
-  import { useInputStore } from '@entities/input/model/store'
   import { useTestStateStore } from '@/entities/test/model/store'
 
   import { TestWord } from '@/features/test/word'
   import { useLineJump } from '@/shared/lib/hooks/useLineJump'
+
+  const MAX_LINES = 3
 
   interface Props {
     isRightToLeft?: boolean
@@ -23,12 +24,10 @@
     isRightToLeft: false
   })
 
-  const inputStore = useInputStore()
   const testState = useTestStateStore()
   const generator = useWordGeneratorStore()
 
   const wordsContainer = ref<HTMLDivElement | null>(null)
-  const MAX_LINES = 3
 
   const { lineJump } = useLineJump(wordsContainer)
   const calculateHeights = () => {
@@ -50,21 +49,32 @@
       calculateHeights()
     })
   }
+  const checkLineJump = () => {
+    const words = wordsContainer.value?.querySelectorAll<HTMLElement>('.word')
+    if (!words || testState.currentWordElementIndex === 0) return
 
+    const currentTop = Math.floor(words[testState.currentWordElementIndex - 1]?.offsetTop ?? 0)
+    let nextTop: number
+
+    try {
+      nextTop = Math.floor(words[testState.currentWordElementIndex]?.offsetTop ?? 0)
+    } catch (e) {
+      console.error(e)
+      nextTop = 0
+    }
+
+    if (nextTop > currentTop) {
+      console.log('JUMP')
+      lineJump(currentTop)
+    }
+  }
   onMounted(async () => {
     updateHeights()
   })
 
-  watch(
-    [
-      () => testState.currentWordElementIndex,
-      () => inputStore.input.current,
-      () => generator.retWords.words
-    ],
-    () => {
-      lineJump()
-    }
-  )
+  watch([() => testState.currentWordElementIndex], () => {
+    checkLineJump()
+  })
 
   watch(
     () => generator.retWords.words,

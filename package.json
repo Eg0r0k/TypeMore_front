@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "build": "vite build",
     "type-check": "vue-tsc --build --force",
-    "lint": "eslint . --fix --ignore-pattern .gitignore --debug",
+    "lint": "eslint src/** --debug ",
     "format": "prettier --write src/",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
