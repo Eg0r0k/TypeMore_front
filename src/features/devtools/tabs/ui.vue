@@ -27,8 +27,8 @@
 <script lang="ts" setup>
   import { Button } from '@shared/ui/button'
   import { ref, computed } from 'vue'
-  import DevtoolsTabControls from '../screens/DevtoolsTabControls.vue'
-  import DevtoolsTabInfo from '../screens/DevtoolsTabInfo.vue'
+  import DevtoolsTabControls from '../screens/DevtoolsTabInfo.vue'
+  import DevtoolsTabInfo from '../screens/DevtoolsTabControls.vue'
 
   interface Tab {
     name: string

@@ -34,3 +34,6 @@ coverage
 *storybook.log
 
 .jest-test-results.json
+
+
+electron

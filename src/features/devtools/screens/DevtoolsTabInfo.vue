@@ -1,83 +1,102 @@
 <template>
-  <p class="stat-line">
-    <span>FPS</span>
-    <ToggleButton
-      size="s"
-      value="showFps"
-      v-model="configStore.config.showFps"
-      @update:modelValue="configStore.setFPS"
-      label="Devtools change"
-      toggledColor="main"
-      color="shadow"
-    >
-      {{ configStore.config.showFps ? 'OFF' : 'ON' }}
-    </ToggleButton>
-  </p>
+  <DevtoolsLabel>
+    <template #label>Test Info</template>
+    <p class="stat-line">
+      <span>Timer:</span>
+      <span>
+        <NumberFlow :value="hours" :format="{ minimumIntegerDigits: 2 }" />
+        <span>:</span>
+        <NumberFlow :value="minutes" :format="{ minimumIntegerDigits: 2 }" />
+        <span>:</span>
+        <NumberFlow :value="seconds" :format="{ minimumIntegerDigits: 2 }" />
+      </span>
+    </p>
+    <p class="stat-line">
+      <span>State:</span>
+      <span>{{ testState.isActive }}</span>
+    </p>
+    <p class="stat-line">
+      <span>Words:</span>
+      <span>{{ testState.currentWordElementIndex }}/{{ configStore.config.words }}</span>
+    </p>
+  </DevtoolsLabel>
 
-  <p class="stat-line">
-    <span>Toggle keyboard</span>
-    <ToggleButton
-      size="s"
-      value="showKeyboard"
-      label="toggle visibility keyboard"
-      toggled-color="main"
-      color="shadow"
-      v-model="configStore.config.showKeyboard"
-    >
-      {{ configStore.config.showKeyboard ? 'OFF' : 'ON' }}
-    </ToggleButton>
-  </p>
-  <p class="stat-line">
-    <span>Play sound</span>
-    <ToggleButton
-      size="s"
-      value="playSound"
-      v-model="configStore.config.playSound"
-      label="Devtools change"
-      toggledColor="main"
-      color="shadow"
-    >
-      {{ configStore.config.playSound ? 'OFF' : 'ON' }}
-    </ToggleButton>
-  </p>
-  <p class="stat-line">
-    <span>Toggle mode</span>
-  </p>
-  <ToggleGroup v-model="configStore.config.mode" @change="configStore.setMode">
-    <ToggleButton label="Word mod" color="shadow" value="words" toggledColor="main">
-      <template #left-icon>
-        <Icon width="20" icon="mynaui:letter-a-solid" />
-      </template>
-    </ToggleButton>
-    <ToggleButton label="Time mod" color="shadow" value="time" toggledColor="main">
-      <template #left-icon>
-        <Icon width="20" icon="mingcute:time-fill" />
-      </template>
-    </ToggleButton>
-    <ToggleButton label="Free mod" color="shadow" value="free" toggledColor="main">
-      <template #left-icon>
-        <Icon width="20" icon="ic:round-crop-free" />
-      </template>
-    </ToggleButton>
-  </ToggleGroup>
+  <DevtoolsLabel>
+    <template #label>Stats</template>
+    <p class="stat-line">
+      <span>WPM:</span>
+      <span>{{ getStats.wpm }}</span>
+    </p>
+    <p class="stat-line">
+      <span>Raw WPM:</span>
+      <span>{{ getStats.wpmRaw }}</span>
+    </p>
+    <p class="stat-line">
+      <span>Correct Chars:</span>
+      <span>{{ getStats.correctChars }}</span>
+    </p>
+    <p class="stat-line">
+      <span>Incorrect Chars:</span>
+      <span>{{ getStats.incorrectChars }}</span>
+    </p>
+    <p class="stat-line">
+      <span>Missed Chars:</span>
+      <span>{{ getStats.missedChars }}</span>
+    </p>
+    <p class="stat-line">
+      <span>Extra Chars:</span>
+      <span>{{ getStats.extraChars }}</span>
+    </p>
+    <p class="stat-line">
+      <span>Spaces:</span>
+      <span>{{ getStats.correctSpaces }}/{{ getStats.spaces }}</span>
+    </p>
+  </DevtoolsLabel>
 
-  <p class="stat-line">
-    <span>Url</span>
-    <TextInput size="xs" color="gray" />
-    <Button size="s">asd</Button>
-  </p>
+  <DevtoolsLabel>
+    <template #label>Accuracy</template>
+    <p class="stat-line">
+      <span>Accuracy:</span>
+      <span>{{ inputStore.accuracyPercentage }}%</span>
+    </p>
+    <p class="stat-line">
+      <span>Correct:</span>
+      <span>{{ inputStore.accuracy.correct }}</span>
+    </p>
+    <p class="stat-line">
+      <span>Incorrect:</span>
+      <span>{{ inputStore.accuracy.incorrect }}</span>
+    </p>
+  </DevtoolsLabel>
+
+  <DevtoolsLabel>
+    <template #label>Inputs</template>
+    <small>History: {{ inputStore.input.history }}</small>
+    <br />
+    <small>Miss: {{ inputStore.missedWords }}</small>
+  </DevtoolsLabel>
 </template>
 
-<script lang="ts" setup>
-  import { ToggleButton } from '@/shared/ui/toggleButton'
+<script setup lang="ts">
   import { useConfigStore } from '@/entities/config/model/store'
-  import { ToggleGroup } from '@/shared/ui/toggleGroup'
-  import { Icon } from '@iconify/vue'
-  import { TextInput } from '@/shared/ui/input'
-  import { Button } from '@/shared/ui/button'
+  import { useInputStore } from '@/entities/input'
+  import { useTestStateStore } from '@/entities/test'
+  import { useTimerStore } from '@/entities/timer/model/store'
+  import { useStats } from '@/shared/lib/hooks/useStats'
+  import { DevtoolsLabel } from '../label'
+  import NumberFlow from '@number-flow/vue'
+  import { computed } from 'vue'
 
+  const { getStats } = useStats()
+  const inputStore = useInputStore()
   const configStore = useConfigStore()
+  const timerStore = useTimerStore()
+  const testState = useTestStateStore()
+  const hours = computed(() => Math.floor(timerStore.time / 3600))
+  const minutes = computed(() => Math.floor((timerStore.time % 3600) / 60))
+  const seconds = computed(() => timerStore.time % 60)
 </script>
+
 <style lang="scss" scoped>
   .stat-line {
     display: flex;
