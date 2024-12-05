@@ -4,11 +4,18 @@ export interface Config {
   time: number
   language: string
   theme: string
-  mode: 'words' | 'free' | 'time'
+  mode: ConfigModes
   backgroundImg: string
   showFps: boolean
   playSound: boolean
+  showKeyboard: boolean
   soundVolume: number
   fontSize: number
   fontFamily: string
+}
+
+export enum ConfigModes {
+  Words = 'words',
+  Free = 'free',
+  Time = 'time'
 }

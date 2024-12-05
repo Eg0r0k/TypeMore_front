@@ -60,6 +60,9 @@
     color: var(--sub-color);
 
     //user-select: none;
+    & span{
+      display: inline-block;
+    }
     &:has(.incorrect) {
       border-bottom: 2px solid var(--error-color);
     }

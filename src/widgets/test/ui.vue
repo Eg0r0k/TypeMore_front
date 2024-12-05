@@ -1,7 +1,8 @@
 <template>
+  <!-- <button @click="clearWords">Clear</button> -->
   <div ref="wordsContainer" class="words" :class="{ rightToLeft: props.isRightToLeft }">
     <template v-for="(word, wordIndex) in generator.retWords.words" :key="`${word}-${wordIndex}`">
-      <TestWord :word="word" :wordIndex="wordIndex" />
+      <TestWord :word="word" :wordIndex="wordIndex + currentIndex" />
     </template>
   </div>
 </template>
@@ -13,19 +14,33 @@
 
   import { TestWord } from '@/features/test/word'
   import { useLineJump } from '@/shared/lib/hooks/useLineJump'
-
+  const generator = useWordGeneratorStore()
+  //TODO: END THIS SHIT
+  //!
   const MAX_LINES = 3
 
   interface Props {
     isRightToLeft?: boolean
   }
 
+  const showedWords = ref<string[]>([])
+  const currentIndex = ref(0)
+
   const props = withDefaults(defineProps<Props>(), {
     isRightToLeft: false
   })
 
+  // const clearWords = () => {
+  //   let temp = testState.currentWordElementIndex - 3
+  //   if (temp < 0) temp = 0
+  //   currentIndex.value = temp
+  //   showedWords.value = unref(generator.retWords.words).slice(
+  //     temp,
+  //     testState.currentWordElementIndex + 7
+  //   )
+  // }
+
   const testState = useTestStateStore()
-  const generator = useWordGeneratorStore()
 
   const wordsContainer = ref<HTMLDivElement | null>(null)
 
@@ -83,6 +98,9 @@
     },
     { immediate: true }
   )
+  // watch([() => testState.currentWordElementIndex], () => {
+  //   clearWords()
+  // })
 </script>
 
 <style lang="scss" scoped>
@@ -108,9 +126,9 @@
     align-content: flex-start;
     flex-wrap: wrap;
     width: 100%;
-    align-content: flex-start;
     overflow: hidden;
     overflow: visible clip;
+    padding-bottom: 1em;
   }
 
   .word {

@@ -5,7 +5,7 @@ import { useTestStateStore } from '@/entities/test/model/store'
 //TODO: Make 'jump' after second line
 export const useLineJump = (wordsRef: Ref<HTMLElement | null>) => {
   const testStore = useTestStateStore()
-
+  //TODO: Animation
   let lineTransition = false
 
   const lineJump = async (currentTop: number) => {

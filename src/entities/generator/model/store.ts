@@ -16,7 +16,7 @@ interface Ret {
 }
 
 //TODO: Qoute and random modes render. punctuateWord mode, relax mode, free mode.
-//TODO:
+
 export const useWordGeneratorStore = defineStore('word-gen', () => {
   const { config } = useConfigStore()
   const testState = useTestStateStore()

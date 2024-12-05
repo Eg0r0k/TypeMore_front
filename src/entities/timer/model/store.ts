@@ -7,6 +7,7 @@ import { useInputStore } from '@entities/input/model/store'
 import { useStats } from '@/shared/lib/hooks/useStats'
 import { WorkerService, useWorkerService } from '@/shared/lib/hooks/useWorkerManager'
 import { ref } from 'vue'
+import { ConfigModes } from '@/shared/constants/type'
 /**
  * Store for managing a timer in a web worker.
  * This store is responsible for handling time tracking during the test, using Web Workers
@@ -17,7 +18,6 @@ export const useTimerStore = defineStore('timer', () => {
   const testState = useTestStateStore()
   const input = useInputStore()
   const stats = useStats()
-
   const time = ref(0)
   /**
    * @constant {WorkerService} workerService - Instance of the worker service, managing the Web Worker lifecycle and communication
@@ -30,7 +30,14 @@ export const useTimerStore = defineStore('timer', () => {
   workerService.onTick((newTime) => {
     time.value = newTime
     stats.calculateChars()
+
+    if (config.mode === ConfigModes.Time && time.value >= config.time) {
+      stopTimer()
+      input.handleSpace()
+      testState.finish()
+    }
   })
+
   /**
    * Event listener for 'stop' events emitted by the Web Worker. Triggers end-of-test actions, including handling the last space input and marking the test as finished
    */

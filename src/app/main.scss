@@ -14,14 +14,6 @@ $fonts: (
   'Lobster': './fonts/Lobster',
   'BalsamiqSans': './fonts/BalsamiqSans-Regular'
 );
-@mixin font-face($font-name, $font-path) {
-  @font-face {
-    font-family: '#{$font-name}';
-    src: url('#{$font-path}.woff2') format('woff2');
-    font-weight: normal;
-    font-style: normal;
-  }
-}
 
 @each $font-name, $font-path in $fonts {
   @include font-face($font-name, $font-path);

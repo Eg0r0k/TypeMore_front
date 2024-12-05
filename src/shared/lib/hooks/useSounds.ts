@@ -40,7 +40,7 @@ export function useSounds(initialClickSounds: string[] = [], initialErrorSound: 
   }
 
   const playErrorSound = (): void => {
-    if (errorSound.value) {
+    if (errorSound.value && config.playSound) {
       errorSound.value.play()
     }
   }
@@ -50,6 +50,7 @@ export function useSounds(initialClickSounds: string[] = [], initialErrorSound: 
   }
 
   const playRandomClickSound = (): void => {
+    if (!config.playSound) return
     const randomSound = RandomElementFromArray(clickSounds.value)
     randomSound?.play()
   }

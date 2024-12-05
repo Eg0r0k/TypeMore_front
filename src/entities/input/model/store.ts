@@ -138,7 +138,7 @@ export const useInputStore = defineStore('input', () => {
 
     //! What is it do? iDK
     incrementKeypressCount()
-
+    //TODO: Move from here!
     if (testState.currentWordElementIndex === generator.retWords.words.length) {
       console.debug('test finished')
       testState.finish()

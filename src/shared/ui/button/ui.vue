@@ -34,7 +34,7 @@
   import { Typography } from '@/shared/ui/typography'
   import clsx from 'clsx'
 
-  type ButtonColor = 'main' | 'gray' | 'error' | 'main-outline' | 'error-outline' | 'shadow'
+  export type ButtonColor = 'main' | 'gray' | 'error' | 'main-outline' | 'error-outline' | 'shadow'
   type ButtonSize = 's' | 'm' | 'l'
   type ButtonDecoration = 'default' | 'none'
 
@@ -42,7 +42,7 @@
   // s : padding - 4px 8px
   // m : padding - 8px 16px
   // l : padding - 16px 24px
-  interface Props {
+  export interface ButtonI {
     color?: ButtonColor
     size?: ButtonSize
     decoration?: ButtonDecoration
@@ -54,7 +54,7 @@
   }
 
   const slots = useSlots()
-  const props = withDefaults(defineProps<Props>(), {
+  const props = withDefaults(defineProps<ButtonI>(), {
     color: 'main',
     size: 'm',
     isDisabled: false,
@@ -122,71 +122,6 @@
     'shadow': $shadow
   );
 
-  @mixin button-style($styles) {
-    @each $key, $val in $styles {
-      .button--color-#{$key} {
-        background-color: map.get($val, 'background');
-
-        p,
-        .icon {
-          color: map.get($val, 'color');
-        }
-
-        @media (hover: hover), (pointer: fine) {
-          &:hover {
-            background-color: map.get($val, 'hover');
-
-            p,
-            .icon {
-              color: map.get($val, 'hover-color');
-            }
-          }
-        }
-
-        &:active {
-          background-color: map.get($val, 'active');
-
-          p,
-          .icon {
-            color: map.get($val, 'active-color');
-          }
-        }
-      }
-
-      .button--color-#{$key}-outline {
-        background-color: transparent;
-        box-shadow: 0 0 0 1px map.get($val, 'background');
-
-        p,
-        .icon {
-          color: map.get($val, 'background');
-        }
-
-        @media (hover: hover), (pointer: fine) {
-          &:hover {
-            background-color: map.get($val, 'background');
-            box-shadow: 0 0 0 1px map.get($val, 'hover');
-
-            p,
-            .icon {
-              color: map.get($val, 'hover-color');
-            }
-          }
-        }
-
-        &:active {
-          background-color: map.get($val, 'active');
-          box-shadow: 0 0 0 1px map.get($val, 'active');
-
-          p,
-          .icon {
-            color: map.get($val, 'active-color');
-          }
-        }
-      }
-    }
-  }
-
   @include button-style($styles);
 
   .icon {
@@ -225,9 +160,13 @@
     &__text {
       text-align: center;
       transition: var(--transition-duration) ease-in;
+
+      &:empty {
+        display: none;
+      }
     }
 
-    & &.decoration--none {
+    & .decoration--none {
       background-color: unset;
       border-color: unset;
     }

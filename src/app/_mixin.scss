@@ -1,5 +1,6 @@
 @use 'sass:meta';
 @use 'sass:color';
+@use 'sass:map';
 @mixin em-to-rem($property, $value) {
   #{$property}: $value * 1rem;
 }
@@ -67,4 +68,78 @@
 
   text-overflow: ellipsis;
   overflow: hidden;
+}
+
+@mixin button-style($styles) {
+  @each $key, $val in $styles {
+    .button--color-#{$key} {
+      background-color: map.get($val, 'background');
+
+      p,
+      .icon {
+        color: map.get($val, 'color');
+      }
+
+      @media (hover: hover), (pointer: fine) {
+        &:hover {
+          background-color: map.get($val, 'hover');
+
+          p,
+          .icon {
+            color: map.get($val, 'hover-color');
+          }
+        }
+      }
+
+      &:active {
+        background-color: map.get($val, 'active');
+
+        p,
+        .icon {
+          color: map.get($val, 'active-color');
+        }
+      }
+    }
+
+    .button--color-#{$key}-outline {
+      background-color: transparent;
+      box-shadow: 0 0 0 1px map.get($val, 'background');
+
+      p,
+      .icon {
+        color: map.get($val, 'background');
+      }
+
+      @media (hover: hover), (pointer: fine) {
+        &:hover {
+          background-color: map.get($val, 'background');
+          box-shadow: 0 0 0 1px map.get($val, 'hover');
+
+          p,
+          .icon {
+            color: map.get($val, 'hover-color');
+          }
+        }
+      }
+
+      &:active {
+        background-color: map.get($val, 'active');
+        box-shadow: 0 0 0 1px map.get($val, 'active');
+
+        p,
+        .icon {
+          color: map.get($val, 'active-color');
+        }
+      }
+    }
+  }
+}
+
+@mixin font-face($font-name, $font-path) {
+  @font-face {
+    font-family: '#{$font-name}';
+    src: url('#{$font-path}.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+  }
 }

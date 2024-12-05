@@ -3,7 +3,9 @@ import { useThemes } from '../hooks/useThemes'
 import { LanguageObj } from '../types/types'
 import { configState, setConfig } from './config'
 import { getLanguage as getLanguageFromFile } from '@/shared/lib/helpers/json-files'
+import { ConfigModes } from '@/shared/constants/type'
 
+//TODO: Add validation for some func
 export const setWords = (amount: number) => {
   setConfig('words', amount)
 }
@@ -13,9 +15,18 @@ export const setTheme = async (name: string) => {
   configState.theme = name
   await applyTheme(name)
 }
-
+export const togglePlaySound = () => {
+  configState.playSound = !configState.playSound
+}
 export const toggleFps = () => {
   configState.showFps = !configState.showFps
+}
+export const setMode = (mode: ConfigModes) => {
+  console.log('Setting mode to:', mode)
+  setConfig('mode', mode)
+}
+export const toggleKeyboard = () => {
+  configState.showKeyboard = !configState.showKeyboard
 }
 
 export const currentLang = ref<LanguageObj | null>(null)
@@ -32,6 +43,19 @@ export const setLanguage = async (lang: string): Promise<void> => {
       console.error(`Error fetching language file for ${lang}:`, error)
     }
   }
+}
+
+export const setSoundVoulme = (volume: number) => {
+  if (volume < 0) {
+    volume = 0
+  } else if (volume > 1.0) {
+    volume = 1.0
+  }
+  setConfig('soundVolume', volume)
+}
+
+export const setFPS = (val: boolean) => {
+  setConfig('showFps', val)
 }
 
 export const setFontFamily = (font: string) => {

@@ -115,7 +115,7 @@
       })
     }
   }
-  const debounceScreenshot = useDebounceFn(handleCopyScreenshot, 250)
+  const debounceScreenshot = useDebounceFn(handleCopyScreenshot, 350)
 </script>
 
 <style lang="scss" scoped>

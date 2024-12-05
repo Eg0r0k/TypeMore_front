@@ -32,19 +32,27 @@
   defineOptions({
     inheritAttrs: false
   })
+
+  type InputColor = 'primary' | 'gray'
+  type InputSize = 'xs' | 's' | 'm' | 'l' | 'xl'
+
   interface Props {
     placeholder?: string
     isError?: boolean
     errorMessage?: string
     isDisabled?: boolean
     label?: string
+    size?: InputSize
     hasErrorSpace?: boolean
     tagName?: 'input' | 'textarea'
+    color?: InputColor
   }
   const modelValue = defineModel<string | number>()
 
   const props = withDefaults(defineProps<Props>(), {
     tagName: 'input',
+    color: 'primary',
+    size: 's',
     hasErrorSpace: false
   })
   defineEmits<{
@@ -59,6 +67,8 @@
   const inputClasses = computed(() =>
     clsx(
       'text-input',
+      `text-input--${props.color}`,
+      `text-input--${props.size}`,
       { 'text-input--error': props.isError },
       { 'text-input--disabled': props.isDisabled }
     )
@@ -112,20 +122,27 @@
   }
 
   .text-input {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    user-select: none;
+    --xs: 4px 8px;
+    --s: 8px 8px;
+    --m: 10px 10px;
+    --l: 12px 10px;
+    --xl: 14px 10px;
+
+    position: relative;
     width: 100%;
-    line-height: normal;
-    box-sizing: border-box;
-    background-color: var(--sub-alt-color);
-    border-radius: var(--border-radius);
+
     border: none;
-    padding: 8px;
+    box-sizing: border-box;
     font-size: 16px;
+    line-height: normal;
+
+    border-radius: var(--border-radius);
     color: var(--text-color);
     caret-color: var(--main-color);
-    position: relative;
+
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
 
     &:focus {
       outline: solid var(--main-color) 1px;
@@ -148,6 +165,34 @@
     &--disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+
+    &--primary {
+      background-color: var(--sub-alt-color);
+    }
+
+    &--gray {
+      background-color: var(--sub-color);
+    }
+
+    &--xs {
+      padding: var(--xs);
+    }
+
+    &--s {
+      padding: var(--s);
+    }
+
+    &--m {
+      padding: var(--m);
+    }
+
+    &--l {
+      padding: var(--l);
+    }
+
+    &--xl {
+      padding: var(--xl);
     }
   }
 </style>

@@ -8,7 +8,8 @@ interface WorkerMessage {
 enum TimerCommand {
   Start = 'start',
   Reset = 'reset',
-  SetTime = 'setTime'
+  SetTime = 'setTime',
+  Stop = 'stop'
 }
 interface TimerState {
   current: number
@@ -37,6 +38,9 @@ self.onmessage = (event: MessageEvent<WorkerMessage>) => {
       break
     case TimerCommand.SetTime:
       if (typeof time === 'number' && time > 0) setConfigTime(time)
+      break
+    case 'stop':
+      stopTimer()
       break
     default:
       throw new Error(`Unknown command: ${command}`)
@@ -76,22 +80,27 @@ function resetTimer() {
 function setConfigTime(time: number) {
   timerState.target = time
 }
+
+/**
+ * Stops the timer without resetting the current time.
+ */
+function stopTimer() {
+  timerState.isRunning = false
+  if (timeoutId) {
+    clearTimeout(timeoutId)
+    timeoutId = null
+  }
+}
+
 /**
  * Increments the timer and posts the current timer value to the main thread.
  * If the timer reaches the configured time, it stops and sends a stop command.
  */
 function timerStep() {
   if (!timerState.isRunning) return
-
-  postMessage({ timer: timerState.current })
+  console.log('____START-STEP_____')
   timerState.current++
-
-  console.log('_____STEP_____')
-  if (timerState.current >= timerState.target) {
-    timerState.isRunning = false
-    postMessage({ timer: timerState.current })
-    postMessage({ command: 'stop' })
-  } else {
-    timeoutId = setTimeout(timerStep, 1000)
-  }
+  postMessage({ timer: timerState.current })
+  timeoutId = setTimeout(timerStep, 1000)
+  console.log('_____END-STEP_____')
 }

@@ -58,15 +58,7 @@
   import { useTestStateStore } from '@/entities/test/model/store'
   import { useThemes } from '@/shared/lib/hooks/useThemes'
   import { getLangList } from '@/shared/lib/helpers/json-files'
-  import {
-    defineAsyncComponent,
-    onBeforeMount,
-    onMounted,
-    onUnmounted,
-    provide,
-    ref,
-    Teleport
-  } from 'vue'
+  import { defineAsyncComponent, onBeforeMount, onMounted, onUnmounted, provide, ref } from 'vue'
   import { CookieModal } from '@/features/modal/cookie'
   import { useModal } from '@/entities/modal/model/store'
   import { useFavicon } from '@vueuse/core'

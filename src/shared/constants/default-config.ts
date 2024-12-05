@@ -7,6 +7,7 @@ export default {
   fontSize: 16,
   fontFamily: 'Hack',
   language: 'russian',
+  showKeyboard: false,
   theme: 'VS Code',
   mode: 'time',
   backgroundImg: '',

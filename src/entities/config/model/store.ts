@@ -1,13 +1,17 @@
-import { configState } from '@/shared/lib/helpers/config'
+import { configState, setConfig } from '@/shared/lib/helpers/config'
 import { getLanguage } from '@/shared/lib/helpers/json-files'
 import {
   currentLang,
   setFontFamily,
   setFontSize,
+  setFPS,
   setLanguage,
+  setMode,
   setTheme,
   setWords,
-  toggleFps
+  toggleFps,
+  toggleKeyboard,
+  togglePlaySound
 } from '@/shared/lib/helpers/setConfigSettings'
 
 import { defineStore } from 'pinia'
@@ -19,19 +23,20 @@ import { computed } from 'vue'
 export const useConfigStore = defineStore(
   'config',
   () => {
-    const setMode = (mode: 'words' | 'free' | 'time') => {
-      configState.mode = mode
-    }
     const currentLanguage = computed(() => currentLang)
 
     return {
+      toggleKeyboard,
       config: configState,
+      togglePlaySound,
       setLanguage,
       toggleFps,
       setFontFamily,
       setTheme,
       setWords,
+      setFPS,
       currentLang,
+      setConfig,
       getLanguage,
       setFontSize,
       currentLanguage,

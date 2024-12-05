@@ -21,6 +21,7 @@
     &__label {
       position: relative;
       font-weight: 600 !important;
+      user-select: none;
 
       &::after {
         content: '';

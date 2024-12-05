@@ -17,7 +17,6 @@ export const useTestStateStore = defineStore('test-state', () => {
   const isLoading = ref(true)
   const isRightToLeft = ref(false)
   const currentWordElementIndex = ref(0)
-  const currentTestLine = ref(0)
 
   const inputStore = useInputStore()
   const replayStore = useReplayStore()
@@ -144,7 +143,6 @@ export const useTestStateStore = defineStore('test-state', () => {
     reset,
     setCurrentWordElementIndex,
     currentWordElementIndex,
-    incrementWordIndex,
-    currentTestLine
+    incrementWordIndex
   }
 })
