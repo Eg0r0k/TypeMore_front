@@ -20,6 +20,9 @@
     "deploy": "gh-pages -d build/"
   },
   "dependencies": {
+    "@capacitor-community/electron": "^5.0.1",
+    "@capacitor/cli": "^6.2.0",
+    "@capacitor/core": "^6.2.0",
     "@number-flow/vue": "^0.3.2",
     "@splidejs/vue-splide": "^0.6.12",
     "@tanstack/vue-query": "^5.59.16",

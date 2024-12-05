@@ -17,7 +17,6 @@
           <template #left-icon>
             <Icon width="20" icon="material-symbols:palette"></Icon>
           </template>
-
         </Button>
       </div>
     </div>
@@ -25,56 +24,55 @@
 </template>
 
 <script lang="ts" setup>
-import { Icon } from '@iconify/vue'
-import { Button } from '@/shared/ui/button'
-import { FooterLinks } from '@/features/footer/links'
-import { FOOTER_LINKS } from '../footer/model/const/values'
-import { useModal } from '@/entities/modal/model/store'
-import { ThemesModal } from '@/features/modal/themes'
-import { useConfigStore } from '@/entities/config/model/store'
-const navLinks = FOOTER_LINKS
-const modal = useModal()
-const { config } = useConfigStore()
-const handleOnClickOpenTheme = () => {
-  modal.open(ThemesModal, 'top', 'center')
-}
+  import { Icon } from '@iconify/vue'
+  import { Button } from '@/shared/ui/button'
+  import { FooterLinks } from '@/features/footer/links'
+  import { FOOTER_LINKS } from '../footer/model/const/values'
+  import { useModal } from '@/entities/modal/model/store'
+  import { ThemesModal } from '@/features/modal/themes'
+  const navLinks = FOOTER_LINKS
+  const modal = useModal()
+
+  const handleOnClickOpenTheme = () => {
+    modal.open(ThemesModal, 'top', 'center')
+  }
 </script>
 
 <style lang="scss" scoped>
-.key-tip {
-  font-size: 0.7rem;
-  line-height: 0.7rem;
-  color: var(--sub-color);
-}
-
-.footer {
-  display: flex;
-  flex-wrap: wrap;
-
-  &__top {
-    width: 100%;
-    display: inline-flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+  .key-tip {
+    font-size: 0.7rem;
+    line-height: 0.7rem;
+    color: var(--sub-color);
   }
 
-  &__bottom {
-    width: 100%;
+  .footer {
     display: flex;
-  }
+    flex-wrap: wrap;
 
-  &__left {
-    display: flex;
-    align-items: center;
-    flex: 1;
-  }
+    &__top {
+      width: 100%;
+      display: inline-flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
 
-  &__right {
-    flex: 1;
-    display: flex;
-    justify-content: end;
-    align-items: stretch;
+    &__bottom {
+      width: 100%;
+      display: flex;
+    }
+
+    &__left {
+      display: flex;
+      align-items: center;
+      flex: 1;
+    }
+
+    &__right {
+      flex: 1;
+      display: flex;
+      justify-content: end;
+      align-items: stretch;
+    }
   }
-}
 </style>
