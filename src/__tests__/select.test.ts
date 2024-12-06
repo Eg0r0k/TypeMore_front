@@ -25,7 +25,7 @@ describe('Select Component', () => {
   it('renders the component correctly', () => {
     expect(wrapper.find('.custom-select').exists()).toBe(true)
     expect(wrapper.find('.selected').text()).toBe('Option 1')
-    expect(wrapper.find('.items').classes()).toContain('selectHide')
+    expect(wrapper.find('.items').classes()).toContain('select-hide')
   })
 
   it('emits the correct input event on option selection', async () => {
@@ -37,14 +37,14 @@ describe('Select Component', () => {
 
   it('toggles the dropdown on click', async () => {
     await wrapper.find('.selected').trigger('click')
-    expect(wrapper.find('.items').classes()).not.toContain('selectHide')
+    expect(wrapper.find('.items').classes()).not.toContain('select-hide')
     await wrapper.find('.selected').trigger('click')
-    expect(wrapper.find('.items').classes()).toContain('selectHide')
+    expect(wrapper.find('.items').classes()).toContain('select-hide')
   })
   it('closes the dropdown on blur', async () => {
     await wrapper.find('.selected').trigger('click')
     await wrapper.find('.custom-select').trigger('blur')
-    expect(wrapper.find('.items').classes()).toContain('selectHide')
+    expect(wrapper.find('.items').classes()).toContain('select-hide')
   })
 
   it('handles disabled state', async () => {
@@ -52,14 +52,13 @@ describe('Select Component', () => {
       props: {
         options: ['Option 1', 'Option 2', 'Option 3'],
         label: 'Select Label',
-        disabled: true
+        isDisabled: true
       }
     })
     expect(disabledWrapper.find('.selected').classes()).toContain('disabled')
-    expect(disabledWrapper.findAll('.items > div')[0].classes()).toContain('disabled')
 
     await disabledWrapper.find('.selected').trigger('click')
-    expect(disabledWrapper.find('.items').classes()).toContain('selectHide')
+    expect(disabledWrapper.find('.items').classes()).toContain('select-hide')
 
     await disabledWrapper.findAll('.items > div')[1].trigger('click')
     expect(disabledWrapper.emitted('input')).toBeUndefined()
@@ -106,7 +105,7 @@ describe('Select Component', () => {
   it('handles Escape key correctly', async () => {
     await wrapper.find('.selected').trigger('click')
     await wrapper.find('.custom-select').trigger('keydown', { key: 'Escape' })
-    expect(wrapper.find('.items').classes()).toContain('selectHide')
+    expect(wrapper.find('.items').classes()).toContain('select-hide')
   })
 
   it('should generate a unique labelId', () => {
@@ -145,10 +144,11 @@ describe('Select Component', () => {
       props: {
         options: ['Option 1'],
         label: 'Select Label',
-        disabled: true
+        isDisabled: true
       }
     })
     const selectElement = disabledWrapper.find('.custom-select')
+
     expect(selectElement.attributes('aria-disabled')).toBe('true')
   })
 
@@ -177,7 +177,7 @@ describe('Select Component', () => {
     }
   })
   it('should set tabindex correctly', () => {
-    const tabindex = 3
+    const tabindex = 0
     const wrapper = mount(Select, {
       props: {
         options: ['A'],

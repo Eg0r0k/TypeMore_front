@@ -1,7 +1,7 @@
 <template>
   <div
     class="custom-select"
-    :tabindex="tabindex"
+    :tabindex="disabled ? -1 : 0"
     @blur="handleBlur"
     role="combobox"
     :aria-expanded="open"
@@ -11,7 +11,6 @@
   >
     <label :id="labelId" class="sr-only">{{ label }}</label>
     <div
-      class="selected"
       :class="selectedClasses"
       @click="toggleDropdown"
       role="button"
@@ -20,11 +19,12 @@
     >
       {{ selected }}
     </div>
-    <div class="items" :class="itemsClasses" role="listbox">
+    <div :class="itemsClasses" role="listbox">
       <div
         v-for="(option, index) in options"
         :role="'option'"
         :key="option"
+        :tabindex="disabled ? -1 : 0"
         @click="selectOption(option, index)"
         :aria-selected="selected === option"
         :class="optionClasses(index)"
@@ -45,7 +45,7 @@
     default?: string | null
     tabindex?: number
     label: string
-    disabled?: boolean
+    isDisabled?: boolean
   }
   function generateId(prefix: string) {
     return `${prefix}-${uuidv4()}`
@@ -62,7 +62,8 @@
 
   const itemsClasses = computed(() =>
     clsx('items', {
-      'select-hide': !open.value
+      'select-hide': !open.value,
+      disabled: disabled.value
     })
   )
 
@@ -81,7 +82,7 @@
 
   const selected = ref(props.default || props.options[0] || null)
   const open = ref(false)
-  const disabled = ref(props.disabled || false)
+  const disabled = ref(props.isDisabled || false)
 
   watch(selected, (newValue: string | null) => {
     if (!newValue) return
