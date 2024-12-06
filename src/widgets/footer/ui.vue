@@ -2,9 +2,9 @@
   <footer class="footer">
     <div class="footer__top">
       <div class="key-tip">
-        <key>Ctrl</key>
+        <kbd>Ctrl</kbd>
         +
-        <key>Enter</key>
+        <kbd>Enter</kbd>
         - Restart test
       </div>
     </div>
@@ -44,6 +44,7 @@
     font-size: 0.7rem;
     line-height: 0.7rem;
     color: var(--sub-color);
+    cursor: default;
   }
 
   .footer {

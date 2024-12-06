@@ -159,6 +159,7 @@
     &__text {
       text-align: center;
       transition: var(--transition-duration) ease-in;
+      cursor: pointer;
 
       &:empty {
         display: none;

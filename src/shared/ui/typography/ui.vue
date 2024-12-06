@@ -78,7 +78,7 @@
 
     margin-top: 0;
     font-style: normal;
-
+    cursor: default;
     &.bold {
       font-weight: 700;
     }
