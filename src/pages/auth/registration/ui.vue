@@ -266,20 +266,20 @@
     width: 100%;
     max-width: 359px;
     padding: 20px;
+    background-color: var(--bg-color);
     border: 2px solid var(--sub-alt-color);
     border-radius: var(--border-radius);
-    background-color: var(--bg-color);
 
     &__body {
       display: flex;
       flex-direction: column;
-      gap: 0px;
+      gap: 0;
     }
 
     &__wrapper {
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       width: 100%;
       margin: 0 auto;
     }
@@ -289,7 +289,7 @@
     }
 
     &__title {
-      margin-bottom: 0px;
+      margin-bottom: 0;
     }
 
     &__popper,

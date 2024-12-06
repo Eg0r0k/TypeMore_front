@@ -61,15 +61,14 @@
 
 <style lang="scss" scoped>
   .key-map {
+    position: fixed;
     z-index: var(--key-map-z);
-    cursor: grab;
     display: flex;
     flex-direction: column;
     gap: 6px;
     align-items: center;
-
-    position: fixed;
     touch-action: none;
+    cursor: grab;
 
     &__row {
       display: flex;
@@ -86,18 +85,16 @@
   }
 
   .key {
-    border-bottom: 1px solid var(--main-color);
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    user-select: none;
     min-width: 40px;
     min-height: 40px;
-    transition: all 0.1s;
     padding: 10px;
-    border-radius: 5px;
     color: var(--main-color);
     text-align: center;
+    user-select: none;
     background-color: var(--sub-alt-color);
+    border-bottom: 1px solid var(--main-color);
+    border-radius: 5px;
+    transition: all 0.1s;
 
     &.active {
       background-color: var(--sub-color);

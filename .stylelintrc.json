@@ -1,0 +1,46 @@
+{
+    "plugins": [
+        "stylelint-scss"
+      ],
+    
+    "extends": [
+      "stylelint-config-standard-scss",
+      "stylelint-config-recommended-vue",
+      "stylelint-config-recess-order",
+      "stylelint-prettier/recommended"
+    ],
+    "customSyntax": "postcss-html",
+    "rules": {
+        "selector-class-pattern": "^[a-z0-9-]+(__[a-z0-9-]+)?(--[a-z0-9-]+)?$|^[a-z0-9-]+-enter-active$|^[a-z0-9-]+-leave-active$|^[a-z0-9-]+-[a-z0-9-]+$",
+        "prettier/prettier": true,
+        "scss/dollar-variable-pattern": "^var-",
+        "at-rule-no-unknown": null,
+        "scss/at-rule-no-unknown": true,
+        "order/properties-order": [
+            "position",
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "z-index",
+            "display",
+            "flex",
+            "align-items",
+            "justify-content",
+            "width",
+            "height",
+            "margin",
+            "padding",
+            "font-family",
+            "font-size",
+            "font-weight",
+            "color",
+            "background",
+            "border",
+            "box-shadow"
+        ],
+        "selector-no-vendor-prefix": true,
+        "selector-type-no-unknown": true
+    }
+  }
+  

@@ -30,9 +30,9 @@
     z-index: var(--alert-z);
     display: flex;
     flex-direction: column;
+    gap: 8px;
     align-items: flex-end;
     padding: 8px;
-    gap: 8px;
     pointer-events: none;
   }
 
@@ -40,10 +40,12 @@
   .list-leave-active {
     transition: all 0.5s ease;
   }
+
   .list-leave-to {
     opacity: 0;
     transform: translateY(-100%);
   }
+
   .list-enter-from {
     opacity: 0;
     transform: translateX(30px);

@@ -1,5 +1,5 @@
 <template>
-  <div class="errorPage">
+  <div class="error-page">
     <Typography class="errorPage__title" color="primary" tagName="h1" isBold>404</Typography>
 
     <Typography class="errorPage__desc" color="primary" size="m" tagName="h1">
@@ -14,20 +14,20 @@
   import { Typography } from '@/shared/ui/typography'
 </script>
 <style lang="scss">
-  .errorPage {
+  .error-page {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+
     &__title {
-      font-size: 100px !important;
       margin-bottom: 0 !important;
+      font-size: 100px !important;
     }
+
     &__desc {
-      text-align: center;
       margin-bottom: 32px !important;
-    }
-    &__button {
+      text-align: center;
     }
   }
 </style>

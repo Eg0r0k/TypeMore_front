@@ -26,15 +26,15 @@
         </div>
       </div>
       <TestChart class="final-screen__chart chart" />
-      <div class="wideStats">Test</div>
-      <div class="wideStats">
-        <div class="wideStats__raw">
+      <div class="wide-stats">Test</div>
+      <div class="wide-stats">
+        <div class="wide-stats__raw">
           <Typography color="sub" size="s">Raw</Typography>
           <Typography color="main" size="xl">
             {{ rawWpm }}
           </Typography>
         </div>
-        <div class="wideStats__characters">
+        <div class="wide-stats__characters">
           <Typography color="sub" size="s">Characters</Typography>
           <Popper placement="top" hover arrow :interactive="false">
             <template #content>
@@ -71,7 +71,6 @@
   import { computed, ref } from 'vue'
 
   import { useDebounceFn } from '@vueuse/core'
-  import { Icon } from '@iconify/vue'
   import { AddWidget } from '../add'
   const { getStats } = useStats()
   const rawWpm = computed(() => Math.floor(getStats.value.wpmRaw))
@@ -120,11 +119,11 @@
 </script>
 
 <style lang="scss" scoped>
-  @media screen and (max-width: 375px) {
-    //
+  @media screen and (width <= 375px) {
+    // add later
   }
 
-  .wideStats {
+  .wide-stats {
     display: flex;
     justify-content: space-between;
   }
@@ -132,14 +131,13 @@
   .final-screen {
     &__result {
       display: grid;
-      gap: 1rem;
-      align-items: center;
-      grid-template-columns: auto 1fr;
       grid-template-areas:
         'stats chart'
-        'morestats morestats';
-
-      padding: 15px 25px 15px 25px;
+        'more-stats more-stats';
+      grid-template-columns: auto 1fr;
+      gap: 1rem;
+      align-items: center;
+      padding: 15px 25px;
     }
 
     &__chart {

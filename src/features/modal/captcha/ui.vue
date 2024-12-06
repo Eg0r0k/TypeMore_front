@@ -53,9 +53,9 @@
 
 <style lang="scss" scoped>
   .captcha-modal {
-    box-shadow: 0 0 0 0.2em var(--sub-alt-color);
+    padding: 24px;
     background: var(--bg-color);
     border-radius: var(--border-radius);
-    padding: 24px;
+    box-shadow: 0 0 0 0.2em var(--sub-alt-color);
   }
 </style>

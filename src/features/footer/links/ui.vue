@@ -29,13 +29,11 @@
 
   .list {
     &__link {
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      user-select: none;
-      text-decoration: none;
       display: flex;
-      align-items: center;
       gap: 2px;
+      align-items: center;
+      text-decoration: none;
+      user-select: none;
     }
   }
 
@@ -43,8 +41,8 @@
     display: flex;
 
     &__list {
-      flex-wrap: wrap;
       display: flex;
+      flex-wrap: wrap;
       gap: 16px;
     }
   }

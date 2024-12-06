@@ -57,22 +57,21 @@
   .accordion-enter-from,
   .accordion-leave-to {
     max-height: 0;
-    opacity: 0;
     padding-top: 0;
     padding-bottom: 0;
     overflow: hidden;
+    opacity: 0;
   }
 
   .accordion-enter-to,
   .accordion-leave-from {
     max-height: 1080px;
-
     opacity: 1;
   }
 
   .accordion-content {
+    padding: 0 0 10px;
     transition: opacity 0.3s ease;
-    padding: 0 0 10px 0;
   }
 
   .accordion-enter-active .accordion-content {
@@ -81,41 +80,41 @@
   }
 
   .devtools {
-    outline: 2px solid var(--sub-color);
-    min-width: 300px;
     position: fixed;
     z-index: var(--fps-z);
+    min-width: 300px;
     background-color: var(--sub-alt-color);
     border-radius: var(--border-radius);
+    outline: 2px solid var(--sub-color);
 
     &__head {
-      touch-action: none;
       display: flex;
-      width: 100%;
       align-items: center;
       justify-content: center;
+      width: 100%;
+      padding: 11px 20px;
+      touch-action: none;
       cursor: grab;
-      padding: 11px 20px 11px 20px;
     }
 
     &__body {
-      padding: 0 20px 0 20px;
+      padding: 0 20px;
       overflow: hidden;
     }
   }
 
   .dot {
-    user-select: none;
     width: 4px;
     height: 4px;
     aspect-ratio: 1/1;
+    user-select: none;
     background-color: var(--main-color);
     border-radius: 100%;
 
     &--group {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
       grid-template-rows: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 4px;
       padding: 2px;
     }

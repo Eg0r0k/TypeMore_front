@@ -104,5 +104,3 @@
     dataRAW.value.push(currentStats.wpmRaw)
   })
 </script>
-
-<style></style>

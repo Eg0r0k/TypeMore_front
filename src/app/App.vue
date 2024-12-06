@@ -5,18 +5,18 @@
 
       <Header />
 
-      <div class="customBackground">
+      <div class="custom-background">
         <img
           :src="configStore.config.backgroundImg"
           draggable="false"
           onerror="console.log('inplement alert on failed loading image [App.vue]')"
           alt="Background Image"
           style="
+            position: absolute;
+            top: 0;
+            left: 0;
             width: calc(100% + 0rem);
             height: calc(100% + 0rem);
-            left: 0rem;
-            top: 0rem;
-            position: absolute;
             user-select: none;
             object-fit: cover;
           "
@@ -107,49 +107,57 @@
     opacity: 0;
   }
 
-  .customBackground {
+  .custom-background {
     position: fixed;
     top: 0;
     left: 0;
+    z-index: -1;
     width: 100vw;
     height: 100vh;
-    z-index: -1;
   }
 
-  .customBackground img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  .custom-background img {
     position: absolute;
     top: 0;
     left: 0;
     z-index: -1;
-  }
-
-  .loader {
-    min-width: 40px;
-    min-height: 40px;
-    border: 4px solid var(--main-color);
-
-    border-bottom-color: var(--bg-color);
-    border-radius: 100%;
-    display: inline-block;
-    box-sizing: border-box;
-    animation: rotation 1.5s linear infinite;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .wrapper {
+    box-sizing: border-box;
     z-index: 0;
-    /* Убедитесь, что wrapper не перекрывает фон */
-  }
-
-  .loader-wrapper {
-    min-height: 100vh;
     display: flex;
     flex-direction: column;
     gap: 20px;
-    justify-content: center;
+    width: 100%;
+    max-width: 1532px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 28px 16px;
+    background-size: cover;
+  }
+
+  .loader {
+    box-sizing: border-box;
+    display: inline-block;
+    min-width: 40px;
+    min-height: 40px;
+    border: 4px solid var(--main-color);
+    border-bottom-color: var(--bg-color);
+    border-radius: 100%;
+    animation: rotation 1.5s linear infinite;
+  }
+
+  .loader-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
     align-items: center;
+    justify-content: center;
+    min-height: 100vh;
 
     &__header {
       display: flex;
@@ -158,8 +166,8 @@
 
     &__body {
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       height: 100%;
     }
   }
@@ -172,18 +180,5 @@
     100% {
       transform: rotate(360deg);
     }
-  }
-
-  .wrapper {
-    background-size: cover;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    width: 100%;
-    min-height: 100vh;
-    max-width: 1532px;
-    margin: 0 auto;
-    padding: 28px 16px;
-    box-sizing: border-box;
   }
 </style>

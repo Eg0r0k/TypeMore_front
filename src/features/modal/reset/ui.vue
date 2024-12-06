@@ -26,12 +26,12 @@
   .reset-modal {
     display: flex;
     flex-direction: column;
-    padding: 24px;
-    width: 600px;
     gap: 12px;
-    box-shadow: 0 0 0 0.2em var(--sub-alt-color);
+    width: 600px;
+    padding: 24px;
     background: var(--bg-color);
     border-radius: var(--border-radius);
+    box-shadow: 0 0 0 0.2em var(--sub-alt-color);
 
     &__input {
       margin-bottom: 24px;

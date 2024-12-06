@@ -1,12 +1,12 @@
 <template>
-  <div class="modalNews">
-    <Button color="shadow" class="modalNews__close" size="s" @click="$emit('close')">
+  <div class="modal-news">
+    <Button color="shadow" class="modal-news__close" size="s" @click="$emit('close')">
       <template #left-icon>
         <Icon :icon="'mingcute:close-fill'" width="30" />
       </template>
     </Button>
 
-    <div class="modalNews__news news">
+    <div class="modal-news__news news">
       <Typography class="news__title" color="primary" size="xl">
         <Icon icon="material-symbols:newsmode-outline-rounded" />
         News
@@ -21,7 +21,7 @@
       </div>
     </div>
 
-    <div class="modalNews__invites invites">
+    <div class="modal-news__invites invites">
       <Typography class="invites__title" color="primary" size="xl">
         <Icon icon="lets-icons:message" />
         Invites
@@ -74,22 +74,23 @@
 </script>
 
 <style lang="scss" scoped>
-  .modalNews {
+  .modal-news {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--news-z);
     display: flex;
     flex-direction: column;
-    position: fixed;
+    gap: 20px;
     width: 100%;
     max-width: 350px;
     height: 100vh;
-    z-index: var(--news-z);
-    right: 0;
-    top: 0;
-    bottom: 0;
-    box-shadow: 0 0 0 0.2em var(--sub-alt-color);
+    padding: 54px 20px 20px;
     background-color: var(--bg-color);
-    padding: 54px 20px 20px 20px;
     border-radius: var(--border-radius) 0 0 var(--border-radius);
-    gap: 20px;
+    box-shadow: 0 0 0 0.2em var(--sub-alt-color);
+
     &__close {
       position: absolute;
       top: 10px;
@@ -101,8 +102,8 @@
   .invites {
     &__title {
       display: flex;
-      align-items: center;
       gap: 8px;
+      align-items: center;
     }
 
     &__data {
@@ -110,10 +111,10 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      width: 100%;
       min-height: 148px;
       max-height: 148px;
       overflow-y: auto;
-      width: 100%;
     }
   }
 
@@ -130,6 +131,7 @@
     0% {
       transform: rotate(0deg);
     }
+
     100% {
       transform: rotate(360deg);
     }

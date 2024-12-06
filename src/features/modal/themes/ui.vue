@@ -57,27 +57,27 @@
   }
 
   .theme {
-    cursor: pointer;
     display: flex;
     justify-content: space-between;
     padding: 4px 20px;
     color: var(--sub-color);
+    cursor: pointer;
 
     &:hover {
       background-color: var(--sub-color);
     }
 
     &__icon {
-      border-radius: var(--border-radius);
-      padding: 4px;
       display: flex;
-      align-items: center;
       gap: 8px;
+      align-items: center;
+      padding: 4px;
+      border-radius: var(--border-radius);
     }
 
     &__color {
-      aspect-ratio: 1/1;
       width: 15px;
+      aspect-ratio: 1/1;
       border-radius: 50%;
     }
   }

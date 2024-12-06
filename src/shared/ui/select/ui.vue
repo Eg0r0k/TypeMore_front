@@ -12,7 +12,7 @@
     <label :id="labelId" class="sr-only">{{ label }}</label>
     <div
       class="selected"
-      :class="{ open, disabled }"
+      :class="selectedClasses"
       @click="toggleDropdown"
       role="button"
       aria-haspopup="listbox"
@@ -20,14 +20,14 @@
     >
       {{ selected }}
     </div>
-    <div class="items" :class="{ selectHide: !open }" role="listbox">
+    <div class="items" :class="itemsClasses" role="listbox">
       <div
         v-for="(option, index) in options"
         :role="'option'"
         :key="option"
         @click="selectOption(option, index)"
         :aria-selected="selected === option"
-        :class="{ selectedOption: index === selectedIndex, disabled: disabled }"
+        :class="optionClasses(index)"
         :aria-disabled="disabled"
       >
         {{ option }}
@@ -37,8 +37,9 @@
 </template>
 
 <script setup lang="ts">
-  import { nextTick, ref, watch } from 'vue'
+  import { computed, nextTick, ref, watch } from 'vue'
   import { v4 as uuidv4 } from 'uuid'
+  import clsx from 'clsx'
   interface Props {
     options: string[]
     default?: string | null
@@ -51,6 +52,27 @@
   }
   const selectedIndex = ref(-1)
   const props = defineProps<Props>()
+
+  const selectedClasses = computed(() =>
+    clsx('selected', {
+      open: open.value,
+      disabled: disabled.value
+    })
+  )
+
+  const itemsClasses = computed(() =>
+    clsx('items', {
+      'select-hide': !open.value
+    })
+  )
+
+  const optionClasses = (index: number) =>
+    computed(() =>
+      clsx({
+        'selected-option': index === selectedIndex.value,
+        disabled: disabled.value
+      })
+    )
 
   const emit = defineEmits<{
     (e: 'input', value: string): void
@@ -118,13 +140,10 @@
       color: var(--text-color);
       padding-left: 8px;
       padding-right: 24px;
-
       cursor: pointer;
       user-select: none;
       white-space: nowrap;
-
       overflow: hidden;
-
       text-overflow: ellipsis;
 
       &.open {
@@ -136,7 +155,6 @@
         position: absolute;
         content: '';
         top: 15px;
-
         right: 1em;
         width: 0;
         height: 0;
@@ -146,15 +164,15 @@
     }
 
     .items {
+      position: absolute;
+      right: 0;
+      left: 0;
+      z-index: 1;
       color: var(--text-color);
       border-radius: 0 0 var(--border-radius) var(--border-radius);
       overflow: hidden;
       outline: 1px solid var(--main-color);
-      position: absolute;
       background-color: var(--sub-alt-color);
-      left: 0;
-      right: 0;
-      z-index: 1;
 
       div {
         color: var(--text-color);
@@ -168,14 +186,14 @@
           background-color: var(--sub-color);
         }
 
-        &.selectedOption {
+        &.selected-option {
           background-color: var(--bg-color);
           color: var(--text-color);
         }
       }
     }
 
-    .selectHide {
+    .select-hide {
       display: none;
     }
   }

@@ -1,6 +1,6 @@
 <template>
   <!-- <button @click="clearWords">Clear</button> -->
-  <div ref="wordsContainer" class="words" :class="{ rightToLeft: props.isRightToLeft }">
+  <div ref="wordsContainer" :class="classes">
     <template v-for="(word, wordIndex) in generator.retWords.words" :key="`${word}-${wordIndex}`">
       <TestWord :word="word" :wordIndex="wordIndex + currentIndex" />
     </template>
@@ -8,12 +8,13 @@
 </template>
 
 <script lang="ts" setup>
-  import { ref, onMounted, watch, nextTick } from 'vue'
+  import { ref, onMounted, watch, nextTick, computed } from 'vue'
   import { useWordGeneratorStore } from '@/entities/generator/model/store'
   import { useTestStateStore } from '@/entities/test/model/store'
 
   import { TestWord } from '@/features/test/word'
   import { useLineJump } from '@/shared/lib/hooks/useLineJump'
+  import clsx from 'clsx'
   const generator = useWordGeneratorStore()
   //TODO: END THIS SHIT
   //!
@@ -25,7 +26,7 @@
 
   const showedWords = ref<string[]>([])
   const currentIndex = ref(0)
-
+  const classes = computed(() => clsx('words', { 'right-to-left': props.isRightToLeft }))
   const props = withDefaults(defineProps<Props>(), {
     isRightToLeft: false
   })
@@ -116,28 +117,28 @@
     color: var(--text-color) !important;
   }
 
-  .rightToLeft {
+  .right-to-left {
     direction: rtl;
   }
 
   .words {
     display: flex;
-    height: fit-content;
-    align-content: flex-start;
     flex-wrap: wrap;
+    align-content: flex-start;
     width: 100%;
+    height: fit-content;
+    padding-bottom: 1em;
     overflow: hidden;
     overflow: visible clip;
-    padding-bottom: 1em;
   }
 
   .word {
     position: relative;
+    margin: 0.25em 0.3em;
     font-size: 32px;
     line-height: 1em;
-    margin: 0.25em 0.3em;
-    border-bottom: 2px solid transparent;
     color: var(--sub-color);
+    border-bottom: 2px solid transparent;
   }
 
   .active {

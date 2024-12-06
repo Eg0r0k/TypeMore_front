@@ -24,13 +24,13 @@
       user-select: none;
 
       &::after {
-        content: '';
         position: absolute;
-        height: 1px;
-        background-color: var(--sub-color);
         top: 50%;
-        transform: translateY(-50%);
         width: 100%;
+        height: 1px;
+        content: '';
+        background-color: var(--sub-color);
+        transform: translateY(-50%);
       }
     }
   }

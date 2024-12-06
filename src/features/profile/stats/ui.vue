@@ -36,9 +36,9 @@
 <style scoped lang="scss">
   .statistic {
     display: flex;
-    justify-content: space-between;
-    gap: 40px;
     flex-wrap: wrap;
+    gap: 40px;
+    justify-content: space-between;
   }
 
   .sr-only {

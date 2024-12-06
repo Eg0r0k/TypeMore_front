@@ -134,24 +134,24 @@
   }
 
   .game-heatmap {
+    position: relative;
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 0.5rem;
-    position: relative;
 
     .months {
       display: flex;
-      justify-content: space-around;
       grid-column: 2;
-      margin-bottom: 0.5rem;
+      justify-content: space-around;
       min-width: 1267px;
+      margin-bottom: 0.5rem;
     }
 
     .days {
       display: flex;
-      margin-right: 6px;
       flex-direction: column;
       justify-content: space-evenly;
+      margin-right: 6px;
     }
 
     .grid-container {
@@ -161,20 +161,20 @@
     }
 
     .grid {
-      grid-area: chart;
       display: grid;
-      grid-auto-flow: column;
+      grid-area: chart;
       grid-template-rows: repeat(7, 1fr);
       grid-template-columns: repeat(53, 1fr);
+      grid-auto-flow: column;
       gap: 5px;
 
       .cell {
+        position: relative;
         width: 19px;
         height: 19px;
         border-radius: 4px;
-        transition: background-color 0.3s;
-        position: relative;
         outline: none;
+        transition: background-color 0.3s;
 
         &:hover {
           cursor: pointer;
@@ -188,24 +188,24 @@
 
     .tooltip {
       position: fixed;
-      background-color: var(--sub-alt-color);
-      color: var(--text-color);
-      padding: 0.3rem 0.5rem;
-      border-radius: 3px;
-      font-size: 0.8rem;
-      pointer-events: none;
       z-index: 10;
-      transform: translateX(-50%);
+      padding: 0.3rem 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-color);
+      pointer-events: none;
+      background-color: var(--sub-alt-color);
+      border-radius: 3px;
       outline: 1px solid var(--text-color);
+      transform: translateX(-50%);
 
       .arrow {
         position: absolute;
         top: 100%;
         left: 50%;
         margin-left: -5px;
-        border-width: 5px;
-        border-style: solid;
         border-color: var(--text-color) transparent transparent transparent;
+        border-style: solid;
+        border-width: 5px;
       }
     }
   }

@@ -82,7 +82,8 @@
 
 <style scoped lang="scss">
   @use 'sass:map';
-  $main: (
+
+  $var-main: (
     'background': var(--main-color),
     'hover': var(--text-color),
     'active': var(--sub-alt-color),
@@ -90,7 +91,7 @@
     'hover-color': var(--bg-color),
     'active-color': var(--text-color)
   );
-  $shadow: (
+  $var-shadow: (
     'background': transparent,
     'hover': transparent,
     'active': transparent,
@@ -98,7 +99,7 @@
     'hover-color': var(--main-color),
     'active-color': var(--sub-color)
   );
-  $error: (
+  $var-error: (
     'background': var(--error-color),
     'hover': var(--text-color),
     'active': var(--error-extra-color),
@@ -106,7 +107,7 @@
     'hover-color': var(--bg-color),
     'active-color': var(--text-color)
   );
-  $gray: (
+  $var-gray: (
     'background': var(--sub-alt-color),
     'hover': var(--text-color),
     'active': var(--sub-color),
@@ -114,19 +115,18 @@
     'hover-color': var(--bg-color),
     'active-color': var(--text-color)
   );
-
-  $styles: (
-    'main': $main,
-    'gray': $gray,
-    'error': $error,
-    'shadow': $shadow
+  $var-styles: (
+    'main': $var-main,
+    'gray': $var-gray,
+    'error': $var-error,
+    'shadow': $var-shadow
   );
 
-  @include button-style($styles);
+  @include button-style($var-styles);
 
   .icon {
-    transition: var(--transition-duration) ease-in;
     display: flex;
+    transition: var(--transition-duration) ease-in;
 
     &:empty {
       // If only one Icon sets to ignore second Icon block
@@ -136,25 +136,24 @@
 
   .button {
     display: flex;
-    justify-content: center;
+    gap: 8px;
     align-items: center;
+    justify-content: center;
     height: min-content;
+    font-family: inherit;
+    line-height: 1.3;
+    appearance: none;
+    cursor: pointer;
+    user-select: none;
     border: none;
     border-radius: var(--border-radius);
-    -webkit-user-select: none;
-    appearance: none;
-    user-select: none;
-    cursor: pointer;
-    line-height: 1.3;
-    font-family: inherit;
     transition: var(--transition-duration) ease-in;
-    gap: 8px;
 
     &:focus-visible {
+      outline: none;
       box-shadow:
         0 0 0 1.5px var(--bg-color),
         0 0 0 3px var(--text-color);
-      outline: none;
     }
 
     &__text {
@@ -177,8 +176,8 @@
 
     &--size {
       &-s {
-        padding: 4px 8px;
         gap: 4px;
+        padding: 4px 8px;
       }
 
       &-m {
@@ -206,13 +205,13 @@
 
   .loader {
     position: absolute;
+    box-sizing: border-box;
+    display: inline-block;
     min-width: 20px;
     min-height: 20px;
     border: 3px solid var(--bg-color);
     border-bottom-color: var(--text-color);
     border-radius: 100%;
-    display: inline-block;
-    box-sizing: border-box;
     animation: rotation 1.5s linear infinite;
   }
 

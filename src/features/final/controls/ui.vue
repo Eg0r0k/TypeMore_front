@@ -52,8 +52,8 @@
 <style scoped lang="scss">
   .final-screen__controls {
     display: flex;
-    justify-content: space-evenly;
     align-items: center;
+    justify-content: space-evenly;
     width: 100%;
   }
 </style>

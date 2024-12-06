@@ -1,5 +1,5 @@
 <template>
-  <div class="serverPage">
+  <div class="server-page">
     <div class="serverPage__head head">
       <Typography class="serverPage__title" color="primary" size="xxl" tag-name="h1">
         Welcome to
@@ -86,7 +86,7 @@
 </script>
 
 <style scoped lang="scss">
-  .serverPage {
+  .server-page {
     &__head {
       display: flex;
       align-items: center;

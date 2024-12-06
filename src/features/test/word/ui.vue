@@ -53,16 +53,17 @@
 
   .word {
     position: relative;
+    margin: 0.25em 0.3em;
     font-size: 32px;
     line-height: 1em;
-    margin: 0.25em 0.3em;
-    border-bottom: 2px solid transparent;
     color: var(--sub-color);
+    border-bottom: 2px solid transparent;
 
-    //user-select: none;
+    // user-select: none;
     & span {
       display: inline-block;
     }
+
     &:has(.incorrect) {
       border-bottom: 2px solid var(--error-color);
     }

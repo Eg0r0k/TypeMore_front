@@ -54,7 +54,7 @@
 </script>
 
 <style lang="scss" scoped>
-  @media screen and (max-width: 375px) {
+  @media screen and (width <= 375px) {
     .user {
       flex-direction: column;
     }
@@ -63,17 +63,17 @@
   .profile {
     &__settings-dropdown {
       position: absolute;
-      right: 0;
       top: 100%;
-      background-color: var(--sub-alt-color);
-      outline: 2px solid var(--sub-color);
-      border-radius: 4px;
-      list-style: none;
-      padding: 4px 0;
-      margin: 0;
+      right: 0;
       z-index: 10;
       min-width: 120px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin: 0;
+      padding: 4px 0;
+      list-style: none;
+      background-color: var(--sub-alt-color);
+      border-radius: 4px;
+      outline: 2px solid var(--sub-color);
+      box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
 
       li {
         padding: 4px 16px;
@@ -86,15 +86,15 @@
 
     &__settings-wrapper {
       position: absolute;
-      right: 14px;
       top: 14px;
+      right: 14px;
     }
   }
 
   .user {
     display: flex;
-    align-items: center;
     gap: 32px;
+    align-items: center;
 
     &__username {
       margin: 10px;

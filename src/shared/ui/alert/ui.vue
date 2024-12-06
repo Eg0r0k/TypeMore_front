@@ -124,17 +124,18 @@
     --error: #b82e2e;
     --success: #2aaf31;
     --info: #1f78d1;
-    --main: #ffffff;
-    min-width: 320px;
-    width: 100%;
+    --main: #fff;
+
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    width: 100%;
+    min-width: 320px;
+    max-width: 400px;
     padding: 22px 4px 22px 22px;
     color: var(--main);
-    border-radius: var(--border-radius);
-    max-width: 400px;
     pointer-events: all;
+    border-radius: var(--border-radius);
 
     &--warn {
       background-color: var(--warn);
@@ -154,17 +155,17 @@
 
     &__close-btn {
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       padding: 8px;
+      color: var(--main);
+      cursor: pointer;
       background-color: transparent;
       border: none;
-      color: var(--main);
       transition: all var(--transition-duration);
-      cursor: pointer;
 
       &:hover {
-        color: rgb(190, 188, 188);
+        color: rgb(190 188 188);
       }
     }
 
@@ -175,20 +176,20 @@
     }
 
     &__header {
-      color: var(--main);
       display: flex;
       flex-direction: row;
-      align-items: center;
       gap: 12px;
+      align-items: center;
       margin-bottom: 11px;
+      color: var(--main);
     }
 
     &__body {
-      scrollbar-width: thin;
-      overflow-y: scroll;
-      max-height: 100px;
-      height: 100%;
       width: 100%;
+      height: 100%;
+      max-height: 100px;
+      overflow-y: scroll;
+      scrollbar-width: thin;
     }
   }
 </style>

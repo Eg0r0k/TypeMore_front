@@ -136,7 +136,6 @@
 <style scoped lang="scss">
   .other {
     display: flex;
-
     gap: 12px;
 
     &__button {
@@ -145,21 +144,21 @@
   }
 
   .divider {
-    display: flex;
     position: relative;
+    display: flex;
     justify-content: center;
   }
 
   .login {
-    width: 100%;
-    max-width: 359px;
     display: flex;
     flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 359px;
     padding: 20px;
+    background-color: var(--bg-color);
     border: 2px solid var(--sub-alt-color);
     border-radius: var(--border-radius);
-    background-color: var(--bg-color);
-    gap: 10px;
 
     &__header {
       text-align: center;
@@ -178,7 +177,7 @@
     }
 
     &__title {
-      margin-bottom: 0px;
+      margin-bottom: 0;
     }
 
     &__sumbit {
@@ -190,16 +189,16 @@
       transition: all var(--transition-duration);
 
       &:hover {
-        cursor: pointer;
         color: var(--main-color);
+        cursor: pointer;
       }
     }
 
     &__wrapper {
-      width: 100%;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
+      width: 100%;
     }
   }
 </style>

@@ -26,11 +26,11 @@
 <style lang="scss" scoped>
   .avatar {
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     width: 100px;
-    background-color: var(--sub-alt-color);
     aspect-ratio: 1/1;
+    background-color: var(--sub-alt-color);
     border-radius: 9999px;
     outline: 4px solid var(--main-color);
 

@@ -21,7 +21,7 @@
 </script>
 
 <style lang="scss" scoped>
-  @media screen and (max-width: 375px) {
+  @media screen and (width <= 375px) {
     .profile {
       &__header {
         flex-direction: column;
@@ -31,16 +31,15 @@
 
   .profile {
     &__header {
+      position: relative;
       display: flex;
-
-      align-items: center;
-      justify-content: space-between;
       flex-wrap: wrap;
       gap: 24px;
+      align-items: center;
+      justify-content: space-between;
       margin: 20px 0;
-      position: relative;
-      background-color: var(--sub-alt-color);
       padding: 33px 38px;
+      background-color: var(--sub-alt-color);
       border-radius: var(--border-radius);
     }
   }

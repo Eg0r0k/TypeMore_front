@@ -47,9 +47,9 @@
   }
 
   .lang {
-    cursor: pointer;
     display: flex;
     padding: 4px 20px;
     color: var(--text-color);
+    cursor: pointer;
   }
 </style>

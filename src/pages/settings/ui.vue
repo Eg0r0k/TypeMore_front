@@ -205,46 +205,42 @@
 
 <style lang="scss" scoped>
   .controls {
-    border-top: 2px solid var(--sub-alt-color);
-    padding-top: 40px;
     display: grid;
-    width: 100%;
-    column-gap: 50px;
-    row-gap: 20px;
     grid-template-columns: repeat(1, 1fr);
+    gap: 20px 50px;
+    width: 100%;
+    padding-top: 40px;
+    border-top: 2px solid var(--sub-alt-color);
 
-    @media (min-width: 792px) {
+    @media (width >= 792px) {
       grid-template-columns: repeat(2, 1fr);
     }
   }
 
   .theme-input {
     display: flex;
-    align-items: center;
     gap: 10px;
+    align-items: center;
   }
 
   .color {
     position: relative;
     display: flex;
-    justify-content: center;
     align-items: center;
-    height: 40px;
+    justify-content: center;
     min-width: 40px;
+    height: 40px;
+    cursor: pointer;
+    user-select: none;
     background-color: var(--sub-alt-color);
     border-radius: var(--border-radius);
-    cursor: pointer;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    user-select: none;
 
     & input {
       position: absolute;
-
-      opacity: 0;
-      cursor: pointer;
-      height: 100%;
       width: 100%;
+      height: 100%;
+      cursor: pointer;
+      opacity: 0;
     }
   }
 
@@ -265,11 +261,11 @@
 
     &__container {
       display: grid;
-      width: 100%;
-      gap: 12px;
       grid-template-columns: repeat(1, 1fr);
+      gap: 12px;
+      width: 100%;
 
-      @media (min-width: 792px) {
+      @media (width >= 792px) {
         grid-template-columns: repeat(2, 1fr);
       }
     }

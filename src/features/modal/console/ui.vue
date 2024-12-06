@@ -146,6 +146,16 @@
     display: flex;
     align-items: center;
 
+    &__search-icon {
+      position: absolute;
+      top: 50%;
+      left: 15px;
+      color: var(--sub-color);
+      pointer-events: none;
+      transition: all var(--transition-duration);
+      transform: translateY(-50%);
+    }
+
     &__search-wrapper {
       position: relative;
       width: 100%;
@@ -157,32 +167,19 @@
       }
     }
 
-    &__search-icon {
-      position: absolute;
-      top: 50%;
-      left: 15px;
-      transition: all var(--transition-duration);
-      transform: translateY(-50%);
-      color: var(--sub-color);
-      pointer-events: none;
-    }
-
     &__search {
+      box-sizing: border-box;
       width: 100%;
       padding: 10px 20px 10px 50px;
-
-      line-height: normal;
-      box-sizing: border-box;
-      background-color: var(--sub-alt-color);
-      border-radius: var(--border-radius);
-      border: none;
-      outline: none;
       font-size: 16px;
+      line-height: normal;
       color: var(--text-color);
       caret-color: var(--main-color);
-      -webkit-user-select: none;
-      -moz-user-select: none;
       user-select: none;
+      background-color: var(--sub-alt-color);
+      border: none;
+      border-radius: var(--border-radius);
+      outline: none;
 
       &::placeholder {
         color: var(--sub-color);
@@ -196,22 +193,20 @@
   }
 
   .console-modal {
+    width: 100%;
+    max-width: 700px;
+    max-height: 100%;
+    overflow: hidden;
+    background-color: var(--sub-alt-color);
     border-radius: var(--border-radius);
     outline: 3px solid var(--sub-color);
-    max-width: 700px;
-    overflow: hidden;
-    width: 100%;
-    max-height: 100%;
-    background-color: var(--sub-alt-color);
 
     &__body {
+      display: grid;
+      max-height: calc(100vh - 200px);
       overflow-y: scroll;
       overscroll-behavior: contain;
-      max-height: calc(100vh - 200px);
-      display: grid;
       cursor: pointer;
-      -webkit-user-select: none;
-      -moz-user-select: none;
       user-select: none;
     }
   }

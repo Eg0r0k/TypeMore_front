@@ -51,29 +51,29 @@
     flex-wrap: wrap;
 
     &__top {
-      width: 100%;
       display: inline-flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
+      width: 100%;
     }
 
     &__bottom {
-      width: 100%;
       display: flex;
+      width: 100%;
     }
 
     &__left {
       display: flex;
-      align-items: center;
       flex: 1;
+      align-items: center;
     }
 
     &__right {
-      flex: 1;
       display: flex;
-      justify-content: end;
+      flex: 1;
       align-items: stretch;
+      justify-content: end;
     }
   }
 </style>

@@ -28,12 +28,12 @@
 
 <style lang="scss" scoped>
   .heatmap-container {
-    background-color: var(--sub-alt-color);
-    border-radius: var(--border-radius);
-    padding: 33px 38px;
     display: flex;
     gap: 14px;
     justify-content: space-between;
+    padding: 33px 38px;
     margin-bottom: 20px;
+    background-color: var(--sub-alt-color);
+    border-radius: var(--border-radius);
   }
 </style>

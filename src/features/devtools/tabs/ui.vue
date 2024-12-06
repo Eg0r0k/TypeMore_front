@@ -56,8 +56,8 @@
 <style lang="scss" scoped>
   .tab-buttons {
     display: flex;
-    justify-content: space-between;
     flex: 1;
+    justify-content: space-between;
     padding: 0 10px;
 
     & button {
@@ -67,14 +67,14 @@
 
   .devtools {
     &__body {
-      padding: 0 20px 0 20px;
+      padding: 0 20px;
       overflow: hidden;
     }
   }
 
   .accordion-content {
+    padding: 0 0 10px;
     transition: opacity 0.3s ease;
-    padding: 0 0 10px 0;
   }
 
   :deep(.active) {

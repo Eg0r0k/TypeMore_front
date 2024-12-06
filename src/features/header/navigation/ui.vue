@@ -74,11 +74,11 @@
   }
 
   .navigation {
-    width: 100%;
     display: flex;
     gap: 8px;
     align-items: center;
     justify-content: space-between;
+    width: 100%;
 
     &__controls {
       display: flex;
@@ -100,16 +100,16 @@
   }
 
   .slide-fade-enter-from {
-    transform: translateX(100%);
     opacity: 0;
+    transform: translateX(100%);
   }
 
   .slide-fade-leave-to {
-    transform: translateX(100%);
     opacity: 0;
+    transform: translateX(100%);
   }
 
-  @media (max-width: 375px) {
+  @media (width <= 375px) {
     .navigation__controls .iconify,
     .list__link .iconify {
       width: 20px;

@@ -64,44 +64,43 @@
 
 <style lang="scss" scoped>
   .test {
-    padding-top: 100px;
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 100%;
     height: 100%;
+    padding-top: 100px;
 
     &__container {
       display: flex;
-      width: 100%;
       justify-content: center;
+      width: 100%;
     }
   }
 
   .caps-detected {
-    width: -moz-fit-content;
+    align-self: flex-start;
     width: fit-content;
     padding: 4px;
-    border-radius: var(--border-radius);
     color: var(--text-color);
     background-color: var(--error-color);
-    align-self: flex-start;
+    border-radius: var(--border-radius);
   }
 
   .refresh {
-    cursor: pointer;
     display: flex;
-    justify-content: center;
     align-items: center;
-    border-radius: var(--border-radius);
-    border: 0px;
+    justify-content: center;
     padding: 6px 16px;
+    cursor: pointer;
     background-color: transparent;
+    border: 0;
+    border-radius: var(--border-radius);
     transition: all var(--transition-duration);
 
     svg {
-      transition: all var(--transition-duration);
       color: var(--sub-color);
+      transition: all var(--transition-duration);
     }
 
     &:active {

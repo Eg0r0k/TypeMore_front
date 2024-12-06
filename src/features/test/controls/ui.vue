@@ -93,24 +93,24 @@
 
 <style lang="scss" scoped>
   .controls {
-    margin-bottom: 8px;
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: 20px;
+    align-items: center;
+    margin-bottom: 8px;
 
     &__presets {
       display: flex;
-      gap: 20px;
       flex-wrap: wrap;
+      gap: 20px;
       justify-content: center;
     }
   }
 
   .preset-group {
     display: flex;
-    gap: 10px;
     flex-wrap: wrap;
+    gap: 10px;
   }
 
   :deep(.active) {

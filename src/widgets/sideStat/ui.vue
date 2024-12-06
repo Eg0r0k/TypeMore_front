@@ -37,7 +37,7 @@
 </script>
 
 <style lang="scss" scoped>
-  @media screen and (max-width: 784px) {
+  @media screen and (width <= 784px) {
     .side-container {
       flex-direction: column;
     }

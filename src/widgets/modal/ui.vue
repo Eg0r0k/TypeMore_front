@@ -99,25 +99,24 @@
   }
 
   .modal {
-    padding: 60px 15px;
-    box-sizing: border-box;
-    width: 100%;
-    height: 100%;
-    max-width: 100%;
-    max-height: 100%;
     position: fixed;
     inset: 0;
-
-    display: flex;
-    overflow: auto;
     z-index: var(--modal-z);
+    box-sizing: border-box;
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    padding: 60px 15px;
+    overflow: auto;
   }
 
   .modal-wrapper {
-    background-color: #00000070;
     position: fixed;
     inset: 0;
     z-index: var(--modal-z);
+    background-color: #00000070;
   }
 
   .justify {

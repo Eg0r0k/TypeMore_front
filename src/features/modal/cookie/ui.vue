@@ -52,11 +52,11 @@
   .cookie-modal {
     display: flex;
     flex-direction: column;
-    padding: 24px;
     width: 450px;
-    box-shadow: 0 0 0 0.2em var(--sub-alt-color);
+    padding: 24px;
     background: var(--bg-color);
     border-radius: var(--border-radius);
+    box-shadow: 0 0 0 0.2em var(--sub-alt-color);
 
     &__settings {
       display: flex;
@@ -66,8 +66,8 @@
 
     &__title {
       display: flex;
-      align-items: center;
       gap: 14px;
+      align-items: center;
     }
 
     &__header {
@@ -75,8 +75,6 @@
       flex-direction: column;
       width: 100%;
       margin-bottom: 10px;
-      -webkit-user-select: none;
-      -moz-user-select: none;
       user-select: none;
     }
 

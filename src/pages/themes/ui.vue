@@ -72,21 +72,22 @@
 <style scoped lang="scss">
   .settings {
     width: 100%;
+    padding: 33px 38px;
     margin-bottom: 20px;
     background-color: var(--sub-alt-color);
-    padding: 33px 38px;
     border-radius: var(--border-radius);
+
     &__categories {
       display: flex;
-      justify-content: space-between;
       flex-wrap: wrap;
+      justify-content: space-between;
     }
   }
 
   .container {
     display: grid;
-    gap: 21px;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 21px;
   }
 
   .apply {
@@ -96,12 +97,12 @@
   .card {
     display: flex;
     flex-direction: column;
+    overflow: hidden;
     background-color: var(--sub-alt-color);
     border-radius: var(--border-radius);
-    overflow: hidden;
 
     &__footer {
-      padding: 10px 24px 24px 24px;
+      padding: 10px 24px 24px;
     }
 
     &__controls {
@@ -110,10 +111,10 @@
     }
 
     &__desc {
-      margin-bottom: 24px;
       display: flex;
       flex-direction: column;
       gap: 4px;
+      margin-bottom: 24px;
     }
   }
 </style>

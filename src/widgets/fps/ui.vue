@@ -35,15 +35,15 @@
 </script>
 <style lang="scss">
   .fps {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: var(--fps-z);
     display: flex;
     flex-direction: column;
     gap: 12px;
-    z-index: var(--fps-z);
-    position: absolute;
-    pointer-events: none;
-    top: 20px;
-    left: 20px;
     color: var(--text-color);
+    pointer-events: none;
 
     & dl {
       display: flex;

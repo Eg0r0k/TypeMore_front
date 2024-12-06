@@ -81,8 +81,8 @@
 <style lang="scss" scoped>
   .stat-line {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     margin: 5px 0;
     font-size: 14px;
 

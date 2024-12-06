@@ -20,12 +20,12 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    max-width: 450px;
+    margin: 0 auto;
+    padding: 15px;
     text-align: center;
     background-color: var(--sub-alt-color);
     border-radius: var(--border-radius);
-    padding: 15px;
-    max-width: 450px;
-    margin: 0 auto;
 
     &__text {
       display: inline-flex;

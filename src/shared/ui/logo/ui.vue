@@ -25,50 +25,44 @@
   </router-link>
 </template>
 <style lang="scss" scoped>
-  //TODO: IDK WHY link TOOOO BIG (its problem becose user can miss click on logo!)
   .logo {
-    text-decoration: none;
-    margin-right: 10px;
     display: flex;
-    -webkit-user-select: none;
-    -moz-user-select: none;
+    margin-right: 10px;
+    text-decoration: none;
     user-select: none;
 
     & .icon {
+      position: absolute;
+      top: -50px;
+      right: 50%;
       display: flex;
+      transform: translate(50%, 50%);
     }
 
     &__text {
-      @media screen and (max-width: 539px) {
+      @media screen and (width <=539px) {
         display: none;
       }
     }
   }
 
   h1 {
-    color: var(--text-color);
-    font-family: 'Balsamiq Sans';
-    transform: translateY(23%);
     position: relative;
     margin: 0;
-
-    & .icon {
-      position: absolute;
-      transform: translate(50%, 50%);
-      right: 50%;
-      top: -50px;
-    }
+    font-family: BalsamiqSans, sans-serif;
+    color: var(--text-color);
+    transform: translateY(23%);
   }
 
-  @media screen and (max-width: 539px) {
+  @media screen and (width <=539px) {
     h1 {
       transform: none;
     }
 
     .logo {
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       margin-right: 4px;
 
       & .icon {
