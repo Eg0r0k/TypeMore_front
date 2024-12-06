@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
   import { ref, provide, watch } from 'vue'
-  import { TOGGLE_GROUP } from '@/shared/constants/inject-keys'
+  import { TOGGLE_GROUP } from '@shared/constants/inject-keys'
 
   const props = defineProps<{
     modelValue?: string | number | (string | number)[]

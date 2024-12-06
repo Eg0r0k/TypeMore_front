@@ -59,7 +59,7 @@
 <script setup lang="ts">
   import { useConfigStore } from '@/entities/config/model/store'
   import { useModal } from '@/entities/modal/model/store'
-  import { InputModal } from '@/features/modal/input'
+  import { InputModal } from '@/features/modal/words'
   import { LangModal } from '@/features/modal/language'
   import { Button } from '@/shared/ui/button'
   import { Icon } from '@iconify/vue'

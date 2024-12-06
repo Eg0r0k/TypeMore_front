@@ -23,7 +23,7 @@
   import { computed, inject, Ref } from 'vue'
   import { ButtonColor, ButtonI } from '../button/ui.vue'
   import { Button } from '../button'
-  import { TOGGLE_GROUP } from '@/shared/constants/inject-keys'
+  import { TOGGLE_GROUP } from '@shared/constants/inject-keys'
 
   interface ToggleButton extends ButtonI {
     modelValue?: boolean

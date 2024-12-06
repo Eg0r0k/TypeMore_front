@@ -3,7 +3,8 @@ import { Config } from '@/shared/constants/type'
 type ValidatorFn = (value: any) => boolean | string
 
 const validators: Record<keyof Config, ValidatorFn> = {
-  words: (value) => (Number.isInteger(value) && value > 0) || 'Words must be a positive integer',
+  words: (value) =>
+    (Number.isInteger(value) && value >= 0 && value <= 10000) || 'Words must be a positive integer',
   time: (value) => (Number.isInteger(value) && value >= 0) || 'Time must be a non-negative integer',
   devTools: (value) => typeof value === 'boolean' || 'Show devtools must be boolean',
   language: (value) =>

@@ -31,81 +31,80 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { Button } from '@/shared/ui/button'
-import { Typography } from '@/shared/ui/typography'
+  import { ref, onMounted } from 'vue'
+  import { Button } from '@/shared/ui/button'
+  import { Typography } from '@/shared/ui/typography'
 
-const online = ref(3)
-const showLobbyList = ref(false)
-const lobbies = ref([] as any[])
+  const online = ref(3)
+  const showLobbyList = ref(false)
+  const lobbies = ref([] as any[])
 
-const browseLobbies = () => {
-  showLobbyList.value = !showLobbyList.value
-}
-
-function setupSSE() {
-  const eventSource = new EventSource('http://localhost:3000/api/v1/sse/public')
-
-  eventSource.onopen = () => {
-    console.log('SSE connection opened')
+  const browseLobbies = () => {
+    showLobbyList.value = !showLobbyList.value
   }
 
-  eventSource.onmessage = (event) => {
-    console.log('SSE data received:', event.data)
-    try {
-      const data = JSON.parse(event.data)
-      console.log('Parsed data:', data)
+  function setupSSE() {
+    const eventSource = new EventSource('http://localhost:3000/api/v1/sse/public')
 
-      if (data && data.type === 'lobby_created') {
-        const lobby = data.lobby
+    eventSource.onopen = () => {
+      console.log('SSE connection opened')
+    }
 
-        const exists = lobbies.value.some((lobbyItem) => lobbyItem.id === lobby.id)
-        if (!exists) {
-          lobbies.value.push(lobby)
-          console.log('Added new lobby:', lobby)
+    eventSource.onmessage = (event) => {
+      console.log('SSE data received:', event.data)
+      try {
+        const data = JSON.parse(event.data)
+        console.log('Parsed data:', data)
+
+        if (data && data.type === 'lobby_created') {
+          const lobby = data.lobby
+
+          const exists = lobbies.value.some((lobbyItem) => lobbyItem.id === lobby.id)
+          if (!exists) {
+            lobbies.value.push(lobby)
+            console.log('Added new lobby:', lobby)
+          }
+        } else {
+          lobbies.value.push(data)
         }
-      } else {
-        lobbies.value.push(data)
+      } catch (error) {
+        console.error('Error parsing SSE message:', error)
+        console.error('Received raw data:', event.data)
       }
-    } catch (error) {
-      console.error('Error parsing SSE message:', error)
-      console.error('Received raw data:', event.data)
+    }
+
+    eventSource.onerror = (error) => {
+      console.error('SSE error:', error)
+      eventSource.close()
     }
   }
 
-  eventSource.onerror = (error) => {
-    console.error('SSE error:', error)
-    eventSource.close()
-  }
-}
-
-onMounted(() => {
-  setupSSE()
-  browseLobbies()
-})
+  onMounted(() => {
+    setupSSE()
+    browseLobbies()
+  })
 </script>
 
 <style scoped lang="scss">
-.serverPage {
-  &__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
-  }
+  .serverPage {
+    &__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
 
-  &__main {
-    display: flex;
-    gap: 20px;
+    &__main {
+      display: flex;
+      gap: 20px;
+    }
 
-  }
+    &__info {
+      text-align: end;
+    }
 
-  &__info {
-    text-align: end;
+    &__title {
+      margin-bottom: 0;
+    }
   }
-
-  &__title {
-    margin-bottom: 0;
-  }
-}
 </style>

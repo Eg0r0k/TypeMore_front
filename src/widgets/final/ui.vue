@@ -1,10 +1,10 @@
 <template>
   <div class="final-screen">
+    <AddWidget />
     <div class="final-screen__result" ref="finalScreenRef">
       <div class="stats">
         <div class="final-screen__WPM">
           <Typography color="sub" size="xl">WPM</Typography>
-
           <Popper placement="top" hover arrow :interactive="false" :content="`${getStats.wpm} WPM`">
             <Typography color="main" isBold size="xxxl">
               {{ wpm }}
@@ -25,7 +25,6 @@
           </Popper>
         </div>
       </div>
-
       <TestChart class="final-screen__chart chart" />
       <div class="wideStats">Test</div>
       <div class="wideStats">
@@ -72,6 +71,8 @@
   import { computed, ref } from 'vue'
 
   import { useDebounceFn } from '@vueuse/core'
+  import { Icon } from '@iconify/vue'
+  import { AddWidget } from '../add'
   const { getStats } = useStats()
   const rawWpm = computed(() => Math.floor(getStats.value.wpmRaw))
   const wpm = computed(() => Math.floor(getStats.value.wpm))
@@ -120,6 +121,7 @@
 
 <style lang="scss" scoped>
   @media screen and (max-width: 375px) {
+    //
   }
 
   .wideStats {

@@ -1,23 +1,42 @@
 <template>
   <p class="stat-line">
     <span>FPS</span>
-    <ToggleButton size="s" value="showFps" v-model="configStore.config.showFps" @update:modelValue="configStore.setFPS"
-      label="Devtools change" toggledColor="main" color="shadow">
+    <ToggleButton
+      size="s"
+      value="showFps"
+      v-model="configStore.config.showFps"
+      @update:modelValue="configStore.setFPS"
+      label="Devtools change"
+      toggledColor="main"
+      color="shadow"
+    >
       {{ configStore.config.showFps ? 'OFF' : 'ON' }}
     </ToggleButton>
   </p>
 
   <p class="stat-line">
     <span>Keyboard</span>
-    <ToggleButton size="s" value="showKeyboard" label="toggle visibility keyboard" toggled-color="main" color="shadow"
-      v-model="configStore.config.showKeyboard">
+    <ToggleButton
+      size="s"
+      value="showKeyboard"
+      label="toggle visibility keyboard"
+      toggled-color="main"
+      color="shadow"
+      v-model="configStore.config.showKeyboard"
+    >
       {{ configStore.config.showKeyboard ? 'OFF' : 'ON' }}
     </ToggleButton>
   </p>
   <p class="stat-line">
     <span>Play sound</span>
-    <ToggleButton size="s" value="playSound" v-model="configStore.config.playSound" label="Devtools change"
-      toggledColor="main" color="shadow">
+    <ToggleButton
+      size="s"
+      value="playSound"
+      v-model="configStore.config.playSound"
+      label="Devtools change"
+      toggledColor="main"
+      color="shadow"
+    >
       {{ configStore.config.playSound ? 'OFF' : 'ON' }}
     </ToggleButton>
   </p>
@@ -50,27 +69,27 @@
 </template>
 
 <script lang="ts" setup>
-import { ToggleButton } from '@/shared/ui/toggleButton'
-import { useConfigStore } from '@/entities/config/model/store'
-import { ToggleGroup } from '@/shared/ui/toggleGroup'
-import { Icon } from '@iconify/vue'
-import { TextInput } from '@/shared/ui/input'
-import { Button } from '@/shared/ui/button'
+  import { ToggleButton } from '@/shared/ui/toggleButton'
+  import { useConfigStore } from '@/entities/config/model/store'
+  import { ToggleGroup } from '@/shared/ui/toggleGroup'
+  import { Icon } from '@iconify/vue'
+  import { TextInput } from '@/shared/ui/input'
+  import { Button } from '@/shared/ui/button'
 
-const configStore = useConfigStore()
+  const configStore = useConfigStore()
 </script>
 <style lang="scss" scoped>
-.stat-line {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 5px 0;
-  font-size: 14px;
+  .stat-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 5px 0;
+    font-size: 14px;
 
-  span {
-    &:first-child {
-      font-size: 16px;
+    span {
+      &:first-child {
+        font-size: 16px;
+      }
     }
   }
-}
 </style>

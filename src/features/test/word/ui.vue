@@ -60,7 +60,7 @@
     color: var(--sub-color);
 
     //user-select: none;
-    & span{
+    & span {
       display: inline-block;
     }
     &:has(.incorrect) {
