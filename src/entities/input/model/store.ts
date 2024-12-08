@@ -1,4 +1,4 @@
-import { computed, markRaw, reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 
 import { defineStore } from 'pinia'
 
@@ -44,7 +44,7 @@ export const useInputStore = defineStore('input', () => {
 
   const replayStore = useReplayStore()
   const testState = useTestStateStore()
-  const generator = markRaw(useWordGeneratorStore())
+  const generator = useWordGeneratorStore()
 
   const currentWord = computed(() => generator.getCurrent())
 
@@ -57,21 +57,23 @@ export const useInputStore = defineStore('input', () => {
   })
 
   const handleChar = (char: string, charIndex: number): void => {
-    const thisCharCorrect = isCharCorrect(char, charIndex)
-    incrementAccuracy(thisCharCorrect)
+    requestAnimationFrame(() => {
+      const thisCharCorrect = isCharCorrect(char, charIndex)
+      incrementAccuracy(thisCharCorrect)
 
-    incrementCharacterCount(thisCharCorrect, charIndex, currentWord.value)
-    if (!thisCharCorrect && generator.getCurrent().charAt(charIndex) === '\n') {
-      if (input.current === '') return
-      char = ' '
-    }
-    replayStore.addReplayEvent(thisCharCorrect ? 'correctLetter' : 'incorrectLetter', char)
-    if (thisCharCorrect) {
-      playRandomClickSound()
-    } else {
-      // console.log('incorrect')
-      playErrorSound()
-    }
+      incrementCharacterCount(thisCharCorrect, charIndex, currentWord.value)
+      if (!thisCharCorrect && generator.getCurrent().charAt(charIndex) === '\n') {
+        if (input.current === '') return
+        char = ' '
+      }
+      replayStore.addReplayEvent(thisCharCorrect ? 'correctLetter' : 'incorrectLetter', char)
+      if (thisCharCorrect) {
+        playRandomClickSound()
+      } else {
+        // console.log('incorrect')
+        playErrorSound()
+      }
+    })
   }
 
   const isCharCorrect = (char: string, charIndex: number): boolean => {
@@ -155,7 +157,6 @@ export const useInputStore = defineStore('input', () => {
     resetCharacterCounts()
     resetAccuracy()
     resetAllErrors()
-    letterClasses.value = []
     resetKeypressTimings()
   }
 

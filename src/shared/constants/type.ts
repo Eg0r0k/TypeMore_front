@@ -17,5 +17,6 @@ export interface Config {
 export enum ConfigModes {
   Words = 'words',
   Free = 'free',
-  Time = 'time'
+  Time = 'time',
+  Qoute = 'quote'
 }

@@ -23,6 +23,7 @@
     max-width: 450px;
     margin: 0 auto;
     padding: 15px;
+    user-select: none;
     text-align: center;
     background-color: var(--sub-alt-color);
     border-radius: var(--border-radius);

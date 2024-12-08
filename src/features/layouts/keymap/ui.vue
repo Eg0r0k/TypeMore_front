@@ -6,9 +6,9 @@
         :key="key.code"
         :class="['key-map__key key', pressedKeys[key.code] ? 'active' : '']"
       >
-        <kbd>
+        <span>
           <b>{{ getLabel(key) }}</b>
-        </kbd>
+        </span>
       </div>
     </div>
   </div>
@@ -65,14 +65,14 @@
     z-index: var(--key-map-z);
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     align-items: center;
     touch-action: none;
     cursor: grab;
 
     &__row {
       display: flex;
-      gap: 10px;
+      gap: 6px;
     }
   }
 

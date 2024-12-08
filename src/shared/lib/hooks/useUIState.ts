@@ -1,28 +1,22 @@
 import { useWordGeneratorStore } from '@/entities/generator/model/store'
 
-import { computed, shallowRef, watch } from 'vue'
+import { computed } from 'vue'
 
 export const useUIState = () => {
   const generator = useWordGeneratorStore()
   const words = computed(() => generator.retWords.words)
-  const letterClasses = shallowRef<string[][]>([])
-  watch(
-    words,
-    (newWords) => {
-      letterClasses.value = newWords.map((word) => Array(word.length).fill(''))
-    },
-    { immediate: true }
-  )
+
+  const letterClasses = computed(() => words.value.map((word) => Array(word.length).fill('')))
+
   const updateLetterClasses = (currentWord: number, wordInputs: string[]) => {
     if (currentWord >= words.value.length) {
       console.warn('Trying to access word beyond array length. Stopping update.')
       return
     }
-
-    const originalWord = words.value[currentWord]
-    const currentInput = wordInputs[currentWord] || ''
-
-    letterClasses.value[currentWord] = computeLetterClasses(originalWord, currentInput)
+    letterClasses.value[currentWord] = computeLetterClasses(
+      words.value[currentWord],
+      wordInputs[currentWord] || ''
+    )
   }
   const computeLetterClasses = (originalWord: string, currentInput: string): string[] => {
     if (!currentInput) {

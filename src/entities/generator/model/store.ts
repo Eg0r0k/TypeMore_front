@@ -10,7 +10,6 @@ import { LanguageObj } from '@/shared/lib/types/types'
 
 interface Ret {
   words: string[]
-  sectionIndexes: number[]
   hasTab: boolean
   hasNewline: boolean
 }
@@ -26,7 +25,6 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
 
   const retWords: Ret = reactive({
     words: [],
-    sectionIndexes: [],
     hasTab: false,
     hasNewline: false
   })
@@ -58,12 +56,13 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
   const generateWords = async (lang: LanguageObj) => {
     if (testState.isRepeated) return
     reset()
+
     let stop = false
-    const limit = config.words
+    const limit = config.words || 100
     let i = 0
 
     while (!stop) {
-      const nextWordsBatch = []
+      const nextWordsBatch: string[] = []
       for (let j = 0; j < 100 && !stop; j++) {
         const nextWord = getNextWord(lang, limit, i)
         nextWordsBatch.push(nextWord)
