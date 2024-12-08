@@ -7,6 +7,7 @@ import { useTimerStore } from '@/entities/timer/model/store'
 import { computed, onUnmounted, ref, watch, watchEffect } from 'vue'
 import { roundTo2 } from '../helpers/numbers'
 import { getLastChar } from '../helpers/string'
+import { ConfigModes } from '@/shared/constants/type'
 
 type Stats = {
   wpm: number
@@ -43,12 +44,11 @@ export const useStats = () => {
   const wpmAndRaw = computed(() => {
     const testSeconds = calculateTestSeconds.value
 
-    const wpm = roundTo2(((correctWordChars.value + correctSpaces.value) * (60 / testSeconds)) / 5)
+    const timePerWord = 60 / testSeconds / 5
 
+    const wpm = roundTo2((correctWordChars.value + correctSpaces.value) * timePerWord)
     const raw = roundTo2(
-      ((correctChars.value + spaces.value + incorrectChars.value + extraChars.value) *
-        (60 / testSeconds)) /
-        5
+      (correctChars.value + spaces.value + incorrectChars.value + extraChars.value) * timePerWord
     )
 
     return {
@@ -70,70 +70,62 @@ export const useStats = () => {
   }
   const calculateChars = () => {
     resetStats()
-    if (!inputWords.value.length || !targetWords.value.length) {
+    const inputLength = inputWords.value.length
+    const targetLength = targetWords.value.length
+
+    if (!inputLength || !targetLength) {
       return
     }
-
-    for (let i = 0; i < inputWords.value.length; i++) {
+    for (let i = 0; i < inputLength; i++) {
       const inputWord = inputWords.value[i] as string
       const targetWord = targetWords.value[i] as string
+
       if (inputWord === targetWord) {
         correctWordChars.value += targetWord.length
         correctChars.value += targetWord.length
-        if (i < inputWords.value.length - 1 && getLastChar(inputWord as string) !== '\n') {
+        if (i < inputLength - 1 && getLastChar(inputWord) !== '\n') {
           correctSpaces.value++
         }
-      } else if (inputWord.length >= targetWord.length) {
-        for (let ch = 0; ch < inputWord.length; ch++) {
-          if (ch < targetWord.length) {
-            if (inputWord[ch] === targetWord[ch]) {
-              correctChars.value++
-            } else {
-              incorrectChars.value++
-            }
-          } else {
-            extraChars.value++
-          }
-        }
       } else {
-        const toAdd = {
-          correct: 0,
-          incorrect: 0,
-          missed: 0
-        }
-        for (let ch = 0; ch < targetWord.length; ch++) {
-          if (ch < inputWord.length) {
-            if (inputWord[ch] === targetWord[ch]) {
-              toAdd.correct++
-            } else {
-              toAdd.incorrect++
-            }
+        const wordLength = Math.max(inputWord.length, targetWord.length)
+        let toAddCorrect = 0
+        let toAddIncorrect = 0
+        let toAddMissed = 0
+        let extraCount = 0
+
+        for (let ch = 0; ch < wordLength; ch++) {
+          const inputChar = inputWord[ch]
+          const targetChar = targetWord[ch]
+
+          if (inputChar === targetChar) {
+            toAddCorrect++
+          } else if (ch < targetWord.length) {
+            toAddIncorrect++
           } else {
-            toAdd.missed++
+            extraCount++
+          }
+
+          if (ch >= inputWord.length) {
+            toAddMissed++
           }
         }
-        correctChars.value += toAdd.correct
-        incorrectChars.value += toAdd.incorrect
-        if (i === inputWords.value.length - 1 && config.mode === 'time') {
-          if (toAdd.incorrect === 0) correctWordChars.value += toAdd.correct
-        } else {
-          // console.log('missed')
-          missedChars.value += toAdd.missed
+        correctChars.value += toAddCorrect
+        incorrectChars.value += toAddIncorrect
+        missedChars.value += toAddMissed
+        if (i === inputLength - 1 && config.mode === ConfigModes.Time && toAddIncorrect === 0) {
+          correctWordChars.value += toAddCorrect
+        }
+        if (extraCount > 0) {
+          extraChars.value += extraCount
         }
       }
-      if (i < inputWords.value.length - 1) {
+      if (i < inputLength - 1) {
         spaces.value++
       }
     }
   }
 
-  watch([inputWords, targetWords], calculateChars, { immediate: true })
-
-  const intervalId = setInterval(calculateChars, 1000)
-
-  onUnmounted(() => {
-    clearInterval(intervalId)
-  })
+  watch([calculateTestSeconds], calculateChars, { immediate: true })
 
   const getStats = computed<Stats>(() => {
     return {
@@ -169,3 +161,62 @@ export const useStats = () => {
     calculateChars
   }
 }
+
+// const calculateChars = () => {
+//   resetStats()
+//   if (!inputWords.value.length || !targetWords.value.length) {
+//     return
+//   }
+
+//   for (let i = 0; i < inputWords.value.length; i++) {
+//     const inputWord = inputWords.value[i] as string
+//     const targetWord = targetWords.value[i] as string
+//     if (inputWord === targetWord) {
+//       correctWordChars.value += targetWord.length
+//       correctChars.value += targetWord.length
+//       if (i < inputWords.value.length - 1 && getLastChar(inputWord as string) !== '\n') {
+//         correctSpaces.value++
+//       }
+//     } else if (inputWord.length >= targetWord.length) {
+//       for (let ch = 0; ch < inputWord.length; ch++) {
+//         if (ch < targetWord.length) {
+//           if (inputWord[ch] === targetWord[ch]) {
+//             correctChars.value++
+//           } else {
+//             incorrectChars.value++
+//           }
+//         } else {
+//           extraChars.value++
+//         }
+//       }
+//     } else {
+//       const toAdd = {
+//         correct: 0,
+//         incorrect: 0,
+//         missed: 0
+//       }
+//       for (let ch = 0; ch < targetWord.length; ch++) {
+//         if (ch < inputWord.length) {
+//           if (inputWord[ch] === targetWord[ch]) {
+//             toAdd.correct++
+//           } else {
+//             toAdd.incorrect++
+//           }
+//         } else {
+//           toAdd.missed++
+//         }
+//       }
+//       correctChars.value += toAdd.correct
+//       incorrectChars.value += toAdd.incorrect
+//       if (i === inputWords.value.length - 1 && config.mode === 'time') {
+//         if (toAdd.incorrect === 0) correctWordChars.value += toAdd.correct
+//       } else {
+//         // console.log('missed')
+//         missedChars.value += toAdd.missed
+//       }
+//     }
+//     if (i < inputWords.value.length - 1) {
+//       spaces.value++
+//     }
+//   }
+// }

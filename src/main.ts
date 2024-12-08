@@ -7,7 +7,6 @@ import { installPlugins } from './plugins'
 
 const app = createApp(App)
 
-
 installPlugins(app)
 app.use(router)
 
