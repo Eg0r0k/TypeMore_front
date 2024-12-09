@@ -1,8 +1,15 @@
 import { useWordGeneratorStore } from '@/entities/generator/model/store'
 
-import { computed } from 'vue'
+import { computed, ComputedRef } from 'vue'
 
-export const useUIState = () => {
+export interface UIStateInterface {
+  letterClasses: ComputedRef<string[][]>
+  updateLetterClasses: (currentWord: number, wordInputs: string[]) => void
+  computeLetterClasses: (originalWord: string, currentInput: string) => string[]
+  getLetterClass: (wordIndex: number, letterIndex: number) => string
+}
+
+export const useUIState = (): UIStateInterface => {
   const generator = useWordGeneratorStore()
   const words = computed(() => generator.retWords.words)
 
@@ -36,6 +43,7 @@ export const useUIState = () => {
   return {
     letterClasses,
     updateLetterClasses,
+    computeLetterClasses,
     getLetterClass
   }
 }

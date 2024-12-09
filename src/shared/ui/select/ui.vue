@@ -44,7 +44,7 @@
     options: string[]
     default?: string | null
     tabindex?: number
-    label: string
+    label?: string
     isDisabled?: boolean
   }
   function generateId(prefix: string) {

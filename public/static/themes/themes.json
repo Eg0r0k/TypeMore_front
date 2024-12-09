@@ -10,6 +10,66 @@
     "--error-extra-color": "#a12828"
   },
   {
+    "name": "Lavender Dreams",
+    "--bg-color": "#2e1a47",
+    "--main-color": "#ba68c8",
+    "--sub-color": "#502d6d",
+    "--sub-alt-color": "#240f35",
+    "--text-color": "#f3e5f5",
+    "--error-color": "#f06292",
+    "--error-extra-color": "#ad1457"
+  },
+  {
+    "name": "Frozen Aurora",
+    "--bg-color": "#0e1b3f",
+    "--main-color": "#5eead4",
+    "--sub-color": "#243763",
+    "--sub-alt-color": "#081329",
+    "--text-color": "#d1f4f1",
+    "--error-color": "#ef4444",
+    "--error-extra-color": "#991b1b"
+  },
+  {
+    "name": "Cybernetic Glow",
+    "--bg-color": "#0f0f0f",
+    "--main-color": "#00e676",
+    "--sub-color": "#1b1b1b",
+    "--sub-alt-color": "#070707",
+    "--text-color": "#e0ffe0",
+    "--error-color": "#ff1744",
+    "--error-extra-color": "#b71c1c"
+  },
+  {
+    "name": "Rustic Charm",
+    "--bg-color": "#2f241f",
+    "--main-color": "#d9b382",
+    "--sub-color": "#5a4a3f",
+    "--sub-alt-color": "#1e1613",
+    "--text-color": "#f3e5d8",
+    "--error-color": "#b71c1c",
+    "--error-extra-color": "#7f0000"
+  },
+  {
+    "name": "Icy Lavender",
+    "--bg-color": "#2b2c3e",
+    "--main-color": "#b39ddb",
+    "--sub-color": "#4e4f66",
+    "--sub-alt-color": "#191924",
+    "--text-color": "#e6e0f8",
+    "--error-color": "#d81b60",
+    "--error-extra-color": "#880e4f"
+  },
+  {
+    "name": "Enchanted Forest",
+    "--bg-color": "#1b2d20",
+    "--main-color": "#6ab04c",
+    "--sub-color": "#355e3b",
+    "--sub-alt-color": "#0f1f14",
+    "--text-color": "#d4e9d2",
+    "--error-color": "#d63031",
+    "--error-extra-color": "#b71517"
+  },
+  {
     "name": "VS Code 2",
     "--bg-color": "#181818",
     "--main-color": "#007aCC",

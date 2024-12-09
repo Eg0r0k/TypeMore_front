@@ -1,6 +1,6 @@
 <template>
   <div class="final-screen">
-    <AddWidget />
+    <AddWidget class="final-screen__add" />
     <div class="final-screen__result" ref="finalScreenRef">
       <div class="stats">
         <div class="final-screen__WPM">
@@ -119,16 +119,21 @@
 </script>
 
 <style lang="scss" scoped>
-  @media screen and (width <= 375px) {
-    // add later
-  }
-
   .wide-stats {
     display: flex;
     justify-content: space-between;
   }
 
+  .stats {
+    display: flex;
+    flex-direction: column;
+  }
+
   .final-screen {
+    &__add {
+      margin-bottom: 20px;
+    }
+
     &__result {
       display: grid;
       grid-template-areas:
@@ -137,11 +142,25 @@
       grid-template-columns: auto 1fr;
       gap: 1rem;
       align-items: center;
-      padding: 15px 25px;
     }
 
     &__chart {
       height: 200px;
+    }
+  }
+
+  @media screen and (width <=784px) {
+    .final-screen__result {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        'stats'
+        'chart'
+        'more-stats';
+    }
+
+    .stats {
+      justify-items: start;
+      justify-self: center;
     }
   }
 </style>

@@ -3,9 +3,11 @@ import { Config } from '@/shared/constants/type'
 type ValidatorFn = (value: any) => boolean | string
 
 const validators: Record<keyof Config, ValidatorFn> = {
+  //TODO: Dont forget make infiniy mode
   words: (value) =>
     (Number.isInteger(value) && value >= 0 && value <= 10000) || 'Words must be a positive integer',
-  time: (value) => (Number.isInteger(value) && value >= 0) || 'Time must be a non-negative integer',
+  //TODO: Dont forget make infiniy mode
+  time: (value) => (Number.isInteger(value) && value > 0) || 'Time must be a non-negative integer',
   devTools: (value) => typeof value === 'boolean' || 'Show devtools must be boolean',
   language: (value) =>
     (typeof value === 'string' && value.length > 0) || 'Language must be a non-empty string',
@@ -47,3 +49,12 @@ export const validateConfig = (key: keyof Config, value: any): boolean | string 
 export const emailReg = new RegExp(
   /^(([^<>()[]+(\.[^<>()[]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 )
+
+export const isValidUrl = (href: string): boolean => {
+  try {
+    new URL(href, window.location.origin)
+    return true
+  } catch {
+    return false
+  }
+}

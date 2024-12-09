@@ -30,10 +30,8 @@
   import { FOOTER_LINKS } from '../footer/model/const/values'
   import { useModal } from '@/entities/modal/model/store'
   import { ThemesModal } from '@/features/modal/themes'
-  import { useConfigStore } from '@/entities/config/model/store'
   const navLinks = FOOTER_LINKS
   const modal = useModal()
-  const { config } = useConfigStore()
   const handleOnClickOpenTheme = () => {
     modal.open(ThemesModal, 'top', 'center')
   }
@@ -41,6 +39,7 @@
 
 <style lang="scss" scoped>
   .key-tip {
+    margin-bottom: 20px;
     font-size: 0.7rem;
     line-height: 0.7rem;
     color: var(--sub-color);

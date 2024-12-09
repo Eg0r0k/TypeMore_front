@@ -69,6 +69,10 @@ export const setFontFamily = (font: string) => {
   }
 }
 
+export const setTime = (val: number) => {
+  setConfig('time', val)
+}
+
 export const setFontSize = (val: number) => {
   setConfig('fontSize', val)
 }

@@ -1,10 +1,23 @@
 import { computed, ComputedRef, reactive } from 'vue'
+export interface InputHookInterface {
+  input: InputState
+  inputHistoryLength: ComputedRef<number>
+  inputLength: ComputedRef<number>
+
+  resetInput: () => void
+  setCurrent: (val: string) => void
+  getCurrent: () => string
+
+  popHistory: () => string
+  pushToHistory: () => string
+  getHistory: () => string[]
+}
 interface InputState {
   current: string
   history: string[]
 }
 
-export const useInputState = () => {
+export const useInputState = (): InputHookInterface => {
   const input = reactive<InputState>({
     current: '',
     history: []

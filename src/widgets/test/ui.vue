@@ -1,5 +1,4 @@
 <template>
-  <button @click="clearWords">Clear</button>
   <div ref="wordsContainer" :class="classes">
     <template v-for="(word, wordIndex) in generator.retWords.words" :key="`${word}-${wordIndex}`">
       <TestWord :word="word" :wordIndex="wordIndex + currentIndex" />
@@ -24,22 +23,22 @@
     isRightToLeft?: boolean
   }
 
-  const showedWords = ref<string[]>([])
+  // const showedWords = ref<string[]>([])
   const currentIndex = ref(0)
   const classes = computed(() => clsx('words', { 'right-to-left': props.isRightToLeft }))
   const props = withDefaults(defineProps<Props>(), {
     isRightToLeft: false
   })
 
-  const clearWords = () => {
-    let temp = testState.currentWordElementIndex - 3
-    if (temp < 0) temp = 0
-    currentIndex.value = temp
-    showedWords.value = unref(generator.retWords.words).slice(
-      temp,
-      testState.currentWordElementIndex + 7
-    )
-  }
+  // const clearWords = () => {
+  //   let temp = testState.currentWordElementIndex - 3
+  //   if (temp < 0) temp = 0
+  //   currentIndex.value = temp
+  //   showedWords.value = unref(generator.retWords.words).slice(
+  //     temp,
+  //     testState.currentWordElementIndex + 7
+  //   )
+  // }
 
   const testState = useTestStateStore()
 

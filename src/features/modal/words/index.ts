@@ -1,1 +1,1 @@
-export { default as InputModal } from './ui.vue'
+export { default as WordsModal } from './ui.vue'

@@ -3,7 +3,7 @@
 @use 'normalize';
 @use 'scroll';
 
-$fonts: (
+$var-fonts: (
   'Geist': './fonts/Geist-Regular',
   'Hack': './fonts/hack-regular',
   'JetBrainsMono': './fonts/JetBrainsMono-Regular',
@@ -15,7 +15,7 @@ $fonts: (
   'BalsamiqSans': './fonts/BalsamiqSans-Regular'
 );
 
-@each $font-name, $font-path in $fonts {
+@each $font-name, $font-path in $var-fonts {
   @include font-face($font-name, $font-path);
 }
 

@@ -4,10 +4,19 @@ import { useInputStore } from '@entities/input/model/store'
 import { useTestStateStore } from '@/entities/test/model/store'
 
 import { useTimerStore } from '@/entities/timer/model/store'
-import { computed, onUnmounted, ref, watch, watchEffect } from 'vue'
+import { computed, ComputedRef, ref, watch, watchEffect } from 'vue'
 import { roundTo2 } from '../helpers/numbers'
 import { getLastChar } from '../helpers/string'
 import { ConfigModes } from '@/shared/constants/type'
+
+export interface UseStatsInterface {
+  getStats: ComputedRef<Stats>
+  setEnd: () => void
+  setStart: () => void
+  wpm: ComputedRef<number>
+  raw: ComputedRef<number>
+  calculateChars: () => void
+}
 
 type Stats = {
   wpm: number
@@ -20,7 +29,7 @@ type Stats = {
   correctSpaces: number
 }
 
-export const useStats = () => {
+export const useStats = (): UseStatsInterface => {
   const correctWordChars = ref(0)
   const correctChars = ref(0)
   const incorrectChars = ref(0)

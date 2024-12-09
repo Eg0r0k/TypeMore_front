@@ -75,6 +75,11 @@
         </Button>
         <TextInput placeholder="Some text" />
         <TextInput :is-disabled="true" placeholder="Some text" />
+        <Select :options="selectValues" />
+        <Select isDisabled :options="selectValues" />
+        <CheckBox value="test">Тест</CheckBox>
+        <CheckBox isDisabled value="test">Тест</CheckBox>
+
       </div>
     </div>
 
@@ -84,12 +89,7 @@
         <TextInput v-model="color.hex" @input="debouncedUpdateColor(color)" />
         <div class="color">
           <Icon icon="mdi:color" width="30" />
-          <input
-            v-model="color.hex"
-            class="input-color"
-            type="color"
-            @input="debouncedUpdateColor(color)"
-          />
+          <input v-model="color.hex" class="input-color" type="color" @input="debouncedUpdateColor(color)" />
         </div>
       </div>
       <div></div>
@@ -104,170 +104,177 @@
 </template>
 
 <script setup lang="ts">
-  import { Icon } from '@iconify/vue'
-  import { TextInput } from '@/shared/ui/input'
-  import { Typography } from '@shared/ui/typography'
-  import { Button } from '@shared/ui/button'
-  import { onMounted, ref } from 'vue'
-  import { Theme } from '@/features/modal/themes/types/themes'
-  import { useAlertStore } from '@/entities/alert'
-  import { AlertType } from '@/entities/alert/types/alertData'
-  import { useDebounceFn } from '@vueuse/core'
-  const root = document.documentElement
-  const alertStore = useAlertStore()
-  interface Color {
-    label: string
-    var: string
-    hex: string
+import { Icon } from '@iconify/vue'
+import { TextInput } from '@/shared/ui/input'
+import { Typography } from '@shared/ui/typography'
+import { Button } from '@shared/ui/button'
+import { onMounted, ref } from 'vue'
+import { Theme } from '@/features/modal/themes/types/themes'
+import { useAlertStore } from '@/entities/alert'
+import { AlertType } from '@/entities/alert/types/alertData'
+import { useDebounceFn } from '@vueuse/core'
+import { Select } from '@/shared/ui/select'
+import { CheckBox } from '@/shared/ui/checkbox'
+const root = document.documentElement
+const selectValues = [
+  "a",
+  "b",
+  "c"
+]
+const alertStore = useAlertStore()
+interface Color {
+  label: string
+  var: string
+  hex: string
+}
+const colors = ref([
+  {
+    label: 'background',
+    var: '--bg-color',
+    hex: getComputedStyle(root).getPropertyValue('--bg-color')
+  },
+  {
+    label: 'main',
+    var: '--main-color',
+    hex: getComputedStyle(root).getPropertyValue('--main-color')
+  },
+  {
+    label: 'sub-color',
+    var: '--sub-color',
+    hex: getComputedStyle(root).getPropertyValue('--sub-color')
+  },
+  {
+    label: 'sub-alt-color',
+    var: '--sub-alt-color',
+    hex: getComputedStyle(root).getPropertyValue('--sub-alt-color')
+  },
+  {
+    label: 'text-color',
+    var: '--text-color',
+    hex: getComputedStyle(root).getPropertyValue('--text-color')
+  },
+  {
+    label: 'error',
+    var: '--error-color',
+    hex: getComputedStyle(root).getPropertyValue('--error-color')
+  },
+  {
+    label: 'extra-error',
+    var: '--error-extra-color',
+    hex: getComputedStyle(root).getPropertyValue('--error-extra-color')
   }
-  const colors = ref([
-    {
-      label: 'background',
-      var: '--bg-color',
-      hex: getComputedStyle(root).getPropertyValue('--bg-color')
-    },
-    {
-      label: 'main',
-      var: '--main-color',
-      hex: getComputedStyle(root).getPropertyValue('--main-color')
-    },
-    {
-      label: 'sub-color',
-      var: '--sub-color',
-      hex: getComputedStyle(root).getPropertyValue('--sub-color')
-    },
-    {
-      label: 'sub-alt-color',
-      var: '--sub-alt-color',
-      hex: getComputedStyle(root).getPropertyValue('--sub-alt-color')
-    },
-    {
-      label: 'text-color',
-      var: '--text-color',
-      hex: getComputedStyle(root).getPropertyValue('--text-color')
-    },
-    {
-      label: 'error',
-      var: '--error-color',
-      hex: getComputedStyle(root).getPropertyValue('--error-color')
-    },
-    {
-      label: 'extra-error',
-      var: '--error-extra-color',
-      hex: getComputedStyle(root).getPropertyValue('--error-extra-color')
-    }
-  ])
+])
 
-  const getTheme = (): Theme => {
-    return colors.value.reduce((theme, color) => {
-      theme[color.var as keyof Theme] = color.hex
-      return theme
-    }, {} as Theme)
+const getTheme = (): Theme => {
+  return colors.value.reduce((theme, color) => {
+    theme[color.var as keyof Theme] = color.hex
+    return theme
+  }, {} as Theme)
+}
+
+let queuedUpdates: Color[] = []
+
+const updateColor = (color: Color) => {
+  queuedUpdates.push(color)
+
+  if (!queuedUpdates.length) {
+    return
   }
 
-  let queuedUpdates: Color[] = []
+  requestAnimationFrame(() => {
+    const updates = queuedUpdates
+    queuedUpdates = []
 
-  const updateColor = (color: Color) => {
-    queuedUpdates.push(color)
-
-    if (!queuedUpdates.length) {
-      return
-    }
-
-    requestAnimationFrame(() => {
-      const updates = queuedUpdates
-      queuedUpdates = []
-
-      updates.forEach((color) => {
-        root.style.setProperty(color.var, color.hex)
-      })
+    updates.forEach((color) => {
+      root.style.setProperty(color.var, color.hex)
+    })
+  })
+}
+const copyTheme = async () => {
+  const theme = getTheme()
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(theme, null, 2))
+  } catch (error) {
+    alertStore.addAlert({
+      type: AlertType.Error,
+      title: 'Failed to copy theme',
+      msg: `${error}`,
+      duration: 2000
     })
   }
-  const copyTheme = async () => {
-    const theme = getTheme()
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(theme, null, 2))
-    } catch (error) {
-      alertStore.addAlert({
-        type: AlertType.Error,
-        title: 'Failed to copy theme',
-        msg: `${error}`,
-        duration: 2000
-      })
-    }
-  }
-  const debouncedUpdateColor = useDebounceFn(updateColor, 200, { maxWait: 200 })
+}
+const debouncedUpdateColor = useDebounceFn(updateColor, 200, { maxWait: 200 })
 
-  onMounted(() => {
-    getTheme()
-  })
+onMounted(() => {
+  getTheme()
+})
 </script>
 
 <style lang="scss" scoped>
-  .controls {
+.controls {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 20px 50px;
+  width: 100%;
+  padding-top: 40px;
+  border-top: 2px solid var(--sub-alt-color);
+
+  @media (width >=792px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.theme-input {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.color {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  cursor: pointer;
+  user-select: none;
+  background-color: var(--sub-alt-color);
+  border-radius: var(--border-radius);
+
+  & input {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    opacity: 0;
+  }
+}
+
+.test {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &__btn {
+    width: 100%;
+  }
+}
+
+.test-color {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+
+  &__container {
     display: grid;
     grid-template-columns: repeat(1, 1fr);
-    gap: 20px 50px;
+    gap: 12px;
     width: 100%;
-    padding-top: 40px;
-    border-top: 2px solid var(--sub-alt-color);
 
-    @media (width >= 792px) {
+    @media (width >=792px) {
       grid-template-columns: repeat(2, 1fr);
     }
   }
-
-  .theme-input {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
-
-  .color {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 40px;
-    height: 40px;
-    cursor: pointer;
-    user-select: none;
-    background-color: var(--sub-alt-color);
-    border-radius: var(--border-radius);
-
-    & input {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      cursor: pointer;
-      opacity: 0;
-    }
-  }
-
-  .test {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-
-    &__btn {
-      width: 100%;
-    }
-  }
-
-  .test-color {
-    display: flex;
-    flex-direction: column;
-    gap: 40px;
-
-    &__container {
-      display: grid;
-      grid-template-columns: repeat(1, 1fr);
-      gap: 12px;
-      width: 100%;
-
-      @media (width >= 792px) {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-  }
+}
 </style>

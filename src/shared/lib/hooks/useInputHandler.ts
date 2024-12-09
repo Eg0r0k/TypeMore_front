@@ -1,9 +1,11 @@
-import { computed, ref } from 'vue'
+import { computed, ref, Ref } from 'vue'
 
 import { useInputState } from '@/shared/lib/hooks/useInputState'
 import { useTestStateStore } from '@/entities/test/model/store'
 
 import { useWordGeneratorStore } from '@/entities/generator/model/store'
+
+
 
 export const useInputHandling = () => {
   const wordInputs = ref<string[]>([])

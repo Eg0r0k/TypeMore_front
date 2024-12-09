@@ -2,10 +2,10 @@
   <nav class="footer-navigation" aria-label="footer navigation">
     <ul class="footer-navigation__list">
       <li v-for="link in props.links" :key="link.label" class="list__item">
-        <a :href="link.link" class="list__link" target="_blank" :title="link.label">
+        <a :href="link.link" class="list__link link" target="_blank" :title="link.label">
           <Icon :icon="link.iconName" width="18" aria-hidden="true" />
           <span class="sr-only">{{ link.label }}</span>
-          {{ link.label }}
+          <span class="link__text">{{ link.label }}</span>
         </a>
       </li>
     </ul>
@@ -44,6 +44,14 @@
       display: flex;
       flex-wrap: wrap;
       gap: 16px;
+    }
+  }
+
+  @media (width <=437px) {
+    .link {
+      &__text {
+        display: none;
+      }
     }
   }
 </style>

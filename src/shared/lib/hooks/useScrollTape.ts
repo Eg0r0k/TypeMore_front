@@ -3,7 +3,7 @@ import { useTestStateStore } from '@/entities/test/model/store'
 
 import { useElementSize } from '@vueuse/core'
 import { Ref } from 'vue'
-
+//TODO: Mb delete it later 
 export const useScrollTape = (wordsRef: Ref<HTMLElement | null>) => {
   const testStore = useTestStateStore()
   const inputStore = useInputStore()
