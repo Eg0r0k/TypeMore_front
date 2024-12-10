@@ -5,7 +5,7 @@ import { useReplayStore } from '@/entities/replay/model/store'
 import { useTimerStore } from '@/entities/timer/model/store'
 
 import { defineStore } from 'pinia'
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 /**
  * Store for controlling the test state.
  * It manages the test activity, repetition status, loading state,
@@ -15,6 +15,7 @@ export const useTestStateStore = defineStore('test-state', () => {
   const isActive = ref(false)
   const isRepeated = ref(false)
   const isLoading = ref(true)
+  //! Not here
   const isRightToLeft = ref(false)
   const currentWordElementIndex = ref(0)
 
@@ -124,9 +125,7 @@ export const useTestStateStore = defineStore('test-state', () => {
   const setCurrentWordElementIndex = (value: number): void => {
     currentWordElementIndex.value = value
   }
-  onMounted(() => {
-    init()
-  })
+
   return {
     setActive,
     restartTest,

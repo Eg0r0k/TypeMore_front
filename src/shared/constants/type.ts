@@ -18,5 +18,6 @@ export enum ConfigModes {
   Words = 'words',
   Free = 'free',
   Time = 'time',
-  Qoute = 'quote'
+  Qoute = 'quote',
+  Custom = 'custom'
 }

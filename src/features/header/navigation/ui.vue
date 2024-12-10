@@ -109,7 +109,7 @@
     transform: translateX(100%);
   }
 
-  @media (width <= 375px) {
+  @media screen and (width <=375px) {
     .navigation__controls .iconify,
     .list__link .iconify {
       width: 20px;

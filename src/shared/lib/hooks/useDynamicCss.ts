@@ -7,10 +7,10 @@ export const useDynamicCss = () => {
   // ref to head link
   const currentLink = ref<HTMLLinkElement | null>(null)
   /**
-   *  Load css file into html head. Unload old link css if its exist 
-   * 
-   * @param href - css path to style  
-   * @returns 
+   *  Load css file into html head. Unload old link css if its exist
+   *
+   * @param href - css path to style
+   * @returns
    */
   const loadCss = (href: string) => {
     if (!isValidUrl(href)) {

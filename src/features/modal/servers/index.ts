@@ -1,1 +1,1 @@
-export { default as ServerModal } from './ui.vue'
+export { default as ServersModal } from './ui.vue'

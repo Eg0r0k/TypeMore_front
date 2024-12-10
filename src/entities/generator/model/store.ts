@@ -49,9 +49,6 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
   const reset = () => {
     retWords.words = []
   }
-  const test = (from: number, to: number) => {
-    retWords.words.splice(from, to)
-  }
 
   const generateWords = async (lang: LanguageObj) => {
     if (testState.isRepeated) return
@@ -105,5 +102,5 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
     shuffle(shuffedIndexes.value)
   }
 
-  return { getWordsLimit, shuffleWords, retWords, generateWords, getCurrent, words, reset, test }
+  return { getWordsLimit, shuffleWords, retWords, generateWords, getCurrent, words, reset }
 })

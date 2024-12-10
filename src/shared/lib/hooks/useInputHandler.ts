@@ -5,8 +5,6 @@ import { useTestStateStore } from '@/entities/test/model/store'
 
 import { useWordGeneratorStore } from '@/entities/generator/model/store'
 
-
-
 export const useInputHandling = () => {
   const wordInputs = ref<string[]>([])
   const testState = useTestStateStore()

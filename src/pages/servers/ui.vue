@@ -1,11 +1,11 @@
 <template>
   <div class="server-page">
-    <div class="serverPage__head head">
-      <Typography class="serverPage__title" color="primary" size="xxl" tag-name="h1">
+    <div class="server-page__head head">
+      <Typography class="server-page__title" color="primary" size="xxl" tag-name="h1">
         Welcome to
         <Typography tag-name="span" size="xxl" color="main">Servers</Typography>
       </Typography>
-      <div class="serverPage__info">
+      <div class="server-page__info">
         <Typography size="s" color="sub">
           Online
           <Typography tag-name="span" size="m" color="primary">{{ online }}</Typography>
@@ -13,10 +13,28 @@
       </div>
     </div>
 
-    <div class="serverPage__main main">
-      <Button size="m" color="main">Create room</Button>
-      <Button size="m" color="main">Browse lobbies</Button>
-      <Button size="m" color="main">Enter code</Button>
+    <div class="server-page__main main">
+      <Button class="main__btn" size="l" color="gray">
+        <div>
+          <Icon width="40" icon="fa6-solid:users" />
+          <Typography isBold>Create room</Typography>
+          <Typography size="xs">Rooms: 0</Typography>
+        </div>
+      </Button>
+      <Button @click="handleServersModal" class="main__btn" size="l" color="gray">
+        <div>
+          <Icon width="40" icon="mynaui:servers-solid" />
+          <Typography isBold>Public rooms</Typography>
+          <Typography size="xs">Rooms: 0</Typography>
+        </div>
+      </Button>
+      <Button class="main__btn" size="l" color="gray">
+        <div>
+          <Icon width="40" icon="mingcute:code-fill" />
+          <Typography isBold>Enter code</Typography>
+          <Typography size="xs">Join using a room code</Typography>
+        </div>
+      </Button>
     </div>
 
     <ul v-if="showLobbyList" id="lobbyList">
@@ -34,10 +52,18 @@
   import { ref, onMounted } from 'vue'
   import { Button } from '@/shared/ui/button'
   import { Typography } from '@/shared/ui/typography'
+  import { Icon } from '@iconify/vue'
+  import { useModal } from '@/entities/modal'
+  import { ServersModal } from '@/features/modal/servers'
 
   const online = ref(3)
   const showLobbyList = ref(false)
   const lobbies = ref([] as any[])
+  const modal = useModal()
+
+  const handleServersModal = () => {
+    modal.open(ServersModal, 'center', 'center')
+  }
 
   const browseLobbies = () => {
     showLobbyList.value = !showLobbyList.value
@@ -86,6 +112,12 @@
 </script>
 
 <style scoped lang="scss">
+  .main {
+    &__btn {
+      height: 100%;
+    }
+  }
+
   .server-page {
     &__head {
       display: flex;
@@ -95,8 +127,10 @@
     }
 
     &__main {
-      display: flex;
+      display: grid;
       gap: 20px;
+      grid-template-columns: repeat(3, 1fr);
+      grid-auto-rows: 1fr;
     }
 
     &__info {
@@ -105,6 +139,16 @@
 
     &__title {
       margin-bottom: 0;
+    }
+  }
+
+  @media screen and (width <=475px) {
+    .server-page__main {
+      grid-template-columns: 1fr;
+    }
+
+    .main__btn {
+      width: 100%;
     }
   }
 </style>

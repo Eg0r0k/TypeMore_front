@@ -7,7 +7,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { ref, onMounted, watch, nextTick, computed, unref } from 'vue'
+  import { ref, onMounted, watch, nextTick, computed } from 'vue'
   import { useWordGeneratorStore } from '@/entities/generator/model/store'
   import { useTestStateStore } from '@/entities/test/model/store'
 

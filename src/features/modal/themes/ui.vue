@@ -41,7 +41,7 @@
   import { THEMES_KEY } from '@/shared/constants/inject-keys'
 
   const configStore = useConfigStore()
-  const themeList = inject<Ref<Theme[]>>(THEMES_KEY) as Ref<Theme[]>
+  const themeList = inject(THEMES_KEY) as Ref<Theme[]>
 
   const changeTheme = async (theme: Theme): Promise<void> => {
     await configStore.setTheme(theme.name)

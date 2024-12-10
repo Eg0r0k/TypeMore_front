@@ -6,7 +6,7 @@
   >
     <span
       v-for="(letter, letterIndex) in props.word"
-      :key="`${letter}-${letterIndex}`"
+      :key="`${wordIndex}-${letterIndex}`"
       :class="[
         inputStore.getLetterClass(wordIndex, letterIndex),
         { 'tab-character': letter === '\t', 'newline-character': letter === '\n' }
@@ -16,7 +16,7 @@
     </span>
     <span
       v-for="(extraLetter, extraLetterIndex) in inputStore.getExtraLetters(wordIndex)"
-      :key="`extra-${extraLetter}-${extraLetterIndex}`"
+      :key="`extra-${wordIndex}-${extraLetterIndex}`"
       class="over-incorrect"
     >
       {{ extraLetter }}

@@ -12,18 +12,7 @@
   >
     <h2 id="modal-search-title" class="sr-only">Search elements</h2>
     <div class="console-modal__header modal-header">
-      <div class="modal-header__search-wrapper">
-        <Icon width="20" icon="fluent:search-12-filled" class="modal-header__search-icon" />
-        <input
-          ref="searchInput"
-          :value="searchQuery"
-          @input="onSearchInput"
-          type="text"
-          class="modal-header__search"
-          placeholder="Search..."
-          aria-label="Search"
-        />
-      </div>
+      <SearchBar v-model="searchQuery" placeholder="Search..." />
     </div>
     <div
       ref="itemsList"
@@ -44,8 +33,8 @@
 <script setup lang="ts">
   import { Icon } from '@iconify/vue'
   import { computed, onMounted, ref, nextTick } from 'vue'
-  import { useFocus } from '@vueuse/core'
   import { Theme } from '../themes/types/themes'
+  import { SearchBar } from '@/shared/ui/search'
 
   enum NavigationDirection {
     Up = 'up',
@@ -54,12 +43,8 @@
 
   const searchQuery = ref('')
   const focusedItemIndex = ref(-1)
-  const searchInput = ref<HTMLInputElement | null>(null)
   const itemsList = ref<HTMLElement | null>(null)
-  const onSearchInput = (event: Event): void => {
-    const target = event.target as HTMLInputElement
-    searchQuery.value = target.value.trim()
-  }
+
   interface Props {
     items: Theme[] | Record<string, any>[] | any[]
     searchKey?: string
@@ -127,7 +112,6 @@
 
     itemsList.value.scrollTop = scroll
   }
-  useFocus(searchInput, { initialValue: true })
 
   onMounted(async () => {
     if (!props.items.length) return
@@ -145,47 +129,6 @@
   .modal-header {
     display: flex;
     align-items: center;
-
-    &__search-icon {
-      position: absolute;
-      top: 50%;
-      left: 15px;
-      color: var(--sub-color);
-      pointer-events: none;
-      transition: all var(--transition-duration);
-      transform: translateY(-50%);
-    }
-
-    &__search-wrapper {
-      position: relative;
-      width: 100%;
-
-      &:focus-within {
-        .modal-header__search-icon {
-          color: var(--text-color);
-        }
-      }
-    }
-
-    &__search {
-      box-sizing: border-box;
-      width: 100%;
-      padding: 10px 20px 10px 50px;
-      font-size: 16px;
-      line-height: normal;
-      color: var(--text-color);
-      caret-color: var(--main-color);
-      user-select: none;
-      background-color: var(--sub-alt-color);
-      border: none;
-      border-radius: var(--border-radius);
-      outline: none;
-
-      &::placeholder {
-        color: var(--sub-color);
-        opacity: 1;
-      }
-    }
   }
 
   .sr-only {

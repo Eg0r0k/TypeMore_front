@@ -18,8 +18,8 @@
   </div>
 </template>
 
-<script setup lang="ts" generic="T"> 
-//Sometimes in some components i forget about T generics in components 
+<script setup lang="ts" generic="T">
+  //Sometimes in some components i forget about T generics in components
   interface Props {
     value: string | number | boolean
     label?: string
