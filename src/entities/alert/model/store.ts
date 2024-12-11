@@ -25,7 +25,7 @@ export const useAlertStore = defineStore('alerts', () => {
    *
    * @param {Omit<AlertData, 'id'>} alert - An alert object without the 'id' field, which will be added automatically.
    * @example
-   * alertStore.addAlert({ type: 'error', msg: 'Something went wrong' })
+   * alertStore.addAlert({ type: AlertType.Error, msg: 'Something went wrong' })
    */
   const addAlert = (alert: Omit<AlertData, 'id'>): void => {
     const newAlert: AlertData = {

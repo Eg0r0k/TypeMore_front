@@ -1,26 +1,16 @@
 import type { Directive } from 'vue'
+import { getInputOrTextarea, type TextInputComponent } from './utils'
 
-interface TextInputComponent {
-  getInputRef?: () => HTMLInputElement | null
-}
-
-const vSelect: Directive = {
+const VSelect: Directive = {
   mounted(el: HTMLElement & TextInputComponent) {
-    const inputEl = getInput(el)
-    if (!inputEl) {
-      console.warn('[v-select] Не удалось найти input элемент.')
-      return
+    const inputEl = getInputOrTextarea(el)
+    if (inputEl) {
+      inputEl.focus()
+      inputEl.select()
+    } else {
+      console.warn('[v-select] Не удалось найти элемент <input> или <textarea>.')
     }
-    inputEl.focus()
-    inputEl.select()
   }
 }
 
-const getInput = (el: HTMLElement & TextInputComponent): HTMLInputElement | null => {
-  if (el.getInputRef) {
-    return el.getInputRef() || null
-  }
-  return el.querySelector('input')
-}
-
-export default vSelect
+export default VSelect

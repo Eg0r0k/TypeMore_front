@@ -28,7 +28,7 @@
           <Typography size="xs">Rooms: 0</Typography>
         </div>
       </Button>
-      <Button class="main__btn" size="l" color="gray">
+      <Button @click="handleCodeModal" class="main__btn" size="l" color="gray">
         <div>
           <Icon width="40" icon="mingcute:code-fill" />
           <Typography isBold>Enter code</Typography>
@@ -55,6 +55,7 @@
   import { Icon } from '@iconify/vue'
   import { useModal } from '@/entities/modal'
   import { ServersModal } from '@/features/modal/servers'
+  import { JoinCodeModal } from '@/features/modal/joinCode'
 
   const online = ref(3)
   const showLobbyList = ref(false)
@@ -63,6 +64,9 @@
 
   const handleServersModal = () => {
     modal.open(ServersModal, 'center', 'center')
+  }
+  const handleCodeModal = () => {
+    modal.open(JoinCodeModal, 'center', 'center')
   }
 
   const browseLobbies = () => {

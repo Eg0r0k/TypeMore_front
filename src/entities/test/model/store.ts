@@ -34,24 +34,52 @@ export const useTestStateStore = defineStore('test-state', () => {
     clear()
     setActive(true)
     timerStore.startTimer()
+
     try {
       const lang = configStore.config.language
       await configStore.setLanguage(lang)
     } catch (e) {
-      console.error(e)
+      console.error('Error setting language:', e)
     }
+
     if (!configStore.currentLanguage.value) {
-      //! Looks bad!
-      await configStore.setLanguage('russian')
-      await init()
+      console.warn('Language not set, retrying...')
+      await retrySetLanguage('russian', 3)
+    }
+
+    if (configStore.currentLanguage.value) {
+      try {
+        await generator.generateWords(configStore.currentLanguage.value)
+        isRightToLeft.value = !!configStore.currentLanguage.value.rightToleft
+      } catch (e) {
+        console.error('Error generating words:', e)
+      }
+    } else {
+      console.error('Language is not set, cannot generate words.')
+    }
+  }
+  /**
+   * Retries setting the language with a delay
+   * @param lang - The language to set
+   * @param retriesLeft - The number of retries left
+   * @returns {Promise<void>} - Promise that resolves when the language is set
+   */
+  const retrySetLanguage = async (lang: string, retriesLeft: number): Promise<void> => {
+    if (retriesLeft <= 0) {
+      console.error('Failed to set language after multiple retries.')
       return
     }
-    try {
-      await generator.generateWords(configStore.currentLanguage.value)
 
-      isRightToLeft.value = !!configStore.currentLanguage.value.rightToleft
+    try {
+      await configStore.setLanguage(lang)
     } catch (e) {
-      console.error(e)
+      console.error('Error setting language:', e)
+    }
+
+    if (!configStore.currentLanguage.value) {
+      console.warn(`Retrying language set (${retriesLeft - 1} retries left)...`)
+      await new Promise((resolve) => setTimeout(resolve, 250))
+      await retrySetLanguage(lang, retriesLeft - 1)
     }
   }
 

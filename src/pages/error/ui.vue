@@ -1,12 +1,12 @@
 <template>
   <div class="error-page">
-    <Typography class="errorPage__title" color="primary" tagName="h1" isBold>404</Typography>
+    <Typography class="error-page__title" color="primary" tagName="h1" isBold>404</Typography>
 
-    <Typography class="errorPage__desc" color="primary" size="m" tagName="h1">
+    <Typography class="error-page__desc" color="primary" size="m" tagName="h1">
       Ooops, its looks like...
       <Typography color="error" size="xl" tagName="span">Error!</Typography>
     </Typography>
-    <Button class="errorPage__button" to="/" color="main">Back on main page</Button>
+    <Button class="error-page__button" to="/" color="main">Back on main page</Button>
   </div>
 </template>
 <script setup lang="ts">

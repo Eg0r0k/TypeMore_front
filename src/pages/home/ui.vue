@@ -25,8 +25,8 @@
   import { useConfigStore } from '@/entities/config/model/store'
   import { useTestStateStore } from '@/entities/test/model/store'
   import { Icon } from '@iconify/vue'
-  import { useKeyModifier, useMagicKeys } from '@vueuse/core'
-  import { onMounted, onUnmounted, watch } from 'vue'
+  import { useKeyModifier, useMagicKeys, whenever } from '@vueuse/core'
+  import { onMounted, onUnmounted } from 'vue'
   import { Test } from '@/widgets/test'
   import { TestInput } from '@/features/test/input'
   import { TestControls } from '@/features/test/controls'
@@ -36,22 +36,18 @@
   const configStore = useConfigStore()
 
   const capsLockState = useKeyModifier('CapsLock')
-  const keys = useMagicKeys()
-  const ctrlEnterPressed = keys['ctrl+enter']
+  const { Ctrl_Space, Ctrl_Enter } = useMagicKeys()
 
-  watch(ctrlEnterPressed, (isPressed) => {
-    if (isPressed) {
-      testState.restartTest()
+  whenever(Ctrl_Space, () => {
+    //TODO: make it only with infinity modes
+    if (testState.isActive) {
+      testState.finish()
     }
   })
 
-  watch(
-    () => configStore.config,
-    async () => {
-      await testState.init()
-    },
-    { deep: true }
-  )
+  whenever(Ctrl_Enter, () => {
+    testState.restartTest()
+  })
 
   onMounted(async () => {
     await testState.init()

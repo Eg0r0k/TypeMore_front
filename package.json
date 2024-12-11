@@ -30,7 +30,6 @@
     "*.ts": "eslint --fix"
   },
   "dependencies": {
-    "@number-flow/vue": "^0.3.2",
     "@splidejs/vue-splide": "^0.6.12",
     "@tanstack/vue-query": "^5.59.16",
     "@vueuse/integrations": "^11.2.0",
@@ -39,7 +38,6 @@
     "axios": "^1.7.2",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
-    "dexie": "^4.0.9",
     "gsap": "^3.12.5",
     "happy-dom": "^15.11.0",
     "howler": "^2.2.4",
@@ -50,7 +48,6 @@
     "vee-validate": "^4.12.6",
     "vue": "^3.4.29",
     "vue-chart-3": "^3.1.8",
-    "vue-recaptcha": "^3.0.0-alpha.2",
     "vue-router": "^4.2.5",
     "vue-slider-component": "^4.1.0-beta.7",
     "vue3-popper": "^1.5.0",
@@ -102,6 +99,7 @@
     "postcss-html": "^1.7.0",
     "prettier": "3.4.2",
     "prettier-plugin-vue": "^1.1.6",
+    "rollup-plugin-visualizer": "^5.12.0",
     "sass": "^1.69.7",
     "storybook": "^8.0.4",
     "stylelint": "^16.11.0",

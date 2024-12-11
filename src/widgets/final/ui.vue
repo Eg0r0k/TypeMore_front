@@ -67,7 +67,6 @@
   import { TestChart } from '@/shared/ui/chart'
   import { Typography } from '@/shared/ui/typography'
 
-  import html2canvas from 'html2canvas'
   import { computed, ref } from 'vue'
 
   import { useDebounceFn } from '@vueuse/core'
@@ -88,6 +87,7 @@
   const finalScreenRef = ref<HTMLElement | null>(null)
   const captureScreenshot = async (el: HTMLElement | null): Promise<string | null> => {
     if (!el) return null
+    const { default: html2canvas } = await import('html2canvas')
     const canvas = await html2canvas(el)
     return canvas.toDataURL('image/png')
   }

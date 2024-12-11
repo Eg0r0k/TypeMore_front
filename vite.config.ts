@@ -3,13 +3,14 @@ import { dirname } from 'path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
+import { visualizer } from 'rollup-plugin-visualizer'
 import { FontaineTransform } from 'fontaine'
 const options = {
   fallbacks: ['BlinkMacSystemFont', 'Segoe UI', 'Helvetica Neue', 'Arial', 'Noto Sans'],
   resolvePath: () => `file://${dirname(fileURLToPath(new URL(import.meta.url)))}public`
 }
 export default defineConfig({
-  plugins: [vue(), vueJsx(), FontaineTransform.vite(options)],
+  plugins: [vue(), vueJsx(), FontaineTransform.vite(options), visualizer()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -22,6 +23,18 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0'
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['vue', 'vue-router'],
+          charts: ['chart.js', 'vue-chart-3'],
+          html2canvas: ['html2canvas'],
+          rare: ['vue3-recaptcha-v2']
+        }
+      }
+    }
   },
   css: {
     preprocessorOptions: {

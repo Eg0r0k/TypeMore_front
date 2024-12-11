@@ -1,7 +1,4 @@
 <template>
-  <metainfo>
-    <template v-slot:title="{ content }">Type More | {{ content }}</template>
-  </metainfo>
   <Transition name="fade" mode="out-in">
     <MainLayout v-if="!testState.isLoading" />
     <LoaderWrapper v-else />
@@ -12,7 +9,6 @@
   import { LoaderWrapper } from '@/features/layouts/loader'
   import { MainLayout } from '@/features/layouts/main'
   import { useAppSetup } from '@/shared/lib/hooks/useAppSetup'
-
   const testState = useTestStateStore()
   useAppSetup()
 </script>

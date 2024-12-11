@@ -4,11 +4,11 @@
     <p class="stat-line">
       <span>Timer:</span>
       <span>
-        <NumberFlow :value="hours" :format="{ minimumIntegerDigits: 2 }" />
+        {{ hours }}
         <span>:</span>
-        <NumberFlow :value="minutes" :format="{ minimumIntegerDigits: 2 }" />
+        {{ minutes }}
         <span>:</span>
-        <NumberFlow :value="seconds" :format="{ minimumIntegerDigits: 2 }" />
+        {{ seconds }}
       </span>
     </p>
     <p class="stat-line">
@@ -84,7 +84,6 @@
   import { useTimerStore } from '@/entities/timer/model/store'
   import { useStats } from '@/shared/lib/hooks/useStats'
   import { DevtoolsLabel } from '../label'
-  import NumberFlow from '@number-flow/vue'
   import { computed } from 'vue'
 
   const { getStats } = useStats()

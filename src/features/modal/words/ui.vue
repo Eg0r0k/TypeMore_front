@@ -46,7 +46,7 @@
     gap: 20px;
     width: 100%;
     max-width: 500px;
-    padding: 24px;
+    padding: 1.5rem;
     background: var(--bg-color);
     border-radius: var(--border-radius);
     box-shadow: 0 0 0 0.2em var(--sub-alt-color);

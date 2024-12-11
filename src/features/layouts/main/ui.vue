@@ -1,5 +1,5 @@
 <template>
-  <div class="wrapper" role="main">
+  <div id="wrapper" role="main">
     <asyncFpsIndecator v-if="configStore.config.showFps" />
     <BackgroundImage />
     <Header />
@@ -11,7 +11,7 @@
       </router-view>
     </main>
     <Footer />
-    <Alerts />
+    <asyncAlerts />
     <asyncDevtools v-if="configStore.config.devTools" />
     <ModalWindow />
   </div>
@@ -20,7 +20,7 @@
 <script lang="ts" setup>
   import { useConfigStore } from '@/entities/config/model/store'
   import { BackgroundImage } from '@/features/home/background'
-  import { Alerts } from '@/widgets/alerts'
+
   import { Footer } from '@/widgets/footer'
   import { Header } from '@/widgets/header'
   import { defineAsyncComponent } from 'vue'
@@ -28,6 +28,7 @@
   const ModalWindow = defineAsyncComponent(() => import('@/widgets/modal/ui.vue'))
   const asyncFpsIndecator = defineAsyncComponent(() => import('@widgets/fps/ui.vue'))
   const asyncDevtools = defineAsyncComponent(() => import('@widgets/devtools/ui.vue'))
+  const asyncAlerts = defineAsyncComponent(() => import('@widgets/alerts/ui.vue'))
   const configStore = useConfigStore()
 </script>
 
@@ -42,7 +43,7 @@
     opacity: 0;
   }
 
-  .wrapper {
+  #wrapper {
     box-sizing: border-box;
     z-index: 0;
     display: flex;

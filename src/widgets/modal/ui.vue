@@ -1,5 +1,5 @@
 <template>
-  <Teleport to="#app" :disabled="!isTeleportAvailable">
+  <Teleport to="#wrapper" :disabled="!isTeleportAvailable">
     <div v-if="isOpen" class="modal-wrapper"></div>
     <Transition
       :name="transitionName"
@@ -20,7 +20,6 @@
         @keydown.esc="handleEscapeKey"
       >
         <h2 id="modal-title" class="sr-only">Modal window</h2>
-
         <component :is="view" ref="modal" v-bind="model" @click.stop></component>
       </div>
     </Transition>
@@ -89,7 +88,7 @@
   }
 
   onMounted(() => {
-    isTeleportAvailable.value = !!document.querySelector('#app')
+    isTeleportAvailable.value = !!document.querySelector('#wrapper')
   })
 </script>
 

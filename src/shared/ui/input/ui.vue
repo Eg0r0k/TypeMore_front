@@ -79,13 +79,13 @@
   const updateInput = (e: any) => {
     modelValue.value = e.target.value
   }
+
   const getInputRef = () => inputRef.value
 
   defineExpose({
     getInputRef
   })
 </script>
-
 <style lang="scss" scoped>
   textarea {
     min-height: 35px;

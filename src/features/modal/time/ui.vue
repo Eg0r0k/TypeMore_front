@@ -23,13 +23,9 @@
     </Typography>
     <Typography color="sub" size="xs">
       (
-      <kbd>esc</kbd>
-      or
-      <kbd>ctrl/cmd</kbd>
+      <kbd>Shift</kbd>
       +
-      <kbd>shift</kbd>
-      +
-      <kbd>p</kbd>
+      <kbd>Space</kbd>
       > Bail Out )
     </Typography>
     <Button buttonLabel="save time amount" size="m" color="gray" @click="saveTimeAmount">ok</Button>
@@ -118,7 +114,7 @@
     gap: 20px;
     width: 100%;
     max-width: 500px;
-    padding: 24px;
+    padding: 1.5rem;
     background: var(--bg-color);
     border-radius: var(--border-radius);
     box-shadow: 0 0 0 0.2em var(--sub-alt-color);

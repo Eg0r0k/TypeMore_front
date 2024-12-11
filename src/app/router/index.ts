@@ -1,8 +1,10 @@
 import { createRouter, createWebHistory, RouteLocationNormalizedLoaded } from 'vue-router'
-import { SettingPage } from '@pages/settings'
-import { ServersPage } from '@pages/servers'
 import { MainPage } from '@/pages/home'
 import { useTitle } from '@vueuse/core'
+import { useModal } from '@/entities/modal'
+import { handleModalClose } from '@/shared/middleware/modalGuard'
+import { setPageTitle } from '@/shared/middleware/pageTitle'
+import { checkAuth } from '@/shared/middleware/authMiddleware'
 
 const routes = [
   {
@@ -19,7 +21,7 @@ const routes = [
   {
     path: '/servers',
     name: 'servers',
-    component: ServersPage,
+    component: () => import('@pages/servers/ui.vue'),
     meta: { title: 'Servers' }
   },
   {
@@ -31,7 +33,7 @@ const routes = [
   {
     path: '/settings',
     name: 'settings',
-    component: SettingPage,
+    component: () => import('@pages/settings/ui.vue'),
     meta: { title: 'Settings' }
   },
   {
@@ -49,7 +51,8 @@ const routes = [
   {
     path: '/:pathMatch(.*)*',
     name: 'error',
-    component: () => import('@/pages/error/ui.vue')
+    component: () => import('@/pages/error/ui.vue'),
+    meta: { title: 'Ooops...' }
   }
 ]
 
@@ -57,8 +60,14 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
-router.beforeEach((to: RouteLocationNormalizedLoaded) => {
-  const title = to.meta.title ? `Type More | ${to.meta.title}` : 'Type More | Typing speed training'
-  useTitle(title)
+router.beforeEach((to, from, next) => {
+  handleModalClose(to, from, next)
 })
+router.beforeEach((to, from, next) => {
+  checkAuth(to, from, next)
+})
+router.beforeEach((to: RouteLocationNormalizedLoaded) => {
+  setPageTitle(to)
+})
+
 export default router
