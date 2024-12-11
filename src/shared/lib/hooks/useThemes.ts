@@ -69,7 +69,7 @@ export function useThemes() {
    */
   const fetchThemes = async () => {
     if (themesList.length === 0) {
-      const themes = await cachedFetchJson<ThemeInterface[]>('./static/themes/themes.json')
+      const themes = await cachedFetchJson<ThemeInterface[]>('/static/themes/themes.json')
       themesList.splice(
         0,
         themesList.length,

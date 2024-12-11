@@ -1,7 +1,5 @@
 import { createRouter, createWebHistory, RouteLocationNormalizedLoaded } from 'vue-router'
 import { MainPage } from '@/pages/home'
-import { useTitle } from '@vueuse/core'
-import { useModal } from '@/entities/modal'
 import { handleModalClose } from '@/shared/middleware/modalGuard'
 import { setPageTitle } from '@/shared/middleware/pageTitle'
 import { checkAuth } from '@/shared/middleware/authMiddleware'
@@ -59,6 +57,11 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
+})
+//?Mb delete later
+router.beforeEach((to, from, next) => {
+  window.scrollTo(0, 0)
+  next()
 })
 router.beforeEach((to, from, next) => {
   handleModalClose(to, from, next)

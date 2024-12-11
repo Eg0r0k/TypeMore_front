@@ -78,7 +78,7 @@ export const getLangList = async () => {
  */
 export const getLanguage = (lang: string): Promise<LanguageObj> => {
   try {
-    const currentLang = cachedFetchJson<LanguageObj>(`./static/languages/${lang}.json`)
+    const currentLang = cachedFetchJson<LanguageObj>(`/static/languages/${lang}.json`)
     return currentLang
   } catch (e) {
     throw Error(`No expected lang,${lang}`)
@@ -87,7 +87,7 @@ export const getLanguage = (lang: string): Promise<LanguageObj> => {
 
 export const getQoutes = (lang: string): Promise<QuoteData> => {
   try {
-    const currentQuote = cachedFetchJson<QuoteData>(`./static/languages/${lang}.json`)
+    const currentQuote = cachedFetchJson<QuoteData>(`/static/languages/${lang}.json`)
     return currentQuote
   } catch (e) {
     throw Error(`No expected qoutes, ${lang}`)

@@ -39,9 +39,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const initializeAuth = async () => {}
-  onMounted(() => {
-    isMacOs.value = navigator.userAgent.includes('Mac')
-  })
+
   return {
     user,
     register,
