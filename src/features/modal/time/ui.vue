@@ -23,7 +23,7 @@
     </Typography>
     <Typography color="sub" size="xs">
       (
-      <kbd>Shift</kbd>
+      <kbd>Ctrl</kbd>
       +
       <kbd>Space</kbd>
       > Bail Out )

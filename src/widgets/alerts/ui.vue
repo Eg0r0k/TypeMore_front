@@ -1,18 +1,20 @@
 <template>
-  <div class="alerts-box">
-    <TransitionGroup name="list">
-      <Alert
-        v-for="alert in alertStore.queuedAlerts"
-        :key="alert.id"
-        :type="alert.type"
-        :duration="alert.duration"
-        :closable="alert.closable"
-        :msg="alert.msg"
-        :title="alert.title"
-        @close="alertStore.removeAlert(alert.id)"
-      />
-    </TransitionGroup>
-  </div>
+  <Teleport to="#app">
+    <div class="alerts-box">
+      <TransitionGroup name="list">
+        <Alert
+          v-for="alert in alertStore.queuedAlerts"
+          :key="alert.id"
+          :type="alert.type"
+          :duration="alert.duration"
+          :closable="alert.closable"
+          :msg="alert.msg"
+          :title="alert.title"
+          @close="alertStore.removeAlert(alert.id)"
+        />
+      </TransitionGroup>
+    </div>
+  </Teleport>
 </template>
 
 <script lang="ts" setup>

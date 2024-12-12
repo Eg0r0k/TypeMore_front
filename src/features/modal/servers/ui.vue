@@ -3,7 +3,6 @@
     <Typography class="server-modal__title" size="l" tag-name="h2" color="primary">
       Rooms
     </Typography>
-
     <div class="server-modal__search">
       <SearchBar
         v-model="searchQuery"
@@ -11,41 +10,13 @@
         aria-label="Search room by name"
       />
     </div>
-
     <ul class="server-modal__rooms" aria-live="polite">
-      <li
+      <RoomWidget
         v-for="room in filteredRooms"
         :key="room.id"
-        class="room"
-        role="button"
-        tabindex="0"
-        @click="selectRoom(room)"
-        @keydown.enter="selectRoom(room)"
-        @keydown.space="selectRoom(room)"
-        :aria-label="`Select room ${room.name}`"
-      >
-        <div class="name">
-          <div class="title">name</div>
-          <div class="value">{{ room.name }}</div>
-        </div>
-        <div class="name">
-          <div class="title">Name</div>
-          <div class="value">{{ room.name }}</div>
-        </div>
-        <div class="players">
-          <div class="title">Players</div>
-          <div class="value">1</div>
-        </div>
-        <div class="state">
-          <div class="title">State</div>
-          <div class="value">Lobby</div>
-        </div>
-        <div class="config">
-          <div class="title">Config</div>
-          <div class="value">Time 30 English</div>
-        </div>
-        <div class="chevron" aria-hidden="true">></div>
-      </li>
+        v-bind="room"
+        @select-room="selectRoom"
+      />
     </ul>
   </div>
 </template>
@@ -54,37 +25,35 @@
   import { ref, computed } from 'vue'
   import { SearchBar } from '@/shared/ui/search'
   import { Typography } from '@/shared/ui/typography'
-  //TODO: Make RoomWiget component
+  import { RoomWidget } from '@/widgets/room'
   const rooms = ref([
-    { id: 1, name: 'Room 1', hasPassword: true },
-    { id: 2, name: 'Room 2', hasPassword: false },
-    { id: 3, name: 'Room 3', hasPassword: true },
-    { id: 4, name: 'Room 4', hasPassword: false },
-    { id: 5, name: 'Room 5', hasPassword: true },
-    { id: 6, name: 'Room 6', hasPassword: false },
-    { id: 7, name: 'Room 7', hasPassword: true },
-    { id: 8, name: 'Room 8', hasPassword: false },
-    { id: 9, name: 'Room 9', hasPassword: true },
-    { id: 10, name: 'Room 10', hasPassword: false },
-    { id: 11, name: 'Room 10', hasPassword: false },
-    { id: 12, name: 'Room 10', hasPassword: false },
-    { id: 13, name: 'Room 10', hasPassword: false },
-    { id: 14, name: 'Room 10', hasPassword: false },
-    { id: 15, name: 'Room 10', hasPassword: false },
-    { id: 16, name: 'Room 10', hasPassword: false },
-    { id: 17, name: 'Room 10', hasPassword: false }
+    { id: '1', name: 'Room 1', hasPassword: true },
+    { id: '2', name: 'Room 2', hasPassword: false },
+    { id: '3', name: 'Room 3', hasPassword: true },
+    { id: '4', name: 'Room 4', hasPassword: false },
+    { id: '5', name: 'Room 5', hasPassword: true },
+    { id: '6', name: 'Room 6', hasPassword: false },
+    { id: '7', name: 'Room 7', hasPassword: true },
+    { id: '8', name: 'Room 8', hasPassword: false },
+    { id: '9', name: 'Room 9', hasPassword: true },
+    { id: '10', name: 'Room 10', hasPassword: false },
+    { id: '11', name: 'Room 10', hasPassword: false },
+    { id: '12', name: 'Room 10', hasPassword: false },
+    { id: '13', name: 'Room 10', hasPassword: false },
+    { id: '14', name: 'Room 10', hasPassword: false },
+    { id: '15', name: 'Room 10', hasPassword: false },
+    { id: '16', name: 'Room 10', hasPassword: false },
+    { id: '17', name: 'Room 10', hasPassword: false }
   ])
 
   const searchQuery = ref('')
 
-  const selectRoom = (room: { id: number; name: string }) => {
+  const selectRoom = (room: { id: string; name: string }) => {
     console.log(`[Servers] Selected room ${room.id}, name: ${room.name}`)
   }
   const filteredRooms = computed(() => {
     return rooms.value.filter((room) => {
-      const matchesSearch = room.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-
-      return matchesSearch
+      return room.name.toLowerCase().includes(searchQuery.value.toLowerCase())
     })
   })
 </script>
@@ -118,74 +87,10 @@
       flex-direction: column;
       gap: 10px;
       box-sizing: border-box;
-
-      .room {
-        display: grid;
-        grid-template-columns: 1fr 1fr 3fr 0fr;
-        grid-auto-rows: auto;
-        width: 100%;
-        height: min-content;
-        padding: 1rem;
-        border: 2px solid var(--sub-alt-color);
-        gap: 0.5rem;
-        transition: 0.25s;
-        box-sizing: border-box;
-        user-select: none;
-        cursor: pointer;
-        grid-template-areas:
-          'name name name chevron'
-          'state players config chevron';
-        border-radius: var(--border-radius);
-
-        &:hover {
-          background-color: var(--sub-alt-color);
-        }
-
-        &:focus-visible {
-          outline: none;
-          box-shadow:
-            0 0 0 1.5px var(--bg-color),
-            0 0 0 3px var(--text-color);
-        }
-
-        .name {
-          grid-area: name;
-        }
-
-        .players {
-          grid-area: players;
-        }
-
-        .state {
-          grid-area: state;
-        }
-
-        .config {
-          grid-area: config;
-        }
-
-        .chevron {
-          grid-area: chevron;
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          padding-right: 10px;
-        }
-
-        .title {
-          font-size: 12px;
-          color: var(--sub-color);
-        }
-
-        .value {
-          font-size: 14px;
-          color: var(--text-color);
-        }
-      }
     }
   }
 
-  @media (width <= 768px) {
+  @media (width <=768px) {
     .server-modal {
       &__rooms {
         padding-right: 5px;

@@ -31,7 +31,6 @@
 </template>
 
 <script setup lang="ts">
-  import { Icon } from '@iconify/vue'
   import { computed, onMounted, ref, nextTick } from 'vue'
   import { Theme } from '../themes/types/themes'
   import { SearchBar } from '@/shared/ui/search'

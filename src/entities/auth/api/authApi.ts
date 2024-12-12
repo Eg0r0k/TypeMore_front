@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from 'axios'
 import type { LoginType, RegistrationType, AuthLoginResponse, ApiResponse } from '../types/auth'
-import { useAuthStore } from '../store'
+import { useAuthStore } from '../model/store'
 
 const API_URL = 'http://localhost:3000/api/v1'
 

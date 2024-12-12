@@ -14,7 +14,8 @@ export const useModal = defineStore('modal', () => {
     alignment: 'center',
     justify: 'center',
     closeOnClickOutside: true,
-    handlers: {}
+    handlers: {},
+    data: null
   })
   /**
    * Opens the modal with the specified configuration.
@@ -25,15 +26,17 @@ export const useModal = defineStore('modal', () => {
     alignment: 'top' | 'bottom' | 'center' | 'none' = 'center',
     justify: 'left' | 'right' | 'center' | 'none' = 'center',
     closeOnClickOutside: boolean = true,
-    handlers: ModalHandlers = {}
+    handlers: ModalHandlers = {},
+    data?: any
   ) => {
+    if (modal.isOpen && modal.view === view) return
     modal.isOpen = true
     modal.view = markRaw(view)
-
     modal.alignment = alignment
     modal.justify = justify
     modal.closeOnClickOutside = closeOnClickOutside
     modal.handlers = handlers
+    modal.data = data
   }
   /**
    * Closes the modal and resets its configuration.

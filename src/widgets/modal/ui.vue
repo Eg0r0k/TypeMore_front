@@ -1,5 +1,5 @@
 <template>
-  <Teleport to="#wrapper" :disabled="!isTeleportAvailable">
+  <Teleport to="#app" :disabled="!isTeleportAvailable">
     <div v-if="isOpen" class="modal-wrapper"></div>
     <Transition
       :name="transitionName"
@@ -11,7 +11,7 @@
       <div
         v-if="isOpen"
         :class="classes"
-        tabindex="0"
+        tabindex="-1"
         class="modal"
         aria-modal="true"
         :aria-hidden="!isOpen"
@@ -20,7 +20,13 @@
         @keydown.esc="handleEscapeKey"
       >
         <h2 id="modal-title" class="sr-only">Modal window</h2>
-        <component :is="view" ref="modal" v-bind="model" @click.stop></component>
+        <component
+          class="modal__component"
+          :is="view"
+          ref="modal"
+          v-bind="model"
+          @click.stop
+        ></component>
       </div>
     </Transition>
   </Teleport>
@@ -43,7 +49,6 @@
     clsx(`alignment-${alignment.value || 'center'}`, `justify-${justify.value || 'center'}`)
   )
   const transitionName = computed(() => (isOpen.value ? 'modal-enter' : 'modal-leave'))
-
   const model = reactive({})
   const isTeleportAvailable = ref(false)
   const modal = ref(null)

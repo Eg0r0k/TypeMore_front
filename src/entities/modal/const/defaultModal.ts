@@ -6,5 +6,6 @@ export const DEFAULT_MODAL_STATE = {
   alignment: 'center' as 'top' | 'bottom' | 'center' | 'none',
   justify: 'center' as 'left' | 'right' | 'center' | 'none',
   closeOnClickOutside: true,
-  handlers: {} as ModalHandlers
+  handlers: {} as ModalHandlers,
+  data: null
 }

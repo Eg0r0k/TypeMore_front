@@ -4,7 +4,7 @@
       Enter the code
     </Typography>
     <div class="code-modal__input">
-      <TextInput v-focus v-model="inputCode" placeholder="Code" />
+      <TextInput @keydown.enter="sendCode" v-focus v-model="inputCode" placeholder="Code" />
       <Popper placement="top" hover arrow :interactive="false" content="Paste code">
         <Button @click="pasteFromClipboard" style="height: 37px" size="s">
           <template #left-icon>
@@ -16,13 +16,14 @@
     <Typography color="sub" size="xs">
       If you have a room code, enter it here to connect.
     </Typography>
-    <Button buttonLabel="save time amount" size="m" color="gray">ok</Button>
+    <Button @click="sendCode" buttonLabel="save time amount" size="m" color="gray">ok</Button>
   </div>
 </template>
 
 <script lang="ts" setup>
   import { useAlertStore } from '@/entities/alert'
   import { AlertType } from '@/entities/alert/types/alertData'
+  import { useModal } from '@/entities/modal'
   import { Button } from '@/shared/ui/button'
   import { TextInput } from '@/shared/ui/input'
   import { Typography } from '@/shared/ui/typography'
@@ -31,6 +32,8 @@
 
   const inputCode = ref('')
   const alert = useAlertStore()
+  const modal = useModal()
+
   const pasteFromClipboard = async () => {
     try {
       const text = await navigator.clipboard.readText()
@@ -40,9 +43,14 @@
         type: AlertType.Error,
         msg: `Paste from clipboard failed: ${e}`,
         title: 'Clipboard Error',
-        duration: 10000
+        duration: 0
       })
     }
+  }
+
+  const sendCode = () => {
+    //TODO: Add send event
+    modal.close()
   }
 </script>
 
@@ -50,7 +58,7 @@
   .code-modal {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 0.5rem;
     width: 100%;
     padding: 1.5rem;
     max-width: 300px;

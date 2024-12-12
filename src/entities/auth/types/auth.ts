@@ -2,8 +2,21 @@ export interface RegistrationType {
   email: string
   password: string
   passwordConfirmation: string
-  userName: string
+  username: string
   captchaToken: string
+}
+
+export enum GlobalRole {
+  SuperAdmin = 'superAdmin',
+  Admin = 'admin',
+  User = 'user',
+  Guest = 'guest',
+  Invalid = 'invalid'
+}
+export enum GlobalPermissions {
+  CreateLobby = 'createLobby',
+  EditProfile = 'editProfile',
+  DeleteProfile = 'deleteProfile'
 }
 
 export interface UserSchema {
@@ -11,6 +24,8 @@ export interface UserSchema {
   username: string
   email: string
   isBanned: boolean
+  globalRole: GlobalRole
+  globalPremissions: GlobalPermissions[]
   config: string
   createAt: Date
   updatedAt: Date

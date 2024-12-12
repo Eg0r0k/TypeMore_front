@@ -87,6 +87,12 @@
   })
 </script>
 <style lang="scss" scoped>
+  label {
+    &:empty {
+      display: none;
+    }
+  }
+
   textarea {
     min-height: 35px;
     max-height: 100px;

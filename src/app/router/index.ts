@@ -3,6 +3,7 @@ import { MainPage } from '@/pages/home'
 import { handleModalClose } from '@/shared/middleware/modalGuard'
 import { setPageTitle } from '@/shared/middleware/pageTitle'
 import { checkAuth } from '@/shared/middleware/authMiddleware'
+import { useLobbyStore } from '@/entities/lobby'
 
 const routes = [
   {
@@ -61,6 +62,13 @@ const router = createRouter({
 //?Mb delete later
 router.beforeEach((to, from, next) => {
   window.scrollTo(0, 0)
+  next()
+})
+router.beforeEach((to, from, next) => {
+  const lobbyStore = useLobbyStore()
+  if (lobbyStore.isRoomManagementOpen && to.path !== '/servers') {
+    next(false)
+  }
   next()
 })
 router.beforeEach((to, from, next) => {
