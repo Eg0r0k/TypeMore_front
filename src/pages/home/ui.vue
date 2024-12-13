@@ -26,7 +26,7 @@
   import { useTestStateStore } from '@/entities/test/model/store'
   import { Icon } from '@iconify/vue'
   import { useKeyModifier, useMagicKeys, whenever } from '@vueuse/core'
-  import { onMounted, onUnmounted } from 'vue'
+  import { onMounted, onUnmounted, watch } from 'vue'
   import { Test } from '@/widgets/test'
   import { TestInput } from '@/features/test/input'
   import { TestControls } from '@/features/test/controls'
@@ -48,6 +48,9 @@
   whenever(Ctrl_Enter, () => {
     testState.restartTest()
   })
+  // watch(() => configStore.config, async () => {
+  //   await testState.init()
+  // }, { deep: true })
 
   onMounted(async () => {
     await testState.init()

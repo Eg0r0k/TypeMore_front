@@ -4,6 +4,7 @@ type Modal = {
   alignment?: 'top' | 'bottom' | 'center' | 'none'
   justify?: 'left' | 'right' | 'center' | 'none'
   closeOnClickOutside: boolean
+  handlers: ModalHandlers
   data: any
 }
 

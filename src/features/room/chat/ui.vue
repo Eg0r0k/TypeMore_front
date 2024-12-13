@@ -22,7 +22,7 @@
         </div>
       </div>
       <TextInput
-        v-model.trim="inputValue"
+        v-model="inputValue"
         :class="inputClasses"
         placeholder="Send a message (press / to focus)"
         @keydown="handleKeyDown"
@@ -41,7 +41,10 @@
   const activeIndex = ref(0)
   const showSuggestion = ref(false)
   const inputValue = ref('')
-  const searchPattern = /:([a-zA-Z]*)$/
+  const searchPattern = /:(\w*)$/
+
+  const isCursorImmediatelyAfterClosedTag = (text: string) => /:\w+:$/.test(text)
+
   const inputClasses = computed(() =>
     clsx({
       'chat__input--flat': showSuggestion.value,
@@ -56,15 +59,19 @@
     { text: 'Coolage', value: 'aboba' },
     { text: 'Sadge', value: 'aboba1' }
   ])
+
   const filteredSuggestions = computed(() => {
     const match = inputValue.value.match(searchPattern)
     const query = match ? match[1].toLowerCase() : ''
     return suggestions.value.filter((suggestion) => suggestion.value.toLowerCase().includes(query))
   })
+
   watchThrottled(
     inputValue,
     (newValue) => {
-      showSuggestion.value = searchPattern.test(newValue)
+      const isValidPattern = searchPattern.test(newValue)
+      const cursorNotAfterClosedTag = !isCursorImmediatelyAfterClosedTag(newValue)
+      showSuggestion.value = isValidPattern && cursorNotAfterClosedTag
     },
     { throttle: 200 }
   )
@@ -93,7 +100,7 @@
   }
 
   const selectSuggestion = (suggestion: { value: string }) => {
-    inputValue.value = inputValue.value.replace(searchPattern, `:${suggestion.value}: `)
+    inputValue.value = inputValue.value.replace(searchPattern, `:${suggestion.value}:`)
     showSuggestion.value = false
     activeIndex.value = 0
   }
@@ -114,6 +121,10 @@
     &--active {
       background-color: var(--text-color);
       color: var(--bg-color);
+    }
+
+    &:first-child {
+      border-radius: var(--border-radius) var(--border-radius) 0 0;
     }
 
     &__icon {

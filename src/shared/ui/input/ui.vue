@@ -145,7 +145,7 @@
     position: relative;
     flex: 1;
     width: 100%;
-    padding: 0 40px 0 0 ;
+    padding: 0 40px 0 0;
     box-sizing: border-box;
     font-size: 16px;
     line-height: normal;

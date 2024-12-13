@@ -1,6 +1,6 @@
-import { ModalHandlers } from '../types/type'
+import { type Modal, ModalHandlers } from '../types/type'
 
-export const DEFAULT_MODAL_STATE = {
+export const DEFAULT_MODAL_STATE: Modal = {
   isOpen: false,
   view: null as any,
   alignment: 'center' as 'top' | 'bottom' | 'center' | 'none',
@@ -8,4 +8,4 @@ export const DEFAULT_MODAL_STATE = {
   closeOnClickOutside: true,
   handlers: {} as ModalHandlers,
   data: null
-}
+} as const

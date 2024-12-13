@@ -21,6 +21,7 @@
       >
         <h2 id="modal-title" class="sr-only">Modal window</h2>
         <component
+          v-if="view"
           class="modal__component"
           :is="view"
           ref="modal"

@@ -5,16 +5,16 @@
     <Header />
     <main id="main" role="main">
       <router-view v-slot="{ Component, route }">
-        <transition name="fade" mode="out-in">
+        <Transition name="fade" mode="out-in">
           <component :is="Component" :key="route.path" />
-        </transition>
+        </Transition>
       </router-view>
     </main>
     <Footer />
+    <ModalWindow />
     <asyncAlerts />
     <asyncDevtools v-if="configStore.config.devTools" />
   </div>
-  <ModalWindow />
 </template>
 
 <script lang="ts" setup>
