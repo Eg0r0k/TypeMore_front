@@ -4,7 +4,7 @@ import { defineStore } from 'pinia'
 import { reactive, ref } from 'vue'
 import { useTestStateStore } from '@/entities/test/model/store'
 
-import { logRandomIndex } from '@/shared/lib/helpers/misc'
+import { generateRandomIndex } from '@/shared/lib/helpers/misc'
 import { getLastChar } from '@/shared/lib/helpers/string'
 import { LanguageObj } from '@/shared/lib/types/types'
 
@@ -80,14 +80,9 @@ export const useWordGeneratorStore = defineStore('word-gen', () => {
   }
 
   const getNextWord = (lang: LanguageObj, limit: number, index: number) => {
-    // console.debug('Generated word: ', {
-    //   isRepeated: testState.isRepeated,
-    //   lang: currentLanguage
-    // })
-    const randomWord = lang.words[logRandomIndex(lang.words.length)]
-    return randomWord
+    const randomIndex = generateRandomIndex(lang.words.length)
+    return lang.words[randomIndex]
   }
-
   const shuffleWords = () => {
     if (shuffedIndexes.value.length === 0) {
       generateShuffledIndexes()

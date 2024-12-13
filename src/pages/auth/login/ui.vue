@@ -128,6 +128,7 @@
         'Password must contain only Latin letters, numbers, and special characters'
       )
       .min(8, 'Password must be at least 8 characters')
+      .max(16, 'Password must be at least 16 characters')
       .required('Password is required')
   })
   const { handleSubmit, errors, defineField } = useForm({

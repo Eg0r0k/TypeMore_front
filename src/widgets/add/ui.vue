@@ -20,7 +20,6 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    max-width: 450px;
     margin: 0 auto;
     padding: 15px;
     user-select: none;

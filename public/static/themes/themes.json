@@ -10,6 +10,16 @@
     "--error-extra-color": "#a12828"
   },
   {
+    "name": "Deep Dark",
+    "--bg-color": "#111",
+    "--main-color": "#eee",
+    "--sub-color": "#444",
+    "--sub-alt-color": "#191919",
+    "--text-color": "#eee",
+    "--error-color": "#da3333",
+    "--error-extra-color": "#791717"
+  },
+  {
     "name": "Lavender Dreams",
     "--bg-color": "#2e1a47",
     "--main-color": "#ba68c8",
@@ -31,9 +41,9 @@
   },
   {
     "name": "Cybernetic Glow",
-    "--bg-color": "#0f0f0f",
+    "--bg-color": "#111111",
     "--main-color": "#00e676",
-    "--sub-color": "#1b1b1b",
+    "--sub-color": "#444",
     "--sub-alt-color": "#070707",
     "--text-color": "#e0ffe0",
     "--error-color": "#ff1744",

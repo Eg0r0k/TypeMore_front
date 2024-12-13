@@ -26,7 +26,7 @@
   import { useTestStateStore } from '@/entities/test/model/store'
   import { Icon } from '@iconify/vue'
   import { useKeyModifier, useMagicKeys, whenever } from '@vueuse/core'
-  import { onMounted, onUnmounted, watch } from 'vue'
+  import { onMounted, onUnmounted } from 'vue'
   import { Test } from '@/widgets/test'
   import { TestInput } from '@/features/test/input'
   import { TestControls } from '@/features/test/controls'

@@ -4,7 +4,6 @@
       <slot></slot>
     </label>
     <div :class="containerClasses">
-      <!-- Контейнер для поля ввода и иконки -->
       <div class="text-input__input-container">
         <component
           v-bind="$attrs"
@@ -18,13 +17,11 @@
           @blur="$emit('blur')"
         />
 
-        <!-- Слот для иконки или кнопки справа -->
         <div class="text-input__right-slot">
           <slot name="right-icon"></slot>
         </div>
       </div>
 
-      <!-- Контейнер для ошибки -->
       <div v-if="props.hasErrorSpace" class="error-msg-container">
         <Typography v-if="errorMessage" class="error-msg" tag-name="p" :size="'xs'" color="error">
           {{ errorMessage }}

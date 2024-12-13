@@ -1,7 +1,10 @@
 <template>
   <div class="chat">
-    <div class="chat__messages">
-      <div class="message" v-for="i in 100" :key="i">Hello</div>
+    <div class="chat__messages" ref="messagesContainer">
+      <div v-for="message in messages" :key="message.id" class="message">
+        <div class="message__author">{{ message.username }}:</div>
+        <div class="message__text" v-html="parseEmojis(message.text)"></div>
+      </div>
     </div>
     <div class="chat__input">
       <div class="chat__emoji-suggestion" v-if="showSuggestion">
@@ -13,18 +16,18 @@
           @click="selectSuggestion(suggestion)"
         >
           <div class="suggestion__icon">
-            <img
-              draggable="false"
-              src="https://cdn.discordapp.com/emojis/1058080458426032128.png?v=1"
-            />
+            <img draggable="false" :src="suggestion.icon" />
           </div>
           <Typography size="xs">{{ suggestion.text }}</Typography>
         </div>
       </div>
       <TextInput
+        ref="chatInput"
+        @keydown.enter="sendMessage"
+        v-max-chars="256"
         v-model="inputValue"
         :class="inputClasses"
-        placeholder="Send a message (press / to focus)"
+        placeholder="Send a message"
         @keydown="handleKeyDown"
       />
     </div>
@@ -32,16 +35,35 @@
 </template>
 
 <script setup lang="ts">
+  import { useAuthStore } from '@/entities/auth/model/store'
+  import { useChatStore } from '@/entities/chat/model/store'
+  import { TextInputComponent } from '@/shared/directives/utils'
+  import { emojis, parseEmojis } from '@/shared/lib/helpers/emoji'
   import { TextInput } from '@/shared/ui/input'
   import { Typography } from '@/shared/ui/typography'
   import { watchThrottled } from '@vueuse/core'
   import clsx from 'clsx'
-  import { computed, ref } from 'vue'
+  import { computed, nextTick, ref, watchEffect } from 'vue'
 
   const activeIndex = ref(0)
   const showSuggestion = ref(false)
   const inputValue = ref('')
   const searchPattern = /:(\w*)$/
+
+  const chatStore = useChatStore()
+  const authStore = useAuthStore()
+
+  const messagesContainer = ref<HTMLElement | null>(null)
+  const chatInput = ref<TextInputComponent | null>(null)
+  const messages = computed(() => chatStore.messages)
+
+  const sendMessage = () => {
+    if (inputValue.value.trim()) {
+      chatStore.addMessage(authStore.user?.username || 'Guest', inputValue.value)
+      inputValue.value = ''
+      scrollToBottom()
+    }
+  }
 
   const isCursorImmediatelyAfterClosedTag = (text: string) => /:\w+:$/.test(text)
 
@@ -52,13 +74,7 @@
     })
   )
 
-  const suggestions = ref([
-    { text: 'Icon example 1', value: 'icon1' },
-    { text: 'Icon example 2', value: 'icon2' },
-    { text: 'What?', value: 'icon3' },
-    { text: 'Coolage', value: 'aboba' },
-    { text: 'Sadge', value: 'aboba1' }
-  ])
+  const suggestions = ref([...emojis])
 
   const filteredSuggestions = computed(() => {
     const match = inputValue.value.match(searchPattern)
@@ -90,7 +106,6 @@
         activeIndex.value = (activeIndex.value + 1) % visibleSuggestions.length
         break
       case 'Tab':
-      case 'Enter':
         if (showSuggestion.value) {
           event.preventDefault()
           selectSuggestion(visibleSuggestions[activeIndex.value])
@@ -104,11 +119,41 @@
     showSuggestion.value = false
     activeIndex.value = 0
   }
-</script>
+  const scrollToBottom = () => {
+    nextTick(() => {
+      if (messagesContainer.value) {
+        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+      }
+    })
+  }
 
+  watchEffect(() => {
+    scrollToBottom()
+  })
+</script>
 <style lang="scss" scoped>
   :deep(.chat__input--flat) {
     border-radius: 0 0 var(--border-radius) var(--border-radius) !important;
+  }
+
+  .message {
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    word-break: break-word;
+
+    &__author {
+      word-break: normal;
+      height: 100%;
+    }
+
+    &__text {
+      display: flex;
+      gap: 0.5rem;
+      align-items: baseline;
+      flex-wrap: wrap;
+    }
   }
 
   .suggestion {
@@ -163,6 +208,8 @@
 
     &__messages {
       height: 20rem;
+      margin-bottom: 0.25rem;
+      scroll-behavior: smooth;
       overflow-y: scroll;
     }
   }

@@ -61,27 +61,41 @@
       cursor: pointer;
       background-color: var(--sub-alt-color);
       border-radius: 3px;
+      box-shadow: 0 0 0 1px var(--sub-color);
+
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+
+      /*&:checked{
       box-shadow: 0 0 0 1px var(--main-color);
     }
+    */
 
-    &__input:disabled {
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
+      &::before {
+        transition: border var(--transition-duration);
+        position: absolute;
+        left: 6px;
+        width: 5px;
+        height: 13px;
+        content: '';
+        border: solid transparent;
+        border-width: 0 3px 3px 0;
+        transform: rotate(45deg);
+      }
 
-    &__input:checked {
-      background-color: var(--main-color);
-    }
+      &:hover::before {
+        border-color: var(--sub-color);
+      }
 
-    &__input:checked::before {
-      position: absolute;
-      left: 6px;
-      width: 5px;
-      height: 13px;
-      content: '';
-      border: solid var(--bg-color);
-      border-width: 0 3px 3px 0;
-      transform: rotate(45deg);
+      &:checked::before {
+        border-color: var(--main-color);
+      }
+
+      &:hover:checked::before {
+        border-color: var(--text-color);
+      }
     }
 
     &__label {
