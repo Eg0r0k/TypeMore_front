@@ -5,6 +5,7 @@ export enum LobbyRole {
 }
 export enum LobbyPermission {
   KickPlayer = 'kickPlayer',
+  SendMessages = 'sendMessages',
   StartGame = 'startGame',
   ControlPlayers = 'controlPlayers',
   ChangeName = 'changeName',

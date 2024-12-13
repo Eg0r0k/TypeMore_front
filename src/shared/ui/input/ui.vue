@@ -4,18 +4,27 @@
       <slot></slot>
     </label>
     <div :class="containerClasses">
-      <component
-        v-bind="$attrs"
-        :is="props.tagName"
-        ref="inputRef"
-        :class="inputClasses"
-        :value="modelValue"
-        :placeholder="placeholder"
-        :disabled="isDisabled"
-        @input="updateInput"
-        @blur="$emit('blur')"
-      />
+      <!-- Контейнер для поля ввода и иконки -->
+      <div class="text-input__input-container">
+        <component
+          v-bind="$attrs"
+          :is="props.tagName"
+          ref="inputRef"
+          :class="inputClasses"
+          :value="modelValue"
+          :placeholder="placeholder"
+          :disabled="isDisabled"
+          @input="updateInput"
+          @blur="$emit('blur')"
+        />
 
+        <!-- Слот для иконки или кнопки справа -->
+        <div class="text-input__right-slot">
+          <slot name="right-icon"></slot>
+        </div>
+      </div>
+
+      <!-- Контейнер для ошибки -->
       <div v-if="props.hasErrorSpace" class="error-msg-container">
         <Typography v-if="errorMessage" class="error-msg" tag-name="p" :size="'xs'" color="error">
           {{ errorMessage }}
@@ -24,7 +33,6 @@
     </div>
   </div>
 </template>
-
 <script setup lang="ts" generic="T">
   import { Typography } from '@/shared/ui/typography'
   import { computed, ref } from 'vue'
@@ -120,6 +128,7 @@
 
   .error-msg-container {
     min-height: 23px;
+    margin-top: 4px;
   }
 
   .error-msg {
@@ -134,8 +143,10 @@
     --xl: 14px 10px;
 
     position: relative;
-    box-sizing: border-box;
+    flex: 1;
     width: 100%;
+    padding: 0 40px 0 0 ;
+    box-sizing: border-box;
     font-size: 16px;
     line-height: normal;
     color: var(--text-color);
@@ -158,7 +169,24 @@
       margin-bottom: 4px;
     }
 
+    &__right-slot {
+      position: absolute;
+      top: 50%;
+      right: 0;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+    }
+
+    &__input-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
     &__container {
+      position: relative;
+
       &--no-error {
         min-height: auto;
       }

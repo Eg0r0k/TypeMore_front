@@ -8,6 +8,7 @@
       </div>
       <Form class="registration__body" autocomplete="off" @submit="onSubmit()">
         <TextInput
+          @keydown="focusNextField"
           :is-disabled="isSubmitting"
           v-bind="usernameProps"
           v-model="username"
@@ -23,6 +24,7 @@
           </Typography>
         </TextInput>
         <TextInput
+          @keydown="focusNextField"
           :is-disabled="isSubmitting"
           v-bind="emailProps"
           v-model="email"
@@ -39,10 +41,11 @@
           </Typography>
         </TextInput>
         <TextInput
+          :type="visiblePassword ? 'text' : 'password'"
+          @keydown="focusNextField"
           :is-disabled="isSubmitting"
           v-bind="passwordProps"
           v-model="password"
-          type="password"
           :has-error-space="true"
           name="password"
           required
@@ -54,12 +57,27 @@
             Password
             <Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
+          <template #right-icon>
+            <Button
+              button-label="show password"
+              size="s"
+              color="shadow"
+              class="password-toggle"
+              @click.prevent="visiblePassword = !visiblePassword"
+              type="button"
+            >
+              <template #left-icon>
+                <Icon :icon="visiblePassword ? 'mdi:eye-off' : 'mdi:eye'" width="24" />
+              </template>
+            </Button>
+          </template>
         </TextInput>
         <TextInput
+          :type="visiblePasswordRepeat ? 'text' : 'password'"
+          @keydown="focusNextField"
           :is-disabled="isSubmitting"
           v-bind="passwordConfirmationProps"
           v-model="passwordConfirmation"
-          type="password"
           :has-error-space="true"
           name="passwordConfirmation"
           autocomplete="new-password"
@@ -71,6 +89,20 @@
             Repeat password
             <Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
+          <template #right-icon>
+            <Button
+              button-label="show password repeat"
+              size="s"
+              color="shadow"
+              class="password-toggle"
+              @click.prevent="visiblePasswordRepeat = !visiblePasswordRepeat"
+              type="button"
+            >
+              <template #left-icon>
+                <Icon :icon="visiblePasswordRepeat ? 'mdi:eye-off' : 'mdi:eye'" width="24" />
+              </template>
+            </Button>
+          </template>
         </TextInput>
         <Button type="submit" class="registration__submit" :is-loading="isSubmitting">
           Create
@@ -98,20 +130,34 @@
   import { useModal } from '@/entities/modal/model/store'
   import { ref, watch } from 'vue'
   import { useRouter } from 'vue-router'
-  import { emailReg } from '@/shared/lib/helpers/validation'
+  import { emailReg, passwordReg, usernameReg } from '@/shared/lib/helpers/validation'
+  import { focusNextField } from '@/shared/lib/helpers/forms'
+  import { Icon } from '@iconify/vue'
 
   const router = useRouter()
   const alertStore = useAlertStore()
   const modalStore = useModal()
-
+  const visiblePassword = ref(false)
+  const visiblePasswordRepeat = ref(false)
   const schema = yup.object({
     username: yup
       .string()
-      .min(3, 'Username min 3 characters')
-      .max(16, 'Username max 16 characters')
-      .required('Username required'),
+      .matches(
+        usernameReg,
+        'Username must contain only Latin letters, numbers, underscores, or dashes'
+      )
+      .min(3, 'Min 3 characters for username')
+      .max(16, 'Max 16 characters for username')
+      .required('Username is required'),
     email: yup.string().matches(emailReg, 'Email must be correct').required('Email is required'),
-    password: yup.string().min(6, 'Min 6 characters for password').required('Password is required'),
+    password: yup
+      .string()
+      .matches(
+        passwordReg,
+        'Password must contain only Latin letters, numbers, and special characters'
+      )
+      .min(8, 'Password must be at least 8 characters')
+      .required('Password is required'),
     passwordConfirmation: yup
       .string()
       .oneOf([yup.ref('password')], 'Passwords do not match')

@@ -22,11 +22,19 @@
         <Typography>
           {{ lobbyStore.lobby.state === LobbyState.WaitingForPlayers ? 'Private' : 'Public' }}
         </Typography>
-        <Button size="s" color="shadow" button-label="change room visibility">
+        <ToggleButton
+          size="s"
+          value="toggle"
+          button-label=""
+          color="shadow"
+          toggled-color="shadow"
+          v-model="lobbyStore.lobby.isPublic"
+        >
           <template #left-icon>
-            <Icon icon="uis:lock-open-alt" />
+            <Icon v-if="lobbyStore.lobby.isPublic" icon="uis:lock-open-alt" />
+            <Icon v-else icon="uis:lock" />
           </template>
-        </Button>
+        </ToggleButton>
       </div>
     </div>
     <div>
@@ -71,6 +79,7 @@
   import { useModal } from '@/entities/modal'
   import { ControlPlayerModal } from '@/features/modal/controlPlayer'
   import { Button } from '@/shared/ui/button'
+  import { ToggleButton } from '@/shared/ui/toggleButton'
   import { Typography } from '@/shared/ui/typography'
   import { Icon } from '@iconify/vue'
   import clsx from 'clsx'

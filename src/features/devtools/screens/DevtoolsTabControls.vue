@@ -3,10 +3,9 @@
     <span>FPS</span>
     <ToggleButton
       size="s"
-      value="showFps"
       v-model="configStore.config.showFps"
       @update:modelValue="configStore.setFPS"
-      label="Devtools change"
+      button-label="Devtools change"
       toggledColor="main"
       color="shadow"
     >
@@ -18,8 +17,7 @@
     <span>Keyboard</span>
     <ToggleButton
       size="s"
-      value="showKeyboard"
-      label="toggle visibility keyboard"
+      button-label="toggle visibility keyboard"
       toggled-color="main"
       color="shadow"
       v-model="configStore.config.showKeyboard"
@@ -31,9 +29,8 @@
     <span>Play sound</span>
     <ToggleButton
       size="s"
-      value="playSound"
       v-model="configStore.config.playSound"
-      label="Devtools change"
+      button-label="Devtools change"
       toggledColor="main"
       color="shadow"
     >
@@ -44,17 +41,17 @@
     <span>Modes</span>
   </p>
   <ToggleGroup v-model="configStore.config.mode" @change="configStore.setMode">
-    <ToggleButton label="Word mod" color="shadow" value="words" toggledColor="main">
+    <ToggleButton button-label="Word mod" color="shadow" value="words" toggledColor="main">
       <template #left-icon>
         <Icon width="20" icon="mynaui:letter-a-solid" />
       </template>
     </ToggleButton>
-    <ToggleButton label="Time mod" color="shadow" value="time" toggledColor="main">
+    <ToggleButton button-label="Time mod" color="shadow" value="time" toggledColor="main">
       <template #left-icon>
         <Icon width="20" icon="mingcute:time-fill" />
       </template>
     </ToggleButton>
-    <ToggleButton label="Free mod" color="shadow" value="free" toggledColor="main">
+    <ToggleButton button-label="Free mod" color="shadow" value="free" toggledColor="main">
       <template #left-icon>
         <Icon width="20" icon="ic:round-crop-free" />
       </template>

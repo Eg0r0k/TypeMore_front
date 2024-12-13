@@ -6,6 +6,7 @@
       </div>
       <Form class="login__body" autocomplete="off" @submit="onSubmit()">
         <TextInput
+          @keydown="focusNextField"
           v-bind="usernameProps"
           v-model="username"
           :has-error-space="true"
@@ -22,11 +23,12 @@
         </TextInput>
 
         <TextInput
+          @keydown="focusNextField"
           v-bind="passwordProps"
           v-model="password"
           :has-error-space="true"
           :error-message="errors.password"
-          type="password"
+          :type="visiblePassword ? 'text' : 'password'"
           placeholder="Password"
           label="Password*"
           autocomplete="new-password"
@@ -36,6 +38,20 @@
             Password
             <Typography tag-name="span" size="xs" color="error">*</Typography>
           </Typography>
+          <template #right-icon>
+            <Button
+              button-label="show password"
+              size="s"
+              color="shadow"
+              class="password-toggle"
+              @click.prevent="visiblePassword = !visiblePassword"
+              type="button"
+            >
+              <template #left-icon>
+                <Icon :icon="visiblePassword ? 'mdi:eye-off' : 'mdi:eye'" width="24" />
+              </template>
+            </Button>
+          </template>
         </TextInput>
 
         <Button type="submit" class="login__sumbit">Login</Button>
@@ -45,12 +61,20 @@
         <Typography color="main">or</Typography>
       </div>
       <div class="other login__other">
-        <Button color="gray" class="other__button other__button--google">
+        <Button
+          button-label="login with google"
+          color="gray"
+          class="other__button other__button--google"
+        >
           <template #left-icon>
             <Icon width="24" icon="ri:google-fill"></Icon>
           </template>
         </Button>
-        <Button color="gray" class="other__button other__button--github">
+        <Button
+          button-label="login with github"
+          color="gray"
+          class="other__button other__button--github"
+        >
           <template #left-icon>
             <Icon width="24" icon="mdi:github"></Icon>
           </template>
@@ -61,14 +85,16 @@
           No account?
           <router-link to="/registration" class="login__link">Create</router-link>
         </Typography>
-        <Typography class="login__link" color="sub" size="xs" @click="openResetModal">
-          forgot password?
-        </Typography>
+
+        <Button size="s" color="shadow" @click="openResetModal">
+          <Typography class="login__link" color="sub" size="xs" role="button">
+            forgot password?
+          </Typography>
+        </Button>
       </div>
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
   import { Icon } from '@iconify/vue'
   import { Typography } from '@shared/ui/typography'
@@ -81,23 +107,39 @@
   import { useAuthStore } from '@/entities/auth/model/store'
   import { useModal } from '@/entities/modal'
   import { ResetModal } from '@/features/modal/reset'
+  import { focusNextField } from '@/shared/lib/helpers/forms'
+  import { passwordReg, usernameReg } from '@/shared/lib/helpers/validation'
+  import { ref } from 'vue'
 
   const schema = yup.object({
-    username: yup.string().min(3, 'Min 3 characters for username').required('Username is required'),
-    password: yup.string().min(6, 'Min 6 characters for password').required('Password is required')
+    username: yup
+      .string()
+      .matches(
+        usernameReg,
+        'Username must contain only Latin letters, numbers, underscores, or dashes'
+      )
+      .min(3, 'Min 3 characters for username')
+      .max(16, 'Max 16 characters for username')
+      .required('Username is required'),
+    password: yup
+      .string()
+      .matches(
+        passwordReg,
+        'Password must contain only Latin letters, numbers, and special characters'
+      )
+      .min(8, 'Password must be at least 8 characters')
+      .required('Password is required')
   })
   const { handleSubmit, errors, defineField } = useForm({
     validationSchema: schema
   })
+  const visiblePassword = ref(false)
+
   const modalStore = useModal()
   const authStore = useAuthStore()
   const alertStore = useAlertStore()
-  const [username, usernameProps] = defineField('username', {
-    validateOnModelUpdate: false
-  })
-  const [password, passwordProps] = defineField('password', {
-    validateOnModelUpdate: false
-  })
+  const [username, usernameProps] = defineField('username')
+  const [password, passwordProps] = defineField('password')
   const openResetModal = () => {
     modalStore.open(ResetModal, 'center', 'center')
   }
@@ -173,6 +215,7 @@
     &__footer {
       display: flex;
       flex-direction: row;
+      align-items: center;
       justify-content: space-between;
     }
 

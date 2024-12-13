@@ -7,7 +7,7 @@
       <div class="chat__emoji-suggestion" v-if="showSuggestion">
         <div
           class="suggestion"
-          v-for="(suggestion, index) in suggestions"
+          v-for="(suggestion, index) in filteredSuggestions.slice(0, 3)"
           :key="index"
           :class="{ 'suggestion--active': index === activeIndex }"
           @click="selectSuggestion(suggestion)"
@@ -22,7 +22,7 @@
         </div>
       </div>
       <TextInput
-        v-model="inputValue"
+        v-model.trim="inputValue"
         :class="inputClasses"
         placeholder="Send a message (press / to focus)"
         @keydown="handleKeyDown"
@@ -50,10 +50,17 @@
   )
 
   const suggestions = ref([
-    { text: 'Icon exemple 1', value: 'icon1' },
-    { text: 'Icon exemple 2', value: 'icon2' }
+    { text: 'Icon example 1', value: 'icon1' },
+    { text: 'Icon example 2', value: 'icon2' },
+    { text: 'What?', value: 'icon3' },
+    { text: 'Coolage', value: 'aboba' },
+    { text: 'Sadge', value: 'aboba1' }
   ])
-
+  const filteredSuggestions = computed(() => {
+    const match = inputValue.value.match(searchPattern)
+    const query = match ? match[1].toLowerCase() : ''
+    return suggestions.value.filter((suggestion) => suggestion.value.toLowerCase().includes(query))
+  })
   watchThrottled(
     inputValue,
     (newValue) => {
@@ -64,22 +71,22 @@
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (!showSuggestion.value) return
-
+    const visibleSuggestions = filteredSuggestions.value.slice(0, 3)
     switch (event.key) {
       case 'ArrowUp':
         event.preventDefault()
         activeIndex.value =
-          (activeIndex.value - 1 + suggestions.value.length) % suggestions.value.length
+          (activeIndex.value - 1 + visibleSuggestions.length) % visibleSuggestions.length
         break
       case 'ArrowDown':
         event.preventDefault()
-        activeIndex.value = (activeIndex.value + 1) % suggestions.value.length
+        activeIndex.value = (activeIndex.value + 1) % visibleSuggestions.length
         break
       case 'Tab':
       case 'Enter':
         if (showSuggestion.value) {
           event.preventDefault()
-          selectSuggestion(suggestions.value[activeIndex.value])
+          selectSuggestion(visibleSuggestions[activeIndex.value])
         }
         break
     }

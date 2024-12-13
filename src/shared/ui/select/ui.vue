@@ -104,18 +104,25 @@
   }
   const handleKeydown = async (event: KeyboardEvent): Promise<void> => {
     if (!open.value) return
-    if (event.key === 'Escape') {
-      open.value = false
-    }
-    if (event.key === 'ArrowDown') {
-      selectedIndex.value = (selectedIndex.value + 1) % props.options.length
-    }
-    if (event.key === 'ArrowUp') {
-      selectedIndex.value = (selectedIndex.value - 1 + props.options.length) % props.options.length
-    }
-    if (event.key === 'Enter') {
-      selectOption(props.options[selectedIndex.value], selectedIndex.value)
-      open.value = false
+
+    switch (event.key) {
+      case 'Escape':
+        open.value = false
+
+        break
+      case 'ArrowDown':
+        selectedIndex.value = (selectedIndex.value + 1) % props.options.length
+
+        break
+      case 'ArrowUp':
+        selectedIndex.value =
+          (selectedIndex.value - 1 + props.options.length) % props.options.length
+
+        break
+      case 'Enter':
+        selectOption(props.options[selectedIndex.value], selectedIndex.value)
+        open.value = false
+        break
     }
     await nextTick()
   }

@@ -19,30 +19,29 @@
   </Button>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T">
   import { computed, inject, Ref } from 'vue'
   import { ButtonColor, ButtonI } from '../button/ui.vue'
   import { Button } from '../button'
   import { TOGGLE_GROUP } from '@shared/constants/inject-keys'
 
-  interface ToggleButton extends ButtonI {
+  interface ToggleButton<T> extends ButtonI {
     modelValue?: boolean
     toggledColor: ButtonColor
-    value: string | number
+    value?: T
   }
-  const toggleGroup = inject<{
-    selectedValue: Ref<string | number | (string | number)[]>
-    selectButton: (value: string | number) => void
-  } | null>(TOGGLE_GROUP, null)
 
-  const props = defineProps<ToggleButton>()
+  const toggleGroup = inject<{
+    selectedValue: Ref<T | T[]>
+    selectButton: (value: T) => void
+  } | null>(TOGGLE_GROUP, null)
+  const props = defineProps<ToggleButton<T>>()
   const emit = defineEmits(['update:modelValue'])
 
   const isActive = computed(() => {
-    if (toggleGroup) {
+    if (toggleGroup && props.value) {
       if (toggleGroup.selectedValue.value instanceof Array) {
-        // Check for multiple selections
-        return (toggleGroup.selectedValue.value as (string | number)[]).includes(props.value)
+        return (toggleGroup.selectedValue.value as T[]).includes(props.value)
       } else {
         return toggleGroup.selectedValue.value === props.value
       }
@@ -52,7 +51,7 @@
   })
 
   const toggle = () => {
-    if (toggleGroup) {
+    if (toggleGroup && props.value) {
       toggleGroup.selectButton(props.value)
     } else {
       emit('update:modelValue', !(props.modelValue ?? false))

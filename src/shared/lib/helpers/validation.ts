@@ -50,6 +50,11 @@ export const emailReg = new RegExp(
   /^(([^<>()[]+(\.[^<>()[]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 )
 
+export const usernameReg = new RegExp(/^[a-zA-Z0-9_-]+$/)
+export const upperCaseReg = new RegExp(/[a-z]/)
+export const lowerCaseReg = new RegExp(/[A-Z]/)
+export const containNumberReg = new RegExp(/\d/)
+export const passwordReg = /^[a-zA-Z0-9!@#$%^&*(),.?":{}|<>]+$/
 export const isValidUrl = (href: string): boolean => {
   try {
     new URL(href, window.location.origin)

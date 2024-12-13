@@ -16,7 +16,10 @@ export const useLobbyStore = defineStore('lobby', () => {
   const leftLobby = () => {
     isRoomManagementOpen.value = false
   }
-
+  const changeVisibility = () => {
+    if (!lobby.value) return
+    lobby.value.isPublic = !lobby.value.isPublic
+  }
   lobby.value = {
     id: 'da23sd-fasdsol7-dasbas-01fgdfs',
     name: 'Guest room',
@@ -83,6 +86,7 @@ export const useLobbyStore = defineStore('lobby', () => {
 
   return {
     lobby,
+    changeVisibility,
     canControlOtherUser,
     hasLobbyPermission,
     updateParticipantsRole,

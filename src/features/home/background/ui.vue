@@ -1,6 +1,7 @@
 <template>
   <div class="custom-background">
     <img
+      loading="lazy"
       :src="backgroundImg"
       draggable="false"
       @error="handleImageError"

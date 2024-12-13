@@ -28,7 +28,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['vue', 'vue-router'],
+          vendor: ['vue', 'vue-router',],
           charts: ['chart.js', 'vue-chart-3'],
           html2canvas: ['html2canvas'],
           rare: ['vue3-recaptcha-v2']
