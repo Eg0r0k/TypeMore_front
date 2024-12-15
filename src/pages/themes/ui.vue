@@ -1,17 +1,49 @@
 <template>
   <div>
-    <div class="settings">
-      <TextInput class="settings__search" placeholder="Search..." />
-      <div class="settings__categories">
-        <CheckBox v-model="isFeatureAEnabled" label="Enable Feature A" value="Test" />
-        <CheckBox v-model="isFeatureAEnabled" label="Enable Feature A" value="Test" />
-        <CheckBox v-model="isFeatureAEnabled" label="Enable Feature A" value="Test" />
+    <div class="options">
+      <SearchBar class="options__search" v-model="query" />
+      <div class="settings">
+        <div class="settings__slider">
+          <Icon width="24" icon="stash:moon-solid" />
+          <vue-slider class="slider" v-model="value" :lazy="true"></vue-slider>
+          <Icon width="24" icon="stash:sun-solid" />
+        </div>
+        <div class="devider devider--vert"></div>
+
+        <div class="settings__group">
+          <CheckBox v-model="hasBackground">
+            <Icon width="24" icon="uil:image" />
+          </CheckBox>
+          <CheckBox v-model="withoutBackground">
+            <Icon width="24" icon="uil:image-slash" />
+          </CheckBox>
+          <div class="devider"></div>
+          <Popper
+            placement="top"
+            offset-distance="2"
+            content="Only favorite"
+            hover
+            arrow
+            :interactive="false"
+          >
+            <ToggleButton
+              class="settings__favorite"
+              v-model="isFavorite"
+              toggled-color="error-outline"
+              color="shadow"
+            >
+              <template #left-icon>
+                <Icon icon="ic:baseline-favorite" />
+              </template>
+            </ToggleButton>
+          </Popper>
+        </div>
       </div>
-      <vue-slider v-model="value" height="6px" :lazy="true"></vue-slider>
     </div>
+
     <div class="container">
       <div v-for="i in 10" :key="i" class="card">
-        <Splide :has-track="false" :options="{ rewind: true }">
+        <Splide lazyLoad="" :has-track="false" :options="{ rewind: true }">
           <div class="sweeper-wrapper">
             <SplideTrack>
               <SplideSlide>
@@ -60,22 +92,53 @@
   import { Icon } from '@iconify/vue'
   import { Button } from '@/shared/ui/button'
   import { Typography } from '@/shared/ui/typography'
-  import { TextInput } from '@/shared/ui/input'
   import slide1 from './slide1.vue'
   import slide2 from './slide2.vue'
   import { ref } from 'vue'
-  const isFeatureAEnabled = ref(false)
+  import { SearchBar } from '@/shared/ui/search'
 
+  import { ToggleButton } from '@/shared/ui/toggleButton'
+  const hasBackground = ref(false)
+  const withoutBackground = ref(false)
+  const isFavorite = ref(false)
   const value = ref([0, 100])
+  const query = ref('')
 </script>
 
 <style scoped lang="scss">
+  .options {
+    &__search {
+      margin: 0 0 0.5rem;
+    }
+  }
+
   .settings {
+    display: flex;
+    gap: 1rem;
     width: 100%;
-    padding: 33px 38px;
+    padding: 1rem;
     margin-bottom: 20px;
     background-color: var(--sub-alt-color);
     border-radius: var(--border-radius);
+
+    &__slider {
+      display: flex;
+      align-items: center;
+      flex-grow: 1;
+      gap: 1rem;
+    }
+
+    &__group {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around;
+      flex-grow: 1;
+    }
+
+    &__favorite {
+      width: 30px;
+      height: 30px;
+    }
 
     &__categories {
       display: flex;
@@ -84,9 +147,24 @@
     }
   }
 
+  .slider {
+    flex-grow: 1;
+  }
+
+  .devider {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background-color: var(--sub-color);
+    align-self: stretch;
+    width: 1px;
+    margin: 0 1rem;
+    white-space: nowrap;
+  }
+
   .container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(252px, 1fr));
     gap: 21px;
   }
 
@@ -115,6 +193,28 @@
       flex-direction: column;
       gap: 4px;
       margin-bottom: 24px;
+    }
+  }
+
+  @media screen and (width <=539px) {
+    .settings {
+      flex-direction: column;
+    }
+
+    .card {
+      &__controls {
+        flex-direction: column;
+        gap: 10px;
+      }
+    }
+
+    .devider {
+      &--vert {
+        width: 100% !important;
+        height: 1px;
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+      }
     }
   }
 </style>

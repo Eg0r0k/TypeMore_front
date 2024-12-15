@@ -1,23 +1,22 @@
 <template>
-  <div class="checkbox-wrapper">
-    <label tabindex="-1" class="checkbox-wrapper__field" :for="labelId">
+  <div class="radio-wrapper">
+    <label tabindex="-1" class="radio-wrapper__field" :for="labelId">
       <input
         :tabindex="isDisabled ? -1 : 0"
         :id="labelId"
         v-model="modelValue"
-        type="checkbox"
+        type="radio"
         :value="value"
         :name="name"
         :disabled="isDisabled"
-        class="checkbox-wrapper__input"
+        class="radio-wrapper__input"
       />
-      <span draggable="false" class="checkbox-wrapper__label">
+      <span draggable="false" class="radio-wrapper__label">
         <slot>{{ label }}</slot>
       </span>
     </label>
   </div>
 </template>
-
 <script setup lang="ts" generic="T">
   import { generateId } from '@/shared/lib/helpers/forms'
   import { computed } from 'vue'
@@ -30,16 +29,18 @@
   }
 
   const props = withDefaults(defineProps<Props>(), {
-    name: 'checkbox',
+    name: 'radio',
     label: ''
   })
-
+  const emit = defineEmits<{
+    (e: 'update:modelValue', value: T): void
+  }>()
   const modelValue = defineModel<T>()
-  const labelId = computed(() => generateId('custom-checkbox'))
+  const labelId = computed(() => generateId('custom-radio'))
 </script>
 
 <style scoped lang="scss">
-  .checkbox-wrapper {
+  .radio-wrapper {
     display: flex;
     align-items: center;
 
@@ -58,7 +59,7 @@
       appearance: none;
       cursor: pointer;
       background-color: var(--sub-alt-color);
-      border-radius: 3px;
+      border-radius: 50%;
       box-shadow: 0 0 0 1px var(--sub-color);
 
       &:disabled {
@@ -66,40 +67,29 @@
         opacity: 0.5;
       }
 
-      /*
-      &:checked{
-      box-shadow: 0 0 0 1px var(--main-color);
-    }
-    */
-      &:focus-visible {
-        outline: none;
-        box-shadow:
-          0 0 0 1.5px var(--bg-color),
-          0 0 0 3px var(--text-color);
+      &:checked {
+        background-color: var(--main-color);
+        box-shadow: 0 0 0 1px var(--main-color);
       }
 
       &::before {
-        transition: border var(--transition-duration);
+        transition: var(--transition-duration);
         position: absolute;
+        top: 6px;
         left: 6px;
-        width: 5px;
-        height: 13px;
+        width: 8px;
+        height: 8px;
         content: '';
-        border: solid transparent;
-        border-width: 0 3px 3px 0;
-        transform: rotate(45deg);
-      }
-
-      &:hover::before {
-        border-color: var(--sub-color);
+        border-radius: 50%;
+        background-color: var(--sub-alt-color);
       }
 
       &:checked::before {
-        border-color: var(--main-color);
+        background-color: var(--text-color);
       }
 
-      &:hover:checked::before {
-        border-color: var(--text-color);
+      &:hover::before {
+        background-color: var(--sub-color);
       }
     }
 

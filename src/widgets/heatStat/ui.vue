@@ -2,10 +2,8 @@
   <div class="heatmap-container">
     <HeatMap :year="year" />
     <Select
-      isDisabled
       label="Select year"
       style="max-width: 100px; margin-bottom: 10px"
-      :tabindex="-1"
       :options="years"
       :default="year.toString()"
       @input="updateYear"
