@@ -1,16 +1,19 @@
 <template>
   <div class="error-page">
-    <Typography class="error-page__title" color="primary" tagName="h1" isBold>404</Typography>
+    <Typography class="error-page__title" color="primary" tag-name="h1" is-bold>404</Typography>
 
-    <Typography class="error-page__desc" color="primary" size="m" tagName="h1">
+    <Typography class="error-page__desc" color="primary" size="m" tag-name="h1">
       Ooops, its looks like...
-      <Typography color="error" size="xl" tagName="span">Error!</Typography>
+      <Typography color="error" size="xl" tag-name="span">Error!</Typography>
     </Typography>
-    <Button class="error-page__button" to="/" color="main">Back on main page</Button>
+    <Button as-child color="main">
+      <Link to="/">Back on main page</Link>
+    </Button>
   </div>
 </template>
 <script setup lang="ts">
   import { Button } from '@/shared/ui/button'
+  import { Link } from '@/shared/ui/link'
   import { Typography } from '@/shared/ui/typography'
 </script>
 <style lang="scss">
@@ -26,7 +29,7 @@
     }
 
     &__desc {
-      margin-bottom: 32px !important;
+      margin-bottom: 12px !important;
       text-align: center;
     }
   }

@@ -1,8 +1,8 @@
 <template>
   <div class="add">
-    <Typography class="add__text" isBold size="xxl" tag="span" color="sub">
+    <Typography class="add__text" is-bold size="xxl" tag="span" color="sub">
       ADD
-      <Icon icon="tabler:ad" width="50" />
+      <IconAd width="50" height="50" />
     </Typography>
     <Typography color="sub">
       Oh... looks like you use add block. Please turn it off to support the site ♥
@@ -12,7 +12,7 @@
 
 <script lang="ts" setup>
   import { Typography } from '@/shared/ui/typography'
-  import { Icon } from '@iconify/vue'
+  import IconAd from '~icons/tabler/ad'
 </script>
 <style lang="scss" scoped>
   .add {

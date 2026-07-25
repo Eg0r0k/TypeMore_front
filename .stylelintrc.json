@@ -10,12 +10,33 @@
       "stylelint-prettier/recommended"
     ],
     "customSyntax": "postcss-html",
+    "ignoreFiles": [
+        "src/widgets/test/**",
+        "src/features/test/word/**",
+        "src/features/test/input/**"
+    ],
     "rules": {
         "selector-class-pattern": "^[a-z0-9-]+(__[a-z0-9-]+)?(--[a-z0-9-]+)?$|^[a-z0-9-]+-enter-active$|^[a-z0-9-]+-leave-active$|^[a-z0-9-]+-[a-z0-9-]+$",
         "prettier/prettier": true,
         "scss/dollar-variable-pattern": "^var-",
         "at-rule-no-unknown": null,
-        "scss/at-rule-no-unknown": true,
+        "scss/at-rule-no-unknown": [
+            true,
+            {
+                "ignoreAtRules": [
+                    "theme",
+                    "utility",
+                    "variant",
+                    "custom-variant",
+                    "source",
+                    "apply",
+                    "reference",
+                    "config",
+                    "plugin",
+                    "tailwind"
+                ]
+            }
+        ],
         "order/properties-order": [
             "position",
             "top",

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { AlertData } from '../types/alertData'
+import type { AlertData } from '../types/alertData'
 /**
  * Store for managing alerts.
  * This store keeps a list of alerts and provides functions to add,

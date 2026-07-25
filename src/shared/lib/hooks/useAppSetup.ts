@@ -1,17 +1,21 @@
 import { useConfigStore } from '@/entities/config/model/store'
 import { useThemes } from '@/shared/lib/hooks/useThemes'
-import { getLangList } from '@/shared/lib/helpers/json-files'
+import { useUiLanguage } from '@/shared/lib/hooks/useUiLanguage'
+import { languagesQueryOptions } from '@shared/api'
+import { useQuery } from '@tanstack/vue-query'
 import { useFavicon } from '@vueuse/core'
-import { CookieModal } from '@/features/modal/cookie'
-import { useModal } from '@/entities/modal/model/store'
 import { LANG_KEY, THEMES_KEY } from '@/shared/constants/inject-keys'
-import { onBeforeMount, onMounted, onUnmounted, provide, ref } from 'vue'
+import { computed, onBeforeMount, onMounted, onUnmounted, provide, ref } from 'vue'
 
 export const useAppSetup = () => {
   const configStore = useConfigStore()
   const { applyTheme, themesList, themesOnUnmounted, favicon } = useThemes()
-  const modalStore = useModal()
-  const lang = ref()
+  // Locale follows the saved preference (or the browser under `system`) for the
+  // whole app lifetime, not just while the settings dialog is mounted.
+  useUiLanguage()
+  const cookieOpen = ref(false)
+  const { data: languages } = useQuery(languagesQueryOptions())
+  const lang = computed(() => languages.value ?? [])
 
   provide(THEMES_KEY, themesList)
   provide(LANG_KEY, lang)
@@ -22,12 +26,14 @@ export const useAppSetup = () => {
     useFavicon(favicon)
   })
 
-  onMounted(async () => {
-    lang.value = await getLangList()
+  onMounted(() => {
+    // Both setters paint a CSS variable; the persisted value is only half the
+    // state until they run once at boot.
     configStore.setFontFamily(configStore.config.fontFamily)
+    configStore.setFontSize(configStore.config.fontSize)
     try {
       if (!localStorage.getItem('cookieConsentGiven')) {
-        modalStore.open(CookieModal, 'bottom', 'right', false)
+        cookieOpen.value = true
       }
     } catch (e) {
       console.error('Failed to get localstorage', e)
@@ -37,4 +43,6 @@ export const useAppSetup = () => {
   onUnmounted(() => {
     themesOnUnmounted()
   })
+
+  return { cookieOpen }
 }

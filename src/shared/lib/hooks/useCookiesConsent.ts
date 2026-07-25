@@ -1,8 +1,7 @@
 import { ref, reactive, watch } from 'vue'
 import { useCookies } from '@vueuse/integrations/useCookies'
-import { useModal } from '@/entities/modal/model/store'
 import { CookieType } from '@/features/modal/cookie/model/types/cookie'
-import { Cookie } from 'universal-cookie'
+import type { Cookie } from 'universal-cookie'
 
 const COOKIE_NAMES: Record<CookieType, string> = {
   [CookieType.METRICS]: 'yandex_metrics',
@@ -37,9 +36,8 @@ export const useCookieStore = () => {
   return { cookies, updateCookie }
 }
 
-export const useCookieConsentLogic = () => {
+export const useCookieConsentLogic = (onDone?: () => void) => {
   const { cookies, updateCookie } = useCookieStore()
-  const modalStore = useModal()
   const showDefaultView = ref(true)
 
   watch(
@@ -64,7 +62,7 @@ export const useCookieConsentLogic = () => {
       updateCookie(cookie)
     })
     setConsentFlag()
-    modalStore.close()
+    onDone?.()
   }
 
   const rejectNonEssentialCookies = () => {
@@ -73,13 +71,13 @@ export const useCookieConsentLogic = () => {
     updateCookie(cookies[CookieType.SECURITY])
     updateCookie(cookies[CookieType.METRICS])
     setConsentFlag()
-    modalStore.close()
+    onDone?.()
   }
 
   const acceptSelectedCookies = () => {
     Object.values(cookies).forEach(updateCookie)
     setConsentFlag()
-    modalStore.close()
+    onDone?.()
   }
 
   return {
@@ -92,7 +90,7 @@ export const useCookieConsentLogic = () => {
   }
 }
 
-export const useCookiesConsent = () => {
+export const useCookiesConsent = (onDone?: () => void) => {
   const {
     cookies,
     showDefaultView,
@@ -100,7 +98,7 @@ export const useCookiesConsent = () => {
     acceptAllCookies,
     rejectNonEssentialCookies,
     acceptSelectedCookies
-  } = useCookieConsentLogic()
+  } = useCookieConsentLogic(onDone)
 
   return {
     cookies,

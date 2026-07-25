@@ -2,11 +2,11 @@
   <div class="game-heatmap" role="region" aria-label="Game activity heatmap">
     <div class="days">
       <Typography
+        v-for="day in ['Mon', 'Wed', 'Fri']"
+        :key="day"
         color="primary"
         size="s"
         tag="span"
-        v-for="day in ['Mon', 'Wed', 'Fri']"
-        :key="day"
       >
         {{ day }}
       </Typography>
@@ -18,7 +18,7 @@
         </span>
       </Typography>
       <div class="grid" role="grid" aria-labelledby="id-heatmap-label">
-        <h2 class="sr-only" id="id-heatmap-label">Heatmap activity</h2>
+        <h2 id="id-heatmap-label" class="sr-only">Heatmap activity</h2>
         <div
           v-for="day in gridData"
           :key="day.date"
@@ -39,10 +39,10 @@
       </div>
     </div>
     <div
+      v-if="selectedCell"
       class="tooltip"
       role="tooltip"
       aria-live="polite"
-      v-if="selectedCell"
       :style="tooltipStyle"
     >
       <span>
@@ -119,7 +119,7 @@
     const tooltipWidth = 100
     const tooltipOffset = 5
     let left = rect.left + window.scrollX + rect.width / 2
-    let top = rect.top + window.scrollY - tooltipOffset - 30
+    const top = rect.top + window.scrollY - tooltipOffset - 30
 
     if (left + tooltipWidth > window.innerWidth)
       left = window.innerWidth - tooltipWidth - tooltipOffset

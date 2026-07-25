@@ -1,17 +1,65 @@
+import type { UiLanguage } from '@/shared/lib/i18n/locale'
+import type { Difficulty } from '@shared/core'
+
+/** Input: how hard the test stops you on a mistake. */
+export type StopOnError = 'off' | 'word' | 'letter'
+/** Caret: interpolation speed between letters (`off` = instant jumps). */
+export type SmoothCaret = 'off' | 'slow' | 'medium' | 'fast'
+/** Caret: shape drawn at the typing position (`off` = no caret). */
+export type CaretStyle = 'off' | 'default' | 'block' | 'outline' | 'underline'
+/** Custom background: how the image is fitted to the viewport. */
+export type BackgroundSize = 'cover' | 'contain' | 'max'
+
 export interface Config {
   words: number
   devTools: boolean
   time: number
+  /** Dictionary language for the test text (NOT the interface language). */
   language: string
+  /** Interface locale; `system` follows the browser. */
+  uiLanguage: UiLanguage
+  /** Active colour theme name (see `shared/api/themes`). */
   theme: string
   mode: ConfigModes
+  /** Custom background: remote image URL ('' = none). */
   backgroundImg: string
+  /** Custom background: local image as a data URL ('' = none). Wins over the URL. */
+  backgroundLocal: string
+  /** Custom background: fitting mode. */
+  backgroundSize: BackgroundSize
   showFps: boolean
   playSound: boolean
   showKeyboard: boolean
   soundVolume: number
+  soundSet: string
   fontSize: number
   fontFamily: string
+  // Game options threaded to the core (see toCoreSetup). `blind` is view-only.
+  punctuation: boolean
+  numbers: boolean
+  randomCase: boolean
+  nospace: boolean
+  difficulty: Difficulty
+  /** Reverse mod (generation): mirror every word. Core-bound — rebuilds on change. */
+  reverse: boolean
+  /** MinSpeed floor in net WPM (0 = off). Core-bound — rebuilds on change. */
+  minWpm: number
+  // View-only mods (never in core/log; applied live).
+  blind: boolean
+  /** Fading mod: the active word melts over FADE_MS. */
+  fading: boolean
+  /** Flashlight mod: only the active word ± neighbours is visible. */
+  flashlight: boolean
+  // Input behaviour — core-bound (see toCoreSetup), rebuilds the run on change.
+  /** Backspace into already-committed words, even correct ones. */
+  freedomMode: boolean
+  /** `letter` rejects a wrong keystroke; `word` blocks the advance until the word is correct. */
+  stopOnError: StopOnError
+  /** Words mode: finish on the last word even if it is wrong (no trailing space needed). */
+  quickEnd: boolean
+  // Caret (view-only).
+  smoothCaret: SmoothCaret
+  caretStyle: CaretStyle
 }
 
 export enum ConfigModes {

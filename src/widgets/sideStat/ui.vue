@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
   import { SideStats } from '@/features/profile/side'
-  import { Statistic } from '@/pages/profile/ui.vue'
+  import type { Statistic } from '@/pages/profile/ui.vue'
   import { computed } from 'vue'
   const allStatistics: Statistic[] = [
     { mode: '15 seconds', value: 123, accuracy: 100 },

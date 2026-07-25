@@ -31,14 +31,21 @@ export const normalDistributionIndex = (
   return Math.max(0, Math.min(arrayLength - 1, Math.round(num)))
 }
 
-let seed = 123
+/**
+ * RFC 4122 v4 UUID.
+ *
+ * `crypto.randomUUID` only exists in secure contexts, so it is missing when the
+ * dev server (host 0.0.0.0) is opened over plain http from another device.
+ * `crypto.getRandomValues` has no such restriction and covers that case.
+ */
+export const uuid = (): string => {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID()
 
-export const generateRandomIndex = (arrayLength: number): number => {
-  const a = 1664525
-  const c = 1013904223
-  const m = Math.pow(2, 32)
+  const bytes = crypto.getRandomValues(new Uint8Array(16))
+  bytes[6] = (bytes[6] & 0x0f) | 0x40
+  bytes[8] = (bytes[8] & 0x3f) | 0x80
 
-  seed = (a * seed + c) % m
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
 
-  return seed % arrayLength
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
 }

@@ -1,9 +1,9 @@
 import { ref } from 'vue'
 import { useThemes } from '../hooks/useThemes'
-import { LanguageObj } from '../types/types'
+import { loadDictionaryBody, type DictionaryBody } from '@shared/api'
 import { configState, setConfig } from './config'
-import { getLanguage as getLanguageFromFile } from '@/shared/lib/helpers/json-files'
 import { ConfigModes } from '@/shared/constants/type'
+import defaultConfig from '@/shared/constants/default-config'
 
 //TODO: Add validation for some func
 export const setWords = (amount: number) => {
@@ -29,7 +29,7 @@ export const toggleKeyboard = () => {
   configState.showKeyboard = !configState.showKeyboard
 }
 
-export const currentLang = ref<LanguageObj | null>(null)
+export const currentLang = ref<DictionaryBody | null>(null)
 
 export const getLanguage = (): string => configState.language
 
@@ -37,7 +37,7 @@ export const setLanguage = async (lang: string): Promise<void> => {
   if (setConfig('language', lang)) {
     configState.language = lang
     try {
-      const languageObj = await getLanguageFromFile(lang)
+      const languageObj = await loadDictionaryBody(lang)
       currentLang.value = languageObj
     } catch (error) {
       console.error(`Error fetching language file for ${lang}:`, error)
@@ -73,6 +73,25 @@ export const setTime = (val: number) => {
   setConfig('time', val)
 }
 
+/**
+ * Test-text size. The words render inside the field's shadow root, which reads
+ * `--tm-font-size` — custom properties inherit through the shadow boundary, so
+ * setting it on the root element is all the plumbing there is.
+ */
 export const setFontSize = (val: number) => {
-  setConfig('fontSize', val)
+  if (setConfig('fontSize', val)) {
+    document.documentElement.style.setProperty('--tm-font-size', `${val}px`)
+  }
+}
+
+/**
+ * Back to factory defaults. Assigning the plain object is not enough: the
+ * values that live as CSS variables (font family/size) and the theme have to be
+ * re-applied, exactly as the boot sequence does.
+ */
+export const resetSettings = async (): Promise<void> => {
+  Object.assign(configState, defaultConfig)
+  setFontFamily(defaultConfig.fontFamily)
+  setFontSize(defaultConfig.fontSize)
+  await setTheme(defaultConfig.theme)
 }

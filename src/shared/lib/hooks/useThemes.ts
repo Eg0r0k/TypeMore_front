@@ -1,17 +1,12 @@
-import { cachedFetchJson } from '../helpers/json-files'
+import { loadThemes, type Theme } from '@shared/api'
 import { computed, reactive, watchEffect } from 'vue'
-import { useTestStateStore } from '@/entities/test/model/store'
+import { useScreenStore } from '@/entities/screen'
 
 import { useConfigStore } from '@/entities/config/model/store'
 
 const root = document.documentElement
 
-interface ThemeInterface {
-  name: string
-  [key: `--${string}`]: string
-}
-
-const DEFAULT_THEME: ThemeInterface = {
+const DEFAULT_THEME: Theme = {
   name: 'default',
   '--bg-color': '#121212',
   '--text-color': '#eeeeee',
@@ -52,7 +47,7 @@ const useThemeCSSVaribales = () => {
  */
 export function useThemes() {
   const { refColors, updateRefColors } = useThemeCSSVaribales()
-  const themesList = reactive<ThemeInterface[]>([])
+  const themesList = reactive<Theme[]>([])
   const configStore = useConfigStore()
   const favicon = computed(() => {
     return `data:image/svg+xml;base64,${btoa(`<svg width="23" height="23" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -69,16 +64,11 @@ export function useThemes() {
    */
   const fetchThemes = async () => {
     if (themesList.length === 0) {
-      const themes = await cachedFetchJson<ThemeInterface[]>('/static/themes/themes.json')
-      themesList.splice(
-        0,
-        themesList.length,
-        ...themes.sort((a, b) => a.name.localeCompare(b.name))
-      )
+      themesList.push(...(await loadThemes()))
     }
   }
 
-  const applyColor = (theme: ThemeInterface) => {
+  const applyColor = (theme: Theme) => {
     Object.entries(theme).forEach(([key, val]) => {
       root.style.setProperty(key, val)
     })
@@ -89,7 +79,7 @@ export function useThemes() {
    * @param name - The name of the theme to fetch.
    * @returns A promise that resolves to the fetched or default theme.
    */
-  const getConfigTheme = async (name: string): Promise<ThemeInterface> => {
+  const getConfigTheme = async (name: string): Promise<Theme> => {
     await fetchThemes()
     return themesList.find((theme) => theme.name === name) || DEFAULT_THEME
   }
@@ -104,11 +94,11 @@ export function useThemes() {
    *  @returns A promise that resolves when the theme is applied.
    */
   const applyTheme = async (name: string): Promise<void> => {
-    const testState = useTestStateStore()
+    const screen = useScreenStore()
     const theme = await getConfigTheme(name)
     applyColor(theme)
 
-    testState.setLoading(false)
+    screen.setLoading(false)
   }
 
   watchEffect(updateRefColors)

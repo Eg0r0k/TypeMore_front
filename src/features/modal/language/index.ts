@@ -1,1 +1,1 @@
-export { default as LangModal } from './ui.vue'
+export { default as LanguageModal } from './ui.vue'

@@ -1,5 +1,7 @@
+import type { Component } from 'vue'
+
 export interface FooterLink {
-  iconName: string
+  icon: Component
   label: string
   link: string
 }

@@ -1,4 +1,4 @@
-import { ref, Ref } from 'vue'
+import { ref, watch, type Ref } from 'vue'
 import { useSound } from '@vueuse/sound'
 import { useConfigStore } from '@/entities/config/model/store'
 import { RandomElementFromArray } from '../helpers/arrays'
@@ -12,7 +12,9 @@ interface SoundInstance {
 }
 
 function createSoundInstance(soundPath: string, volume: Ref<number>): SoundInstance {
-  const sound = useSound(soundPath, { volume, interrupt: true })
+  // @vueuse/sound's ComposableOptions collides `volume` with Howl's `volume: number`,
+  // yielding an impossible `MaybeRef<number> & number` type. unref() handles the Ref at runtime.
+  const sound = useSound(soundPath, { volume: volume as unknown as number, interrupt: true })
   return {
     play: sound.play,
     stop: sound.stop,
@@ -25,6 +27,14 @@ function createSoundInstance(soundPath: string, volume: Ref<number>): SoundInsta
 export function useSounds(initialClickSounds: string[] = [], initialErrorSound: string = '') {
   const { config } = useConfigStore()
   const volume = ref(config.soundVolume)
+  // Keep the howler volume (watched by @vueuse/sound via unref) in sync with the
+  // persisted config, so the settings slider applies live to loaded samples.
+  watch(
+    () => config.soundVolume,
+    (next) => {
+      volume.value = next
+    }
+  )
 
   const createSoundInstances = (soundPaths: string[]) =>
     soundPaths.map((soundPath) => createSoundInstance(soundPath, volume))

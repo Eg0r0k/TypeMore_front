@@ -1,19 +1,20 @@
 <template>
   <div class="heatmap-container">
     <HeatMap :year="year" />
-    <Select
-      label="Select year"
-      style="max-width: 100px; margin-bottom: 10px"
-      :options="years"
-      :default="year.toString()"
-      @input="updateYear"
-    />
+    <Select :model-value="year.toString()" @update:model-value="(v) => updateYear(String(v))">
+      <SelectTrigger aria-label="Select year" style="max-width: 100px; margin-bottom: 10px">
+        <SelectValue placeholder="Select year" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem v-for="y in years" :key="y" :value="y">{{ y }}</SelectItem>
+      </SelectContent>
+    </Select>
   </div>
 </template>
 
 <script setup lang="ts">
   import { HeatMap } from '@/features/profile/heatmap'
-  import { Select } from '@/shared/ui/select'
+  import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/shared/ui/select'
   import dayjs from 'dayjs'
   import { computed, ref } from 'vue'
 

@@ -8,37 +8,49 @@
     :class="classes"
     :aria-live="props.type === AlertType.Error ? 'assertive' : 'polite'"
   >
-    <div class="alert__content">
-      <div class="alert__header header-alert">
-        <Icon aria-hidden="true" width="30" color="white" :icon="iconName" />
-        <h2 :id="titleId" class="alert__header__text">
+    <div class="flex w-full flex-col">
+      <div class="mb-2 flex flex-row items-center gap-3">
+        <component
+          :is="iconComponent"
+          aria-hidden="true"
+          width="24"
+          height="24"
+          :class="accentIcon"
+        />
+        <h2 :id="titleId" class="text-lg font-semibold">
           {{ props.title || defaultTitles[props.type] }}
         </h2>
       </div>
-      <div class="alert__body">
+      <div class="max-h-[100px] w-full overflow-y-auto text-sub [scrollbar-width:thin]">
         <p :id="messageId">{{ props.msg }}</p>
       </div>
     </div>
     <button
       v-if="props.closable"
-      class="alert__close-btn"
+      class="flex h-min cursor-pointer items-center justify-center rounded-md p-2 text-sub transition-tm hover:text-text focus-ring"
       aria-label="Close alert"
       @click.stop.prevent="close"
     >
-      <Icon icon="mdi:close" width="25" />
+      <IconX width="20" height="20" />
     </button>
   </div>
 </template>
 
 <script lang="ts" setup>
   import { DEFAULT_ALERT_CLOSABLE, DEFAULT_ALERT_DURATION } from '@/entities/alert/const/values'
-  import { Icon } from '@iconify/vue'
+  import IconAlertCircle from '~icons/tabler/alert-circle'
+  import IconInfoCircle from '~icons/tabler/info-circle'
+  import IconCircleCheck from '~icons/tabler/circle-check'
+  import IconAlertTriangle from '~icons/tabler/alert-triangle'
+  import IconX from '~icons/tabler/x'
   import { useSound } from '@vueuse/sound'
   import { computed, onMounted, ref } from 'vue'
+  import type { Component } from 'vue'
   import Error from '/static/sounds/Error.mp3'
   import Info from '/static/sounds/Stop.mp3'
   import { useConfigStore } from '@/entities/config/model/store'
-  import clsx from 'clsx'
+  import { cn } from '@/shared/lib/utils'
+  import { alertVariants, alertIconVariants, type AlertVariants } from './index'
   const titleId = `alert-title-${Date.now()}`
   const messageId = `alert-message-${Date.now()}`
   const { config } = useConfigStore()
@@ -80,19 +92,22 @@
     duration: DEFAULT_ALERT_DURATION,
     closable: DEFAULT_ALERT_CLOSABLE
   })
-  const alertIcons: Record<AlertType, string> = {
-    [AlertType.Error]: 'pajamas:error',
-    [AlertType.Info]: 'pajamas:information-o',
-    [AlertType.Success]: 'pajamas:check-circle',
-    [AlertType.Warning]: 'pajamas:warning'
-  } as const
-  const iconName = computed(() => alertIcons[props.type])
+  const alertIcons: Record<AlertType, Component> = {
+    [AlertType.Error]: IconAlertCircle,
+    [AlertType.Info]: IconInfoCircle,
+    [AlertType.Success]: IconCircleCheck,
+    [AlertType.Warning]: IconAlertTriangle
+  }
+  const iconComponent = computed(() => alertIcons[props.type])
 
   const emit = defineEmits<{
     (e: 'close'): void
   }>()
 
-  const classes = computed(() => clsx('alert', `alert--${props.type}`))
+  const accentIcon = computed(() =>
+    alertIconVariants({ type: props.type as AlertVariants['type'] })
+  )
+  const classes = computed(() => cn(alertVariants({ type: props.type as AlertVariants['type'] })))
   const playSound = () => {
     alertSounds[props.type]?.play()
   }
@@ -113,83 +128,3 @@
     setTimeout(playSound, 100)
   })
 </script>
-
-<style lang="scss" scoped>
-  .header-alert {
-    font-size: 18px;
-  }
-
-  .alert {
-    --warn: #fc9403;
-    --error: #b82e2e;
-    --success: #2aaf31;
-    --info: #1f78d1;
-    --main: #fff;
-
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    width: 100%;
-    min-width: 320px;
-    max-width: 400px;
-    padding: 22px 4px 22px 22px;
-    color: var(--main);
-    pointer-events: all;
-    border-radius: var(--border-radius);
-
-    &--warn {
-      background-color: var(--warn);
-    }
-
-    &--error {
-      background-color: var(--error);
-    }
-
-    &--info {
-      background-color: var(--info);
-    }
-
-    &--success {
-      background-color: var(--success);
-    }
-
-    &__close-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 8px;
-      color: var(--main);
-      cursor: pointer;
-      background-color: transparent;
-      border: none;
-      transition: all var(--transition-duration);
-
-      &:hover {
-        color: rgb(190 188 188);
-      }
-    }
-
-    &__content {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-    }
-
-    &__header {
-      display: flex;
-      flex-direction: row;
-      gap: 12px;
-      align-items: center;
-      margin-bottom: 11px;
-      color: var(--main);
-    }
-
-    &__body {
-      width: 100%;
-      height: 100%;
-      max-height: 100px;
-      overflow-y: scroll;
-      scrollbar-width: thin;
-    }
-  }
-</style>

@@ -13,28 +13,24 @@
         <FooterLinks :links="navLinks" />
       </div>
       <div class="footer__right">
-        <Button size="s" color="shadow" @click="handleOnClickOpenTheme">
-          <template #left-icon>
-            <Icon width="20" icon="material-symbols:palette"></Icon>
-          </template>
+        <Button size="icon-sm" color="shadow" @click="themesOpen = true">
+          <IconPalette class="size-5" />
         </Button>
       </div>
     </div>
+    <ThemesModal v-model:open="themesOpen" />
   </footer>
 </template>
 
 <script lang="ts" setup>
-  import { Icon } from '@iconify/vue'
+  import IconPalette from '~icons/tabler/palette'
   import { Button } from '@/shared/ui/button'
   import { FooterLinks } from '@/features/footer/links'
   import { FOOTER_LINKS } from '../footer/model/const/values'
-  import { useModal } from '@/entities/modal/model/store'
   import { ThemesModal } from '@/features/modal/themes'
+  import { ref } from 'vue'
   const navLinks = FOOTER_LINKS
-  const modal = useModal()
-  const handleOnClickOpenTheme = () => {
-    modal.open(ThemesModal, 'top', 'center')
-  }
+  const themesOpen = ref(false)
 </script>
 
 <style lang="scss" scoped>

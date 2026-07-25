@@ -1,248 +1,191 @@
 <template>
-  <div class="login__wrapper">
-    <div class="login">
-      <div class="login__header">
-        <Typography color="main" tag-name="h2" size="xl" class="login__title">Login</Typography>
+  <div class="auth__wrapper">
+    <div class="auth">
+      <div class="auth__header">
+        <Typography color="main" tag-name="h2" size="xl">{{ t('auth.login.title') }}</Typography>
       </div>
-      <Form class="login__body" autocomplete="off" @submit="onSubmit()">
+
+      <Form class="auth__body" autocomplete="off" @submit="onSubmit()">
         <TextInput
-          @keydown="focusNextField"
-          v-bind="usernameProps"
-          v-model="username"
+          v-bind="emailProps"
+          v-model="email"
+          type="email"
+          autocomplete="email"
+          name="email"
           :has-error-space="true"
-          required
-          placeholder="Username"
-          autocomplete="username"
-          :error-message="errors.username"
-          name="username"
-        >
-          <Typography color="primary">
-            Username
-            <Typography tag-name="span" size="xs" color="error">*</Typography>
-          </Typography>
-        </TextInput>
+          :error-message="errors.email"
+          :label="t('auth.common.email')"
+          :placeholder="t('auth.common.email')"
+        />
 
         <TextInput
-          @keydown="focusNextField"
           v-bind="passwordProps"
           v-model="password"
+          :type="visiblePassword ? 'text' : 'password'"
+          autocomplete="current-password"
+          name="password"
           :has-error-space="true"
           :error-message="errors.password"
-          :type="visiblePassword ? 'text' : 'password'"
-          placeholder="Password"
-          label="Password*"
-          autocomplete="new-password"
-          name="password"
+          :label="t('auth.common.password')"
+          :placeholder="t('auth.common.password')"
         >
-          <Typography color="primary">
-            Password
-            <Typography tag-name="span" size="xs" color="error">*</Typography>
-          </Typography>
           <template #right-icon>
             <Button
-              button-label="show password"
+              type="button"
               size="s"
               color="shadow"
-              class="password-toggle"
+              :button-label="
+                visiblePassword ? t('auth.common.hidePassword') : t('auth.common.showPassword')
+              "
               @click.prevent="visiblePassword = !visiblePassword"
-              type="button"
             >
               <template #left-icon>
-                <Icon :icon="visiblePassword ? 'mdi:eye-off' : 'mdi:eye'" width="24" />
+                <component :is="visiblePassword ? IconEyeOff : IconEye" width="24" height="24" />
               </template>
             </Button>
           </template>
         </TextInput>
 
-        <Button type="submit" class="login__sumbit">Login</Button>
-      </Form>
-
-      <div class="divider">
-        <Typography color="main">or</Typography>
-      </div>
-      <div class="other login__other">
-        <Button
-          button-label="login with google"
-          color="gray"
-          class="other__button other__button--google"
-        >
-          <template #left-icon>
-            <Icon width="24" icon="ri:google-fill"></Icon>
-          </template>
-        </Button>
-        <Button
-          button-label="login with github"
-          color="gray"
-          class="other__button other__button--github"
-        >
-          <template #left-icon>
-            <Icon width="24" icon="mdi:github"></Icon>
-          </template>
-        </Button>
-      </div>
-      <div class="login__footer">
-        <Typography tag-name="p" color="primary" size="xs">
-          No account?
-          <router-link to="/registration" class="login__link">Create</router-link>
+        <Typography v-if="submitError" color="error" size="xs" role="alert">
+          {{ submitError }}
         </Typography>
 
-        <Button size="s" color="shadow" @click="openResetModal">
-          <Typography class="login__link" color="sub" size="xs" role="button">
-            forgot password?
-          </Typography>
+        <Button type="submit" :disabled="isPending">{{ t('auth.login.submit') }}</Button>
+      </Form>
+
+      <div class="auth__divider">
+        <Typography color="sub" size="xs">{{ t('auth.common.or') }}</Typography>
+      </div>
+
+      <div class="auth__oauth">
+        <Button color="gray" :button-label="t('auth.login.github')" @click="startOAuth('github')">
+          <template #left-icon><IconBrandGithub width="22" height="22" /></template>
+          {{ t('auth.login.github') }}
         </Button>
+        <Button color="gray" :button-label="t('auth.login.google')" @click="startOAuth('google')">
+          <template #left-icon><IconBrandGoogle width="22" height="22" /></template>
+          {{ t('auth.login.google') }}
+        </Button>
+      </div>
+
+      <div class="auth__footer">
+        <Typography tag-name="p" color="primary" size="xs">
+          {{ t('auth.login.noAccount') }}
+          <RouterLink class="auth__link" :to="routeLocation.register()">
+            {{ t('auth.login.createOne') }}
+          </RouterLink>
+        </Typography>
+        <RouterLink class="auth__link" :to="routeLocation.reset()">
+          <Typography color="sub" size="xs">{{ t('auth.login.forgotPassword') }}</Typography>
+        </RouterLink>
       </div>
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
-  import { Icon } from '@iconify/vue'
+  import { ref } from 'vue'
+  import { useRouter, RouterLink } from 'vue-router'
+  import { useI18n } from 'vue-i18n'
+  import { Form, useForm } from 'vee-validate'
+  import { toTypedSchema } from '@vee-validate/valibot'
+  import * as v from 'valibot'
+  import IconEye from '~icons/tabler/eye'
+  import IconEyeOff from '~icons/tabler/eye-off'
+  import IconBrandGoogle from '~icons/tabler/brand-google'
+  import IconBrandGithub from '~icons/tabler/brand-github'
   import { Typography } from '@shared/ui/typography'
   import { TextInput } from '@shared/ui/input'
   import { Button } from '@shared/ui/button'
-  import { Form, useForm } from 'vee-validate'
-  import * as yup from 'yup'
-  import { useAlertStore } from '@/entities/alert'
-  import { AlertType } from '@/entities/alert/types/alertData'
-  import { useAuthStore } from '@/entities/auth/model/store'
-  import { useModal } from '@/entities/modal'
-  import { ResetModal } from '@/features/modal/reset'
-  import { focusNextField } from '@/shared/lib/helpers/forms'
-  import { passwordReg, usernameReg } from '@/shared/lib/helpers/validation'
-  import { ref } from 'vue'
+  import { oauthStartUrl, useLoginMutation, type OAuthProvider } from '@shared/api'
+  import { routeLocation } from '@/app/router/route-locations'
 
-  const schema = yup.object({
-    username: yup
-      .string()
-      .matches(
-        usernameReg,
-        'Username must contain only Latin letters, numbers, underscores, or dashes'
-      )
-      .min(3, 'Min 3 characters for username')
-      .max(16, 'Max 16 characters for username')
-      .required('Username is required'),
-    password: yup
-      .string()
-      .matches(
-        passwordReg,
-        'Password must contain only Latin letters, numbers, and special characters'
-      )
-      .min(8, 'Password must be at least 8 characters')
-      .max(16, 'Password must be at least 16 characters')
-      .required('Password is required')
-  })
-  const { handleSubmit, errors, defineField } = useForm({
-    validationSchema: schema
-  })
-  const visiblePassword = ref(false)
+  const { t } = useI18n()
+  const router = useRouter()
 
-  const modalStore = useModal()
-  const authStore = useAuthStore()
-  const alertStore = useAlertStore()
-  const [username, usernameProps] = defineField('username')
-  const [password, passwordProps] = defineField('password')
-  const openResetModal = () => {
-    modalStore.open(ResetModal, 'center', 'center')
-  }
-  const onSubmit = handleSubmit(
-    async () => {
-      try {
-        await authStore.login({ username: username.value, password: password.value })
-        alertStore.addAlert({
-          type: AlertType.Success,
-          title: 'Success',
-          msg: 'Login successful',
-          duration: 1500
-        })
-      } catch (error) {
-        console.error('Login error:', error)
-        alertStore.addAlert({
-          type: AlertType.Error,
-          title: 'Login Failed',
-          msg: 'Invalid email or password',
-          duration: 0
-        })
-      }
-    },
-    (errors) => {
-      console.error(errors)
-      alertStore.addAlert({
-        type: AlertType.Error,
-        title: 'WTF',
-        msg: 'Please fill all fields correctly',
-        duration: 0
-      })
-    }
+  const schema = toTypedSchema(
+    v.object({
+      email: v.pipe(
+        v.string(t('auth.validation.emailRequired')),
+        v.nonEmpty(t('auth.validation.emailRequired')),
+        v.email(t('auth.validation.emailInvalid'))
+      ),
+      password: v.pipe(
+        v.string(t('auth.validation.passwordRequired')),
+        v.nonEmpty(t('auth.validation.passwordRequired'))
+      )
+    })
   )
+
+  const { handleSubmit, errors, defineField } = useForm({ validationSchema: schema })
+  const [email, emailProps] = defineField('email')
+  const [password, passwordProps] = defineField('password')
+
+  const visiblePassword = ref(false)
+  const submitError = ref('')
+
+  const { mutateAsync, isPending } = useLoginMutation()
+
+  const onSubmit = handleSubmit(async (values) => {
+    submitError.value = ''
+    try {
+      await mutateAsync({ email: values.email, password: values.password })
+      await router.push(routeLocation.home())
+    } catch {
+      submitError.value = t('auth.login.failed')
+    }
+  })
+
+  const startOAuth = (provider: OAuthProvider) => {
+    window.location.href = oauthStartUrl(provider)
+  }
 </script>
 
 <style scoped lang="scss">
-  .other {
-    display: flex;
-    gap: 12px;
-
-    &__button {
-      width: 100%;
-    }
-  }
-
-  .divider {
-    position: relative;
-    display: flex;
-    justify-content: center;
-  }
-
-  .login {
+  .auth {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    width: 100%;
-    max-width: 359px;
-    padding: 20px;
-    background-color: var(--bg-color);
-    border: 2px solid var(--sub-alt-color);
-    border-radius: var(--border-radius);
-
-    &__header {
-      text-align: center;
-    }
-
-    &__body {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    &__footer {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    &__title {
-      margin-bottom: 0;
-    }
-
-    &__sumbit {
-      width: 100%;
-    }
-
-    &__link {
-      user-select: none;
-      transition: all var(--transition-duration);
-
-      &:hover {
-        color: var(--main-color);
-        cursor: pointer;
-      }
-    }
+    gap: 12px;
+    width: min(360px, 100%);
+    margin: 0 auto;
 
     &__wrapper {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 100%;
+      padding: 24px 16px;
+    }
+
+    &__body {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    &__divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 0;
+    }
+
+    &__oauth {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    &__footer {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    &__link {
+      color: var(--main-color);
+      text-decoration: underline;
     }
   }
 </style>

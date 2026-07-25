@@ -1,5 +1,5 @@
 <template>
-  <div id="wrapper" :inert="modal.isOpen" role="main">
+  <div id="wrapper" role="main">
     <asyncFpsIndecator v-if="configStore.config.showFps" />
     <BackgroundImage />
     <Header />
@@ -11,27 +11,21 @@
       </router-view>
     </main>
     <Footer />
-    <ModalWindow />
     <asyncAlerts />
-    <asyncDevtools v-if="configStore.config.devTools" />
   </div>
 </template>
 
 <script lang="ts" setup>
   import { useConfigStore } from '@/entities/config/model/store'
-  import { useModal } from '@/entities/modal'
   import { BackgroundImage } from '@/features/home/background'
 
   import { Footer } from '@/widgets/footer'
   import { Header } from '@/widgets/header'
   import { defineAsyncComponent } from 'vue'
 
-  const ModalWindow = defineAsyncComponent(() => import('@/widgets/modal/ui.vue'))
   const asyncFpsIndecator = defineAsyncComponent(() => import('@widgets/fps/ui.vue'))
-  const asyncDevtools = defineAsyncComponent(() => import('@widgets/devtools/ui.vue'))
   const asyncAlerts = defineAsyncComponent(() => import('@widgets/alerts/ui.vue'))
   const configStore = useConfigStore()
-  const modal = useModal()
 </script>
 
 <style lang="scss" scoped>

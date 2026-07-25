@@ -6,7 +6,7 @@
         <Typography color="sub" size="xs" tag="h3">tests started</Typography>
       </div>
       <div class="stats__value">
-        <Typography color="primary" isBold size="m" tag="span">723</Typography>
+        <Typography color="primary" is-bold size="m" tag="span">723</Typography>
       </div>
     </div>
     <div class="statistic__stats stats">
@@ -14,7 +14,7 @@
         <Typography color="sub" size="xs" tag="h3">tests complited</Typography>
       </div>
       <div class="stats__value">
-        <Typography color="primary" isBold size="m" tag="span">112</Typography>
+        <Typography color="primary" is-bold size="m" tag="span">112</Typography>
       </div>
     </div>
 
@@ -23,7 +23,7 @@
         <Typography color="sub" size="xs" tag="h3">type typing</Typography>
       </div>
       <div class="stats__value">
-        <Typography color="primary" isBold size="m" tag="span">00:23:00</Typography>
+        <Typography color="primary" is-bold size="m" tag="span">00:23:00</Typography>
       </div>
     </div>
   </section>

@@ -1,34 +1,17 @@
 {
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
   "compilerOptions": {
-    "target": "es5",
-    "module": "esnext",
-    "strict": true,
-
-    "jsx": "preserve",
-    "importHelpers": true,
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "sourceMap": true,
-    "baseUrl": ".",
+    "noEmit": true,
     "types": ["vite/client"],
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/*": ["./src/shared/*"],
-      "@pages/*": ["./src/pages/*"],
+      "@app/*": ["./src/app/*"],
       "@entities/*": ["./src/entities/*"],
-      "@widgets/*": ["./src/widgets/*"],
-      "@app/*": ["./src/app/*"]
-    },
-    "lib": ["es2015", "dom", "dom.iterable", "scripthost"]
+      "@pages/*": ["./src/pages/*"],
+      "@shared/*": ["./src/shared/*"],
+      "@widgets/*": ["./src/widgets/*"]
+    }
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
-    "tests/**/*.ts",
-    "tests/**/*.tsx",
-    "src/shared/lib/helpers/worker.ts",
-    "global.d.ts"
-  ],
-  "exclude": ["node_modules"]
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
+  "exclude": ["src/**/__tests__/**"]
 }

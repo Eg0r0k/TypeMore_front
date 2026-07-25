@@ -1,23 +1,27 @@
-import { FooterLink } from '../types/links'
+import type { FooterLink } from '../types/links'
+import IconBrandGithub from '~icons/tabler/brand-github'
+import IconShield from '~icons/tabler/shield'
+import IconFileText from '~icons/tabler/file-text'
+import IconShieldLock from '~icons/tabler/shield-lock'
 
 export const FOOTER_LINKS: readonly FooterLink[] = [
   {
-    iconName: 'mingcute:github-fill',
+    icon: IconBrandGithub,
     label: 'GitHub',
     link: 'https://github.com/Eg0r0k/TypeMore_front'
   },
   {
-    iconName: 'healthicons:security-worker',
+    icon: IconShield,
     label: 'Security',
     link: '/security-policy'
   },
   {
-    iconName: 'fluent:document-16-filled',
+    icon: IconFileText,
     label: 'Terms',
     link: 'terms'
   },
   {
-    iconName: 'mdi:secure',
+    icon: IconShieldLock,
     label: 'Privacy',
     link: '/privacy-policy'
   }

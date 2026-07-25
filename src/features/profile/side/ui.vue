@@ -16,7 +16,7 @@
 <script lang="ts" setup>
   import { Button } from '@/shared/ui/button'
   import { Typography } from '@/shared/ui/typography'
-  import { Statistic } from '@/pages/profile/ui.vue'
+  import type { Statistic } from '@/pages/profile/ui.vue'
 
   const props = defineProps<{
     statistics: Statistic[]

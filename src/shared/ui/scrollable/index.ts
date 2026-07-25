@@ -1,0 +1,5 @@
+export { default as Scrollable } from './ui.vue'
+export { default as useScrollable } from './lib/useScrollable'
+export type { ScrollableOptions, ScrollToOptions } from './lib/useScrollable'
+export { scrollableInjectionKey } from './lib/injection'
+export type { ScrollableContext } from './lib/injection'

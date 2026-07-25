@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid'
+import { uuid } from './misc'
 
 export const focusNextField = (event: KeyboardEvent) => {
   if (!(event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement)) {
@@ -42,5 +42,5 @@ export const focusNextField = (event: KeyboardEvent) => {
 }
 
 export const generateId = (prefix: string) => {
-  return `${prefix}-${uuidv4()}`
+  return `${prefix}-${uuid()}`
 }

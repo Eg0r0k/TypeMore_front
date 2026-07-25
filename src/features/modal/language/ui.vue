@@ -1,55 +1,39 @@
 <template>
   <ConsoleModal
-    v-model="configStore.config.language"
-    search-key="name"
-    :items="langList"
-    :active-item="configStore.config.language"
-    @item-selected="changeLang"
-  >
-    <template #items="{ filteredItems, focusedItems, selectItem }">
-      <div
-        role="option"
-        v-for="(lang, index) in filteredItems"
-        :key="index"
-        class="lang"
-        :class="{
-          active: lang == configStore.config.language,
-          focused: index === focusedItems
-        }"
-        @click="selectItem(lang)"
-      >
-        {{ lang.replace('_', ' ') }}
-      </div>
-    </template>
-  </ConsoleModal>
+    v-model:open="open"
+    :model-value="language"
+    :items="languages"
+    :title="t('game.language')"
+    :description="t('picker.languageHint')"
+    @update:model-value="onSelect"
+  />
 </template>
 
 <script lang="ts" setup>
-  import { inject, Ref } from 'vue'
-  import { ConsoleModal } from '../console'
-  import { useConfigStore } from '@/entities/config/model/store'
-  import { LANG_KEY } from '@/shared/constants/inject-keys'
-  const configStore = useConfigStore()
-  const langList = inject<Ref<string[]>>(LANG_KEY) as Ref<string[]>
+  import { computed } from 'vue'
+  import { useQuery } from '@tanstack/vue-query'
+  import { useI18n } from 'vue-i18n'
 
-  const changeLang = async (lang: string) => {
-    await configStore.setLanguage(lang)
+  import { ConsoleModal } from '../console'
+  import { languagesQueryOptions } from '@shared/api'
+
+  /**
+   * Test-language picker: the dictionary catalogue rendered as a searchable
+   * console list. The caller owns both the open state and the value, so the same
+   * modal serves the home settings bar (writes the persisted config) and the room
+   * config panel (writes the room settings).
+   */
+  const open = defineModel<boolean>('open', { required: true })
+  const language = defineModel<string>({ required: true })
+
+  const { t } = useI18n()
+
+  // Falls back to the current value so the list is never empty while the
+  // catalogue loads (or if it fails to).
+  const { data: catalogue } = useQuery(languagesQueryOptions())
+  const languages = computed<string[]>(() => catalogue.value ?? [language.value])
+
+  const onSelect = (value: string | string[] | null): void => {
+    if (typeof value === 'string') language.value = value
   }
 </script>
-
-<style lang="scss" scoped>
-  .focused {
-    border: 2px solid var(--main-color);
-  }
-
-  .active {
-    background-color: var(--sub-alt-color) !important;
-  }
-
-  .lang {
-    display: flex;
-    padding: 4px 20px;
-    color: var(--text-color);
-    cursor: pointer;
-  }
-</style>

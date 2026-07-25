@@ -3,104 +3,39 @@ import { Button } from '@/shared/ui/button'
 import { expect, it, describe } from 'vitest'
 
 describe('Button', () => {
-  it('Renders button text when passed', async () => {
-    const wrapper = mount(Button, {
-      slots: {
-        default: 'Click'
-      }
-    })
+  it('renders default slot text', () => {
+    const wrapper = mount(Button, { slots: { default: 'Click' } })
     expect(wrapper.text()).toContain('Click')
   })
 
-  it('Disabled button when loading is true', () => {
-    const wrapper = mount(Button, {
-      props: {
-        isLoading: true
-      }
-    })
+  it('renders a <button> element by default', () => {
+    const wrapper = mount(Button)
+    expect(wrapper.element.tagName).toBe('BUTTON')
+  })
+
+  it('forwards a native disabled attribute to the button', () => {
+    const wrapper = mount(Button, { attrs: { disabled: true } })
     expect(wrapper.attributes('disabled')).toBeDefined()
   })
 
-  it('Disabled button from props', () => {
-    const wrapper = mount(Button, {
-      props: {
-        isDisabled: true
-      }
-    })
-    expect(wrapper.attributes('disabled')).toBeDefined()
-  })
-  it('Check no conflict with isLoading and isDisabled', () => {
-    const wrapper = mount(Button, {
-      props: {
-        isDisabled: true,
-        isLoading: true
-      }
-    })
-    expect(wrapper.attributes('disabled')).toBeDefined()
+  it('forwards aria-label to the button', () => {
+    const wrapper = mount(Button, { attrs: { 'aria-label': 'Save' } })
+    expect(wrapper.attributes('aria-label')).toBe('Save')
   })
 
-  it('Check correct classes based on props', async () => {
-    const wrapper = mount(Button, {
-      props: {
-        color: 'gray',
-        size: 's',
-        decoration: 'none'
-      }
-    })
-    expect(wrapper.classes()).toContain('button')
-    expect(wrapper.classes()).toContain('button--size-s')
-    expect(wrapper.classes()).toContain('button--color-gray')
-    expect(wrapper.classes()).toContain('decoration--none')
+  it('merges the class prop with variant classes', () => {
+    const wrapper = mount(Button, { props: { class: 'extra-class' } })
+    expect(wrapper.classes()).toContain('extra-class')
   })
 
-  it('Check empty props', async () => {
+  it('renders as its child element (a link) when as-child is set', () => {
     const wrapper = mount(Button, {
-      props: {}
+      props: { asChild: true },
+      slots: { default: '<a href="/home">Home</a>' }
     })
-    expect(wrapper.classes()).toContain('button')
-    expect(wrapper.classes()).toContain('button--size-m')
-    expect(wrapper.classes()).toContain('button--color-main')
-    expect(wrapper.attributes('disabled')).toBeUndefined()
-    expect(wrapper.attributes('role')).toBe('button')
-    expect(wrapper.attributes('aria-label')).toBe('Button')
-  })
-
-  it('Renders left icon slot', () => {
-    const wrapper = mount(Button, {
-      slots: {
-        'left-icon': '<span class="left-icon">Left</span>'
-      }
-    })
-    expect(wrapper.find('.left-icon').exists()).toBe(true)
-  })
-
-  it('Renders right icon slot', () => {
-    const wrapper = mount(Button, {
-      slots: {
-        'right-icon': '<span class="right-icon">Right</span>'
-      }
-    })
-    expect(wrapper.find('.right-icon').exists()).toBe(true)
-  })
-
-  it('Check aria attributes', async () => {
-    const wrapper = mount(Button, {
-      props: {
-        isLoading: true,
-        buttonLabel: 'Submit'
-      }
-    })
-    expect(wrapper.attributes('aria-busy')).toBe('true')
-    expect(wrapper.attributes('aria-label')).toBe('Submit')
-  })
-
-  it('Loading state hides text and shows loader', () => {
-    const wrapper = mount(Button, {
-      props: {
-        isLoading: true
-      }
-    })
-    expect(wrapper.find('.loader').exists()).toBe(true)
-    expect(wrapper.text()).not.toContain('Button Text')
+    const link = wrapper.find('a')
+    expect(link.exists()).toBe(true)
+    expect(link.attributes('href')).toBe('/home')
+    expect(link.text()).toContain('Home')
   })
 })

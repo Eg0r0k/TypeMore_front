@@ -12,10 +12,3 @@ export type QuoteData = {
   language: string
   quotes: Quote[]
 }
-
-export type LanguageObj = {
-  name: string
-  rightToleft: boolean
-  words: string[]
-  bcp47?: string
-}

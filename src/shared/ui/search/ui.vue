@@ -1,36 +1,34 @@
 <template>
   <div class="search-bar">
-    <Icon width="20" :icon="icon" class="search-bar__icon" />
+    <IconSearch class="search-bar__icon size-5" />
     <input
       ref="searchInput"
       :value="modelValue"
-      @input="onInput"
       type="text"
       class="search-bar__input"
       :placeholder="placeholder"
       aria-label="Search"
+      @input="onInput"
     />
   </div>
 </template>
 
 <script setup lang="ts">
   import { onMounted, ref } from 'vue'
-  import { Icon } from '@iconify/vue'
+  import IconSearch from '~icons/tabler/search'
 
   interface Props {
     modelValue: string
     placeholder?: string
-    icon?: string
   }
 
   const emit = defineEmits<{
     (event: 'update:modelValue', value: string): void
   }>()
 
-  const props = withDefaults(defineProps<Props>(), {
+  withDefaults(defineProps<Props>(), {
     modelValue: '',
-    placeholder: 'Search...',
-    icon: 'fluent:search-12-filled'
+    placeholder: 'Search...'
   })
 
   const searchInput = ref<HTMLInputElement | null>(null)

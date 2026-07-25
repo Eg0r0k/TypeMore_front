@@ -1,61 +1,104 @@
 <template>
   <nav class="navigation header-navigation" role="navigation" aria-label="header navigation">
-    <ul class="navigation__list" role="list">
-      <li v-for="link in props.links" :key="link.link" class="list__item" role="listitem">
-        <Popper hover arrow offset-distance="6" class="registration__popper" :content="link.label">
-          <router-link
-            :to="link.link"
-            class="list__link"
-            tabindex="0"
-            :title="link.label"
-            role="link"
-          >
-            <Icon :icon="link.iconName" width="30" aria-hidden="true" />
-          </router-link>
-        </Popper>
+    <ul class="flex gap-2 ml-2" role="list">
+      <li v-for="link in props.links" :key="link.link" role="listitem">
+        <Button size="icon-sm" color="shadow" :button-label="link.label">
+          <Link :to="link.link" class="list__link" :title="link.label">
+            <component :is="link.icon" class="size-6" aria-hidden="true" />
+          </Link>
+        </Button>
       </li>
     </ul>
     <div class="navigation__controls controls">
       <Button
         tabindex="0"
         class="controls__alert"
-        size="s"
+        size="icon-sm"
         color="shadow"
         button-label="Open alerts"
-        @click="handleOpenNews"
       >
-        <template #left-icon>
-          <Icon :icon="'ion:notifications'" width="30" />
-        </template>
+        <IconBell class="size-6" />
       </Button>
 
-      <router-link tabindex="0" class="controls__user" to="/login" title="Login" aria-label="Login">
-        <Icon :icon="'mdi:user'" width="30" aria-hidden="true" />
-      </router-link>
+      <Button
+        size="icon-sm"
+        color="shadow"
+        :aria-label="t('settings.title')"
+        :title="t('settings.title')"
+        @click="settingsOpen = true"
+      >
+        <IconSettings class="size-6" aria-hidden="true" />
+      </Button>
+
+      <DropdownMenu v-if="isAuth">
+        <DropdownMenuTrigger as-child>
+          <Button color="shadow" size="s" class="controls__user" :button-label="displayName">
+            <IconUser class="size-6" aria-hidden="true" />
+            {{ displayName }}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>{{ displayName }}</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem @select="onLogout">{{ t('auth.header.logout') }}</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <Button v-else as-child color="shadow" size="icon-sm" :button-label="t('auth.header.login')">
+        <Link :to="routeLocation.login()" class="controls__user" :title="t('auth.header.login')">
+          <IconUser class="size-6" aria-hidden="true" />
+        </Link>
+      </Button>
     </div>
+    <SettingsModal v-model:open="settingsOpen" />
   </nav>
-  <Transition name="slide-fade">
-    <NewsModal v-if="isVisible" @close="handleOpenNews" />
-  </Transition>
 </template>
 
 <script setup lang="ts">
-  import { NewsModal } from '@/features/modal/news'
   import { Button } from '@/shared/ui/button'
-  import { HeaderLink } from '@/widgets/header/types/links'
-  import { Icon } from '@iconify/vue'
-
-  import { ref } from 'vue'
+  import { Link } from '@/shared/ui/link'
+  import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuItem
+  } from '@/shared/ui/dropdown-menu'
+  import type { HeaderLink } from '@/widgets/header/types/links'
+  import IconBell from '~icons/tabler/bell'
+  import IconUser from '~icons/tabler/user'
+  import IconSettings from '~icons/tabler/settings'
+  import { SettingsModal } from '@/features/modal/settings'
+  import { computed, ref } from 'vue'
+  import { storeToRefs } from 'pinia'
+  import { useRouter } from 'vue-router'
+  import { useI18n } from 'vue-i18n'
+  import { useAuthStore, useCurrentUser } from '@/entities/auth'
+  import { useLogoutMutation } from '@shared/api'
+  import { routeLocation } from '@/app/router/route-locations'
 
   interface Props {
     links: readonly HeaderLink[]
   }
 
-  const isVisible = ref(false)
   const props = defineProps<Props>()
 
-  const handleOpenNews = (): void => {
-    isVisible.value = !isVisible.value
+  const { t } = useI18n()
+  const router = useRouter()
+  const settingsOpen = ref(false)
+
+  const { isAuth } = storeToRefs(useAuthStore())
+  const { data: user } = useCurrentUser()
+  const displayName = computed(() => user.value?.displayName ?? '')
+
+  const { mutate: logout } = useLogoutMutation()
+
+  const onLogout = (): void => {
+    logout(undefined, {
+      onSuccess: () => {
+        void router.push(routeLocation.home())
+      }
+    })
   }
 </script>
 

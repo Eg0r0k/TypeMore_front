@@ -1,5 +1,7 @@
+import type { Component } from 'vue'
+
 export interface HeaderLink {
   link: string
-  iconName: string
+  icon: Component
   label: string
 }

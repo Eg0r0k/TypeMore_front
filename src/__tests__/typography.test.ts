@@ -1,7 +1,6 @@
 import { mount } from '@vue/test-utils'
-import { describe, it } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { Typography } from '@/shared/ui/typography'
-import { expect } from 'chai'
 describe('Typography', () => {
   it('renders default paragraph element', () => {
     const wrapper = mount(Typography)

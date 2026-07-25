@@ -36,97 +36,16 @@ $var-fonts: (
   --key-map-z: 10;
   --fps-z: 1000;
   --alert-z: 999;
+  // Popovers/selects/menus/tooltips are portaled to <body>, so they must sit
+  // ABOVE the modal layer — otherwise a select opened inside a dialog is
+  // rendered under the dialog's own overlay and cannot be clicked.
+  --popup-z: 999;
   --modal-z: 998;
   --news-z: 997;
   --footer-z: 996;
 }
-
-// Color for popper plugin
-:root {
-  --popper-theme-background-color: var(--sub-alt-color);
-  --popper-theme-background-color-hover: var(--sub-alt-color);
-  --popper-theme-text-color: var(--text-color);
-  --popper-theme-border-color: var(--sub-color);
-  --popper-theme-border-width: 1px;
-  --popper-theme-border-style: solid;
-  --popper-theme-border-radius: var(--border-radius);
-  --popper-theme-padding: 6px;
-  --popper-theme-box-shadow: 0;
-}
-//TODO: Delte all styles for slider!
-.splide__arrow--next {
-  right: 8px;
-}
-
-.splide__arrow--prev {
-  left: 8px;
-}
 * {
   box-sizing: border-box;
-}
-.splide__arrow--prev svg {
-  transform: scaleX(-1);
-}
-
-.splide__arrow {
-  background-color: var(--sub-alt-color);
-}
-
-.sweeper-wrapper {
-  position: relative;
-}
-
-.splide__arrow {
-  opacity: 0.8;
-  border: 0;
-  z-index: 100;
-  position: absolute;
-  border-radius: 50%;
-  background-color: var(--sub-color);
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 32px;
-  width: 32px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.splide__pagination__page {
-  border: 0;
-  cursor: pointer;
-  border-radius: 50%;
-  display: inline-block;
-  height: 8px;
-  margin: 3px;
-  opacity: 0.7;
-  padding: 0;
-  position: relative;
-  transition: transform 0.2s linear;
-  width: 8px;
-}
-
-.splide__pagination li {
-  display: inline-block;
-  line-height: 1;
-  list-style-type: none;
-  margin: 0;
-  pointer-events: auto;
-}
-
-.splide__pagination__page {
-  border-radius: 50%;
-  background-color: var(--sub-color);
-  border: 0;
-  width: 12px;
-  height: 12px;
-}
-
-.splide__pagination__page.is-active {
-  background: #fff;
-  transform: scale(1.2);
-  z-index: 1;
 }
 //-------------------------------------------------------
 main {
@@ -154,27 +73,6 @@ body {
 }
 
 // Global styles for elements
-input {
-  padding: 5px;
-  box-sizing: border-box;
-  border: none;
-  font-size: 16px;
-  line-height: normal;
-  background-color: var(--sub-color);
-  border-radius: var(--border-radius);
-  color: var(--text-color);
-  caret-color: var(--main-color);
-}
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-input[type='number'] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
 kbd {
   color: var(--text-color);
   border: 1px solid var(--sub-color);

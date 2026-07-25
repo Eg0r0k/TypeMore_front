@@ -1,4 +1,6 @@
-import { Config } from '@/shared/constants/type'
+import type { Config } from '@/shared/constants/type'
+import { isSupportedLocale } from '@/shared/lib/i18n/locale'
+import { SOUND_PACKS } from '@/shared/constants/sound-packs'
 
 type ValidatorFn = (value: any) => boolean | string
 
@@ -11,6 +13,10 @@ const validators: Record<keyof Config, ValidatorFn> = {
   devTools: (value) => typeof value === 'boolean' || 'Show devtools must be boolean',
   language: (value) =>
     (typeof value === 'string' && value.length > 0) || 'Language must be a non-empty string',
+  uiLanguage: (value) =>
+    value === 'system' ||
+    (typeof value === 'string' && isSupportedLocale(value)) ||
+    'Unsupported interface language',
 
   playSound: (value) => typeof value === 'boolean' || 'Play sound must be a boolean',
   theme: (value) =>
@@ -23,22 +29,49 @@ const validators: Record<keyof Config, ValidatorFn> = {
   },
   showKeyboard: (value) => typeof value === 'boolean' || 'Play sound must be a boolean',
   backgroundImg: (value) => {
-    if (typeof value === 'string' && value.length > 0) {
-      const urlPattern = /^(https?:\/\/[^\s]+(\.jpg|\.jpeg|\.png|\.gif|\.bmp|\.webp|\.svg))$/i
-      return (
-        urlPattern.test(value) || 'Background image must be a valid URL pointing to an image file'
-      )
-    }
-    return 'Background image must be a non-empty string'
+    if (typeof value !== 'string') return 'Background image must be a string'
+    // '' clears the custom background — the only way back to the theme colour.
+    if (value.length === 0) return true
+    const urlPattern = /^(https?:\/\/[^\s]+(\.jpg|\.jpeg|\.png|\.gif|\.bmp|\.webp|\.svg))$/i
+    return (
+      urlPattern.test(value) || 'Background image must be a valid URL pointing to an image file'
+    )
   },
+  backgroundLocal: (value) =>
+    (typeof value === 'string' && (value.length === 0 || value.startsWith('data:image/'))) ||
+    'Local background must be an image data URL',
+  backgroundSize: (value) =>
+    ['cover', 'contain', 'max'].includes(value) || 'Invalid background size',
   showFps: (value) => typeof value === 'boolean' || 'Show FPS must be a boolean',
   soundVolume: (value) =>
     (typeof value === 'number' && value >= 0 && value <= 1.0) ||
     'Sound volume must be between 0 and 1.0',
+  soundSet: (value) =>
+    (typeof value === 'string' && SOUND_PACKS.some((pack) => pack.id === value)) ||
+    'Invalid sound set',
   fontSize: (value) =>
     (typeof value === 'number' && value > 0) || 'Font size must be a positive number',
   fontFamily: (value) =>
-    (typeof value === 'string' && value.length > 0) || 'Font family must be a non-empty string'
+    (typeof value === 'string' && value.length > 0) || 'Font family must be a non-empty string',
+  punctuation: (value) => typeof value === 'boolean' || 'Punctuation must be a boolean',
+  numbers: (value) => typeof value === 'boolean' || 'Numbers must be a boolean',
+  randomCase: (value) => typeof value === 'boolean' || 'Random case must be a boolean',
+  nospace: (value) => typeof value === 'boolean' || 'No-space must be a boolean',
+  difficulty: (value) =>
+    (typeof value === 'string' && ['normal', 'expert', 'master'].includes(value)) ||
+    'Invalid difficulty',
+  blind: (value) => typeof value === 'boolean' || 'Blind must be a boolean',
+  reverse: (value) => typeof value === 'boolean' || 'Reverse must be a boolean',
+  minWpm: (value) => [0, 60, 80, 100].includes(value) || 'MinSpeed must be 0, 60, 80 or 100',
+  fading: (value) => typeof value === 'boolean' || 'Fading must be a boolean',
+  flashlight: (value) => typeof value === 'boolean' || 'Flashlight must be a boolean',
+  freedomMode: (value) => typeof value === 'boolean' || 'Freedom mode must be a boolean',
+  stopOnError: (value) => ['off', 'word', 'letter'].includes(value) || 'Invalid stop on error',
+  quickEnd: (value) => typeof value === 'boolean' || 'Quick end must be a boolean',
+  smoothCaret: (value) =>
+    ['off', 'slow', 'medium', 'fast'].includes(value) || 'Invalid smooth caret',
+  caretStyle: (value) =>
+    ['off', 'default', 'block', 'outline', 'underline'].includes(value) || 'Invalid caret style'
 }
 export const validateConfig = (key: keyof Config, value: any): boolean | string => {
   const validator = validators[key]
@@ -46,10 +79,7 @@ export const validateConfig = (key: keyof Config, value: any): boolean | string 
   return validator ? validator(value) : true
 }
 
-export const emailReg = new RegExp(
-  /^(([^<>()[]+(\.[^<>()[]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-)
-
+export const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export const usernameReg = new RegExp(/^[a-zA-Z0-9_-]+$/)
 export const upperCaseReg = new RegExp(/[a-z]/)
 export const lowerCaseReg = new RegExp(/[A-Z]/)

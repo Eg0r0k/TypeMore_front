@@ -5,12 +5,38 @@ import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { FontaineTransform } from 'fontaine'
+import Icons from 'unplugin-icons/vite'
+import { FileSystemIconLoader } from 'unplugin-icons/loaders'
+import tailwindcss from '@tailwindcss/vite'
+import vueDevTools from 'vite-plugin-vue-devtools'
 const options = {
   fallbacks: ['BlinkMacSystemFont', 'Segoe UI', 'Helvetica Neue', 'Arial', 'Noto Sans'],
   resolvePath: () => `file://${dirname(fileURLToPath(new URL(import.meta.url)))}public`
 }
 export default defineConfig({
-  plugins: [vue(), vueJsx(), FontaineTransform.vite(options), visualizer()],
+  plugins: [
+    vue(),
+    vueDevTools(),
+    vueJsx(),
+    tailwindcss(),
+    Icons({
+      compiler: 'vue3',
+      customCollections: {
+        // Bespoke brand assets (not in Tabler) live here; the loader injects
+        // `fill="currentColor"` so they inherit `color`. Consumed as `~icons/typemore/<file>`.
+        typemore: FileSystemIconLoader('./src/shared/assets/icons', (svg) =>
+          svg.replace(/^<svg /, '<svg fill="currentColor" ')
+        )
+      }
+    }),
+    FontaineTransform.vite(options),
+    visualizer()
+  ],
+  define: {
+    // vue-i18n tree-shaking: we use Composition API mode only, no prod devtools.
+    __VUE_I18N_LEGACY_API__: 'false',
+    __INTLIFY_PROD_DEVTOOLS__: 'false'
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -27,11 +53,11 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['vue', 'vue-router',],
-          charts: ['chart.js', 'vue-chart-3'],
-          html2canvas: ['html2canvas'],
-          rare: ['vue3-recaptcha-v2']
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('html2canvas')) return 'html2canvas'
+          if (id.includes('vue3-recaptcha-v2')) return 'rare'
+          if (id.includes('/vue/') || id.includes('/vue-router/')) return 'vendor'
         }
       }
     }
@@ -39,7 +65,6 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
-        api: 'modern',
         additionalData: '@use  "@/app/_mixin.scss" as *;'
       }
     }

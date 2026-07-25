@@ -1,7 +1,7 @@
 import { configState, setConfig } from '@/shared/lib/helpers/config'
-import { getLanguage } from '@/shared/lib/helpers/json-files'
 import {
   currentLang,
+  resetSettings,
   setFontFamily,
   setFontSize,
   setFPS,
@@ -39,8 +39,8 @@ export const useConfigStore = defineStore(
       setFPS,
       currentLang,
       setConfig,
-      getLanguage,
       setFontSize,
+      resetSettings,
       currentLanguage,
       setMode
     }

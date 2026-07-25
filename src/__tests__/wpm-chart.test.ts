@@ -1,0 +1,58 @@
+/**
+ * The results chart is SVG on purpose: every colour comes from a theme custom
+ * property through CSS, so switching the theme repaints it with no redraw. These
+ * tests pin the geometry contract (a path per series, a marker per error bucket)
+ * and that no colour is baked into the markup.
+ */
+import { mount } from '@vue/test-utils'
+import { describe, expect, it } from 'vitest'
+
+import type { TimelinePoint } from '@shared/core'
+import WpmChart from '@/features/test/results/wpm-chart.vue'
+
+const timeline: TimelinePoint[] = [
+  { second: 1, wpm: 40, raw: 52, errors: 0 },
+  { second: 2, wpm: 61, raw: 70, errors: 2 },
+  { second: 3, wpm: 58, raw: 44, errors: 0 },
+  { second: 4, wpm: 66, raw: 71, errors: 1 }
+]
+
+const mountChart = (points: TimelinePoint[] = timeline) =>
+  mount(WpmChart, { props: { timeline: points } })
+
+describe('WpmChart', () => {
+  it('draws one curve per series and one marker per error bucket', () => {
+    const wrapper = mountChart()
+
+    expect(wrapper.find('.wpm-chart__line--wpm').attributes('d')).toMatch(/^M [\d.]+ [\d.]+ C /)
+    expect(wrapper.find('.wpm-chart__line--raw').attributes('d')).toMatch(/^M [\d.]+ [\d.]+ C /)
+    expect(wrapper.findAll('.wpm-chart__errors > g')).toHaveLength(2)
+  })
+
+  it('keeps every colour in CSS, never in the markup', () => {
+    const html = mountChart().html()
+
+    expect(html).not.toMatch(/#[0-9a-f]{3,8}\b/i)
+    expect(html).not.toMatch(/(stroke|fill)="(?!none)[a-z]/i)
+  })
+
+  it('renders a flat curve inside the plot for a single point', () => {
+    const wrapper = mountChart([{ second: 1, wpm: 30, raw: 30, errors: 0 }])
+
+    const d = wrapper.find('.wpm-chart__line--wpm').attributes('d')
+    expect(d).toMatch(/^M [\d.]+ [\d.]+$/)
+    expect(wrapper.findAll('.wpm-chart__errors > g')).toHaveLength(0)
+  })
+
+  it('reports the nearest point on hover', async () => {
+    const wrapper = mountChart()
+    const svg = wrapper.get('.wpm-chart__svg')
+
+    // happy-dom reports a zero-size box, so clientX 0 resolves to the first point.
+    await svg.trigger('pointermove', { clientX: 0 })
+    expect(wrapper.get('.wpm-chart__tooltip').text()).toContain('wpm 40')
+
+    await svg.trigger('pointerleave')
+    expect(wrapper.find('.wpm-chart__tooltip').exists()).toBe(false)
+  })
+})

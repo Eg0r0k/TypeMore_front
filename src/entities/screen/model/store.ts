@@ -4,11 +4,16 @@ import { type Platform } from './types/types'
 
 export const useScreenStore = defineStore('screen', () => {
   const platform = ref<Platform>('desktop')
+  // App-level loading (theme bootstrap); moved off the old game store.
+  const isLoading = ref(true)
+  const setLoading = (value: boolean): void => {
+    isLoading.value = value
+  }
   //set platform based on screen width
   const setPlatform = (width: number): Platform => {
     if (width >= 1024) return (platform.value = 'desktop')
     if (width >= 768) return (platform.value = 'tablet')
     return (platform.value = 'mobile')
   }
-  return { setPlatform, platform }
+  return { setPlatform, platform, isLoading, setLoading }
 })

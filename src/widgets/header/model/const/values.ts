@@ -1,29 +1,22 @@
-import { HeaderLink } from '../../types/links'
+import type { HeaderLink } from '../../types/links'
+import IconKeyboard from '~icons/tabler/keyboard'
+import IconChartBar from '~icons/tabler/chart-bar'
+import IconNetwork from '~icons/tabler/network'
 
 export const NAV_LINKS: readonly HeaderLink[] = [
   {
-    iconName: 'material-symbols:keyboard-outline',
+    icon: IconKeyboard,
     label: 'Game',
     link: '/'
   },
   {
-    iconName: 'material-symbols:leaderboard-outline-rounded',
+    icon: IconChartBar,
     label: 'Leaderbord',
     link: '/'
   },
   {
-    iconName: 'solar:settings-bold',
-    label: 'Settings',
-    link: '/settings'
-  },
-  {
-    iconName: 'icon-park-solid:network-tree',
+    icon: IconNetwork,
     label: 'Servers',
     link: '/servers'
-  },
-  {
-    iconName: 'fluent:paint-brush-24-filled',
-    label: 'Themes',
-    link: '/themes'
   }
 ]

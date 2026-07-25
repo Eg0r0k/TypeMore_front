@@ -1,0 +1,165 @@
+/*
+ * Tailwind CSS v4 + shadcn-vue token bridge for TypeMore app chrome.
+ *
+ * SOURCE OF TRUTH: the hex palette lives ONLY in :root of src/app/main.scss
+ * (--bg-color, --main-color, --sub-color, --sub-alt-color, --text-color,
+ * --error-color, --error-extra-color, --border-radius, --transition-duration).
+ *
+ * shadcn-vue's semantic tokens (--background, --primary, ...) are defined here
+ * as DERIVED ALIASES of that palette. Direction is always shadcn token -> our
+ * variable, never a new hex. This keeps two guarantees:
+ *   1. runtime theme switching (overriding :root) recolors every shadcn
+ *      component, because the semantic tokens resolve through our vars;
+ *   2. `shadcn-vue add` updates drop in cleanly — we never rewrite generated
+ *      component internals to use our variable names.
+ */
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* shadcn semantic tokens -> our palette (derived aliases, no hex here) */
+:root {
+  --ease-standard: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --background: var(--bg-color);
+  --foreground: var(--text-color);
+  --card: var(--sub-alt-color);
+  --card-foreground: var(--text-color);
+  --popover: var(--sub-alt-color);
+  --popover-foreground: var(--text-color);
+  --primary: var(--main-color);
+  --primary-foreground: var(--bg-color);
+  --secondary: var(--sub-alt-color);
+  --secondary-foreground: var(--sub-color);
+  --muted: var(--sub-alt-color);
+  --muted-foreground: var(--sub-color);
+  --accent: var(--bg-color);
+  --accent-foreground: var(--text-color);
+  --destructive: var(--error-color);
+  --destructive-foreground: var(--text-color);
+  --border: var(--sub-color);
+  --input: var(--sub-color);
+  --ring: var(--text-color);
+  --radius: var(--border-radius);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /*
+   * Radius scale derived from --radius (= --border-radius, 6px) and CAPPED at
+   * that ceiling: nothing rounds more than 6px per the design system. The
+   * larger steps clamp to --radius instead of scaling up.
+   */
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: calc(var(--radius) - 1px);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+
+  --font-sans: 'JetBrainsMono', 'Vazirmatn', monospace;
+  --font-mono: 'JetBrainsMono', 'Vazirmatn', monospace;
+
+  /*
+   * Legacy design-system aliases kept so any chrome authored directly against
+   * our palette (settings-bar label, etc.) keeps working. Same vars, no hex.
+   */
+  --color-bg: var(--bg-color);
+  --color-main: var(--main-color);
+  --color-sub: var(--sub-color);
+  --color-sub-alt: var(--sub-alt-color);
+  --color-text: var(--text-color);
+  --color-error: var(--error-color);
+  --color-error-extra: var(--error-extra-color);
+  --radius-tm: var(--border-radius);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+}
+
+/* --- shared design-system utilities (composed by restyled components) --- */
+
+/* The 0.08s linear transition mandated by the design system (§2). */
+@utility transition-tm {
+  transition-property:
+    color, background-color, border-color, box-shadow, opacity, transform, filter;
+  transition-duration: var(--transition-duration);
+  transition-timing-function: linear;
+}
+
+/* The mandatory focus-visible double ring: bg-color gap, then text-color ring. */
+@utility focus-ring {
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 1.5px var(--bg-color),
+      0 0 0 3px var(--text-color);
+  }
+}
+
+/* Keycap (kbd) surface for the tooltip kbd variant (mirrors the global kbd). */
+@utility kbd-cap {
+  display: inline-block;
+  min-width: 14px;
+  min-height: 14px;
+  padding: 3px 6px 4px;
+  font-size: 0.7rem;
+  line-height: 0.7rem;
+  color: var(--text-color);
+  background-color: var(--bg-color);
+  border: 1px solid var(--sub-color);
+  border-radius: 4px;
+  box-shadow: inset 0 -3px 0 var(--sub-color);
+}
+
+@utility press-scale {
+  transition: transform 0.1s var(--ease-standard);
+  transform: scale(1);
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  body.is-mobile & {
+    transform: var(--transform-extra, none) scale3d(1, 1, 1);
+
+    &:active {
+      transform: var(--transform-extra, none) scale3d(0.96, 0.96, 1);
+    }
+  }
+}
+
+/*
+ * Switch thumb slide: the translate gets an eased, slightly longer motion
+ * (--ease-standard) so the toggle reads as an animation, while the thumb's
+ * color still follows the design-system's 0.08s linear cadence.
+ */
+@utility switch-thumb-motion {
+  transition-property: translate, background-color;
+  transition-duration: 0.2s, var(--transition-duration);
+  transition-timing-function: var(--ease-standard), linear;
+}

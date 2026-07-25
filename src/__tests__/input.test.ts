@@ -1,6 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { expect } from 'chai'
-import { describe, it, vi } from 'vitest'
+import { describe, it, vi, expect } from 'vitest'
 import { TextInput } from '@/shared/ui/input'
 
 vi.mock('@/shared/ui/typography', () => ({
@@ -29,23 +28,19 @@ describe('Input', () => {
     await wrapper.find('input').setValue('test')
     expect(wrapper.emitted('update:modelValue')?.[0]).to.deep.equal(['test'])
   })
-  it('applies error class when isError prop is true', () => {
-    const wrapper = mount(TextInput, {
-      props: { isError: true }
-    })
-    expect(wrapper.find('.text-input').classes()).to.include('text-input--error')
-  })
-  it('displays error message when provided', () => {
+  it('displays error message when errorMessage and hasErrorSpace are set', () => {
     const errorMessage = 'This is an error'
     const wrapper = mount(TextInput, {
       props: { errorMessage, hasErrorSpace: true }
     })
-
-    if (wrapper.find('.error-msg-container').exists()) {
-      expect(wrapper.find('.error-msg-container').text()).to.equal(errorMessage)
-    } else {
-      expect(wrapper.find('.error-msg-container').exists()).to.equal(false)
-    }
+    expect(wrapper.text()).to.include(errorMessage)
+  })
+  it('does not render error message when hasErrorSpace is false', () => {
+    const errorMessage = 'This is an error'
+    const wrapper = mount(TextInput, {
+      props: { errorMessage, hasErrorSpace: false }
+    })
+    expect(wrapper.text()).to.not.include(errorMessage)
   })
   it('disables input when isDisabled prop is true', () => {
     const wrapper = mount(TextInput, {
@@ -64,7 +59,7 @@ describe('Input', () => {
         default: 'Label Text'
       }
     })
-    expect(wrapper.find('.text-input__label').text()).to.equal('Label Text')
+    expect(wrapper.find('label').text()).to.equal('Label Text')
   })
   it('passes attributes to input element', () => {
     const wrapper = mount(TextInput, {

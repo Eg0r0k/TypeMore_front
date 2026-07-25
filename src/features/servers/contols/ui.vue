@@ -1,86 +1,62 @@
 <template>
   <div class="controls">
     <Button
-      :isLoading="loading"
-      @click="handleCreateRoom"
       class="controls__btn"
       size="l"
       color="gray"
+      :disabled="!canAct"
+      @click="session.createRoom()"
     >
       <div>
-        <Icon width="40" icon="fa6-solid:users" />
-        <Typography isBold>Create room</Typography>
-        <Typography size="xs">Rooms: 0</Typography>
+        <IconUsers width="40" height="40" />
+        <Typography is-bold>{{ t('servers.create') }}</Typography>
       </div>
     </Button>
-    <Button @click="handleServersModal" class="controls__btn" size="l" color="gray">
+    <Button
+      class="controls__btn"
+      size="l"
+      color="gray"
+      :disabled="!canAct"
+      @click="joinOpen = true"
+    >
       <div>
-        <Icon width="40" icon="mynaui:servers-solid" />
-        <Typography isBold>Public rooms</Typography>
-        <Typography size="xs">Rooms: 0</Typography>
+        <IconCode width="40" height="40" />
+        <Typography is-bold>{{ t('servers.joinByCode') }}</Typography>
+        <Typography size="xs">{{ t('servers.join.hint') }}</Typography>
       </div>
     </Button>
-    <Button @click="handleCodeModal" class="controls__btn" size="l" color="gray">
-      <div>
-        <Icon width="40" icon="mingcute:code-fill" />
-        <Typography isBold>Enter code</Typography>
-        <Typography size="xs">Join using a room code</Typography>
-      </div>
-    </Button>
+    <JoinCodeModal v-model:open="joinOpen" />
   </div>
 </template>
 
 <script lang="ts" setup>
-  import { useModal } from '@/entities/modal'
+  import { computed, ref } from 'vue'
+  import { useI18n } from 'vue-i18n'
+  import { useMatchSessionStore } from '@/entities/match'
   import { JoinCodeModal } from '@/features/modal/joinCode'
-  import { ServersModal } from '@/features/modal/servers'
   import { Button } from '@/shared/ui/button'
   import { Typography } from '@/shared/ui/typography'
-  import { Icon } from '@iconify/vue'
-  import { ref } from 'vue'
-  const loading = ref(false)
-  const emit = defineEmits<{ (e: 'open-room'): void }>()
-  const modal = useModal()
-  const handleServersModal = () => {
-    modal.open(ServersModal, 'center', 'center')
-  }
-  const handleCodeModal = () => {
-    modal.open(JoinCodeModal, 'center', 'center')
-  }
-  const mockServerRequest = (): Promise<{ success: boolean }> => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const isSuccess = Math.random() > 0.5
-        if (isSuccess) {
-          resolve({ success: true })
-        } else {
-          reject(new Error('Failed to join room'))
-        }
-      }, 1000)
-    })
-  }
+  import IconCode from '~icons/tabler/code'
+  import IconUsers from '~icons/tabler/users'
 
-  const handleCreateRoom = async () => {
-    try {
-      loading.value = true
-      const response = await mockServerRequest()
-      if (response.success) {
-        emit('open-room')
-      }
-    } catch (e) {
-      console.error('Failed to join room:', e)
-      //
-    } finally {
-      loading.value = false
-    }
-  }
+  /**
+   * v1 entry points: create a room or join by code. The public-room-list
+   * browser has no protocol support in v1 (the room list is a later server
+   * phase), so it is gone along with the old mock server request.
+   */
+  const { t } = useI18n()
+  const session = useMatchSessionStore()
+  const joinOpen = ref(false)
+
+  // Room commands are only sendable from a connected, not-yet-seated socket.
+  const canAct = computed(() => session.connection === 'idle' && !session.room)
 </script>
 
 <style lang="scss" scoped>
   .controls {
     display: grid;
     gap: 20px;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     grid-auto-rows: 1fr;
 
     &__btn {
