@@ -1,68 +1,102 @@
 <template>
   <div class="chat">
-    <div class="chat__messages" ref="messagesContainer">
-      <div v-for="message in messages" :key="message.id" class="message">
-        <div class="message__author">{{ message.username }}:</div>
-        <div class="message__text" v-html="parseEmojis(message.text)"></div>
+    <div ref="messagesContainer" class="chat__messages">
+      <div v-for="entry in session.chatLog" :key="entry.id" :class="messageClass(entry)">
+        <template v-if="entry.from === 'system'">
+          <div class="message__text message__text--system">{{ entry.text }}</div>
+        </template>
+        <template v-else>
+          <div
+            class="message__author"
+            :class="{ 'message__author--me': entry.from === session.selfId }"
+          >
+            {{ nickOf(entry) }}:
+          </div>
+          <!-- eslint-disable-next-line vue/no-v-html -- parseEmojis HTML-escapes its input first -->
+          <div class="message__text" v-html="parseEmojis(entry.text)"></div>
+        </template>
       </div>
     </div>
     <div class="chat__input">
-      <div class="chat__emoji-suggestion" v-if="showSuggestion">
+      <div v-if="showSuggestion" class="chat__emoji-suggestion">
         <div
-          class="suggestion"
           v-for="(suggestion, index) in filteredSuggestions.slice(0, 3)"
           :key="index"
+          class="suggestion"
           :class="{ 'suggestion--active': index === activeIndex }"
           @click="selectSuggestion(suggestion)"
         >
           <div class="suggestion__icon">
-            <img draggable="false" :src="suggestion.icon" />
+            <img draggable="false" :src="suggestion.icon" alt="" />
           </div>
           <Typography size="xs">{{ suggestion.text }}</Typography>
         </div>
       </div>
       <TextInput
         ref="chatInput"
-        @keydown.enter="sendMessage"
-        v-max-chars="256"
         v-model="inputValue"
+        v-max-chars="200"
         :class="inputClasses"
-        placeholder="Send a message"
+        :placeholder="t('room.chat.placeholder')"
+        @keydown.enter="sendMessage"
         @keydown="handleKeyDown"
       />
+      <Typography v-if="rateLimited" class="chat__rate-limited" size="xs" color="error">
+        {{ t('room.chat.rateLimited') }}
+      </Typography>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { useAuthStore } from '@/entities/auth/model/store'
-  import { useChatStore } from '@/entities/chat/model/store'
-  import { TextInputComponent } from '@/shared/directives/utils'
+  import type { ChatEntry, RoomPlayer } from '@/entities/lobby'
+  import { useMatchSessionStore } from '@/entities/match'
+  import type { TextInputComponent } from '@/shared/directives/utils'
   import { emojis, parseEmojis } from '@/shared/lib/helpers/emoji'
   import { TextInput } from '@/shared/ui/input'
   import { Typography } from '@/shared/ui/typography'
   import { watchThrottled } from '@vueuse/core'
+  import { useI18n } from 'vue-i18n'
   import clsx from 'clsx'
   import { computed, nextTick, ref, watchEffect } from 'vue'
+
+  /**
+   * Lobby chat over the session store's chatLog. Player text goes through
+   * `parseEmojis` (which HTML-escapes before emoji substitution — remote text
+   * never reaches v-html raw). System messages (§4 `chat` with `from:
+   * "system"`) render distinctly, styled per `kind`. A `rate_limited` reject
+   * (§3 chat_send: burst 5 / 2 s) surfaces under the input.
+   */
+  const { t } = useI18n()
+  const session = useMatchSessionStore()
 
   const activeIndex = ref(0)
   const showSuggestion = ref(false)
   const inputValue = ref('')
   const searchPattern = /:(\w*)$/
 
-  const chatStore = useChatStore()
-  const authStore = useAuthStore()
-
   const messagesContainer = ref<HTMLElement | null>(null)
   const chatInput = ref<TextInputComponent | null>(null)
-  const messages = computed(() => chatStore.messages)
+
+  const messageClass = (entry: ChatEntry) =>
+    clsx('message', {
+      'message--system': entry.from === 'system',
+      [`message--${entry.kind?.replace(/_/g, '-')}`]: entry.kind !== undefined
+    })
+
+  const nickOf = (entry: ChatEntry) =>
+    entry.nick ??
+    session.room?.players.find((player: RoomPlayer) => player.playerId === entry.from)?.nick ??
+    entry.from.slice(0, 8)
+
+  const rateLimited = computed(() => session.lastError?.code === 'rate_limited')
 
   const sendMessage = () => {
-    if (inputValue.value.trim()) {
-      chatStore.addMessage(authStore.user?.username || 'Guest', inputValue.value)
-      inputValue.value = ''
-      scrollToBottom()
-    }
+    const text = inputValue.value.trim()
+    if (!text) return
+    session.sendChat(text)
+    inputValue.value = ''
+    scrollToBottom()
   }
 
   const isCursorImmediatelyAfterClosedTag = (text: string) => /:\w+:$/.test(text)
@@ -128,6 +162,8 @@
   }
 
   watchEffect(() => {
+    // Track log growth so new messages keep the view pinned to the bottom.
+    void session.chatLog.length
     scrollToBottom()
   })
 </script>
@@ -141,11 +177,15 @@
     display: flex;
     align-items: baseline;
     gap: 0.5rem;
-    word-break: break-word;
+    overflow-wrap: break-word;
 
     &__author {
       word-break: normal;
       height: 100%;
+
+      &--me {
+        color: var(--main-color);
+      }
     }
 
     &__text {
@@ -153,6 +193,16 @@
       gap: 0.5rem;
       align-items: baseline;
       flex-wrap: wrap;
+
+      &--system {
+        font-style: italic;
+        color: var(--sub-color);
+      }
+    }
+
+    &--host-changed .message__text--system,
+    &--settings-changed .message__text--system {
+      color: var(--main-color);
     }
   }
 
@@ -191,6 +241,11 @@
 
     &__input {
       position: relative;
+    }
+
+    &__rate-limited {
+      display: block;
+      margin-top: 0.25rem;
     }
 
     &__emoji-suggestion {

@@ -1,47 +1,83 @@
 <template>
   <div class="server-page">
-    <Transition name="fade" mode="out-in">
-      <RoomManagement v-if="lobbyStore.isRoomManagementOpen" />
-      <div v-else>
-        <div class="server-page__head head">
-          <Typography class="server-page__title" color="primary" size="xxl" tag-name="h1">
-            Welcome to
-            <Typography tag-name="span" size="xxl" color="main">Servers</Typography>
-          </Typography>
-          <div class="server-page__info">
-            <Typography size="s" color="sub">
-              Online
-              <Typography tag-name="span" size="m" color="primary">{{ online }}</Typography>
-            </Typography>
-          </div>
-        </div>
-        <ServersControls @open-room="lobbyStore.createLobby" />
+    <div class="server-page__head head">
+      <Typography class="server-page__title" color="primary" size="xxl" tag-name="h1">
+        {{ t('servers.title.lead') }}
+        <Typography tag-name="span" size="xxl" color="main">
+          {{ t('servers.title.name') }}
+        </Typography>
+      </Typography>
+      <div class="server-page__info">
+        <Typography size="s" color="sub">
+          {{ t('servers.status.label') }}
+          <Typography tag-name="span" size="m" :color="statusColor">{{ statusText }}</Typography>
+        </Typography>
       </div>
-    </Transition>
+    </div>
+    <Typography v-if="session.connectionError" class="server-page__error" size="s" color="error">
+      {{ session.connectionError.message }}
+    </Typography>
+    <ServersControls />
   </div>
 </template>
 
 <script setup lang="ts">
-  import { ref } from 'vue'
+  import { computed, onMounted, watch } from 'vue'
+  import { useRouter } from 'vue-router'
+  import { useI18n } from 'vue-i18n'
   import { Typography } from '@/shared/ui/typography'
   import { ServersControls } from '@/features/servers/contols'
-  import { RoomManagement } from '@/pages/room'
-  import { useLobbyStore } from '@/entities/lobby'
-  const online = ref(3)
-  const lobbyStore = useLobbyStore()
+  import { routeLocation } from '@/app/router/route-locations'
+  import { useMatchSessionStore } from '@/entities/match'
+
+  /**
+   * Multiplayer entry point. PROTOCOL v1 has no online-count message, so the
+   * old hardcoded counter is gone — the header shows the live connection state
+   * instead. Entering a room (create or join-by-code) navigates to /room.
+   */
+  const { t } = useI18n()
+  const router = useRouter()
+  const session = useMatchSessionStore()
+
+  onMounted(() => {
+    void session.init()
+  })
+
+  const statusText = computed(() => {
+    switch (session.connection) {
+      case 'connecting':
+        return t('servers.status.connecting')
+      case 'reconnecting':
+        return t('servers.status.reconnecting')
+      case 'failed':
+        return t('servers.status.failed')
+      case 'idle':
+      case 'in_room':
+      case 'in_match':
+        return t('servers.status.connected')
+      default:
+        return t('servers.status.offline')
+    }
+  })
+
+  const statusColor = computed(() => {
+    if (session.connection === 'failed') return 'error'
+    if (session.connection === 'connecting' || session.connection === 'reconnecting') return 'sub'
+    return 'main'
+  })
+
+  // Already in a room (fresh room_state, or a back-navigation while seated):
+  // the room page is the only place to be.
+  watch(
+    () => session.room,
+    (room) => {
+      if (room) void router.push(routeLocation.room())
+    },
+    { immediate: true }
+  )
 </script>
 
 <style scoped lang="scss">
-  .fade-enter-active,
-  .fade-leave-active {
-    transition: all 0.125s;
-  }
-
-  .fade-enter-from,
-  .fade-leave-to {
-    opacity: 0;
-  }
-
   .server-page {
     &__head {
       display: flex;
@@ -56,6 +92,11 @@
 
     &__title {
       margin-bottom: 0;
+    }
+
+    &__error {
+      display: block;
+      margin-bottom: 16px;
     }
   }
 </style>

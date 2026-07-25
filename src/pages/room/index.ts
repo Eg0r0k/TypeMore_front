@@ -1,1 +1,1 @@
-export { default as RoomManagement } from './ui.vue'
+export { default as RoomPage } from './ui.vue'
