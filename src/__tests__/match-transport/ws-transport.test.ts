@@ -296,8 +296,8 @@ describe('match_end (Δ3)', () => {
     visibility: 'private',
     mode: 'time',
     durationMs: 30_000,
-    lang: 'en',
-    dictHash: 'en-default',
+    lang: 'english',
+    dictHash: 'be99aa1a',
     textMods: { punctuation: false, numbers: false, randomCase: false, reverse: false },
     textSource: { kind: 'seeded' }
   }

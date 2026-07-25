@@ -462,8 +462,14 @@ export class LoopbackServer {
         visibility: 'private',
         mode: 'time',
         durationMs: 30_000,
-        lang: 'en',
-        dictHash: 'en-default',
+        // The real published english dictionary, not a placeholder: a room's
+        // default settings are handed straight to clients, and a lang/dictHash
+        // pair that resolves to nothing makes the match path fail its own
+        // dictionary check (session-store verifies dictVersion(words) against
+        // this hash). `be99aa1a` is frozen forever by the server's
+        // publishedHashes tripwire, so it cannot drift out from under us.
+        lang: 'english',
+        dictHash: 'be99aa1a',
         textMods: { punctuation: false, numbers: false, randomCase: false, reverse: false },
         textSource: { kind: 'seeded' }
       },
