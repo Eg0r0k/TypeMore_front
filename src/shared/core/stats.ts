@@ -11,7 +11,15 @@
 import type { GameEvent, Ms } from './events'
 import { asMs, sortEvents } from './events'
 import type { CoreContext, GameState } from './game-core'
-import { GameCore, endsLine, initialStateOf, reduce, separatorsOf, settle } from './game-core'
+import {
+  GameCore,
+  bufferOf,
+  endsLine,
+  initialStateOf,
+  reduce,
+  separatorsOf,
+  settle
+} from './game-core'
 
 export interface CharCounts {
   readonly correct: number
@@ -53,14 +61,30 @@ export interface ErrorWord {
   readonly typed: string
 }
 
-interface Analysis {
+/**
+ * The result of one replay pass over a log. Exported because `score.ts` needs
+ * BOTH the metrics and the fold's final state, and paying for two identical
+ * trajectories over a 40,000-event log is the whole reason this exists.
+ */
+export interface LogAnalysis {
+  /** The state the log folds to, WITHOUT the trailing `settle` that `foldLog` applies. */
   readonly finalState: GameState
+  /**
+   * The pass stopped before the end of the log — the run had already finished, or
+   * the reducer rejected an event. Exactly where `foldLog` would return an error.
+   */
+  readonly aborted: boolean
   readonly correctKeys: number
   readonly totalKeys: number
   readonly wordFirstT: readonly (number | undefined)[]
   readonly wordLastT: readonly (number | undefined)[]
-  /** Every inserted keystroke with its timestamp and frozen correctness. */
-  readonly keystrokes: readonly { readonly t: number; readonly correct: boolean }[]
+  /**
+   * Every inserted keystroke, as two parallel arrays: timestamp, and correctness
+   * frozen at the position it landed. Parallel rather than an object per key so a
+   * long log does not allocate one short-lived object per character.
+   */
+  readonly keyTimes: readonly number[]
+  readonly keyCorrect: readonly boolean[]
   /** Timestamp of each committed word separator (one per word advance). */
   readonly commitTimes: readonly number[]
 }
@@ -70,29 +94,35 @@ interface Analysis {
  * word/boundary semantics never diverge) and, per inserted character, freezes
  * its correctness at the position it landed — the keystream basis for accuracy.
  */
-function analyze(ctx: CoreContext, events: readonly GameEvent[]): Analysis {
+export function analyzeLog(ctx: CoreContext, events: readonly GameEvent[]): LogAnalysis {
   let state = initialStateOf(ctx)
   let correctKeys = 0
   let totalKeys = 0
+  let aborted = false
   const wordFirstT: (number | undefined)[] = []
   const wordLastT: (number | undefined)[] = []
-  const keystrokes: { t: number; correct: boolean }[] = []
+  const keyTimes: number[] = []
+  const keyCorrect: boolean[] = []
   const commitTimes: number[] = []
 
   for (const event of sortEvents(events)) {
     state = settle(ctx, state, event.t)
-    if (state.phase === 'finished') break
+    if (state.phase === 'finished') {
+      aborted = true
+      break
+    }
 
     if (event.kind === 'insert' || event.kind === 'replace') {
       const wordIndex = state.wordIndex
       const target = ctx.words[wordIndex] ?? ''
-      const startPos = event.kind === 'replace' ? event.from : (state.input[wordIndex] ?? '').length
+      const startPos = event.kind === 'replace' ? event.from : bufferOf(state, wordIndex).length
       for (let k = 0; k < event.text.length; k++) {
         const pos = startPos + k
         totalKeys++
         const correct = pos < target.length && target[pos] === event.text[k]
         if (correct) correctKeys++
-        keystrokes.push({ t: event.t, correct })
+        keyTimes.push(event.t)
+        keyCorrect.push(correct)
       }
       if (wordFirstT[wordIndex] === undefined) wordFirstT[wordIndex] = event.t
       wordLastT[wordIndex] = event.t
@@ -100,18 +130,23 @@ function analyze(ctx: CoreContext, events: readonly GameEvent[]): Analysis {
 
     const beforeIndex = state.wordIndex
     const result = reduce(ctx, state, event)
-    if (result.isErr()) break
+    if (result.isErr()) {
+      aborted = true
+      break
+    }
     state = result.value
     for (let j = beforeIndex; j < state.wordIndex; j++) commitTimes.push(event.t)
   }
 
   return {
     finalState: state,
+    aborted,
     correctKeys,
     totalKeys,
     wordFirstT,
     wordLastT,
-    keystrokes,
+    keyTimes,
+    keyCorrect,
     commitTimes
   }
 }
@@ -134,12 +169,14 @@ function compareWord(target: string, typed: string, includeMissed: boolean): Cha
 
 function getChars(ctx: CoreContext, state: GameState): { chars: CharCounts; spaces: number } {
   const committed = Math.min(state.wordIndex, ctx.words.length)
+  // One materialization, then plain indexing — `state.input` is a getter now.
+  const input = state.input
   let correct = 0
   let incorrect = 0
   let extra = 0
   let missed = 0
   for (let i = 0; i < committed; i++) {
-    const word = compareWord(ctx.words[i], state.input[i] ?? '', true)
+    const word = compareWord(ctx.words[i], input[i] ?? '', true)
     correct += word.correct
     incorrect += word.incorrect
     extra += word.extra
@@ -148,7 +185,7 @@ function getChars(ctx: CoreContext, state: GameState): { chars: CharCounts; spac
   // Current, not-yet-committed word: typed characters count, but untyped tail is
   // not "missed" until the word is committed.
   if (state.wordIndex < ctx.words.length) {
-    const buffer = state.input[state.wordIndex] ?? ''
+    const buffer = input[state.wordIndex] ?? ''
     if (buffer.length > 0) {
       const word = compareWord(ctx.words[state.wordIndex], buffer, false)
       correct += word.correct
@@ -160,14 +197,15 @@ function getChars(ctx: CoreContext, state: GameState): { chars: CharCounts; spac
 }
 
 /** Per-word burst speeds (WPM) from first to last insert of each word. */
-function burstWpms(ctx: CoreContext, analysis: Analysis): number[] {
+function burstWpms(ctx: CoreContext, analysis: LogAnalysis): number[] {
   const out: number[] = []
+  const input = analysis.finalState.input
   for (let i = 0; i < analysis.wordFirstT.length; i++) {
     const first = analysis.wordFirstT[i]
     const last = analysis.wordLastT[i]
     if (first === undefined || last === undefined) continue
     const durationMs = last - first
-    const chars = (analysis.finalState.input[i] ?? '').length
+    const chars = (input[i] ?? '').length
     if (durationMs <= 0 || chars === 0) continue
     out.push(chars / 5 / (durationMs / 60000))
   }
@@ -196,7 +234,15 @@ function consistency(bursts: readonly number[]): number {
  * (use `finishedAt` for final results, the current tick instant for live UI).
  */
 export function computeMetrics(ctx: CoreContext, events: readonly GameEvent[], endMs: Ms): Metrics {
-  const analysis = analyze(ctx, events)
+  return metricsFrom(ctx, analyzeLog(ctx, events), endMs)
+}
+
+/**
+ * {@link computeMetrics} over a replay pass that has already been made. The
+ * server's scorer needs the pass's final state for the authoritative finish
+ * instant anyway, so it computes both from one traversal instead of two.
+ */
+export function metricsFrom(ctx: CoreContext, analysis: LogAnalysis, endMs: Ms): Metrics {
   const { chars, spaces } = getChars(ctx, analysis.finalState)
   const startedAt = analysis.finalState.startedAt
   const end = analysis.finalState.finishedAt ?? endMs
@@ -236,11 +282,12 @@ export function wpmOverTime(
   events: readonly GameEvent[],
   endMs: Ms
 ): TimelinePoint[] {
-  const analysis = analyze(ctx, events)
+  const analysis = analyzeLog(ctx, events)
   const startedAt = analysis.finalState.startedAt
   if (startedAt === null) return []
   const end = analysis.finalState.finishedAt ?? endMs
   const seconds = Math.ceil(Math.max(0, (end - startedAt) / 1000))
+  if (seconds <= 0) return []
   // Mirror `separatorsOf`: a count-finished test's final word has no trailing
   // space, and a word that ends its own line already typed its separator as a
   // `\n` character — neither contributes a separator to the cumulative wpm.
@@ -254,6 +301,46 @@ export function wpmOverTime(
     if (endsLine(ctx.words[i] ?? '')) continue
     spaceTimes.push(analysis.commitTimes[i])
   }
+
+  // Every query below is a range over the same second grid, so bucket once and
+  // prefix-sum instead of rescanning the whole keystream per second: the naive
+  // nest is O(seconds × keystrokes), which on an hour-long log is ~1e8 iterations
+  // for a chart. Only the TRAILING bucket has a window that is not a whole
+  // second, so it keeps the exact original scan — the counts are integers either
+  // way, so the points are identical to the last bit.
+  const { keyTimes, keyCorrect } = analysis
+  // `perBucket[s]` = events landing in `[start + (s-1)s, start + s·s)`;
+  // `byCheckpoint[s]` = events with `t <= start + s·1000`, as a prefix sum.
+  const rawInBucket = new Float64Array(seconds + 2)
+  const errorsInBucket = new Float64Array(seconds + 2)
+  const correctByCheckpoint = new Float64Array(seconds + 2)
+  for (let k = 0; k < keyTimes.length; k++) {
+    const offset = keyTimes[k] - startedAt
+    if (offset >= 0) {
+      const bucket = Math.floor(offset / 1000) + 1
+      if (bucket <= seconds) {
+        rawInBucket[bucket]++
+        if (!keyCorrect[k]) errorsInBucket[bucket]++
+      }
+    }
+    if (keyCorrect[k]) {
+      // `t <= start + s·1000` first holds at `s = ceil(offset / 1000)`; a key at or
+      // before the start instant is inside every checkpoint.
+      const from = offset <= 0 ? 0 : Math.ceil(offset / 1000)
+      if (from <= seconds) correctByCheckpoint[from]++
+    }
+  }
+  const spacesByCheckpoint = new Float64Array(seconds + 2)
+  for (const t of spaceTimes) {
+    const offset = t - startedAt
+    const from = offset <= 0 ? 0 : Math.ceil(offset / 1000)
+    if (from <= seconds) spacesByCheckpoint[from]++
+  }
+  for (let s = 1; s <= seconds; s++) {
+    correctByCheckpoint[s] += correctByCheckpoint[s - 1]
+    spacesByCheckpoint[s] += spacesByCheckpoint[s - 1]
+  }
+
   const points: TimelinePoint[] = []
   for (let s = 1; s <= seconds; s++) {
     const bucketStart = startedAt + (s - 1) * 1000
@@ -266,27 +353,40 @@ export function wpmOverTime(
     // the one ENDING at the finish (clamped at the run's start), not the sliver.
     const tail = checkpoint < bucketEnd
     const rateStart = Math.max(startedAt, checkpoint - 1000)
-    let correctSoFar = 0
-    let rawInWindow = 0
-    let errorsInBucket = 0
-    for (const key of analysis.keystrokes) {
-      if (key.t <= checkpoint && key.correct) correctSoFar++
-      // Errors stay bucket-local: they are a count, not a rate, and the windows
-      // of the last two points overlap.
-      if (key.t >= bucketStart && key.t < bucketEnd && !key.correct) errorsInBucket++
-      // No keystroke is past `end`, so the tail window needs no upper bound.
-      const inWindow = tail ? key.t >= rateStart : key.t >= bucketStart && key.t < bucketEnd
-      if (inWindow) rawInWindow++
+    let correctSoFar: number
+    let rawInWindow: number
+    let errors: number
+    let spacesSoFar: number
+    if (s < seconds) {
+      correctSoFar = correctByCheckpoint[s]
+      rawInWindow = rawInBucket[s]
+      errors = errorsInBucket[s]
+      spacesSoFar = spacesByCheckpoint[s]
+    } else {
+      correctSoFar = 0
+      rawInWindow = 0
+      errors = 0
+      spacesSoFar = 0
+      for (let k = 0; k < keyTimes.length; k++) {
+        const t = keyTimes[k]
+        const correct = keyCorrect[k]
+        if (t <= checkpoint && correct) correctSoFar++
+        // Errors stay bucket-local: they are a count, not a rate, and the windows
+        // of the last two points overlap.
+        if (t >= bucketStart && t < bucketEnd && !correct) errors++
+        // No keystroke is past `end`, so the tail window needs no upper bound.
+        const inWindow = tail ? t >= rateStart : t >= bucketStart && t < bucketEnd
+        if (inWindow) rawInWindow++
+      }
+      for (const t of spaceTimes) if (t <= checkpoint) spacesSoFar++
     }
-    let spacesSoFar = 0
-    for (const t of spaceTimes) if (t <= checkpoint) spacesSoFar++
     const elapsedMin = (checkpoint - startedAt) / 60000
     const rateMin = (checkpoint - rateStart) / 60000
     points.push({
       second: s,
       wpm: elapsedMin > 0 ? (correctSoFar + spacesSoFar) / 5 / elapsedMin : 0,
       raw: rateMin > 0 ? rawInWindow / 5 / rateMin : 0,
-      errors: errorsInBucket
+      errors
     })
   }
   return points
@@ -294,12 +394,13 @@ export function wpmOverTime(
 
 /** Committed words whose typed text differs from the target (word + what was typed). */
 export function errorWords(ctx: CoreContext, events: readonly GameEvent[]): ErrorWord[] {
-  const { finalState } = analyze(ctx, events)
+  const { finalState } = analyzeLog(ctx, events)
   const committed = Math.min(finalState.wordIndex, ctx.words.length)
+  const input = finalState.input
   const out: ErrorWord[] = []
   for (let i = 0; i < committed; i++) {
     const expected = ctx.words[i]
-    const typed = finalState.input[i] ?? ''
+    const typed = input[i] ?? ''
     if (typed !== expected) out.push({ expected, typed })
   }
   return out
@@ -347,10 +448,24 @@ const AFK_BUCKET_MS = 1000
  * — timed runs (deadline), completed runs, and MinSpeed fails (derived instant).
  */
 export function afkOf(ctx: CoreContext, events: readonly GameEvent[], endMs: Ms): AfkStats {
-  const { finalState } = analyze(ctx, events)
-  const start = finalState.startedAt
+  const { finalState } = analyzeLog(ctx, events)
+  return afkBetween(events, finalState.startedAt, finalState.finishedAt ?? endMs)
+}
+
+/**
+ * {@link afkOf} for a caller that already knows the run's window. The fold inside
+ * `afkOf` exists only to recover `startedAt`/`finishedAt`; the actual work is the
+ * bucket scan below, which needs no replay at all. `validateLog` holds both
+ * instants on the state it just folded, so it skips a whole traversal of the log.
+ */
+export function afkBetween(
+  events: readonly GameEvent[],
+  startedAt: Ms | null,
+  endMs: Ms
+): AfkStats {
+  const start = startedAt
   if (start === null) return { afkMs: 0, buckets: 0 }
-  const end = finalState.finishedAt ?? endMs
+  const end = endMs
   const bucketCount = Math.floor((end - start) / AFK_BUCKET_MS)
   if (bucketCount <= 0) return { afkMs: 0, buckets: 0 }
 

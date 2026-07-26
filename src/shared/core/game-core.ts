@@ -140,28 +140,316 @@ export function initialState(): GameState {
   }
 }
 
-/**
- * The initial state for `ctx` — the ONLY place the start policy is applied. A
- * `'go'` run is already running at `t = 0`, so `settle` (and therefore the
- * deadline, the MinSpeed floor and every fold) is live without a single event.
+/*
+ * ── THE INPUT BUFFERS: PURITY BOUNDARY. READ THIS BEFORE TOUCHING `state.input`.
+ *
+ * The contract is unchanged and absolute: the array you read off a state is an
+ * immutable snapshot of that state. Reduce a thousand more events and it still
+ * reads what it read the first time.
+ *
+ * The REPRESENTATION behind it is not one array per state. It used to be —
+ * `input.slice()` on every accepted edit — and that is O(words) per keystroke,
+ * i.e. a quadratic fold: the server's largest legal log (~5,000 committed words,
+ * ~40,000 events) copied on the order of 1e8 references per fold, five folds per
+ * judgement. So every state produced by one fold instead SHARES a single mutable
+ * backing buffer plus a write journal, and carries the version it belongs to —
+ * a persistent array by re-rooting (Baker's shallow binding). Reading slot `i`
+ * of version `v` first seeks the buffer to `v`, undoing/redoing journal entries;
+ * for the linear "fold forward" pattern that is zero entries, so writes and
+ * reads are O(1) amortized. Holding an old state and reading it later still
+ * works — it costs the version distance, once.
+ *
+ * What the next person must respect:
+ *  - `state.input` is a LAZY getter that materializes and memoizes a fresh plain
+ *    array. It is O(words). NEVER call it per event; inside the core use
+ *    {@link bufferOf}, which is O(1).
+ *  - The array it hands back is a copy. It is `readonly` and it means it: writing
+ *    through it corrupts nothing, it is simply lost.
+ *  - The derived counters below are accumulated against a specific `ctx.words`.
+ *    They are trusted only when the store was built for the SAME array identity;
+ *    any other context falls back to the original O(words) loops.
+ *  - A state that never came out of this module — an object literal, a
+ *    `structuredClone`, anything that crossed a serialization boundary — simply
+ *    has no store attached. Every function here falls back to the plain-array
+ *    path for those, so foreign states keep working at the old cost.
  */
-export function initialStateOf(ctx: CoreContext): GameState {
-  const state = initialState()
-  if (ctx.config.startPolicy !== 'go') return state
-  return { ...state, phase: 'running', startedAt: asMs(0) }
+
+/** Shared, mutable backing buffer for one chain of states. Never escapes this module. */
+interface InputStore {
+  /** The `ctx.words` this store's counters were accumulated against (identity-checked). */
+  readonly words: readonly string[]
+  /** Slot values as of `version`. Only `[0, len)` is meaningful. */
+  readonly slots: string[]
+  len: number
+  version: number
+  /*
+   * Write journal, as four parallel arrays so a write allocates no object:
+   * entry `v` is the write that turns version `v` into version `v + 1`.
+   */
+  readonly jIndex: number[]
+  readonly jPrev: string[]
+  readonly jNext: string[]
+  readonly jLen: number[]
 }
 
-// Copy-on-write helper: never mutates the source array (property: reduce is pure).
+/** One state's view of the buffers: a version plus the counters derived at it. */
+interface StateCore {
+  readonly store: InputStore
+  readonly version: number
+  /** Committed words that are not `endsLine` — `separatorsOf` before the count-finish adjustment. */
+  readonly sep: number
+  /** Correct characters across the committed words — `netCharsOf`'s committed half. */
+  readonly correct: number
+  /** Target characters across the committed words — `targetCharsOf`'s committed half. */
+  readonly target: number
+  /** Memoized `state.input`; shared by every state sitting at this version. */
+  cache: readonly string[] | null
+}
+
+/** Either the incremental representation or a plain array (the foreign-state fallback). */
+type Buffers = StateCore | readonly string[]
+
+// Non-enumerable, so `Object.keys`, `for...in`, spread, `JSON.stringify`,
+// `structuredClone` and every deep-equality matcher see exactly the seven public
+// fields — the internals are invisible to anything that compares two states.
+const STATE_CORE = Symbol('gameStateBuffers')
+
+function coreOf(state: GameState): StateCore | undefined {
+  return (state as { readonly [STATE_CORE]?: StateCore })[STATE_CORE]
+}
+
+/** Move `store` to `version`, undoing or redoing journal entries as needed. */
+function seek(store: InputStore, version: number): void {
+  while (store.version > version) {
+    const entry = store.version - 1
+    store.slots[store.jIndex[entry]] = store.jPrev[entry]
+    store.len = store.jLen[entry]
+    store.version = entry
+  }
+  while (store.version < version) {
+    const entry = store.version
+    const index = store.jIndex[entry]
+    store.slots[index] = store.jNext[entry]
+    if (index >= store.len) store.len = index + 1
+    store.version = entry + 1
+  }
+}
+
+/**
+ * The typed buffer of word `index` in `state` — O(1), and the ONLY read the
+ * reducer and the metrics pass may use per event. `state.input[index]` is the
+ * same value, at O(words) a call.
+ */
+export function bufferOf(state: GameState, index: number): string {
+  const core = coreOf(state)
+  if (core === undefined) return state.input[index] ?? ''
+  const store = core.store
+  if (store.version !== core.version) seek(store, core.version)
+  return index < store.len ? store.slots[index] : ''
+}
+
+/** A fresh plain array holding `core`'s slots — what `state.input` hands out. */
+function materialize(core: StateCore): readonly string[] {
+  const store = core.store
+  if (store.version !== core.version) seek(store, core.version)
+  return store.slots.slice(0, store.len)
+}
+
+/** Copy-on-write helper for the plain-array fallback: never mutates the source. */
 function setInput(input: readonly string[], index: number, value: string): string[] {
   const next = input.slice()
   next[index] = value
   return next
 }
 
-// Every accepted transition records the event's seq; callers pass only the fields
-// that change, keeping the merge honest and the source state untouched.
-function withEvent(state: GameState, patch: Partial<GameState>, event: GameEvent): GameState {
-  return { ...state, ...patch, lastSeq: event.seq }
+function emptyCore(words: readonly string[]): StateCore {
+  return {
+    store: { words, slots: [], len: 0, version: 0, jIndex: [], jPrev: [], jNext: [], jLen: [] },
+    version: 0,
+    sep: 0,
+    correct: 0,
+    target: 0,
+    cache: null
+  }
+}
+
+/** Write `value` into slot `index`, returning the successor version. */
+function writeCore(core: StateCore, index: number, value: string): StateCore {
+  let store = core.store
+  if (core.version !== store.jIndex.length) {
+    // A FORK: an older state is being extended while newer versions still exist
+    // (the reducer never does this — a caller branching off a held state does).
+    // The branch gets its own store so both histories stay readable, at the cost
+    // of one copy. Everything after it is O(1) again.
+    const slots = materialize(core) as string[]
+    store = {
+      words: store.words,
+      slots,
+      len: slots.length,
+      version: 0,
+      jIndex: [],
+      jPrev: [],
+      jNext: [],
+      jLen: []
+    }
+  } else if (store.version !== core.version) {
+    seek(store, core.version)
+  }
+  const entry = store.version
+  store.jIndex[entry] = index
+  store.jPrev[entry] = store.slots[index] ?? ''
+  store.jNext[entry] = value
+  store.jLen[entry] = store.len
+  store.slots[index] = value
+  if (index >= store.len) store.len = index + 1
+  store.version = entry + 1
+  return {
+    store,
+    version: entry + 1,
+    sep: core.sep,
+    correct: core.correct,
+    target: core.target,
+    cache: null
+  }
+}
+
+/** Characters of `typed` that match `target` position for position. */
+function matchingChars(target: string, typed: string): number {
+  const shared = target.length < typed.length ? target.length : typed.length
+  let correct = 0
+  for (let k = 0; k < shared; k++) if (typed[k] === target[k]) correct++
+  return correct
+}
+
+/**
+ * The buffers `state` should be edited through under `ctx`: the incremental
+ * representation when the store belongs to this exact word list, the plain
+ * array otherwise (a foreign state, or a state replayed against other words).
+ */
+function buffersFor(ctx: CoreContext, state: GameState): Buffers {
+  const core = coreOf(state)
+  return core !== undefined && core.store.words === ctx.words ? core : state.input
+}
+
+/** The buffers `state` already carries — never materializes anything. */
+function buffersOf(state: GameState): Buffers {
+  return coreOf(state) ?? state.input
+}
+
+function writeBuffers(buffers: Buffers, index: number, value: string): Buffers {
+  return Array.isArray(buffers)
+    ? setInput(buffers as readonly string[], index, value)
+    : writeCore(buffers as StateCore, index, value)
+}
+
+/** Word `index` (buffer `typed`) just became committed: roll the counters forward. */
+function commitBuffers(ctx: CoreContext, buffers: Buffers, index: number, typed: string): Buffers {
+  if (Array.isArray(buffers) || index >= ctx.words.length) return buffers
+  const core = buffers as StateCore
+  const word = ctx.words[index]
+  return {
+    store: core.store,
+    version: core.version,
+    sep: core.sep + (endsLine(word) ? 0 : 1),
+    correct: core.correct + matchingChars(word, typed),
+    target: core.target + word.length,
+    cache: core.cache
+  }
+}
+
+/** Word `index` is the active word again (a backspace crossed back): roll them back. */
+function uncommitBuffers(
+  ctx: CoreContext,
+  buffers: Buffers,
+  index: number,
+  typed: string
+): Buffers {
+  if (Array.isArray(buffers) || index >= ctx.words.length) return buffers
+  const core = buffers as StateCore
+  const word = ctx.words[index]
+  return {
+    store: core.store,
+    version: core.version,
+    sep: core.sep - (endsLine(word) ? 0 : 1),
+    correct: core.correct - matchingChars(word, typed),
+    target: core.target - word.length,
+    cache: core.cache
+  }
+}
+
+/**
+ * The single state constructor. Every field is passed explicitly — no spread, so
+ * reading `input` off the source state (and materializing it) can never sneak
+ * into a transition.
+ */
+function makeState(
+  phase: Phase,
+  wordIndex: number,
+  buffers: Buffers,
+  startedAt: Ms | null,
+  finishedAt: Ms | null,
+  lastSeq: Seq | null,
+  failReason: FailReason | null
+): GameState {
+  if (Array.isArray(buffers)) {
+    return {
+      phase,
+      wordIndex,
+      input: buffers as readonly string[],
+      startedAt,
+      finishedAt,
+      lastSeq,
+      failReason
+    }
+  }
+  const core = buffers as StateCore
+  const state = {
+    phase,
+    wordIndex,
+    get input(): readonly string[] {
+      return (core.cache ??= materialize(core))
+    },
+    startedAt,
+    finishedAt,
+    lastSeq,
+    failReason
+  }
+  // `configurable` so a reactive Proxy over a state cannot trip the
+  // non-configurable-own-property invariant; still non-enumerable, still invisible.
+  Object.defineProperty(state, STATE_CORE, { value: core, configurable: true })
+  return state
+}
+
+/**
+ * The initial state for `ctx` — the ONLY place the start policy is applied. A
+ * `'go'` run is already running at `t = 0`, so `settle` (and therefore the
+ * deadline, the MinSpeed floor and every fold) is live without a single event.
+ */
+export function initialStateOf(ctx: CoreContext): GameState {
+  const running = ctx.config.startPolicy === 'go'
+  return makeState(
+    running ? 'running' : 'idle',
+    0,
+    emptyCore(ctx.words),
+    running ? asMs(0) : null,
+    null,
+    null,
+    null
+  )
+}
+
+// Every accepted transition records the event's seq. This is the shape for the
+// transitions that move nothing else (a no-op delete, a leading commit).
+function withSeq(state: GameState, event: GameEvent): GameState {
+  return makeState(
+    state.phase,
+    state.wordIndex,
+    buffersOf(state),
+    state.startedAt,
+    state.finishedAt,
+    event.seq,
+    state.failReason
+  )
 }
 
 /** MinSpeed grace: the floor is never evaluated before this many ms after the first event. */
@@ -190,6 +478,12 @@ export function separatorsOf(ctx: CoreContext, state: GameState): number {
   const committed = Math.min(state.wordIndex, ctx.words.length)
   const finishedByCount =
     state.phase === 'finished' && ctx.config.mode !== 'time' && ctx.config.mode !== 'free'
+  const core = coreOf(state)
+  if (core !== undefined && core.store.words === ctx.words) {
+    // Same sum, accumulated one word at a time as the run advanced.
+    const last = finishedByCount && committed > 0 && !endsLine(ctx.words[committed - 1] ?? '')
+    return last ? core.sep - 1 : core.sep
+  }
   let spaces = 0
   for (let i = 0; i < committed; i++) {
     if (finishedByCount && i === committed - 1) continue
@@ -207,17 +501,29 @@ export function separatorsOf(ctx: CoreContext, state: GameState): number {
  * `core.equivalence`/minspeed tests pin the match.
  */
 export function netCharsOf(ctx: CoreContext, state: GameState): number {
-  const committed = Math.min(state.wordIndex, ctx.words.length)
+  const core = coreOf(state)
+  const incremental = core !== undefined && core.store.words === ctx.words
   let correct = 0
-  for (let i = 0; i < committed; i++) {
-    const target = ctx.words[i] ?? ''
-    const typed = state.input[i] ?? ''
-    const n = Math.min(target.length, typed.length)
-    for (let k = 0; k < n; k++) if (typed[k] === target[k]) correct++
+  if (incremental) {
+    // The committed half is carried on the state — see the PURITY BOUNDARY note.
+    // Recomputing it here is what made a MinSpeed run quadratic: `settle` asks
+    // for it on every single event.
+    correct = (core as StateCore).correct
+  } else {
+    const committed = Math.min(state.wordIndex, ctx.words.length)
+    const input = state.input
+    for (let i = 0; i < committed; i++) {
+      const target = ctx.words[i] ?? ''
+      const typed = input[i] ?? ''
+      const n = Math.min(target.length, typed.length)
+      for (let k = 0; k < n; k++) if (typed[k] === target[k]) correct++
+    }
   }
   if (state.wordIndex < ctx.words.length) {
     const target = ctx.words[state.wordIndex] ?? ''
-    const buffer = state.input[state.wordIndex] ?? ''
+    const buffer = incremental
+      ? bufferOf(state, state.wordIndex)
+      : (state.input[state.wordIndex] ?? '')
     const n = Math.min(target.length, buffer.length)
     for (let k = 0; k < n; k++) if (buffer[k] === target[k]) correct++
   }
@@ -235,12 +541,20 @@ export function netCharsOf(ctx: CoreContext, state: GameState): number {
  * in-field ghost carets all read it.
  */
 export function targetCharsOf(ctx: CoreContext, state: GameState): number {
-  const committed = Math.min(state.wordIndex, ctx.words.length)
+  const core = coreOf(state)
+  const incremental = core !== undefined && core.store.words === ctx.words
   let chars = 0
-  for (let i = 0; i < committed; i++) chars += (ctx.words[i] ?? '').length
+  if (incremental) {
+    chars = (core as StateCore).target
+  } else {
+    const committed = Math.min(state.wordIndex, ctx.words.length)
+    for (let i = 0; i < committed; i++) chars += (ctx.words[i] ?? '').length
+  }
   if (state.wordIndex < ctx.words.length) {
     const target = (ctx.words[state.wordIndex] ?? '').length
-    const typed = (state.input[state.wordIndex] ?? '').length
+    const typed = incremental
+      ? bufferOf(state, state.wordIndex).length
+      : (state.input[state.wordIndex] ?? '').length
     chars += typed < target ? typed : target
   }
   return chars
@@ -308,7 +622,15 @@ export function settle(ctx: CoreContext, state: GameState, nowMs: Ms): GameState
     }
   }
   if (finishAt !== null && nowMs >= finishAt) {
-    return { ...state, phase: 'finished', finishedAt: finishAt, failReason: reason }
+    return makeState(
+      'finished',
+      state.wordIndex,
+      buffersOf(state),
+      state.startedAt,
+      finishAt,
+      state.lastSeq,
+      reason
+    )
   }
   return state
 }
@@ -328,32 +650,32 @@ function stoppedOnError(message: string, event: GameEvent): CoreError {
 }
 
 /**
- * Commit the current word: advance to the next, or finish the test. Shared by the
- * explicit `commit` event and by nospace auto-commit. In `expert` difficulty a word
- * committed with any error ends the test (`failReason: 'expert'`).
+ * Commit word `wordIndex` (buffer `buffer`, buffers already carrying it): advance
+ * to the next, or finish the test. Shared by the explicit `commit` event and by
+ * nospace / quickEnd auto-commit. In `expert` difficulty a word committed with any
+ * error ends the test (`failReason: 'expert'`). The caller passes the pieces
+ * rather than a state so the edit path builds exactly one state object per event.
  */
-function commitCurrentWord(
+function commitWord(
   ctx: CoreContext,
-  state: GameState,
-  event: GameEvent
+  event: GameEvent,
+  wordIndex: number,
+  buffer: string,
+  buffers: Buffers,
+  startedAt: Ms | null
 ): Result<GameState, CoreError> {
-  const wordIndex = state.wordIndex
-  const buffer = state.input[wordIndex] ?? ''
   const target = ctx.words[wordIndex] ?? ''
   if (ctx.config.difficulty === 'expert' && buffer !== target) {
-    return ok(
-      withEvent(state, { phase: 'finished', finishedAt: event.t, failReason: 'expert' }, event)
-    )
+    return ok(makeState('finished', wordIndex, buffers, startedAt, event.t, event.seq, 'expert'))
   }
   const nextIndex = wordIndex + 1
+  const advanced = commitBuffers(ctx, buffers, wordIndex, buffer)
   const finishesByCount =
     ctx.config.mode !== 'time' && ctx.config.mode !== 'free' && nextIndex >= ctx.words.length
   if (finishesByCount) {
-    return ok(
-      withEvent(state, { wordIndex: nextIndex, phase: 'finished', finishedAt: event.t }, event)
-    )
+    return ok(makeState('finished', nextIndex, advanced, startedAt, event.t, event.seq, null))
   }
-  return ok(withEvent(state, { wordIndex: nextIndex }, event))
+  return ok(makeState('running', nextIndex, advanced, startedAt, null, event.seq, null))
 }
 
 /**
@@ -377,40 +699,51 @@ function applyEdit(
   insertedText: string,
   insertedAt: number
 ): Result<GameState, CoreError> {
-  const target = ctx.words[state.wordIndex] ?? ''
+  const wordIndex = state.wordIndex
+  const target = ctx.words[wordIndex] ?? ''
   if (next.length > target.length + ctx.config.maxExtraChars) {
     return err({
       kind: 'WordLengthExceeded',
-      message: `word ${state.wordIndex} exceeds length cap`,
+      message: `word ${wordIndex} exceeds length cap`,
       seq: event.seq
     })
   }
   const wrongInsert = hasWrongChar(target, insertedText, insertedAt)
-  const withBuffer: GameState = {
-    ...state,
-    phase: 'running',
-    startedAt: state.startedAt ?? event.t,
-    input: setInput(state.input, state.wordIndex, next)
+  const master = ctx.config.difficulty === 'master'
+  // The `stopOnError: 'letter'` refusal is decided BEFORE the buffer is written.
+  // `master` is still evaluated first and still wins, so the outcome is unchanged
+  // — but a refused keystroke must not leave a discarded buffer version behind,
+  // because that would fork the shared store on every rejected key.
+  if (wrongInsert && !master && ctx.config.stopOnError === 'letter') {
+    return err(stoppedOnError(`wrong character refused in word ${wordIndex}`, event))
   }
-  if (ctx.config.difficulty === 'master' && wrongInsert) {
-    return ok(
-      withEvent(withBuffer, { phase: 'finished', finishedAt: event.t, failReason: 'master' }, event)
-    )
-  }
-  if (ctx.config.stopOnError === 'letter' && wrongInsert) {
-    return err(stoppedOnError(`wrong character refused in word ${state.wordIndex}`, event))
-  }
-  if (ctx.config.nospace && next.length >= target.length) {
-    return commitCurrentWord(ctx, withBuffer, event)
+  const buffers = writeBuffers(buffersFor(ctx, state), wordIndex, next)
+  const startedAt = state.startedAt ?? event.t
+  if (master && wrongInsert) {
+    return ok(makeState('finished', wordIndex, buffers, startedAt, event.t, event.seq, 'master'))
   }
   const countsWords = ctx.config.mode !== 'time' && ctx.config.mode !== 'free'
-  const isLastWord = state.wordIndex + 1 >= ctx.words.length
-  if (ctx.config.quickEnd === true && countsWords && isLastWord && next.length >= target.length) {
-    // Same auto-commit path as nospace, so `expert` and `finishesByCount` keep their
-    // usual meaning on the final word.
-    return commitCurrentWord(ctx, withBuffer, event)
+  const isLastWord = wordIndex + 1 >= ctx.words.length
+  // nospace: reaching the target length auto-commits. quickEnd: the LAST word of a
+  // count run does too — the same path, so `expert` and `finishesByCount` keep
+  // their usual meaning on the final word.
+  const autoCommits =
+    next.length >= target.length &&
+    (ctx.config.nospace || (ctx.config.quickEnd === true && countsWords && isLastWord))
+  if (autoCommits) {
+    return commitWord(ctx, event, wordIndex, next, buffers, startedAt)
   }
-  return ok(withEvent(withBuffer, {}, event))
+  return ok(
+    makeState(
+      'running',
+      wordIndex,
+      buffers,
+      startedAt,
+      state.finishedAt,
+      event.seq,
+      state.failReason
+    )
+  )
 }
 
 // The previous word is "locked" when it was committed fully correct (buffer equals
@@ -421,7 +754,7 @@ function prevWordLocked(ctx: CoreContext, state: GameState): boolean {
   if (ctx.config.freedomMode === true) return false
   const previous = state.wordIndex - 1
   if (previous < 0) return false
-  return (state.input[previous] ?? '') === (ctx.words[previous] ?? '')
+  return bufferOf(state, previous) === (ctx.words[previous] ?? '')
 }
 
 function reduceDelete(
@@ -429,44 +762,63 @@ function reduceDelete(
   state: GameState,
   event: Extract<GameEvent, { kind: 'delete' }>
 ): Result<GameState, CoreError> {
-  const buffer = state.input[state.wordIndex] ?? ''
-  const crossesBoundary = buffer.length === 0 && state.wordIndex > 0
+  const wordIndex = state.wordIndex
+  const buffer = bufferOf(state, wordIndex)
+  const crossesBoundary = buffer.length === 0 && wordIndex > 0
   // A backspace must not re-enter a word committed fully correct. Rejected (not a
   // no-op that mutates), so the store never logs it and a valid log never contains
   // it — a log that does is caught by foldLog / validateLog.
   if (crossesBoundary && prevWordLocked(ctx, state)) {
     return err({
       kind: 'BackspaceLocked',
-      message: `backspace blocked at correct word ${state.wordIndex - 1}`,
+      message: `backspace blocked at correct word ${wordIndex - 1}`,
       seq: event.seq
     })
   }
+  const edited = (buffers: Buffers, index: number): GameState =>
+    makeState(
+      state.phase,
+      index,
+      buffers,
+      state.startedAt,
+      state.finishedAt,
+      event.seq,
+      state.failReason
+    )
   if (event.unit === 'word') {
-    if (buffer.length > 0)
-      return ok(withEvent(state, { input: setInput(state.input, state.wordIndex, '') }, event))
-    if (crossesBoundary) {
-      return ok(
-        withEvent(
-          state,
-          { wordIndex: state.wordIndex - 1, input: setInput(state.input, state.wordIndex - 1, '') },
-          event
-        )
-      )
+    if (buffer.length > 0) {
+      return ok(edited(writeBuffers(buffersFor(ctx, state), wordIndex, ''), wordIndex))
     }
-    return ok(withEvent(state, {}, event)) // at the very start: nothing to delete
+    if (crossesBoundary) {
+      // Step back into the previous word AND clear it. The counters roll back
+      // against the buffer as it was before the clear.
+      const previous = wordIndex - 1
+      const reopened = uncommitBuffers(
+        ctx,
+        buffersFor(ctx, state),
+        previous,
+        bufferOf(state, previous)
+      )
+      return ok(edited(writeBuffers(reopened, previous, ''), previous))
+    }
+    return ok(withSeq(state, event)) // at the very start: nothing to delete
   }
   // Single character.
   if (buffer.length > 0) {
     return ok(
-      withEvent(
-        state,
-        { input: setInput(state.input, state.wordIndex, buffer.slice(0, -1)) },
-        event
+      edited(writeBuffers(buffersFor(ctx, state), wordIndex, buffer.slice(0, -1)), wordIndex)
+    )
+  }
+  if (crossesBoundary) {
+    const previous = wordIndex - 1
+    return ok(
+      edited(
+        uncommitBuffers(ctx, buffersFor(ctx, state), previous, bufferOf(state, previous)),
+        previous
       )
     )
   }
-  if (crossesBoundary) return ok(withEvent(state, { wordIndex: state.wordIndex - 1 }, event))
-  return ok(withEvent(state, {}, event)) // at the very start: no-op
+  return ok(withSeq(state, event)) // at the very start: no-op
 }
 
 function reduceCommit(
@@ -489,8 +841,8 @@ function reduceCommit(
     })
   }
   // Commit before the first insert is a no-op (leading space).
-  if (state.phase !== 'running') return ok(withEvent(state, {}, event))
-  const buffer = state.input[state.wordIndex] ?? ''
+  if (state.phase !== 'running') return ok(withSeq(state, event))
+  const buffer = bufferOf(state, state.wordIndex)
   // stopOnError 'word': the advance is refused while the buffer differs from the target
   // — an empty buffer included, so a word cannot be skipped either.
   const stoppedOnWrongWord =
@@ -498,13 +850,13 @@ function reduceCommit(
   if (buffer.length === 0) {
     if (stoppedOnWrongWord)
       return err(stoppedOnError(`word ${state.wordIndex} cannot be skipped`, event))
-    return ok(withEvent(state, {}, event)) // empty commit: no advance
+    return ok(withSeq(state, event)) // empty commit: no advance
   }
   // `expert` wins: an errored commit ends the run there rather than being refused.
   if (stoppedOnWrongWord && ctx.config.difficulty !== 'expert') {
     return err(stoppedOnError(`word ${state.wordIndex} is not correct yet`, event))
   }
-  return commitCurrentWord(ctx, state, event)
+  return commitWord(ctx, event, state.wordIndex, buffer, buffersFor(ctx, state), state.startedAt)
 }
 
 /**
@@ -529,11 +881,11 @@ export function reduce(
 
   switch (event.kind) {
     case 'insert': {
-      const buffer = state.input[state.wordIndex] ?? ''
+      const buffer = bufferOf(state, state.wordIndex)
       return applyEdit(ctx, state, event, buffer + event.text, event.text, buffer.length)
     }
     case 'replace': {
-      const buffer = state.input[state.wordIndex] ?? ''
+      const buffer = bufferOf(state, state.wordIndex)
       if (event.from < 0 || event.to < event.from || event.to > buffer.length) {
         return err({
           kind: 'InvalidRange',

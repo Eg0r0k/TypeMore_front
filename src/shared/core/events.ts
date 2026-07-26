@@ -125,7 +125,15 @@ export const replaceEvent = (
  * Canonical ordering: ascending `seq`. Stable, so any equal-`seq` inputs (which
  * must not occur — `seq` is unique) keep arrival order. Producers assign `seq`
  * in processing order, so this also resolves ties on equal `t`.
+ *
+ * An already-ordered log is returned AS IS: every producer emits in `seq` order,
+ * so the copy-and-sort was pure waste — and it ran five times per server
+ * judgement over the full log. The result is `readonly` precisely because it may
+ * alias the caller's array; nothing has ever mutated it.
  */
-export function sortEvents(events: readonly GameEvent[]): GameEvent[] {
-  return [...events].sort((a, b) => a.seq - b.seq)
+export function sortEvents(events: readonly GameEvent[]): readonly GameEvent[] {
+  for (let i = 1; i < events.length; i++) {
+    if (events[i].seq < events[i - 1].seq) return [...events].sort((a, b) => a.seq - b.seq)
+  }
+  return events
 }

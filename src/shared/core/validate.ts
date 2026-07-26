@@ -16,7 +16,7 @@ import { foldLog, minSpeedFailInstant, settle } from './game-core'
 import type { Dictionary, GenerationConfig } from './words'
 import { generateWords, makeSeedContext } from './words'
 import type { Metrics } from './stats'
-import { afkOf, computeMetrics } from './stats'
+import { afkBetween, computeMetrics } from './stats'
 
 /** The immutable snapshot that governed the match (reducer config + generation config). */
 export interface ConfigSnapshot {
@@ -248,7 +248,9 @@ export function validateLog(input: ValidateLogInput): Result<ValidationReport, V
   // clock — the "second clock" of the network phase).
   const runEnd =
     finalState.finishedAt ?? endMs ?? (events.length > 0 ? events[events.length - 1].t : startT)
-  const afk = afkOf(ctx, events, runEnd)
+  // `runEnd` already resolves `finalState.finishedAt`, so this is byte-for-byte
+  // the window `afkOf` would have re-folded the entire log to rediscover.
+  const afk = afkBetween(events, finalState.startedAt, runEnd)
   const runMs = Math.max(0, runEnd - (finalState.startedAt ?? startT))
   if (afk.afkMs > 0 && runMs > 0) {
     const share = afk.afkMs / runMs

@@ -37,9 +37,9 @@
 import type { GameEvent, Ms } from './events'
 import { asMs, sortEvents } from './events'
 import type { CoreContext } from './game-core'
-import { foldLog, minSpeedFailInstant, settle } from './game-core'
+import { minSpeedFailInstant, settle } from './game-core'
 import type { Metrics } from './stats'
-import { computeMetrics } from './stats'
+import { analyzeLog, computeMetrics, metricsFrom } from './stats'
 import type { GenerationConfig, GenerationMode } from './words'
 import type { ModsDeclaration } from './mods'
 import { modMultiplierV1 } from './mods'
@@ -336,9 +336,17 @@ export function finalizeScoreV2(
 
 /**
  * Batch scoreV2 — the server's authoritative recompute and the finals path.
- * Folds the log for the authoritative finish instant (time deadline + MinSpeed
- * tail) so a count-mode + MinSpeed run measures its time bonus to the fail instant
- * exactly as the client did, then applies the mod multiplier from setup + declaration.
+ * Replays the log ONCE for the authoritative finish instant (time deadline +
+ * MinSpeed tail) so a count-mode + MinSpeed run measures its time bonus to the
+ * fail instant exactly as the client did, then applies the mod multiplier from
+ * setup + declaration.
+ *
+ * That replay used to be a `foldLog` on top of the one `computeMetrics` already
+ * performs — two identical trajectories over the same log. `analyzeLog` carries
+ * the fold's final state, so one pass now feeds both: `settle` to the last event
+ * reproduces `foldLog`'s trailing settle exactly, and `aborted` marks the point
+ * where `foldLog` would have returned an error (in which case, as before, the
+ * finish instant falls back to the last event).
  */
 export function scoreV2OfLog(
   log: readonly GameEvent[],
@@ -349,12 +357,12 @@ export function scoreV2OfLog(
   const ordered = sortEvents(log)
   const lastT = ordered.length > 0 ? ordered[ordered.length - 1].t : asMs(0)
 
-  // Authoritative finish instant (mirrors validateLog): fold, then surface a
+  // Authoritative finish instant (mirrors validateLog): replay, then surface a
   // post-last-event MinSpeed breach so the measured duration matches the client.
+  const analysis = analyzeLog(ctx, ordered)
   let end: Ms = lastT
-  const folded = foldLog(ctx, ordered)
-  if (folded.isOk()) {
-    let finalState = folded.value
+  if (!analysis.aborted) {
+    let finalState = settle(ctx, analysis.finalState, lastT)
     if (ctx.config.minWpm > 0 && finalState.phase === 'running') {
       const failAt = minSpeedFailInstant(ctx, finalState)
       if (failAt !== null) finalState = settle(ctx, finalState, failAt)
@@ -364,7 +372,7 @@ export function scoreV2OfLog(
 
   const state = initialScoreState()
   for (const event of ordered) scoreStep(state, event, ctx)
-  const metrics = computeMetrics(ctx, ordered, end)
+  const metrics = metricsFrom(ctx, analysis, end)
   const modMultiplier = modMultiplierV1(
     { generation: setup.generation, config: ctx.config },
     declaration
