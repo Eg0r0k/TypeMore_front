@@ -170,6 +170,10 @@ export default {
       hidePassword: 'Hide password',
       or: 'or'
     },
+    captcha: {
+      required: 'Complete the captcha to continue.',
+      failed: 'Captcha check failed. Please try again.'
+    },
     login: {
       title: 'Login',
       submit: 'Login',
@@ -196,7 +200,10 @@ export default {
       success: 'Your email is verified. You can now log in.',
       failed: 'This verification link is invalid or has expired.',
       missingToken: 'No verification token was provided.',
-      toLogin: 'Go to login'
+      toLogin: 'Go to login',
+      resendDescription: 'Need a new link? Enter your email and we will send another.',
+      resendSubmit: 'Resend verification email',
+      resendSent: 'If that address still needs verifying, a new link is on its way.'
     },
     callback: {
       title: 'Signing you in',

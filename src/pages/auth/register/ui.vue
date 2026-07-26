@@ -61,6 +61,11 @@
           </template>
         </TextInput>
 
+        <TurnstileField
+          ref="captcha"
+          v-model="turnstileToken"
+          :error-message="errors.turnstileToken"
+        />
         <Typography v-if="submitError" color="error" size="xs" role="alert">
           {{ submitError }}
         </Typography>
@@ -81,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref } from 'vue'
+  import { ref, useTemplateRef } from 'vue'
   import { RouterLink } from 'vue-router'
   import { useI18n } from 'vue-i18n'
   import { Form, useForm } from 'vee-validate'
@@ -93,6 +98,13 @@
   import { TextInput } from '@shared/ui/input'
   import { Button } from '@shared/ui/button'
   import { isApiError, useRegisterMutation } from '@shared/api'
+  import {
+    TurnstileField,
+    captchaBody,
+    captchaTokenSchema,
+    isCaptchaError,
+    type TurnstileFieldExpose
+  } from '@/features/captcha/turnstile'
   import { routeLocation } from '@/app/router/route-locations'
 
   const { t } = useI18n()
@@ -117,7 +129,8 @@
         v.nonEmpty(t('auth.validation.passwordRequired')),
         v.minLength(8, t('auth.validation.passwordMin')),
         v.maxLength(72, t('auth.validation.passwordMax'))
-      )
+      ),
+      turnstileToken: captchaTokenSchema(t('auth.captcha.required'))
     })
   )
 
@@ -125,6 +138,8 @@
   const [name, nameProps] = defineField('name')
   const [email, emailProps] = defineField('email')
   const [password, passwordProps] = defineField('password')
+  const [turnstileToken] = defineField('turnstileToken')
+  const captcha = useTemplateRef<TurnstileFieldExpose>('captcha')
 
   const visiblePassword = ref(false)
   const submitError = ref('')
@@ -135,10 +150,20 @@
   const onSubmit = handleSubmit(async (values) => {
     submitError.value = ''
     try {
-      await mutateAsync({ email: values.email, password: values.password, name: values.name })
+      await mutateAsync({
+        email: values.email,
+        password: values.password,
+        name: values.name,
+        ...captchaBody(values.turnstileToken)
+      })
       done.value = true
     } catch (error) {
-      if (isApiError(error) && error.code === 'name_taken') {
+      // A Turnstile token is single-use: without the reset the retry would
+      // resubmit the spent token and fail again, silently.
+      if (isCaptchaError(error)) {
+        captcha.value?.reset()
+        submitError.value = t('auth.captcha.failed')
+      } else if (isApiError(error) && error.code === 'name_taken') {
         submitError.value = t('auth.register.nameTaken')
       } else if (isApiError(error) && error.code === 'account_exists') {
         submitError.value = t('auth.register.accountExists')

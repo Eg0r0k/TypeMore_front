@@ -106,6 +106,25 @@ every request from `import.meta.env.VITE_API_URL`.
   fail to connect, remap the backend to a free host port in compose and point
   `VITE_API_URL` at that mapped port instead (the prefix stays `/api/v1`).
 
+### `VITE_TURNSTILE_SITE_KEY`
+
+Cloudflare Turnstile site key. It guards the three abuse-prone auth endpoints —
+`POST /auth/register`, `POST /auth/password-reset/request` and
+`POST /auth/verify/resend` — by adding a `turnstileToken` field to their JSON
+bodies.
+
+- **Absent or blank is the dev default**, and it disables the captcha entirely:
+  Cloudflare's script is never fetched, no widget renders, and the request
+  bodies are byte-identical to their pre-captcha form.
+- It mirrors the backend's `TYPEMORE_TURNSTILE_SECRET`, which disables
+  verification when empty. Set both or neither: a site key pointed at a backend
+  with no secret only makes users solve a challenge nobody checks.
+- The script is loaded lazily by the widget, so it reaches auth routes only —
+  the typing test and the boards never pay for it.
+- The backend answers a bad or missing token with HTTP 400 `captcha_failed` /
+  `captcha_required`. Both surface the same message and reset the widget, since
+  a Turnstile token is single-use.
+
 ### Developing against docker-compose
 
 Run the backend stack from the `TypeMore_back` repository, then run this

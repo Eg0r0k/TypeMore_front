@@ -25,6 +25,16 @@
             :label="t('auth.common.email')"
             :placeholder="t('auth.common.email')"
           />
+          <TurnstileField
+            ref="captcha"
+            v-model="turnstileToken"
+            :error-message="errors.turnstileToken"
+          />
+
+          <Typography v-if="submitError" color="error" size="xs" role="alert">
+            {{ submitError }}
+          </Typography>
+
           <Button type="submit" :disabled="isPending">{{ t('auth.reset.submit') }}</Button>
         </Form>
       </template>
@@ -37,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref } from 'vue'
+  import { ref, useTemplateRef } from 'vue'
   import { RouterLink } from 'vue-router'
   import { useI18n } from 'vue-i18n'
   import { Form, useForm } from 'vee-validate'
@@ -47,6 +57,13 @@
   import { TextInput } from '@shared/ui/input'
   import { Button } from '@shared/ui/button'
   import { usePasswordResetRequestMutation } from '@shared/api'
+  import {
+    TurnstileField,
+    captchaBody,
+    captchaTokenSchema,
+    isCaptchaError,
+    type TurnstileFieldExpose
+  } from '@/features/captcha/turnstile'
   import { routeLocation } from '@/app/router/route-locations'
 
   const { t } = useI18n()
@@ -57,23 +74,35 @@
         v.string(t('auth.validation.emailRequired')),
         v.nonEmpty(t('auth.validation.emailRequired')),
         v.email(t('auth.validation.emailInvalid'))
-      )
+      ),
+      turnstileToken: captchaTokenSchema(t('auth.captcha.required'))
     })
   )
 
   const { handleSubmit, errors, defineField } = useForm({ validationSchema: schema })
   const [email, emailProps] = defineField('email')
+  const [turnstileToken] = defineField('turnstileToken')
+  const captcha = useTemplateRef<TurnstileFieldExpose>('captcha')
 
   const submitted = ref(false)
+  const submitError = ref('')
   const { mutateAsync, isPending } = usePasswordResetRequestMutation()
 
   const onSubmit = handleSubmit(async (values) => {
-    // Swallow the outcome deliberately: revealing success/failure per-email would
-    // leak which addresses are registered.
+    submitError.value = ''
     try {
-      await mutateAsync({ email: values.email })
-    } catch {
-      // ignore — identical UX regardless.
+      await mutateAsync({ email: values.email, ...captchaBody(values.turnstileToken) })
+    } catch (error) {
+      // The captcha gate runs BEFORE the anti-enumeration branch server-side, so
+      // a rejection here says nothing about the address and must be surfaced —
+      // and the spent, single-use token replaced before the user retries.
+      if (isCaptchaError(error)) {
+        captcha.value?.reset()
+        submitError.value = t('auth.captcha.failed')
+        return
+      }
+      // Any other outcome is swallowed deliberately: revealing success/failure
+      // per-email would leak which addresses are registered.
     }
     submitted.value = true
   })

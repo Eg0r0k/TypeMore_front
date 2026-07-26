@@ -8,6 +8,12 @@ interface ImportMetaEnv {
   readonly VITE_WS_URL?: string
   /** Legacy alias some configs use for the API base; consulted after VITE_API_URL. */
   readonly VITE_API_BASE_URL?: string
+  /**
+   * Cloudflare Turnstile site key. Absent or blank ⇒ no captcha is rendered and
+   * no token is sent — the mirror of an empty `TYPEMORE_TURNSTILE_SECRET` on the
+   * backend, which is the dev default.
+   */
+  readonly VITE_TURNSTILE_SITE_KEY?: string
   /** Truthy in Playwright E2E builds (enables the loopback match mode gate). */
   readonly VITE_E2E?: string
 }

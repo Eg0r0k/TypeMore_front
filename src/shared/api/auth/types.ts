@@ -3,11 +3,17 @@
 /** OAuth / linking providers. */
 export type OAuthProvider = 'github' | 'google'
 
+/**
+ * `turnstileToken` rides the three abuse-prone endpoints (register, password
+ * reset request, verification resend). It is OMITTED entirely when the site
+ * key is unset, which is the backend's disabled mode too.
+ */
 export interface RegisterInput {
   email: string
   password: string
   /** Omitted → server defaults to the email local-part. */
   name?: string
+  turnstileToken?: string
 }
 export interface LoginInput {
   email: string
@@ -18,9 +24,11 @@ export interface VerifyInput {
 }
 export interface ResendVerificationInput {
   email: string
+  turnstileToken?: string
 }
 export interface PasswordResetRequestInput {
   email: string
+  turnstileToken?: string
 }
 export interface PasswordResetConfirmInput {
   token: string
