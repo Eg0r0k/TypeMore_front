@@ -100,7 +100,7 @@ const WORDS: Record<string, string[]> = {
     'страна',
     'человек'
   ],
-  css_code: [
+  code_css: [
     'color',
     'background',
     'font-size',
@@ -133,7 +133,18 @@ const WORDS: Record<string, string[]> = {
 const HASHES: Record<string, string> = {
   german: 'e2e00001',
   russian: 'e2e00002',
-  css_code: 'e2e00003'
+  code_css: 'e2e00003'
+}
+
+/**
+ * The catalogue's human names. NOT derived from the key: the server owns this
+ * table (`code_css` is "CSS (code)", never "Css Code"), and the client renders
+ * whatever it is handed — so the stub has to hand over the real thing.
+ */
+const NAMES: Record<string, string> = {
+  german: 'German',
+  russian: 'Russian',
+  code_css: 'CSS (code)'
 }
 
 /** Installs the catalogue + body routes on `page`. Call before the first `goto`. */
@@ -142,7 +153,7 @@ export async function stubDictionaries(page: Page): Promise<void> {
     const body = JSON.stringify({ name: lang, words })
     return {
       lang,
-      name: lang,
+      name: NAMES[lang],
       dictHash: HASHES[lang],
       wordCount: words.length,
       bytes: new TextEncoder().encode(body).length

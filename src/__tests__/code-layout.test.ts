@@ -28,7 +28,7 @@ const CSS_TEXT = 'p.center {\n\ttext-align: center;\n\tcolor: red;\n}\n\np.large
 
 /** A quote run's targets, straight out of the core. */
 function targetsOf(text: string): readonly string[] {
-  const dict: Dictionary = { name: 'css_code', bcp47: 'en', words: ['unused'] }
+  const dict: Dictionary = { name: 'code_css', bcp47: 'en', words: ['unused'] }
   const generation: GenerationConfig = {
     mode: 'quote',
     length: 0,

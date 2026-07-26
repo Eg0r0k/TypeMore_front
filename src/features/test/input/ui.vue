@@ -73,7 +73,7 @@
    *
    * But ONLY a target-final newline separates. `generateWords` splits a quote's
    * text on spaces, so a code quote's newline usually lands mid-token
-   * (`{\n\ttext-align:` — 241 of css_code's 376 tokens carry one). Committing
+   * (`{\n\ttext-align:` — 241 of code_css's 376 tokens carry one). Committing
    * there would throw the rest of the token away and jump the player to the next
    * word with the remainder of the line silently marked missed — the reported
    * word skip. Inside a token the newline is simply one of its characters, which

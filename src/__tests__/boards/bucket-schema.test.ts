@@ -22,10 +22,10 @@ import {
  */
 
 const LANGUAGE_BUCKET = {
-  bucket: 'time:15000:css_code:seeded',
+  bucket: 'time:15000:code_css:seeded',
   mode: 'time',
   durationMs: 15000,
-  lang: 'css_code',
+  lang: 'code_css',
   textSource: 'seeded',
   entries: 1
 }
@@ -65,7 +65,7 @@ describe('the catalogue parses both kinds of board', () => {
       v.parse(BucketInfoSchema, LANGUAGE_BUCKET)
     ]
     const named = buckets.map((b) => (isQuoteBucket(b) ? `quote ${b.quoteId.slice(0, 8)}` : b.lang))
-    expect(named).toEqual(['quote 0a6c0103', 'css_code'])
+    expect(named).toEqual(['quote 0a6c0103', 'code_css'])
   })
 
   it('still rejects a row that is neither shape', () => {

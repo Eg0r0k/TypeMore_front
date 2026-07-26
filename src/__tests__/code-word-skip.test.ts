@@ -1,7 +1,7 @@
 /**
  * The word-skip at a code newline, and the rule that removes its cause.
  *
- * REPORTED: typing Enter (or Space) at a line ending in a css_code quote made a
+ * REPORTED: typing Enter (or Space) at a line ending in a code_css quote made a
  * word disappear; two newlines in a row would not advance at all; and a line
  * scrolled off leaving half of itself behind.
  *
@@ -46,7 +46,7 @@ const CSS_TEXT = 'p.center {\n\ttext-align: center;\n\tcolor: red;\n}\n\np.large
 
 /** The screenshot text's real targets, straight out of the core. */
 const CSS_WORDS = ((): readonly string[] => {
-  const dict: Dictionary = { name: 'css_code', bcp47: 'en', words: ['unused'] }
+  const dict: Dictionary = { name: 'code_css', bcp47: 'en', words: ['unused'] }
   const generation: GenerationConfig = {
     mode: 'quote',
     length: 0,

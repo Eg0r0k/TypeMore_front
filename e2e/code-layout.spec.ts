@@ -27,7 +27,7 @@ const EXPECTED_LINES = [
 
 const QUOTE = {
   id: '34173500-3ac6-4edb-a21b-00f02c1acf6e',
-  lang: 'css_code',
+  lang: 'code_css',
   upstreamId: 3,
   source: 'W3Schools CSS Class Selector',
   length: TEXT.length,
@@ -50,7 +50,7 @@ async function openQuoteRun(page: Page): Promise<void> {
     }
     const config = raw.config ?? {}
     config.mode = 'quote'
-    config.language = 'css_code'
+    config.language = 'code_css'
     config.quoteGroup = 'all'
     localStorage.setItem('config', JSON.stringify({ ...raw, config }))
   })
