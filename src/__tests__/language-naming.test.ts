@@ -232,6 +232,19 @@ describe('the catalogue contract', () => {
     expect(parsed.name).toBe('CSS (code)')
   })
 
+  /**
+   * The rename `css_code -> code_css` is a rename of the KEY and nothing else.
+   * `dictHash` is FNV-1a over the word list, the word list did not move, so the
+   * body address did not move either — which is what keeps every run recorded
+   * before the rename replayable against the dictionary it was actually played
+   * on. A run's replay resolves by hash, never by language.
+   */
+  it('does not move the body address when the key is renamed', () => {
+    const css = v.parse(DictionaryCatalogueSchema, CATALOGUE).find((d) => d.lang === 'code_css')
+
+    expect(css?.dictHash).toBe('55ccd317')
+  })
+
   it('rejects a row with no name — there would be nothing honest to render', () => {
     const { name: _dropped, ...nameless } = row() as Record<string, unknown>
     expect(() => v.parse(DictionarySchema, nameless)).toThrow()
