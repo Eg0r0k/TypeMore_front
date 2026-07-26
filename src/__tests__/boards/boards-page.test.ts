@@ -37,6 +37,13 @@ vi.mock('@shared/api', () => {
       queryKey: ['catalogue'],
       queryFn: () => h.catalogue()
     }),
+    // The picker asks the dictionary catalogue what a bucket's language is
+    // CALLED. This harness publishes none, so every board falls back to its key
+    // — which is what the label assertions below read.
+    languageNamesQueryOptions: () => ({
+      queryKey: ['language-names'],
+      queryFn: () => ({})
+    }),
     boardPageQueryOptions: (bucket: string, cursor?: string) => ({
       queryKey: ['board', bucket, cursor ?? ''],
       queryFn: () => h.page(bucket, cursor)

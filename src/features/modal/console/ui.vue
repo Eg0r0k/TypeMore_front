@@ -91,14 +91,18 @@
    *
    * Selection is a plain `v-model` over the item *values* — a single string in
    * single mode, a string array when `multiple`. Items may be strings or objects;
-   * `searchKey` names the searchable/label field and `valueKey` the identity one
-   * (defaults to `searchKey`). Custom rows go through the `#item` slot; the
-   * option wrapper (role, aria-selected, focus/active state, click) is ours.
+   * `searchKey` names the label field, `valueKey` the identity one (defaults to
+   * `searchKey`), and `searchKeys` adds further fields the query matches against
+   * — a language is findable by its name AND by the key it is stored under.
+   * Custom rows go through the `#item` slot; the option wrapper (role,
+   * aria-selected, focus/active state, click) is ours.
    */
   interface Props {
     items?: T[]
     /** Object field used for search and for the default label. */
     searchKey?: string
+    /** Extra object fields the search matches, beyond `searchKey`. */
+    searchKeys?: readonly string[]
     /** Object field used as the model value. Defaults to `searchKey`. */
     valueKey?: string
     multiple?: boolean
@@ -113,6 +117,7 @@
   const props = withDefaults(defineProps<Props>(), {
     items: () => [],
     searchKey: 'name',
+    searchKeys: () => [],
     valueKey: undefined,
     multiple: false,
     description: undefined,
@@ -138,10 +143,16 @@
   const labelOf = (item: T): string => fieldOf(item, props.searchKey)
   const valueOf = (item: T): string => fieldOf(item, props.valueKey ?? props.searchKey)
 
+  /** Every field the query is tested against: the label, plus whatever `searchKeys` adds. */
+  const matches = (item: T, term: string): boolean =>
+    [props.searchKey, ...props.searchKeys].some((key) =>
+      fieldOf(item, key).toLowerCase().includes(term)
+    )
+
   const filteredItems = computed(() => {
     const term = searchQuery.value.toLowerCase()
     if (!term) return props.items
-    return props.items.filter((item) => labelOf(item).toLowerCase().includes(term))
+    return props.items.filter((item) => matches(item, term))
   })
 
   const selectedValues = computed<string[]>(() => {

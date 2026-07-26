@@ -38,7 +38,9 @@ test('with no ?bucket= the busiest board wins', async ({ page }) => {
 
   await page.goto('/boards')
 
-  await expect(page.getByTestId('boards-bucket-picker')).toHaveText(/10 words · german/)
+  // "German", not "german": the bucket carries the KEY, the picker renders the
+  // name the dictionary catalogue publishes for it.
+  await expect(page.getByTestId('boards-bucket-picker')).toHaveText(/10 words · German/)
   await expect(page.getByTestId('boards-row')).toHaveCount(2)
   await expect(page.getByTestId('boards-player').first()).toHaveText(/Ada/)
 
@@ -57,7 +59,7 @@ test('an unknown ?bucket= falls back to the busiest board and the URL is correct
 
   await page.goto('/boards?bucket=words:99:klingon:seeded')
 
-  await expect(page.getByTestId('boards-bucket-picker')).toHaveText(/10 words · german/)
+  await expect(page.getByTestId('boards-bucket-picker')).toHaveText(/10 words · German/)
   await expect(page.getByTestId('boards-player').first()).toHaveText(/Ada/)
   // A URL that named one board while showing another would lie to whoever
   // copies it next, so it is rewritten to the board actually on screen.
@@ -69,6 +71,8 @@ test('a known ?bucket= beats the busiest board', async ({ page }) => {
 
   await page.goto(`/boards?bucket=${encodeURIComponent(TIME_60_RU)}`)
 
+  // The stub catalogue publishes german only, so a russian board has no name to
+  // render and falls back to its key — the one case a key is allowed on screen.
   await expect(page.getByTestId('boards-bucket-picker')).toHaveText(/60s · russian/)
   const rows = page.getByTestId('boards-row')
   await expect(rows).toHaveCount(1)
@@ -83,7 +87,7 @@ test('picking another bucket loads that board', async ({ page }) => {
   await expect(page.getByTestId('boards-player').first()).toHaveText(/Ada/)
 
   await page.getByTestId('boards-bucket-picker').click()
-  await page.getByRole('option', { name: /15s · german/ }).click()
+  await page.getByRole('option', { name: /15s · German/ }).click()
 
   await expect.poll(() => new URL(page.url()).searchParams.get('bucket')).toBe(TIME_15_DE)
   const rows = page.getByTestId('boards-row')

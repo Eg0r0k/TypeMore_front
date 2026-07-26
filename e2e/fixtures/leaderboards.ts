@@ -34,7 +34,10 @@ import type { Dictionary, GenerationConfig } from '../../src/shared/core/words'
 // make the replay page's mismatch check pass for the wrong reason (or fail for
 // no reason the day the hash function changes).
 
-const DICT_NAME = 'german'
+/** The canonical KEY — what buckets, run records and configs are written in. */
+const DICT_LANG = 'german'
+/** What the catalogue CALLS it — the only thing a surface is allowed to render. */
+const DICT_DISPLAY_NAME = 'German'
 
 const DICT_WORDS: readonly string[] = [
   'der',
@@ -66,7 +69,7 @@ const DICT_WORDS: readonly string[] = [
 /** The address the body is served at AND the hash a run must have been played on. */
 export const DICT_HASH = dictVersion(DICT_WORDS)
 
-const DICT_BODY = { name: DICT_NAME, words: DICT_WORDS, bcp47: 'de-DE' }
+const DICT_BODY = { name: DICT_LANG, words: DICT_WORDS, bcp47: 'de-DE' }
 
 export interface DictionaryStubOptions {
   /**
@@ -90,8 +93,8 @@ export async function stubDictionary(
 ): Promise<void> {
   const catalogue = [
     {
-      lang: DICT_NAME,
-      name: DICT_NAME,
+      lang: DICT_LANG,
+      name: DICT_DISPLAY_NAME,
       dictHash: DICT_HASH,
       wordCount: DICT_WORDS.length,
       bytes: new TextEncoder().encode(JSON.stringify(DICT_BODY)).length
@@ -361,7 +364,7 @@ const CONFIG = {
 
 const DECLARATION = { blind: false, fading: false, flashlight: false } as const
 
-const DICTIONARY: Dictionary = { name: DICT_NAME, bcp47: 'de-DE', words: DICT_WORDS }
+const DICTIONARY: Dictionary = { name: DICT_LANG, bcp47: 'de-DE', words: DICT_WORDS }
 
 /**
  * The exact words this run was played on — regenerated the way the replay page
@@ -491,7 +494,7 @@ export async function stubReplay(page: Page, options: ReplayStubOptions = {}): P
         displayName: REPLAY_DISPLAY_NAME,
         mode: 'words',
         wordCount: GENERATION.length,
-        lang: DICT_NAME,
+        lang: DICT_LANG,
         seed: SEED,
         dictHash,
         setup: { config: CONFIG, generation: GENERATION, declaration: DECLARATION },

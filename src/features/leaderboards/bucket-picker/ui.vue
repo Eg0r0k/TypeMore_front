@@ -27,6 +27,7 @@
   import { computed } from 'vue'
   import { useI18n } from 'vue-i18n'
   import { isQuoteBucket, type BucketInfo } from '@shared/api'
+  import { useLanguageNames } from '@/shared/lib/hooks/useLanguageNames'
   import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
   import { Typography } from '@/shared/ui/typography'
 
@@ -47,6 +48,10 @@
 
   const { t } = useI18n()
 
+  // A bucket carries the language KEY it was played in; the dictionary
+  // catalogue is the only thing that knows what that key is called.
+  const { languageName } = useLanguageNames()
+
   const MS_PER_SECOND = 1000
   /** Enough of a uuid to tell two quote boards apart in a dropdown. */
   const QUOTE_ID_STEM = 8
@@ -62,12 +67,13 @@
     if (isQuoteBucket(bucket)) {
       return t('boards.bucket.quote', { id: bucket.quoteId.slice(0, QUOTE_ID_STEM) })
     }
+    const lang = languageName(bucket.lang)
     return bucket.mode === 'time'
       ? t('boards.bucket.time', {
           seconds: Math.round((bucket.durationMs ?? 0) / MS_PER_SECOND),
-          lang: bucket.lang
+          lang
         })
-      : t('boards.bucket.words', { count: bucket.wordCount ?? 0, lang: bucket.lang })
+      : t('boards.bucket.words', { count: bucket.wordCount ?? 0, lang })
   }
 
   // The listbox is portaled, so the trigger renders its own copy of the label

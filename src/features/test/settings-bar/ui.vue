@@ -127,7 +127,7 @@
         class="transition-tm focus-ring inline-flex cursor-pointer items-center rounded-md px-3 py-1.5 text-sm text-sub hover:text-text"
         @click="languageOpen = true"
       >
-        {{ config.language }}
+        {{ languageName(config.language) }}
       </button>
     </label>
 
@@ -156,6 +156,7 @@
   import { ConfigModes, type Config, type QuoteGroup } from '@/shared/constants/type'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
   import { LanguageModal } from '@/features/modal/language'
+  import { useLanguageNames } from '@/shared/lib/hooks/useLanguageNames'
 
   /** The `Config` fields the multi-select group writes — every boolean one. */
   type BooleanOptionKey = {
@@ -184,6 +185,9 @@
   const difficultyOption = optionOf('difficulty')
   const minWpmOption = optionOf('minWpm')
   const languageOption = optionOf('language')
+
+  // The catalogue names the language; the config only ever holds its key.
+  const { languageName } = useLanguageNames()
 
   const modeValues = computed(() => valuesFor(modeOption, 'solo'))
 
