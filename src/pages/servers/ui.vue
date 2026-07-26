@@ -18,6 +18,7 @@
       {{ session.connectionError.message }}
     </Typography>
     <ServersControls />
+    <ServersLobby class="server-page__lobby" />
   </div>
 </template>
 
@@ -27,13 +28,16 @@
   import { useI18n } from 'vue-i18n'
   import { Typography } from '@/shared/ui/typography'
   import { ServersControls } from '@/features/servers/contols'
+  import { ServersLobby } from '@/features/servers/lobby'
   import { routeLocation } from '@/app/router/route-locations'
   import { useMatchSessionStore } from '@/entities/match'
 
   /**
    * Multiplayer entry point. PROTOCOL v1 has no online-count message, so the
    * old hardcoded counter is gone — the header shows the live connection state
-   * instead. Entering a room (create or join-by-code) navigates to /room.
+   * instead. Create, join-by-code and the public room list all end the same
+   * way: a `room_state` lands on the session store and this page leaves for
+   * /room.
    */
   const { t } = useI18n()
   const router = useRouter()
@@ -97,6 +101,10 @@
     &__error {
       display: block;
       margin-bottom: 16px;
+    }
+
+    &__lobby {
+      margin-top: 32px;
     }
   }
 </style>

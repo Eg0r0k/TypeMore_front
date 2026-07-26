@@ -3,7 +3,7 @@
  *
  * Layout: transport + query-client are cross-cutting core; everything else
  * lives in a domain folder (`auth/`, `runs/`, `dictionaries/`, `themes/`,
- * `leaderboards/`, `quotes/`) that
+ * `leaderboards/`, `quotes/`, `rooms/`) that
  * owns its schemas, request types, endpoints, cache keys, queries and
  * mutations. A new domain is a new folder plus one line here — no existing
  * file grows.
@@ -19,6 +19,7 @@ export * from './dictionaries'
 export * from './themes'
 export * from './leaderboards'
 export * from './quotes'
+export * from './rooms'
 
 export { queryClient } from './query-client'
 export { API_SCOPE } from './keys'

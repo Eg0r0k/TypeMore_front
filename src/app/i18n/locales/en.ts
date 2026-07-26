@@ -266,6 +266,26 @@ export default {
       invalid: 'Room codes are 6 characters',
       notFound: 'Room not found',
       full: 'That room is full'
+    },
+    /** Public room list — discovery beside create/join-by-code, not instead of it. */
+    lobby: {
+      title: 'Open rooms',
+      loading: 'loading rooms…',
+      error: 'Could not load the room list',
+      retry: 'retry',
+      empty: 'No open rooms right now',
+      players: 'players {count}/{max}',
+      time: '{seconds}s',
+      words: '{count} words',
+      inMatch: 'in match',
+      /** Accessible name of a row: the whole row is one button. */
+      joinRoom: 'Join {name}',
+      /** Why a row cannot be clicked. Always rendered — never a dead row. */
+      reason: {
+        full: 'room is full',
+        inMatch: 'match already started',
+        offline: 'not connected'
+      }
     }
   },
   room: {
