@@ -151,6 +151,15 @@ export const WORDS_SHADOW_STYLES = `
    colours above still win — a mistyped newline must read as an error. */
 .letter--ws { opacity: 0.45; }
 
+/* A tab is INDENTATION, not a glyph-sized character: it occupies one tab stop,
+   so the lines of a code quote align under each other and the arrow sits at the
+   left of that space. It stays ONE measurable letter box, which is what keeps
+   the caret right on it — the caret is drawn from the box it sits on, so an
+   indent faked with margin or padding would put the caret in the wrong place.
+   After the generator's newline normalisation a tab only ever opens a token, so
+   this is the line's indent and nothing else. */
+.letter--tab { width: var(--tm-tab-width, 4ch); }
+
 /* Forced line break after a word that ends with \\n. Flexbox has no break-after,
    so the only mechanism is a full-width item: it cannot share a line with the
    word before it, wraps onto a zero-height line of its own, and pushes the next

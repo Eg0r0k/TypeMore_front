@@ -4,7 +4,7 @@
       v-for="(letter, i) in letters"
       :key="i"
       class="letter"
-      :class="[letter.state, { 'letter--ws': letter.ws }]"
+      :class="[letter.state, { 'letter--ws': letter.ws, 'letter--tab': letter.tab }]"
     >
       {{ letter.display }}
     </span>
@@ -45,12 +45,12 @@
   const GLYPHS: Record<string, string> = { '\t': '→', '\n': '↵' }
   const display = (char: string): string => GLYPHS[char] ?? char
 
-  const letters = computed<{ display: string; state: LetterState; ws: boolean }[]>(() => {
+  const letters = computed<{ display: string; state: LetterState; ws: boolean; tab: boolean }[]>(() => {
     const target = props.word
     const typed = props.typed
     const blind = props.blind === true
     const committed = props.committed === true
-    const out: { display: string; state: LetterState; ws: boolean }[] = []
+    const out: { display: string; state: LetterState; ws: boolean; tab: boolean }[] = []
 
     for (let i = 0; i < target.length; i++) {
       let state: LetterState = ''
@@ -59,14 +59,20 @@
       // Untyped letters of a committed word are "missed"; on the active word they are
       // simply not-yet-typed. Blind hides both.
       else if (committed && !blind) state = 'missed'
-      out.push({ display: display(target[i]), state, ws: target[i] in GLYPHS })
+      out.push({
+        display: display(target[i]),
+        state,
+        ws: target[i] in GLYPHS,
+        tab: target[i] === '\t'
+      })
     }
     // Extra characters typed past the target length (neutral under blind).
     for (let i = target.length; i < typed.length; i++) {
       out.push({
         display: display(typed[i]),
         state: blind ? 'correct' : 'extra',
-        ws: typed[i] in GLYPHS
+        ws: typed[i] in GLYPHS,
+        tab: typed[i] === '\t'
       })
     }
     return out
