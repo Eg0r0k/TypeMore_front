@@ -329,14 +329,30 @@ export function generateWords(
         message: `quote ${quote.quoteId} text hash mismatch: context=${context.dictVersion} actual=${actualHash}`
       })
     }
-    // Split on the SPACE character only, and drop empties. A run of spaces, a
-    // leading space or a trailing newline+space would otherwise produce a
-    // zero-length target, which is not a typeable word: the reducer would have
-    // nothing to compare a keystroke against and the player could never satisfy
-    // it. Everything else in the text is preserved verbatim, `\n` and `\t`
-    // included — they belong to the token they sit in, exactly as a code
-    // dictionary's tokens carry their own layout.
-    const words = quote.text.split(' ').filter((word) => word.length > 0)
+    // A newline ENDS its token. Ported from monkeytype's quote pipeline
+    // (`words-generator.ts`, `getQuoteWordList`): every line break is rewritten
+    // to "\n " before the split, so the newline closes the token it belongs to
+    // and whatever follows — indentation included — opens the next one.
+    //
+    // Without it a space-only split glues a line ending into the middle of a
+    // token (`{\n\ttext-align:`), and a mid-token newline is unrenderable and
+    // untypeable: a target is one box, so its tail cannot move to the next
+    // visual line, and Enter mid-token either separates (throwing the tail
+    // away) or does not (leaving the line unbreakable). Normalising here — in
+    // the ONE function both the client and the server's goja bundle run — keeps
+    // that decision in the same place as every other target-shaping rule.
+    //
+    // `\n\n` yields a lone "\n" token: a line that is only a line ending, which
+    // is exactly a blank line and needs no special case anywhere downstream.
+    //
+    // Then split on the SPACE character only, and drop empties. A run of
+    // spaces, a leading space or the space this normalisation just introduced
+    // at the end of the text would otherwise produce a zero-length target,
+    // which is not a typeable word: the reducer would have nothing to compare a
+    // keystroke against and the player could never satisfy it. Everything else
+    // is preserved verbatim — `\t` belongs to the token it opens.
+    const normalized = quote.text.replace(/ *(\r\n|\r|\n) */g, '\n ')
+    const words = normalized.split(' ').filter((word) => word.length > 0)
     if (words.length === 0) {
       return err({ kind: 'EmptyQuote', message: `quote ${quote.quoteId} has no typeable words` })
     }

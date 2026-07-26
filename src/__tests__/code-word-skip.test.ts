@@ -1,22 +1,22 @@
 /**
- * The word-skip at a code newline.
+ * The word-skip at a code newline, and the rule that removes its cause.
  *
- * REAL corpus tokens, not the idealised ones. `generateWords` splits a quote's
- * text on SPACES only, so a code quote's `\n` lands in the MIDDLE of a token and
- * its `\t` is never at the head of one:
+ * REPORTED: typing Enter (or Space) at a line ending in a css_code quote made a
+ * word disappear; two newlines in a row would not advance at all; and a line
+ * scrolled off leaving half of itself behind.
  *
- *   "p.center {\n\ttext-align: center;\n\tcolor: red;\n}"
- *     -> ["p.center", "{\n\ttext-align:", "center;\n\tcolor:", "red;\n}"]
+ * ROOT CAUSE, single and upstream of all three: the generator split a quote's
+ * text on SPACES only, so a line ending was glued into the middle of a target
+ * (`{\n\ttext-align:`). A mid-target newline is not representable — a target is
+ * one box, so its tail cannot move to the next visual line — and not typeable:
+ * Enter there either separates, throwing the tail away, or does not, leaving the
+ * line unbreakable. Monkeytype does not have this problem because it rewrites
+ * every line break to "\n " BEFORE splitting (`words-generator.ts`), so a
+ * newline always closes its token and the indentation after it opens the next.
+ * `words.ts` now does the same.
  *
- * Measured over the served corpora: css_code 241/376 tokens carry a mid-token
- * `\n`, and ZERO of 1 999 tokens across css_code / code_python /
- * code_javascript begin with `\t`. The existing `code-words.test.ts` fixture
- * (`'1;\n'`, `'\tconsole.log(x)\n'`) is the shape the port was designed against
- * and is not a shape the generator can produce — which is why this survived.
- *
- * Consequence: Enter arrives with the caret on a newline that is NOT the end of
- * the target. Committing there throws the rest of the token away, and the player
- * sees the remainder of the line vanish — the reported "skipped word".
+ * With that rule the word boundaries and the visual lines coincide, which is
+ * what makes Enter, Space and the window's line-dropping all agree.
  */
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi, type Mock } from 'vitest'
@@ -29,17 +29,40 @@ import {
   asMs,
   asSeq,
   commitEvent,
+  dictVersion,
   foldLog,
+  generateWords,
   initialStateOf,
   insertEvent,
+  makeSeedContext,
   type CoreConfig,
+  type Dictionary,
   type GameEvent,
-  type GameState
+  type GameState,
+  type GenerationConfig
 } from '@shared/core'
 
-/** The owner's screenshot text, tokenised exactly as `generateWords` does. */
 const CSS_TEXT = 'p.center {\n\ttext-align: center;\n\tcolor: red;\n}\n\np.large {\n\tfont-size: 300%\n;}'
-const CSS_WORDS = CSS_TEXT.split(' ').filter((w) => w.length > 0)
+
+/** The screenshot text's real targets, straight out of the core. */
+const CSS_WORDS = ((): readonly string[] => {
+  const dict: Dictionary = { name: 'css_code', bcp47: 'en', words: ['unused'] }
+  const generation: GenerationConfig = {
+    mode: 'quote',
+    length: 0,
+    punctuation: false,
+    numbers: false,
+    randomCase: false,
+    reverse: false,
+    textSource: {
+      kind: 'quote',
+      quoteId: 'q1',
+      quoteHash: dictVersion([CSS_TEXT]),
+      text: CSS_TEXT
+    }
+  }
+  return generateWords(dict, makeSeedContext(dict, 1, generation))._unsafeUnwrap().words
+})()
 
 const state = (over: Partial<GameState> = {}): GameState => ({
   phase: 'running',
@@ -78,46 +101,33 @@ const mountInput = (session: GameSession) =>
     attachTo: document.body
   })
 
-describe('the corpus really does put \\n mid-token', () => {
-  it('splits the screenshot text so no token ends with \\n and none begins with \\t', () => {
-    expect(CSS_WORDS).toEqual([
-      'p.center',
-      '{\n\ttext-align:',
-      'center;\n\tcolor:',
-      'red;\n}\n\np.large',
-      '{\n\tfont-size:',
-      '300%\n;}'
-    ])
-    // The two premises the code-mode port was built on, both false for real data.
-    expect(CSS_WORDS.some((w) => w.endsWith('\n'))).toBe(false)
-    expect(CSS_WORDS.some((w) => w.startsWith('\t'))).toBe(false)
+describe('word boundaries coincide with visual lines', () => {
+  it('never puts a newline anywhere but the end of a target', () => {
+    // The premise every one of the three reports failed on.
+    for (const word of CSS_WORDS) {
+      if (word.includes('\n')) expect(word).toBe(word.slice(0, -1) + '\n')
+    }
+    expect(CSS_WORDS.filter((w) => w.includes('\n')).every((w) => w.endsWith('\n'))).toBe(true)
+  })
+
+  it('gives the doubled newline its own target, so Space advances past it', () => {
+    // "two \n in a row do not move to the next word": the blank line is now a
+    // target of its own, committed like any other.
+    expect(CSS_WORDS).toContain('\n')
+  })
+
+  it('starts an indented line with its own tab target', () => {
+    expect(CSS_WORDS.filter((w) => w.startsWith('\t'))).toHaveLength(3)
   })
 })
 
-describe('Enter at a mid-token newline must not commit the token', () => {
-  it('types the newline and keeps the word active (the skip regression)', async () => {
-    // Caret sits on the '\n' of '{\n\ttext-align:' — index 1, mid-token.
+describe('Enter and Space at a line ending', () => {
+  it('types the newline, then separates — one target per line ending', () => {
+    // Caret on the '\n' of '{\n'.
     const session = makeSession(CSS_WORDS, state({ wordIndex: 1, input: ['p.center', '{'] }))
     const input = mountInput(session)
 
-    await input.get('textarea').trigger('keydown', { key: 'Enter' })
-
-    // The newline is a character of this target, so it is typed...
-    expect(session.insert).toHaveBeenCalledWith('\n')
-    // ...but it does NOT separate: '\ttext-align:' is still to be typed.
-    expect(session.commit).not.toHaveBeenCalled()
-
-    input.unmount()
-  })
-
-  it('still separates when the newline IS the last character of the target', async () => {
-    // code_python really does produce these (13 of 652 tokens): 'key\n' at the
-    // very end of a text. Enter there is a genuine separator.
-    const words = ['key\n', 'next']
-    const session = makeSession(words, state({ wordIndex: 0, input: ['key'] }))
-    const input = mountInput(session)
-
-    await input.get('textarea').trigger('keydown', { key: 'Enter' })
+    input.get('textarea').trigger('keydown', { key: 'Enter' })
 
     expect(session.insert).toHaveBeenCalledWith('\n')
     expect(session.commit).toHaveBeenCalledTimes(1)
@@ -125,12 +135,11 @@ describe('Enter at a mid-token newline must not commit the token', () => {
     input.unmount()
   })
 
-  it('separates on Enter when the target expects no newline at all', async () => {
-    // Enter is still a separator for ordinary prose — unchanged behaviour.
+  it('separates on Enter when the target expects no newline', () => {
     const session = makeSession(['hello', 'world'], state({ wordIndex: 0, input: ['hello'] }))
     const input = mountInput(session)
 
-    await input.get('textarea').trigger('keydown', { key: 'Enter' })
+    input.get('textarea').trigger('keydown', { key: 'Enter' })
 
     expect(session.insert).not.toHaveBeenCalled()
     expect(session.commit).toHaveBeenCalledTimes(1)
@@ -138,21 +147,52 @@ describe('Enter at a mid-token newline must not commit the token', () => {
     input.unmount()
   })
 
-  it('types the tab that follows the mid-token newline into the SAME word', async () => {
-    // The owner's exact sequence: Enter then Tab. Both belong to token 1.
+  it('Space advances exactly one target, so the tab line is typed, not skipped', () => {
+    // "Space skips \n AND \t AND the word after": with the targets above, the
+    // caret at '{\n' has only the newline left, so Space lands on '\ttext-align:'.
     const session = makeSession(CSS_WORDS, state({ wordIndex: 1, input: ['p.center', '{\n'] }))
     const input = mountInput(session)
 
-    await input.get('textarea').trigger('keydown', { key: 'Tab' })
+    input.get('textarea').trigger('keydown', { key: ' ', code: 'Space' })
+
+    expect(session.commit).toHaveBeenCalledTimes(1)
+    expect(CSS_WORDS[2]).toBe('\ttext-align:')
+
+    input.unmount()
+  })
+
+  it('types a tab into the target that opens with one', () => {
+    const session = makeSession(CSS_WORDS, state({ wordIndex: 2, input: ['p.center', '{\n', ''] }))
+    const input = mountInput(session)
+
+    input.get('textarea').trigger('keydown', { key: 'Tab' })
 
     expect(session.insert).toHaveBeenCalledWith('\t')
     expect(session.commit).not.toHaveBeenCalled()
 
     input.unmount()
   })
+
+  /**
+   * The adapter keeps its own guard: a newline separates only when it ENDS the
+   * target. The generator now makes that the only kind there is, so this is
+   * defence for a future text source rather than a live path — but it is the
+   * difference between a truncated word and a typed one, so it stays pinned.
+   */
+  it('would not commit a mid-target newline if one ever reached it', () => {
+    const session = makeSession(['{\n\ttext-align:'], state({ wordIndex: 0, input: ['{'] }))
+    const input = mountInput(session)
+
+    input.get('textarea').trigger('keydown', { key: 'Enter' })
+
+    expect(session.insert).toHaveBeenCalledWith('\n')
+    expect(session.commit).not.toHaveBeenCalled()
+
+    input.unmount()
+  })
 })
 
-describe('the core folds the corrected keystrokes to the same state as a manual log', () => {
+describe('the core folds the whole quote to a complete run', () => {
   const config: CoreConfig = {
     mode: 'words',
     durationMs: 0,
@@ -162,53 +202,20 @@ describe('the core folds the corrected keystrokes to the same state as a manual 
     minWpm: 0
   }
 
-  /** Type a token's characters one insert per grapheme, then commit. */
-  const typeToken = (events: GameEvent[], token: string, seq: { n: number; t: number }): void => {
-    for (const char of token) {
-      seq.n += 1
-      seq.t += 50
-      events.push(insertEvent(asSeq(seq.n), asMs(seq.t), char))
-    }
-    seq.n += 1
-    seq.t += 50
-    events.push(commitEvent(asSeq(seq.n), asMs(seq.t)))
-  }
-
-  it('is bit-identical to a hand-written correct log for the same text', () => {
+  it('types every target in full — nothing skipped, nothing missed', () => {
     const ctx = { config, words: CSS_WORDS }
-    const seq = { n: 0, t: 0 }
     const events: GameEvent[] = []
-    for (const token of CSS_WORDS) typeToken(events, token, seq)
+    let n = 0
+    let t = 0
+    for (const word of CSS_WORDS) {
+      for (const char of word) events.push(insertEvent(asSeq(++n), asMs((t += 50)), char))
+      events.push(commitEvent(asSeq(++n), asMs((t += 50))))
+    }
 
-    const folded = foldLog(ctx, events)
-    expect(folded.isOk()).toBe(true)
-    const final = folded._unsafeUnwrap()
+    const final = foldLog(ctx, events)._unsafeUnwrap()
 
-    // Every token typed in full, one commit each — the newline mid-token is an
-    // ordinary character of its word, exactly as the reducer already treats it.
     expect(final.wordIndex).toBe(CSS_WORDS.length)
     expect(final.input).toEqual([...CSS_WORDS])
-
-    // And the reducer's own starting point is unchanged by any of this.
     expect(initialStateOf(ctx).wordIndex).toBe(0)
-  })
-
-  it('a log that commits at the mid-token newline loses the rest of the token', () => {
-    // This is what the pre-fix adapter produced, shown as a state difference
-    // rather than an assertion about the adapter.
-    const ctx = { config, words: CSS_WORDS }
-    const truncated: GameEvent[] = [
-      ...[...'p.center'].map((c, i) => insertEvent(asSeq(i + 1), asMs((i + 1) * 50), c)),
-      commitEvent(asSeq(9), asMs(450)),
-      insertEvent(asSeq(10), asMs(500), '{'),
-      insertEvent(asSeq(11), asMs(550), '\n'),
-      commitEvent(asSeq(12), asMs(600))
-    ]
-
-    const final = foldLog(ctx, truncated)._unsafeUnwrap()
-    expect(final.wordIndex).toBe(2)
-    // Token 1 is left with 2 of its 14 characters — the vanished line.
-    expect(final.input[1]).toBe('{\n')
-    expect(CSS_WORDS[1].length).toBe(14)
   })
 })

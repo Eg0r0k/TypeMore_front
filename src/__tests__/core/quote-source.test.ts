@@ -158,13 +158,33 @@ describe('quote targets are the text, split on spaces', () => {
     expect(words).toEqual(['double', 'spaced', 'text'])
   })
 
-  it('keeps newlines and tabs inside the token they belong to', () => {
-    const text = 'a\nb c\td'
+  it('ends a token at every newline, so a tab opens the next one', () => {
+    // Ported from monkeytype (`words-generator.ts`): a line break is rewritten
+    // to "\n " before the split, so it closes its token and the indentation
+    // that follows opens the next. A mid-token newline is both unrenderable
+    // (a target is one box and its tail cannot move to the next visual line)
+    // and untypeable (Enter would either discard the tail or not break at all).
     const words = generateWords(
       dict,
-      makeSeedContext(dict, 1, quoteGen({ textSource: quoteSource(text) }))
+      makeSeedContext(dict, 1, quoteGen({ textSource: quoteSource('a\nb c\td') }))
     )._unsafeUnwrap().words
-    expect(words).toEqual(['a\nb', 'c\td'])
+    expect(words).toEqual(['a\n', 'b', 'c\td'])
+  })
+
+  it('turns a doubled newline into a token of its own — a blank line', () => {
+    const words = generateWords(
+      dict,
+      makeSeedContext(dict, 1, quoteGen({ textSource: quoteSource('a\n\nb') }))
+    )._unsafeUnwrap().words
+    expect(words).toEqual(['a\n', '\n', 'b'])
+  })
+
+  it('absorbs the spaces around a newline rather than emitting empty targets', () => {
+    const words = generateWords(
+      dict,
+      makeSeedContext(dict, 1, quoteGen({ textSource: quoteSource('a  \n  b') }))
+    )._unsafeUnwrap().words
+    expect(words).toEqual(['a\n', 'b'])
   })
 
   it('rejects a text with no typeable word instead of building an empty run', () => {
