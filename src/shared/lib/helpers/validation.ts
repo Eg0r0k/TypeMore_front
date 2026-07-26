@@ -22,7 +22,7 @@ const validators: Record<keyof Config, ValidatorFn> = {
   theme: (value) =>
     (typeof value === 'string' && value.length > 0) || 'Theme must be a non-empty string',
   mode: (value) => {
-    if (['words', 'free', 'time'].includes(value)) {
+    if (['words', 'free', 'time', 'quote'].includes(value)) {
       return true
     }
     return 'Invalid mode selected'
@@ -62,6 +62,8 @@ const validators: Record<keyof Config, ValidatorFn> = {
     'Invalid difficulty',
   blind: (value) => typeof value === 'boolean' || 'Blind must be a boolean',
   reverse: (value) => typeof value === 'boolean' || 'Reverse must be a boolean',
+  quoteGroup: (value) =>
+    ['all', 'short', 'medium', 'long', 'thicc'].includes(value) || 'Invalid quote length',
   minWpm: (value) => [0, 60, 80, 100].includes(value) || 'MinSpeed must be 0, 60, 80 or 100',
   fading: (value) => typeof value === 'boolean' || 'Fading must be a boolean',
   flashlight: (value) => typeof value === 'boolean' || 'Flashlight must be a boolean',

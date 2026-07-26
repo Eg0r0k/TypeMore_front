@@ -27,6 +27,40 @@ export interface Dictionary {
 export type GenerationMode = 'words' | 'time' | 'quote' | 'free' | 'custom'
 
 /**
+ * Where a run's targets come from.
+ *
+ * `seeded` is the historical behaviour: the PRNG draws tokens out of a
+ * dictionary. `quote` is a FIXED TEXT — everyone types the same bytes, so the
+ * text itself governs the run and the dictionary is not consulted at all.
+ *
+ * The core never fetches: `text` arrives already resolved (the page calls
+ * `/quotes/random`, the server re-resolves it by id on submission).
+ */
+export interface SeededTextSource {
+  readonly kind: 'seeded'
+}
+
+/**
+ * A quote WITHOUT its bytes — the id/hash pair that names one immutable text
+ * forever. This is what a run submits (`build-payload.ts`): the server
+ * re-resolves the text by `quoteId` and checks it against `quoteHash`, so the
+ * client's copy of the text is never the thing the server trusts.
+ */
+export interface QuoteRef {
+  readonly kind: 'quote'
+  readonly quoteId: string
+  /** `dictVersion([text])` — the server's `textHash`, same FNV-1a convention. */
+  readonly quoteHash: string
+}
+
+/** A quote as the CORE sees it: the ref plus the resolved bytes. */
+export interface QuoteTextSource extends QuoteRef {
+  readonly text: string
+}
+
+export type GenerationTextSource = SeededTextSource | QuoteTextSource
+
+/**
  * The config subset that changes generated output. Kept separate from the app
  * `Config` so the store maps only the fields that matter; anything not here
  * (theme, sound, font…) must not affect the word list.
@@ -43,7 +77,11 @@ export type GenerationMode = 'words' | 'time' | 'quote' | 'free' | 'custom'
  */
 export interface GenerationConfig {
   readonly mode: GenerationMode
-  /** Magnitude for the mode: word count for `words`/`custom`/`quote`, seconds for `time`/`free`. */
+  /**
+   * Magnitude for the mode: word count for `words`/`custom`, seconds for
+   * `time`/`free`. A run with a `quote` `textSource` has NO magnitude — its
+   * length is the text's — and carries `0`.
+   */
   readonly length: number
   readonly punctuation: boolean
   readonly numbers: boolean
@@ -62,6 +100,18 @@ export interface GenerationConfig {
    * optional `CoreConfig` fields).
    */
   readonly rawTokens?: boolean
+  /**
+   * Where the targets come from. ABSENT MEANS `seeded` — that is what keeps
+   * `EVENT_LOG_VERSION` at 1: every log, golden vector and stored config
+   * snapshot written before quotes existed reconstructs byte-identically,
+   * because the seeded branch below is reached by exactly the same code path it
+   * always was.
+   *
+   * It lives here and not in `CoreConfig` because it decides what the targets
+   * ARE (slot invariant, docs/game-architecture.md) — so it travels in the seed
+   * context and every replay/`validateLog` reconstructs from it.
+   */
+  readonly textSource?: GenerationTextSource
 }
 
 export interface SeedContext {
@@ -76,7 +126,7 @@ export interface GeneratedWords {
   readonly dictName: string
 }
 
-export type WordsErrorKind = 'EmptyDictionary' | 'DictVersionMismatch'
+export type WordsErrorKind = 'EmptyDictionary' | 'DictVersionMismatch' | 'EmptyQuote'
 
 export interface WordsError {
   readonly kind: WordsErrorKind
@@ -122,12 +172,51 @@ export function dictVersion(words: readonly string[]): string {
   return fnv1a(words.join('\u0000')).toString(16).padStart(8, '0')
 }
 
+/** The quote arm of `textSource`, or `undefined` for a seeded run. */
+export function quoteOf(gen: GenerationConfig): QuoteTextSource | undefined {
+  return gen.textSource?.kind === 'quote' ? gen.textSource : undefined
+}
+
+/**
+ * True when the run's targets are emitted VERBATIM: no `decorate` transform
+ * (numbers, randomCase, capitalization, punctuation) and no reverse mirror.
+ *
+ * ONE predicate, two callers, so the two can never disagree: `generateWords`
+ * skips the transforms, and `activeModsV1` (mods.ts) withholds the
+ * word-affecting multipliers. Crediting a punctuation multiplier for
+ * punctuation the run did not choose — the author of a code token or a quote
+ * did — would pay for a mod that was never applied.
+ */
+export function emitsRawTokens(gen: GenerationConfig): boolean {
+  return gen.rawTokens === true || gen.textSource?.kind === 'quote'
+}
+
+/**
+ * The seed context for a run: the seed, the generation config, and the CONTENT
+ * HASH of whatever the targets are generated from.
+ *
+ * For a seeded run that hash is the dictionary's fingerprint, as it always was.
+ * For a QUOTE run the dictionary is not read at all, so hashing it would freeze
+ * an artefact the run does not depend on (and `code_python` /
+ * `code_javascript` are quote-only — they have no served dictionary to hash).
+ * The text IS the corpus of a quote run, so its content hash is
+ * `dictVersion([text])` — which is bit-for-bit the server's `textHash`
+ * (QUOTES.md: `text_hash = core.DictVersion([]string{quote.Text})`, a
+ * one-element slice so the NUL join is a no-op, and therefore the same artefact
+ * `dictHash` already is). The drift guard keeps meaning exactly what it meant:
+ * "the bytes this run was generated from still hash to what it recorded".
+ */
 export function makeSeedContext(
   dict: Dictionary,
   seed: number,
   generation: GenerationConfig
 ): SeedContext {
-  return { seed, dictVersion: dictVersion(dict.words), generation }
+  const quote = quoteOf(generation)
+  return {
+    seed,
+    dictVersion: quote ? dictVersion([quote.text]) : dictVersion(dict.words),
+    generation
+  }
 }
 
 // ── Generation ────────────────────────────────────────────────────────────────
@@ -137,7 +226,15 @@ const PUNCTUATION_WEIGHT = 0.25
 const SENTENCE_END = ['.', '?', '!']
 const MID_PUNCTUATION = [',', ';', ':']
 
-/** Number of target words to pre-generate for the given generation config. */
+/**
+ * Number of target words to pre-generate for the given generation config.
+ *
+ * A real quote run never gets here: `generateWords` returns the text's own
+ * words before any count is computed, so a quote has no length target and ends
+ * on its last committed word. `mode: 'quote'` with NO `textSource` is a config
+ * that names a fixed text and supplies none — it degrades to the seeded
+ * word-count path rather than inventing a length.
+ */
 function targetCount(gen: GenerationConfig): number {
   switch (gen.mode) {
     case 'words':
@@ -207,13 +304,48 @@ export function reverseWord(word: string): string {
  * Generate the full target word list for a test. Deterministic in
  * `(dictionary, context)`: same inputs always yield the same list.
  *
- * Fails if the dictionary is empty, or if the context's `dictVersion` does not
- * match the dictionary actually passed in (drift protection).
+ * Two sources, one function (`context.generation.textSource`):
+ *
+ * - **seeded** (or absent, the legacy shape): draw tokens from the dictionary
+ *   with the seeded PRNG. Fails if the dictionary is empty, or if the context's
+ *   `dictVersion` does not match the dictionary actually passed in.
+ * - **quote**: the targets ARE the text. The dictionary is never touched — not
+ *   read, not hashed, not required to be non-empty — and the PRNG is never
+ *   constructed, so `seed` cannot influence a single byte of the output.
+ *   `dictVersion` is checked against the TEXT instead (see `makeSeedContext`),
+ *   which is the same drift guard aimed at the artefact that actually governs
+ *   the run.
  */
 export function generateWords(
   dict: Dictionary,
   context: SeedContext
 ): Result<GeneratedWords, WordsError> {
+  const quote = quoteOf(context.generation)
+  if (quote) {
+    const actualHash = dictVersion([quote.text])
+    if (actualHash !== context.dictVersion) {
+      return err({
+        kind: 'DictVersionMismatch',
+        message: `quote ${quote.quoteId} text hash mismatch: context=${context.dictVersion} actual=${actualHash}`
+      })
+    }
+    // Split on the SPACE character only, and drop empties. A run of spaces, a
+    // leading space or a trailing newline+space would otherwise produce a
+    // zero-length target, which is not a typeable word: the reducer would have
+    // nothing to compare a keystroke against and the player could never satisfy
+    // it. Everything else in the text is preserved verbatim, `\n` and `\t`
+    // included — they belong to the token they sit in, exactly as a code
+    // dictionary's tokens carry their own layout.
+    const words = quote.text.split(' ').filter((word) => word.length > 0)
+    if (words.length === 0) {
+      return err({ kind: 'EmptyQuote', message: `quote ${quote.quoteId} has no typeable words` })
+    }
+    // No `mulberry32`, no `targetCount`, no `decorate`: the seed cannot reach
+    // the output, and the run's length is the quote's — it ends when the last
+    // word is committed (the reducer's count-mode finish, `game-core.ts`).
+    return ok({ words, context, dictName: dict.name })
+  }
+
   if (dict.words.length === 0) {
     return err({ kind: 'EmptyDictionary', message: `dictionary "${dict.name}" has no words` })
   }
@@ -227,9 +359,9 @@ export function generateWords(
 
   const rng = mulberry32(context.seed)
   const count = targetCount(context.generation)
-  // Raw tokens: the dictionary IS the text (code, quotes). No transform runs, so
-  // the only PRNG draw per word is the index one — still fully deterministic.
-  const raw = context.generation.rawTokens === true
+  // Raw tokens: the dictionary IS the text (code). No transform runs, so the
+  // only PRNG draw per word is the index one — still fully deterministic.
+  const raw = emitsRawTokens(context.generation)
   const words: string[] = []
   let prevIndex = -1
   let capitalizeNext = !raw && context.generation.punctuation // start of a sentence

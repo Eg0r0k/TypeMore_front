@@ -150,4 +150,108 @@ describe('buildRunPayload — RUNS.md field-for-field (contract-drift guard)', (
       ].sort()
     )
   })
+
+  /**
+   * The seeded payload is the regression that matters most: adding a second
+   * text source must not move one byte of the shape the server already
+   * accepts. `toEqual` on the whole body, not a field walk.
+   */
+  it('emits a byte-identical body for a seeded run (no textSource anywhere)', () => {
+    expect(buildRunPayload(timeCtx())).toEqual({
+      mode: 'time',
+      durationMs: 15000,
+      lang: 'en',
+      seed: 2864901,
+      dictHash: 'a1b2c3d4',
+      scoreVersion: 2,
+      setup: { config, generation, declaration },
+      clientMetrics: { wpm: 80, raw: 85, acc: 0.97 },
+      clientScore: score,
+      log: { version: 1, events: log }
+    })
+    expect(JSON.stringify(buildRunPayload(timeCtx()))).not.toContain('textSource')
+  })
+})
+
+describe('buildRunPayload — a quote run names its text, never carries it', () => {
+  const QUOTE_TEXT = 'the quick brown fox'
+  const quoteCtx = (): RunSubmitContext => ({
+    ...timeCtx(),
+    mode: 'quote',
+    config: { ...config, mode: 'quote' },
+    generation: {
+      ...generation,
+      mode: 'quote',
+      // A quote has no magnitude — its length is the text's.
+      length: 0,
+      textSource: {
+        kind: 'quote',
+        quoteId: '1f5f1f2c-6f0f-4d5a-9f0a-3f2a1b0c9d8e',
+        quoteHash: '8b1cf30a',
+        text: QUOTE_TEXT
+      }
+    },
+    dictHash: '8b1cf30a'
+  })
+
+  it('emits quoteId + quoteHash, strips the text, and carries no dimension', () => {
+    const payload = buildRunPayload(quoteCtx())
+
+    // Exact top-level key set: NEITHER durationMs NOR wordCount. The server
+    // relaxes its one-of-two check for quotes in Stage C.
+    expect(Object.keys(payload).sort()).toEqual(
+      [
+        'clientMetrics',
+        'clientScore',
+        'dictHash',
+        'lang',
+        'log',
+        'mode',
+        'scoreVersion',
+        'seed',
+        'setup'
+      ].sort()
+    )
+    expect('durationMs' in payload).toBe(false)
+    expect('wordCount' in payload).toBe(false)
+
+    // The exact setup shape, text excluded. `toEqual` so an extra key — a
+    // smuggled `text` above all — trips the guard.
+    expect(payload.setup).toEqual({
+      config: { ...config, mode: 'quote' },
+      generation: {
+        mode: 'quote',
+        length: 0,
+        punctuation: false,
+        numbers: false,
+        randomCase: false,
+        reverse: false,
+        textSource: {
+          kind: 'quote',
+          quoteId: '1f5f1f2c-6f0f-4d5a-9f0a-3f2a1b0c9d8e',
+          quoteHash: '8b1cf30a'
+        }
+      },
+      declaration
+    })
+
+    // Belt and braces: the text must not survive serialization anywhere in the
+    // body — not in `setup`, not smuggled through another field.
+    expect(JSON.stringify(payload)).not.toContain(QUOTE_TEXT)
+
+    // dictHash is the quote's content hash — the seed context recorded it.
+    expect(payload.dictHash).toBe('8b1cf30a')
+    expect(payload.mode).toBe('quote')
+  })
+
+  it('does not mutate the caller`s generation config', () => {
+    const ctx = quoteCtx()
+    buildRunPayload(ctx)
+    expect(ctx.generation.textSource).toEqual({
+      kind: 'quote',
+      quoteId: '1f5f1f2c-6f0f-4d5a-9f0a-3f2a1b0c9d8e',
+      quoteHash: '8b1cf30a',
+      text: QUOTE_TEXT
+    })
+  })
 })

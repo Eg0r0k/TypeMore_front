@@ -7,17 +7,21 @@
  *   mode          → GameSetup config.mode (ranked-eligible: time | words only)
  *   durationMs    → config.durationMs           (time mode only)
  *   wordCount     → generation.length           (words mode only; exactly one of the two)
+ *                                               (a QUOTE run carries NEITHER — see below)
  *   lang          → dictionary bcp47 tag captured at generation
  *   seed          → the 32-bit seed the client generated the words from
- *   dictHash      → SeedContext.dictVersion (fnv1a of the dictionary)
+ *   dictHash      → SeedContext.dictVersion (fnv1a of the dictionary; of the
+ *                                            TEXT for a quote run)
  *   scoreVersion  → 2 (scoreV2 — see SCORE_VERSION note below)
- *   setup         → { config, generation, declaration } (replayable snapshot)
+ *   setup         → { config, generation, declaration } (replayable snapshot),
+ *                   with generation.textSource STRIPPED of its text for a quote
  *   clientMetrics → { wpm, raw, acc } from the store Metrics
  *   clientScore   → the finalized ScoreResult (display-only server-side)
  *   log           → { version, events } — the core EventLog wrapping the store log
  */
 import {
   EVENT_LOG_VERSION,
+  quoteOf,
   type CoreConfig,
   type EventLog,
   type GameEvent,
@@ -25,7 +29,9 @@ import {
   type GenerationMode,
   type Metrics,
   type ModsDeclaration,
-  type ScoreResult
+  type QuoteRef,
+  type ScoreResult,
+  type SeededTextSource
 } from '@shared/core'
 import type { RunSubmitInput } from '@shared/api'
 
@@ -63,22 +69,41 @@ export interface RunSubmitContext {
   readonly log: readonly GameEvent[]
 }
 
+/**
+ * `GenerationConfig` as it goes ON THE WIRE. Identical to the core's shape but
+ * for the quote arm, which loses its `text`: the server re-resolves the bytes
+ * from `quoteId` and verifies them against `quoteHash`. The client's copy of
+ * the text must never be the thing the server trusts — otherwise "everyone
+ * types the same bytes" would be a claim the client gets to make about itself.
+ */
+export type WireGenerationConfig = Omit<GenerationConfig, 'textSource'> & {
+  readonly textSource?: SeededTextSource | QuoteRef
+}
+
 /** Build the exact RUNS.md POST body. Assumes `ctx.mode` is ranked-eligible. */
 export function buildRunPayload(ctx: RunSubmitContext): RunSubmitInput {
   const eventLog: EventLog = { version: EVENT_LOG_VERSION, events: ctx.log }
+  const quote = quoteOf(ctx.generation)
+  const generation: WireGenerationConfig = quote
+    ? {
+        ...ctx.generation,
+        textSource: { kind: 'quote', quoteId: quote.quoteId, quoteHash: quote.quoteHash }
+      }
+    : ctx.generation
   return {
     mode: ctx.mode,
-    // Exactly one dimension is set: time → durationMs, words → wordCount.
-    ...(ctx.mode === 'time'
-      ? { durationMs: ctx.config.durationMs }
-      : { wordCount: ctx.generation.length }),
+    // Exactly one dimension is set: time → durationMs, words → wordCount. A
+    // quote run has neither — its length is the quote's, named by `quoteId`,
+    // and inventing a `wordCount` would be a second, forgeable copy of it. The
+    // server relaxes its XOR check for quotes in Stage C.
+    ...dimensionOf(ctx),
     lang: ctx.lang,
     seed: ctx.seed,
     dictHash: ctx.dictHash,
     scoreVersion: SCORE_VERSION,
     setup: {
       config: ctx.config,
-      generation: ctx.generation,
+      generation,
       declaration: ctx.declaration
     },
     clientMetrics: {
@@ -89,4 +114,10 @@ export function buildRunPayload(ctx: RunSubmitContext): RunSubmitInput {
     clientScore: ctx.score,
     log: eventLog
   }
+}
+
+function dimensionOf(ctx: RunSubmitContext): { durationMs?: number; wordCount?: number } {
+  if (ctx.mode === 'quote') return {}
+  if (ctx.mode === 'time') return { durationMs: ctx.config.durationMs }
+  return { wordCount: ctx.generation.length }
 }

@@ -3,7 +3,7 @@
  */
 export default {
   game: {
-    mode: { words: 'слова', time: 'время' },
+    mode: { words: 'слова', time: 'время', quote: 'цитата' },
     punctuation: 'пунктуация',
     numbers: 'цифры',
     randomCase: 'случайный регистр',
@@ -16,10 +16,23 @@ export default {
     minSpeedOff: 'выкл',
     language: 'язык',
     difficulty: { label: 'сложность', normal: 'обычная', expert: 'эксперт', master: 'мастер' },
+    quote: {
+      length: 'длина',
+      group: {
+        all: 'любая',
+        short: 'короткая',
+        medium: 'средняя',
+        long: 'длинная',
+        thicc: 'огромная'
+      },
+      source: '— {source}'
+    },
     setup: {
       loading: 'загрузка слов…',
       dictionaryError: 'не удалось загрузить список слов для {lang}',
       generationError: 'не удалось собрать тест с этими настройками',
+      quoteEmpty: 'нет цитат ({group}) для языка {lang} — выберите другую длину или язык',
+      quoteError: 'не удалось загрузить цитату',
       retry: 'повторить'
     }
   },

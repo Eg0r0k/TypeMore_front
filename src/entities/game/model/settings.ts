@@ -12,6 +12,7 @@ import {
   type Difficulty,
   type GenerationConfig,
   type GenerationMode,
+  type GenerationTextSource,
   CODE_MAX_EXTRA_CHARS,
   DEFAULT_MAX_EXTRA_CHARS
 } from '@shared/core'
@@ -51,6 +52,13 @@ export interface GameSettings {
    * from the dictionary's metadata; there is no toggle in the settings bar.
    */
   readonly rawTokens?: boolean
+  /**
+   * Where the targets come from. Absent (or `{kind:'seeded'}`) is the seeded
+   * dictionary run; the quote arm carries the already-resolved text, which the
+   * page fetched from `/quotes/random`. Not a saved setting — it is drawn per
+   * run, so it arrives here beside the saved ones rather than living in them.
+   */
+  readonly textSource?: GenerationTextSource
 }
 
 export interface CoreSetup {
@@ -73,8 +81,13 @@ export function toCoreSetup(settings: GameSettings): CoreSetup {
     freedomMode,
     stopOnError,
     quickEnd,
-    rawTokens
+    rawTokens,
+    textSource
   } = settings
+  // A quote has no length target — the run ends on the last committed word of
+  // the text itself, so there is no magnitude to carry and none is invented
+  // (see `targetCount` in words.ts).
+  const seededLength = mode === 'time' ? time : words
   return {
     coreConfig: {
       mode,
@@ -89,12 +102,13 @@ export function toCoreSetup(settings: GameSettings): CoreSetup {
     },
     generation: {
       mode,
-      length: mode === 'time' ? time : words,
+      length: textSource?.kind === 'quote' ? 0 : seededLength,
       punctuation,
       numbers,
       randomCase,
       reverse,
-      rawTokens
+      rawTokens,
+      textSource
     }
   }
 }

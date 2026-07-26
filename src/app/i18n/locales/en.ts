@@ -4,7 +4,7 @@
  */
 export default {
   game: {
-    mode: { words: 'words', time: 'time' },
+    mode: { words: 'words', time: 'time', quote: 'quote' },
     punctuation: 'punctuation',
     numbers: 'numbers',
     randomCase: 'random case',
@@ -17,10 +17,17 @@ export default {
     minSpeedOff: 'off',
     language: 'language',
     difficulty: { label: 'difficulty', normal: 'normal', expert: 'expert', master: 'master' },
+    quote: {
+      length: 'length',
+      group: { all: 'all', short: 'short', medium: 'medium', long: 'long', thicc: 'thicc' },
+      source: '— {source}'
+    },
     setup: {
       loading: 'loading words…',
       dictionaryError: 'could not load the word list for {lang}',
       generationError: 'could not build a test from these settings',
+      quoteEmpty: 'no {group} quotes in {lang} yet — try another length or language',
+      quoteError: 'could not load a quote',
       retry: 'retry'
     }
   },

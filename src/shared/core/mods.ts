@@ -17,6 +17,7 @@
  */
 import type { CoreConfig } from './game-core'
 import type { GenerationConfig } from './words'
+import { emitsRawTokens } from './words'
 
 /** The declared (view-only) mods, accepted on trust. Verifiable mods are NOT here. */
 export interface ModsDeclaration {
@@ -65,6 +66,13 @@ export const MINSPEED_MULTIPLIERS: Record<number, number> = {
  * The active mods for a run, in a stable order: verifiable (from the setup) then
  * declared (from the declaration). Pure — the results breakdown and
  * `modMultiplierV1` both read it, so the list and the product never disagree.
+ *
+ * The four WORD-AFFECTING mods are gated on `emitsRawTokens` — the same
+ * predicate `generateWords` uses to skip the transforms. When the targets are
+ * emitted verbatim (a code dictionary, or a quote) those toggles changed
+ * nothing about the text, so paying a multiplier for them would credit
+ * punctuation the run never chose. One predicate, so "was the transform
+ * applied" and "is the mod paid for" cannot drift apart.
  */
 export function activeModsV1(setup: ModSetup, declaration: ModsDeclaration): ActiveMod[] {
   const { generation: g, config: c } = setup
@@ -73,13 +81,14 @@ export function activeModsV1(setup: ModSetup, declaration: ModsDeclaration): Act
     if (on) mods.push({ id, multiplier })
   }
   // Verifiable — reproduced from seed + config snapshot server-side.
-  add('punctuation', g.punctuation, MOD_MULTIPLIERS.punctuation)
-  add('numbers', g.numbers, MOD_MULTIPLIERS.numbers)
-  add('randomCase', g.randomCase, MOD_MULTIPLIERS.randomCase)
+  const transformed = !emitsRawTokens(g)
+  add('punctuation', transformed && g.punctuation, MOD_MULTIPLIERS.punctuation)
+  add('numbers', transformed && g.numbers, MOD_MULTIPLIERS.numbers)
+  add('randomCase', transformed && g.randomCase, MOD_MULTIPLIERS.randomCase)
   add('nospace', c.nospace, MOD_MULTIPLIERS.nospace)
   add('expert', c.difficulty === 'expert', MOD_MULTIPLIERS.expert)
   add('master', c.difficulty === 'master', MOD_MULTIPLIERS.master)
-  add('reverse', g.reverse, MOD_MULTIPLIERS.reverse)
+  add('reverse', transformed && g.reverse, MOD_MULTIPLIERS.reverse)
   if (c.minWpm > 0 && MINSPEED_MULTIPLIERS[c.minWpm] !== undefined) {
     mods.push({ id: `minSpeed${c.minWpm}`, multiplier: MINSPEED_MULTIPLIERS[c.minWpm] })
   }

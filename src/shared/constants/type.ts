@@ -9,6 +9,12 @@ export type SmoothCaret = 'off' | 'slow' | 'medium' | 'fast'
 export type CaretStyle = 'off' | 'default' | 'block' | 'outline' | 'underline'
 /** Custom background: how the image is fitted to the viewport. */
 export type BackgroundSize = 'cover' | 'contain' | 'max'
+/**
+ * Quote mode: which length band to draw from. `all` is the absence of a filter
+ * — it OMITS the `group` query parameter rather than sending a sixth value the
+ * server would reject with a 400 (see the backend's `docs/QUOTES.md`).
+ */
+export type QuoteGroup = 'all' | 'short' | 'medium' | 'long' | 'thicc'
 
 export interface Config {
   words: number
@@ -42,6 +48,8 @@ export interface Config {
   difficulty: Difficulty
   /** Reverse mod (generation): mirror every word. Core-bound — rebuilds on change. */
   reverse: boolean
+  /** Quote mode: length band the random draw is filtered to. Core-bound. */
+  quoteGroup: QuoteGroup
   /** MinSpeed floor in net WPM (0 = off). Core-bound — rebuilds on change. */
   minWpm: number
   // View-only mods (never in core/log; applied live).
@@ -66,6 +74,6 @@ export enum ConfigModes {
   Words = 'words',
   Free = 'free',
   Time = 'time',
-  Qoute = 'quote',
+  Quote = 'quote',
   Custom = 'custom'
 }

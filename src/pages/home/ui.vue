@@ -45,11 +45,7 @@
         </Typography>
         <template v-else>
           <Typography size="m" color="error">
-            {{
-              setupState === 'dictionary-error'
-                ? t('game.setup.dictionaryError', { lang: config.language })
-                : t('game.setup.generationError')
-            }}
+            {{ setupErrorText }}
           </Typography>
           <Button color="main-outline" size="s" @click="loadAndSetup">
             {{ t('game.setup.retry') }}
@@ -67,6 +63,18 @@
         :smooth-caret="config.smoothCaret"
       />
     </Transition>
+    <!--
+      Attribution. Upstream's `source` is not decoration and not optional: a
+      fixed text is somebody's, and the run is played on their bytes.
+    -->
+    <Typography
+      v-if="activeQuote && !replaying && setupState === 'ready' && !isFinished"
+      class="home__quote-source"
+      size="s"
+      color="sub"
+    >
+      {{ t('game.quote.source', { source: activeQuote.source }) }}
+    </Typography>
   </main>
 </template>
 
@@ -83,7 +91,14 @@
   import { ReplayPlayer } from '@/features/test/replay'
   import { type ReplayData, toCoreSetup, toGameSession, useGameStore } from '@entities/game'
   import { useConfigStore } from '@/entities/config/model/store'
-  import { loadDictionaryBody, type DictionaryBody } from '@shared/api'
+  import {
+    isApiError,
+    loadDictionaryBody,
+    loadRandomQuote,
+    type DictionaryBody,
+    type Quote
+  } from '@shared/api'
+  import { ConfigModes } from '@/shared/constants/type'
   import { createTimerWorker } from '@/shared/lib/hooks/createTimerWorker'
   import {
     type Dictionary,
@@ -117,11 +132,33 @@
   /**
    * Whether a test exists to type into. `dictionary-error` — the word list
    * failed to load (server down, unknown language); `generation-error` — the
-   * settings produced no words. Anything but `ready` hides the field: an empty
+   * settings produced no words; `quote-empty` — the language/length filter
+   * matches no quote (the registry's honest 404, not a failure); `quote-error`
+   * — the draw itself failed. Anything but `ready` hides the field: an empty
    * field still owns the keyboard, so the player would type into nothing.
    */
-  type SetupState = 'loading' | 'ready' | 'dictionary-error' | 'generation-error'
+  type SetupState =
+    'loading' | 'ready' | 'dictionary-error' | 'generation-error' | 'quote-empty' | 'quote-error'
   const setupState = ref<SetupState>('loading')
+
+  /** The quote the current run is played on, `null` for a seeded run. */
+  const activeQuote = ref<Quote | null>(null)
+
+  const setupErrorText = computed(() => {
+    switch (setupState.value) {
+      case 'dictionary-error':
+        return t('game.setup.dictionaryError', { lang: config.language })
+      case 'quote-empty':
+        return t('game.setup.quoteEmpty', {
+          lang: config.language,
+          group: t(`game.quote.group.${config.quoteGroup}`)
+        })
+      case 'quote-error':
+        return t('game.setup.quoteError')
+      default:
+        return t('game.setup.generationError')
+    }
+  })
 
   // Replay overlay: a finished run played back over a second store instance.
   const replaying = ref(false)
@@ -137,7 +174,14 @@
     mode: config.mode,
     language: config.language,
     difficulty: config.difficulty,
-    amount: config.mode === 'time' ? config.time : config.words,
+    // A quote's magnitude is the text's own word count, not a configured
+    // preset — the config's `words` would be a number the run never used.
+    amount:
+      activeQuote.value !== null
+        ? game.words.length
+        : config.mode === 'time'
+          ? config.time
+          : config.words,
     punctuation: config.punctuation,
     numbers: config.numbers,
     randomCase: config.randomCase,
@@ -188,27 +232,55 @@
   })
 
   /**
-   * No word list ⇒ no test. Both failure modes below leave the game store
-   * without a core, so the field would render empty while still capturing
-   * keystrokes — surface the failure instead and let the player retry.
+   * No text ⇒ no test. Every failure below leaves the game store without a
+   * core, so the field would render empty while still capturing keystrokes —
+   * surface the failure instead and let the player retry.
+   *
+   * A QUOTE run draws its text first, and the dictionary becomes optional:
+   * `generateWords` never reads it for a quote, and `code_python` /
+   * `code_javascript` are quote-only languages with no served word list at all.
+   * A seeded run still treats a missing dictionary as fatal.
    */
   async function loadAndSetup(): Promise<void> {
     replaying.value = false
     setupState.value = 'loading'
-    let lang: DictionaryBody
+    const quoteMode = config.mode === ConfigModes.Quote
+
+    let quote: Quote | null = null
+    if (quoteMode) {
+      try {
+        quote = await loadRandomQuote({
+          lang: config.language,
+          // `all` is the absence of a filter, not a sixth band: the parameter
+          // is omitted rather than sent as a value the server rejects (400).
+          group: config.quoteGroup === 'all' ? undefined : config.quoteGroup
+        })
+      } catch (error) {
+        console.error('quote draw failed', error)
+        // 404 is the registry saying this filter matches nothing — a real state
+        // the player can act on (pick another length or language), not a fault.
+        setupState.value = isApiError(error) && error.status === 404 ? 'quote-empty' : 'quote-error'
+        return
+      }
+    }
+    activeQuote.value = quote
+
+    let body: DictionaryBody | null = null
     try {
-      lang = await loadDictionaryBody(config.language)
+      body = await loadDictionaryBody(config.language)
     } catch (error) {
       console.error('dictionary load failed', error)
-      setupState.value = 'dictionary-error'
-      return
+      if (!quoteMode) {
+        setupState.value = 'dictionary-error'
+        return
+      }
     }
     const dictionary: Dictionary = {
-      name: lang.name,
-      bcp47: lang.bcp47 ?? config.language,
-      words: lang.words
+      name: body?.name ?? config.language,
+      bcp47: body?.bcp47 ?? config.language,
+      words: body?.words ?? []
     }
-    isRightToLeft.value = lang.rightToleft === true
+    isRightToLeft.value = body?.rightToleft === true
 
     const { coreConfig, generation } = toCoreSetup({
       mode: config.mode as GenerationMode,
@@ -223,7 +295,12 @@
       minWpm: config.minWpm,
       freedomMode: config.freedomMode,
       stopOnError: config.stopOnError,
-      quickEnd: config.quickEnd
+      quickEnd: config.quickEnd,
+      // The text is already resolved — the core never fetches. On submission it
+      // is stripped back to {quoteId, quoteHash}; the server re-resolves it.
+      textSource: quote
+        ? { kind: 'quote', quoteId: quote.id, quoteHash: quote.textHash, text: quote.text }
+        : undefined
     })
     // Local play seeds itself; a ranked/multiplayer server supplies the seed.
     const seed = Math.floor(Math.random() * 0x1_0000_0000)
@@ -260,6 +337,7 @@
       config.mode,
       config.time,
       config.words,
+      config.quoteGroup,
       config.language,
       config.punctuation,
       config.numbers,
@@ -313,6 +391,12 @@
     align-items: center;
     justify-content: center;
     min-height: 8rem;
+    text-align: center;
+  }
+
+  /* Attribution under the typing field — never above it, never beside it. */
+  .home__quote-source {
+    margin-top: 1.5rem;
     text-align: center;
   }
 

@@ -9,20 +9,27 @@
       aria-label="modifiers"
       @update:model-value="setActiveToggles"
     >
-      <ToggleGroupItem v-for="key in toggles" :key="key" :value="key" class="settings-bar__btn">
+      <ToggleGroupItem
+        v-for="key in toggles"
+        :key="key"
+        :value="key"
+        :disabled="gatedToggles.has(key)"
+        class="settings-bar__btn"
+      >
         {{ t(`game.${key}`) }}
       </ToggleGroupItem>
     </ToggleGroup>
 
-    <!-- mode: time | words (single) -->
+    <!-- mode: time | words | quote (single) -->
     <ToggleGroup :model-value="config.mode" aria-label="mode" @update:model-value="onMode">
       <ToggleGroupItem v-for="m in modes" :key="m" :value="m" class="settings-bar__btn">
-        {{ t(`game.mode.${m === ConfigModes.Time ? 'time' : 'words'}`) }}
+        {{ t(`game.mode.${m}`) }}
       </ToggleGroupItem>
     </ToggleGroup>
 
-    <!-- amount presets (single) -->
+    <!-- amount presets (single) — a quote's length is the text's, not a preset -->
     <ToggleGroup
+      v-if="!isQuote"
       :model-value="String(currentAmount)"
       aria-label="amount"
       @update:model-value="onPreset"
@@ -36,6 +43,28 @@
         {{ preset }}
       </ToggleGroupItem>
     </ToggleGroup>
+
+    <!--
+      Quote length band (single) — `all` omits the group filter. A plain
+      wrapper, not a <label>: the group already labels itself via aria-label.
+    -->
+    <div v-else class="flex items-center gap-2 text-sub">
+      <span>{{ t('game.quote.length') }}</span>
+      <ToggleGroup
+        :model-value="config.quoteGroup"
+        aria-label="quote length"
+        @update:model-value="onQuoteGroup"
+      >
+        <ToggleGroupItem
+          v-for="group in quoteGroups"
+          :key="group"
+          :value="group"
+          class="settings-bar__btn"
+        >
+          {{ t(`game.quote.group.${group}`) }}
+        </ToggleGroupItem>
+      </ToggleGroup>
+    </div>
 
     <!-- difficulty (single) -->
     <ToggleGroup
@@ -92,7 +121,7 @@
   import { useI18n } from 'vue-i18n'
 
   import { useConfigStore } from '@/entities/config/model/store'
-  import { ConfigModes } from '@/shared/constants/type'
+  import { ConfigModes, type QuoteGroup } from '@/shared/constants/type'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
   import { LanguageModal } from '@/features/modal/language'
 
@@ -129,18 +158,41 @@
     'fading',
     'flashlight'
   ]
+  /**
+   * The WORD-AFFECTING mods, disabled while a quote is selected: a quote's
+   * bytes are fixed, so punctuation/numbers/randomCase/reverse would change
+   * nothing (`emitsRawTokens` in the core suppresses them on both the
+   * generation and the scoring side). They are shown disabled rather than
+   * silently ignored, and their saved values are left alone so switching back
+   * to a seeded mode restores them.
+   */
+  const QUOTE_GATED: readonly ToggleKey[] = ['punctuation', 'numbers', 'randomCase', 'reverse']
+  const isQuote = computed(() => config.mode === ConfigModes.Quote)
+  const gatedToggles = computed(() => new Set(isQuote.value ? QUOTE_GATED : []))
+
   // Multi-select model over the boolean flags. The setter writes each flag to its
   // membership in the selection; unchanged flags resolve to the same value and do
   // not re-trigger reactivity (so only the flipped flag fires the watcher).
   const activeToggles = computed<ToggleKey[]>(() => toggles.filter((key) => config[key]))
   const setActiveToggles = (value: unknown): void => {
     const next = (Array.isArray(value) ? value : []) as ToggleKey[]
-    for (const key of toggles) config[key] = next.includes(key)
+    // A gated flag keeps its stored value: the group's model omits nothing, but
+    // a disabled item can never appear in `next`, and writing that absence back
+    // would silently clear a setting the player did not touch.
+    for (const key of toggles) {
+      if (!gatedToggles.value.has(key)) config[key] = next.includes(key)
+    }
   }
 
-  const modes = [ConfigModes.Words, ConfigModes.Time]
+  const modes = [ConfigModes.Words, ConfigModes.Time, ConfigModes.Quote]
   const onMode = (value: unknown): void => {
     if (value) configStore.setMode(value as ConfigModes)
+  }
+
+  const quoteGroups: QuoteGroup[] = ['all', 'short', 'medium', 'long', 'thicc']
+  const onQuoteGroup = (value: unknown): void => {
+    if (!value) return
+    configStore.setConfig('quoteGroup', value as QuoteGroup)
   }
 
   const difficulties = ['normal', 'expert', 'master'] as const
