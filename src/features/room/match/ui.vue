@@ -48,10 +48,22 @@
       </span>
     </div>
     <section class="room-match__field">
+      <!--
+        The personal visual mods travel with the player, not with the room.
+        PROTOCOL.md §5 keeps blind/fading/flashlight off the wire because they
+        leave no trace in the event log and so cannot be scored — that is why
+        they are not freemods, NOT a reason to withhold them from the player who
+        turned them on. `blind` already reached the field through `selfView`;
+        fading and flashlight are CSS mods carried as props, and were simply
+        never passed here. All three are self-handicaps: they hide information,
+        so there is nothing to guard against.
+      -->
       <Test
         v-if="session.selfView"
         :store="session.selfView"
         :ghosts="ghosts"
+        :fading="config.fading"
+        :flashlight="config.flashlight"
         :caret-style="config.caretStyle"
         :smooth-caret="config.smoothCaret"
       />
