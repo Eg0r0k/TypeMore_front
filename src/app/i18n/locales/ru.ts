@@ -361,6 +361,7 @@ export default {
       label: 'таблица',
       time: '{seconds}с · {lang}',
       words: '{count} слов · {lang}',
+      quote: 'цитата · {id}',
       entries: 'записей: {count}'
     },
     column: {

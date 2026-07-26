@@ -26,7 +26,7 @@
 <script setup lang="ts">
   import { computed } from 'vue'
   import { useI18n } from 'vue-i18n'
-  import type { BucketInfo } from '@shared/api'
+  import { isQuoteBucket, type BucketInfo } from '@shared/api'
   import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
   import { Typography } from '@/shared/ui/typography'
 
@@ -48,14 +48,27 @@
   const { t } = useI18n()
 
   const MS_PER_SECOND = 1000
+  /** Enough of a uuid to tell two quote boards apart in a dropdown. */
+  const QUOTE_ID_STEM = 8
 
-  const label = (bucket: BucketInfo): string =>
-    bucket.mode === 'time'
+  /**
+   * A quote board has no mode, dimension or language to be named by — everyone
+   * types the same fixed text, so it is named by the quote. The catalogue only
+   * carries the id (attribution lives on the board's rows and on
+   * `GET /quotes/{id}`), so the label uses a stem of it, which is at least
+   * unambiguous between two quote boards.
+   */
+  const label = (bucket: BucketInfo): string => {
+    if (isQuoteBucket(bucket)) {
+      return t('boards.bucket.quote', { id: bucket.quoteId.slice(0, QUOTE_ID_STEM) })
+    }
+    return bucket.mode === 'time'
       ? t('boards.bucket.time', {
           seconds: Math.round((bucket.durationMs ?? 0) / MS_PER_SECOND),
           lang: bucket.lang
         })
       : t('boards.bucket.words', { count: bucket.wordCount ?? 0, lang: bucket.lang })
+  }
 
   // The listbox is portaled, so the trigger renders its own copy of the label
   // rather than relying on the selected item's node being in the tree.

@@ -360,6 +360,7 @@ export default {
       label: 'board',
       time: '{seconds}s · {lang}',
       words: '{count} words · {lang}',
+      quote: 'quote · {id}',
       entries: '{count} entries'
     },
     column: { rank: '#', player: 'player', wpm: 'wpm', acc: 'acc', score: 'score', when: 'when' },

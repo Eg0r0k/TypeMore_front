@@ -8,6 +8,9 @@ export {
 } from './queries'
 
 export {
+  isQuoteBucket,
+  LanguageBucketSchema,
+  QuoteBucketSchema,
   BucketInfoSchema,
   BucketCatalogueSchema,
   BoardModsSchema,
@@ -17,6 +20,8 @@ export {
 } from './schemas'
 export type {
   TextSource,
+  LanguageBucket,
+  QuoteBucket,
   BucketInfo,
   BucketCatalogue,
   BoardMods,

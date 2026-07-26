@@ -28,6 +28,9 @@ vi.mock('@shared/api', () => {
   return {
     ApiError,
     isApiError: (value: unknown) => value instanceof ApiError,
+    // Pure predicate, so the mock carries the real rule rather than a stub: the
+    // picker calls it for every row and a missing export throws inside render.
+    isQuoteBucket: (bucket: object) => 'quoteId' in bucket,
     // The real factory `select`s `.buckets` out of the envelope; the view only
     // ever sees the array, so that is what the mock resolves.
     bucketCatalogueQueryOptions: () => ({
