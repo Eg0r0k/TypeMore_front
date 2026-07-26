@@ -1,11 +1,9 @@
 import { useConfigStore } from '@/entities/config/model/store'
 import { useThemes } from '@/shared/lib/hooks/useThemes'
 import { useUiLanguage } from '@/shared/lib/hooks/useUiLanguage'
-import { languagesQueryOptions } from '@shared/api'
-import { useQuery } from '@tanstack/vue-query'
 import { useFavicon } from '@vueuse/core'
-import { LANG_KEY, THEMES_KEY } from '@/shared/constants/inject-keys'
-import { computed, onBeforeMount, onMounted, onUnmounted, provide, ref } from 'vue'
+import { THEMES_KEY } from '@/shared/constants/inject-keys'
+import { onBeforeMount, onMounted, onUnmounted, provide, ref } from 'vue'
 
 export const useAppSetup = () => {
   const configStore = useConfigStore()
@@ -14,11 +12,8 @@ export const useAppSetup = () => {
   // whole app lifetime, not just while the settings dialog is mounted.
   useUiLanguage()
   const cookieOpen = ref(false)
-  const { data: languages } = useQuery(languagesQueryOptions())
-  const lang = computed(() => languages.value ?? [])
 
   provide(THEMES_KEY, themesList)
-  provide(LANG_KEY, lang)
 
   onBeforeMount(async () => {
     await applyTheme(configStore.config.theme)

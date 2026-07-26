@@ -21,11 +21,30 @@ export const dictionaryCatalogueQueryOptions = () =>
     ...IMMUTABLE
   })
 
-/** The catalogue projected to language codes — same cache entry, no extra fetch. */
-export const languagesQueryOptions = () =>
+/**
+ * The catalogue projected to language KEYS — same cache entry, no extra fetch.
+ *
+ * Keys only. Anything that RENDERS a language wants
+ * `dictionaryCatalogueQueryOptions` (whole rows) or `languageNamesQueryOptions`
+ * (key → name), because the key is an identifier and never a label.
+ */
+export const languageKeysQueryOptions = () =>
   queryOptions({
     ...dictionaryCatalogueQueryOptions(),
     select: (catalogue: DictionaryCatalogue) => catalogue.map((d) => d.lang)
+  })
+
+/**
+ * `lang` → its human name, for the surfaces that hold a bare key and must show
+ * it: the settings bar, the room panel, a leaderboard bucket. The server's
+ * catalogue is the ONLY place a language is named — no client-side prettifying
+ * of `code_css` into something that reads like a language.
+ */
+export const languageNamesQueryOptions = () =>
+  queryOptions({
+    ...dictionaryCatalogueQueryOptions(),
+    select: (catalogue: DictionaryCatalogue): Readonly<Record<string, string>> =>
+      Object.fromEntries(catalogue.map((d) => [d.lang, d.name]))
   })
 
 /** Two hops by design: the catalogue resolves a language to its content hash. */

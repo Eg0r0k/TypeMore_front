@@ -2,7 +2,8 @@
 export { dictionaryKeys } from './keys'
 export {
   dictionaryCatalogueQueryOptions,
-  languagesQueryOptions,
+  languageKeysQueryOptions,
+  languageNamesQueryOptions,
   dictionaryBodyQueryOptions,
   dictionaryBodyByHashQueryOptions,
   loadDictionaryCatalogue,
@@ -10,5 +11,5 @@ export {
   loadDictionaryBody,
   loadDictionaryBodyByHash
 } from './queries'
-
+export { DictionarySchema, DictionaryCatalogueSchema, DictionaryBodySchema } from './schemas'
 export type { DictionaryInfo, DictionaryCatalogue, DictionaryBody } from './schemas'
