@@ -2,7 +2,7 @@
   <div
     class="mb-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-3 py-2.5 text-sm text-sub"
   >
-    <!-- modifiers (multi-select) -->
+    <!-- modifiers (multi-select) — every boolean the registry puts in this context -->
     <ToggleGroup
       type="multiple"
       :model-value="activeToggles"
@@ -10,83 +10,106 @@
       @update:model-value="setActiveToggles"
     >
       <ToggleGroupItem
-        v-for="key in toggles"
-        :key="key"
-        :value="key"
-        :disabled="gatedToggles.has(key)"
+        v-for="option in toggleOptions"
+        :key="option.key"
+        :value="option.key"
+        :disabled="reasonOf(option) !== null"
+        :title="titleOf(option)"
         class="settings-bar__btn"
       >
-        {{ t(`game.${key}`) }}
+        {{ t(option.i18nKey) }}
       </ToggleGroupItem>
     </ToggleGroup>
 
-    <!-- mode: time | words | quote (single) -->
-    <ToggleGroup :model-value="config.mode" aria-label="mode" @update:model-value="onMode">
-      <ToggleGroupItem v-for="m in modes" :key="m" :value="m" class="settings-bar__btn">
-        {{ t(`game.mode.${m}`) }}
-      </ToggleGroupItem>
-    </ToggleGroup>
+    <!-- why a disabled modifier is disabled — the registry's reason, rendered once -->
+    <span v-for="reason in activeReasons" :key="reason" class="settings-bar__reason">
+      {{ t(reason) }}
+    </span>
 
-    <!-- amount presets (single) — a quote's length is the text's, not a preset -->
+    <!-- mode: the values this context accepts (solo adds `quote`; a room does not) -->
     <ToggleGroup
-      v-if="!isQuote"
-      :model-value="String(currentAmount)"
-      aria-label="amount"
-      @update:model-value="onPreset"
+      :model-value="config.mode"
+      :aria-label="modeOption.ariaLabel"
+      @update:model-value="onMode"
     >
       <ToggleGroupItem
-        v-for="preset in presets"
-        :key="preset"
-        :value="String(preset)"
+        v-for="value in modeValues"
+        :key="value"
+        :value="value"
         class="settings-bar__btn"
       >
-        {{ preset }}
+        {{ t(`${modeOption.valueI18nPrefix}.${value}`) }}
       </ToggleGroupItem>
     </ToggleGroup>
 
     <!--
-      Quote length band (single) — `all` omits the group filter. A plain
-      wrapper, not a <label>: the group already labels itself via aria-label.
+      The dimension control, whichever one the current mode makes visible:
+      seconds, word count, or a quote's length band. Exactly one is ever shown —
+      `visibleWhen` in the registry decides, not a chain of `v-if`s here.
     -->
-    <div v-else class="flex items-center gap-2 text-sub">
-      <span>{{ t('game.quote.length') }}</span>
+    <template v-if="dimension">
       <ToggleGroup
-        :model-value="config.quoteGroup"
-        aria-label="quote length"
-        @update:model-value="onQuoteGroup"
+        v-if="dimension.control.kind === 'presets'"
+        :model-value="String(config[dimension.key])"
+        :aria-label="dimension.ariaLabel"
+        @update:model-value="onDimensionPreset"
       >
         <ToggleGroupItem
-          v-for="group in quoteGroups"
-          :key="group"
-          :value="group"
+          v-for="preset in presetsFor(dimension)"
+          :key="preset"
+          :value="String(preset)"
           class="settings-bar__btn"
         >
-          {{ t(`game.quote.group.${group}`) }}
+          {{ preset }}
         </ToggleGroupItem>
       </ToggleGroup>
-    </div>
+
+      <!-- A plain wrapper, not a <label>: the group already labels itself. -->
+      <div v-else class="flex items-center gap-2 text-sub">
+        <span>{{ t(dimension.i18nKey) }}</span>
+        <ToggleGroup
+          :model-value="String(config[dimension.key])"
+          :aria-label="dimension.ariaLabel"
+          @update:model-value="onDimensionEnum"
+        >
+          <ToggleGroupItem
+            v-for="value in valuesFor(dimension, 'solo')"
+            :key="value"
+            :value="value"
+            class="settings-bar__btn"
+          >
+            {{ t(`${dimension.valueI18nPrefix}.${value}`) }}
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
+    </template>
 
     <!-- difficulty (single) -->
     <ToggleGroup
       :model-value="config.difficulty"
-      aria-label="difficulty"
+      :aria-label="difficultyOption.ariaLabel"
       @update:model-value="onDifficulty"
     >
-      <ToggleGroupItem v-for="d in difficulties" :key="d" :value="d" class="settings-bar__btn">
-        {{ t(`game.difficulty.${d}`) }}
+      <ToggleGroupItem
+        v-for="value in valuesFor(difficultyOption, 'solo')"
+        :key="value"
+        :value="value"
+        class="settings-bar__btn"
+      >
+        {{ t(`${difficultyOption.valueI18nPrefix}.${value}`) }}
       </ToggleGroupItem>
     </ToggleGroup>
 
     <!-- min speed floor (single) -->
     <label class="flex items-center gap-2 text-sub">
-      {{ t('game.minSpeed') }}
+      {{ t(minWpmOption.i18nKey) }}
       <ToggleGroup
         :model-value="String(config.minWpm)"
-        aria-label="min speed"
+        :aria-label="minWpmOption.ariaLabel"
         @update:model-value="onMinSpeed"
       >
         <ToggleGroupItem
-          v-for="ms in minSpeedOptions"
+          v-for="ms in presetsFor(minWpmOption)"
           :key="ms"
           :value="String(ms)"
           class="settings-bar__btn"
@@ -98,7 +121,7 @@
 
     <!-- language (searchable console modal) -->
     <label class="flex items-center gap-2 text-sub">
-      {{ t('game.language') }}
+      {{ t(languageOption.i18nKey) }}
       <button
         type="button"
         class="transition-tm focus-ring inline-flex cursor-pointer items-center rounded-md px-3 py-1.5 text-sm text-sub hover:text-text"
@@ -121,102 +144,114 @@
   import { useI18n } from 'vue-i18n'
 
   import { useConfigStore } from '@/entities/config/model/store'
-  import { ConfigModes, type QuoteGroup } from '@/shared/constants/type'
+  import {
+    disabledReason,
+    optionOf,
+    presetsFor,
+    valuesFor,
+    visibleOptionsFor,
+    type ConstraintContext,
+    type GameOption
+  } from '@/entities/game'
+  import { ConfigModes, type Config, type QuoteGroup } from '@/shared/constants/type'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
   import { LanguageModal } from '@/features/modal/language'
 
+  /** The `Config` fields the multi-select group writes — every boolean one. */
+  type BooleanOptionKey = {
+    [K in keyof Config]: Config[K] extends boolean ? K : never
+  }[keyof Config]
+
   /**
-   * Compact game settings bar. Writes straight into the persisted config store;
-   * core-bound options trigger the GameField rebuild-on-change, `blind` applies
-   * live. No local state, no rules — just the existing config fields.
+   * Compact game settings bar, rendered from the game-config registry filtered
+   * to the `solo` context. Which options exist, which values they accept and
+   * when they are unavailable all come from that one table — this file owns only
+   * the LAYOUT and the writes.
    *
-   * The rendering layer is shadcn ToggleGroup + the console language modal, but
-   * every write below is identical to the previous bar (setMode/setTime/setWords/
-   * setLanguage, direct config.difficulty, config[toggle] flip) so the home-page
-   * rebuild-run watcher semantics are unchanged.
+   * The writes are deliberately unchanged from the pre-registry bar
+   * (setMode/setTime/setWords/setLanguage, `setConfig` for quoteGroup/minWpm,
+   * direct `config.difficulty` and `config[key]` for the flags), so the
+   * home-page rebuild-run watcher semantics are exactly what they were.
    */
   const { t } = useI18n()
   const configStore = useConfigStore()
   const config = configStore.config
 
-  type ToggleKey =
-    | 'punctuation'
-    | 'numbers'
-    | 'randomCase'
-    | 'nospace'
-    | 'reverse'
-    | 'blind'
-    | 'fading'
-    | 'flashlight'
-  const toggles: ToggleKey[] = [
-    'punctuation',
-    'numbers',
-    'randomCase',
-    'nospace',
-    'reverse',
-    'blind',
-    'fading',
-    'flashlight'
-  ]
+  /** Constraint input: the run's intent. No quote is drawn yet at this point. */
+  const ctx = computed<ConstraintContext>(() => ({ mode: config.mode }))
+
+  const modeOption = optionOf('mode')
+  const difficultyOption = optionOf('difficulty')
+  const minWpmOption = optionOf('minWpm')
+  const languageOption = optionOf('language')
+
+  const modeValues = computed(() => valuesFor(modeOption, 'solo'))
+
+  /** Every boolean this context owns, in registry order. */
+  const toggleOptions = computed(() =>
+    visibleOptionsFor('solo', ctx.value).filter((o) => o.control.kind === 'boolean')
+  )
+
+  /** The one dimension control the current mode makes visible. */
+  const DIMENSION_KEYS: readonly string[] = ['time', 'words', 'quoteGroup']
+  const dimension = computed(() =>
+    visibleOptionsFor('solo', ctx.value).find((o) => DIMENSION_KEYS.includes(o.key))
+  )
+
+  const reasonOf = (option: GameOption): string | null => disabledReason(option, ctx.value)
+  const titleOf = (option: GameOption): string | undefined => {
+    const reason = reasonOf(option)
+    return reason ? t(reason) : undefined
+  }
+
   /**
-   * The WORD-AFFECTING mods, disabled while a quote is selected: a quote's
-   * bytes are fixed, so punctuation/numbers/randomCase/reverse would change
-   * nothing (`emitsRawTokens` in the core suppresses them on both the
-   * generation and the scoring side). They are shown disabled rather than
-   * silently ignored, and their saved values are left alone so switching back
-   * to a seeded mode restores them.
+   * The distinct reasons currently gating something, so the bar explains itself
+   * once instead of hiding the explanation in a tooltip nobody hovers.
    */
-  const QUOTE_GATED: readonly ToggleKey[] = ['punctuation', 'numbers', 'randomCase', 'reverse']
-  const isQuote = computed(() => config.mode === ConfigModes.Quote)
-  const gatedToggles = computed(() => new Set(isQuote.value ? QUOTE_GATED : []))
+  const activeReasons = computed(() => [
+    ...new Set(toggleOptions.value.map(reasonOf).filter((r): r is string => r !== null))
+  ])
 
   // Multi-select model over the boolean flags. The setter writes each flag to its
   // membership in the selection; unchanged flags resolve to the same value and do
   // not re-trigger reactivity (so only the flipped flag fires the watcher).
-  const activeToggles = computed<ToggleKey[]>(() => toggles.filter((key) => config[key]))
+  const activeToggles = computed<string[]>(() =>
+    toggleOptions.value.filter((o) => config[o.key] === true).map((o) => o.key)
+  )
   const setActiveToggles = (value: unknown): void => {
-    const next = (Array.isArray(value) ? value : []) as ToggleKey[]
-    // A gated flag keeps its stored value: the group's model omits nothing, but
-    // a disabled item can never appear in `next`, and writing that absence back
-    // would silently clear a setting the player did not touch.
-    for (const key of toggles) {
-      if (!gatedToggles.value.has(key)) config[key] = next.includes(key)
+    const next = new Set(Array.isArray(value) ? (value as string[]) : [])
+    // A gated flag keeps its stored value: a disabled item can never appear in
+    // `next`, and writing that absence back would silently clear a setting the
+    // player did not touch — so switching away from a quote restores them.
+    for (const option of toggleOptions.value) {
+      if (reasonOf(option) !== null) continue
+      config[option.key as BooleanOptionKey] = next.has(option.key)
     }
   }
 
-  const modes = [ConfigModes.Words, ConfigModes.Time, ConfigModes.Quote]
   const onMode = (value: unknown): void => {
     if (value) configStore.setMode(value as ConfigModes)
   }
 
-  const quoteGroups: QuoteGroup[] = ['all', 'short', 'medium', 'long', 'thicc']
-  const onQuoteGroup = (value: unknown): void => {
-    if (!value) return
-    configStore.setConfig('quoteGroup', value as QuoteGroup)
-  }
-
-  const difficulties = ['normal', 'expert', 'master'] as const
-  const onDifficulty = (value: unknown): void => {
-    if (value) config.difficulty = value as (typeof difficulties)[number]
-  }
-
-  const minSpeedOptions = [0, 60, 80, 100]
-  const onMinSpeed = (value: unknown): void => {
-    if (value === null || value === undefined || value === '') return
-    configStore.setConfig('minWpm', Number(value))
-  }
-
-  const WORD_PRESETS = [10, 25, 50, 100]
-  const TIME_PRESETS = [15, 30, 60, 120]
-  const presets = computed(() => (config.mode === ConfigModes.Time ? TIME_PRESETS : WORD_PRESETS))
-  const currentAmount = computed(() =>
-    config.mode === ConfigModes.Time ? config.time : config.words
-  )
-  const onPreset = (value: unknown): void => {
+  const onDimensionPreset = (value: unknown): void => {
     if (value === null || value === undefined || value === '') return
     const amount = Number(value)
     if (config.mode === ConfigModes.Time) configStore.setTime(amount)
     else configStore.setWords(amount)
+  }
+
+  const onDimensionEnum = (value: unknown): void => {
+    if (!value) return
+    configStore.setConfig('quoteGroup', value as QuoteGroup)
+  }
+
+  const onDifficulty = (value: unknown): void => {
+    if (value) config.difficulty = value as (typeof config)['difficulty']
+  }
+
+  const onMinSpeed = (value: unknown): void => {
+    if (value === null || value === undefined || value === '') return
+    configStore.setConfig('minWpm', Number(value))
   }
 
   const languageOpen = ref(false)
@@ -224,3 +259,11 @@
     void configStore.setLanguage(value)
   }
 </script>
+
+<style lang="scss" scoped>
+  .settings-bar__reason {
+    font-size: 0.75rem;
+    color: var(--sub-color);
+    opacity: 0.8;
+  }
+</style>
