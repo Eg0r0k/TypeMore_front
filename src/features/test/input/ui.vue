@@ -65,17 +65,27 @@
   // a typing key when the run actually contains one (monkeytype gates the same way
   // behind `wordsHaveTab()`); otherwise it stays the browser's focus key.
   const typesTab = computed(() => wordsHaveTab(store.words))
-  const expectedChar = (): string | undefined => store.words[store.wordIndex]?.[caretPos()]
 
   /**
    * Enter separates words exactly like space does; when the target expects a
    * newline at the caret, the character is typed first so it counts as the
    * keystroke it is (monkeytype's `getCommitCharacterType`: '\n' IS a separator).
+   *
+   * But ONLY a target-final newline separates. `generateWords` splits a quote's
+   * text on spaces, so a code quote's newline usually lands mid-token
+   * (`{\n\ttext-align:` — 241 of css_code's 376 tokens carry one). Committing
+   * there would throw the rest of the token away and jump the player to the next
+   * word with the remainder of the line silently marked missed — the reported
+   * word skip. Inside a token the newline is simply one of its characters, which
+   * is already exactly how the reducer treats it.
    */
   const separateWord = (): void => {
-    if (expectedChar() === '\n') {
+    const target = store.words[store.wordIndex] ?? ''
+    const at = caretPos()
+    if (target[at] === '\n') {
       playKeyFeedback('\n')
       store.insert('\n')
+      if (at < target.length - 1) return
     }
     store.commit()
   }
