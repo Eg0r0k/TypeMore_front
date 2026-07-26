@@ -5,3 +5,27 @@ export type { GameView, GameInputSink, GameSession } from './model/view'
 export { toCoreSetup } from './model/settings'
 export type { GameSettings, CoreSetup } from './model/settings'
 export { wordsHaveTab, wordsHaveNewline, wordBreaksLine } from './lib/whitespace'
+export {
+  GAME_OPTIONS,
+  OPTION_CONTEXTS,
+  emitsFixedText,
+  optionOf,
+  optionsFor,
+  valuesFor,
+  presetsFor,
+  isVisible,
+  disabledReason,
+  visibleOptionsFor
+} from './config/registry'
+export type {
+  GameOption,
+  GameOptionKey,
+  AppOnlyConfigKey,
+  OptionContext,
+  OptionContexts,
+  OptionControl,
+  OptionSlot,
+  OptionDescriptor,
+  ConstraintContext,
+  DisabledReason
+} from './config/registry'

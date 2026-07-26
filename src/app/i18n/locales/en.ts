@@ -29,6 +29,10 @@ export default {
       quoteEmpty: 'no {group} quotes in {lang} yet — try another length or language',
       quoteError: 'could not load a quote',
       retry: 'retry'
+    },
+    /** Why a registry option is unavailable — rendered beside the disabled control. */
+    constraint: {
+      fixedText: 'fixed text — this mod would change nothing'
     }
   },
   picker: {
@@ -75,6 +79,7 @@ export default {
       label: 'stop on error',
       description:
         'Letter mode will stop input when pressing any incorrect letters. Word mode will not allow you to continue to the next word until you correct all mistakes.',
+      off: 'off',
       word: 'word',
       letter: 'letter'
     },
