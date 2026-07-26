@@ -3,5 +3,9 @@
  * import ONLY from here. Turns the server's public replay pair into the
  * `ReplayData` the player renders.
  */
-export { replayFromApi } from './model/replay-from-api'
-export type { ReplayFromApiError, ReplayFromApiErrorKind } from './model/replay-from-api'
+export { quoteRefOf, replayFromApi } from './model/replay-from-api'
+export type {
+  ReplayFromApiError,
+  ReplayFromApiErrorKind,
+  ReplayTextSource
+} from './model/replay-from-api'

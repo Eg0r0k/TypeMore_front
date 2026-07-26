@@ -54,7 +54,7 @@
       data-testid="replay-dict-error"
     >
       <Typography v-if="byLine" size="s" color="sub">{{ byLine }}</Typography>
-      <Typography size="m" color="error">{{ t('replay.dictError') }}</Typography>
+      <Typography size="m" color="error">{{ textErrorText }}</Typography>
       <Button color="main-outline" size="s" data-testid="replay-dict-retry" @click="retryDict">
         {{ t('replay.retry') }}
       </Button>
@@ -65,7 +65,7 @@
       class="replay-page__notice"
       data-testid="replay-dict-mismatch"
     >
-      <Typography size="m" color="error">{{ t('replay.dictMismatch') }}</Typography>
+      <Typography size="m" color="error">{{ textMismatchText }}</Typography>
       <!-- No retry: the body is addressed by its own content hash, so fetching
            it again returns the same bytes and the same mismatch. -->
       <Button color="main-outline" size="s" data-testid="replay-back" @click="goBack">
@@ -89,9 +89,10 @@
   import { useQuery } from '@tanstack/vue-query'
 
   import { ReplayPlayer } from '@/features/test/replay'
-  import { replayFromApi } from '@/features/replay-view'
+  import { quoteRefOf, replayFromApi, type ReplayTextSource } from '@/features/replay-view'
   import {
     dictionaryBodyByHashQueryOptions,
+    quoteByIdQueryOptions,
     runReplayLogQueryOptions,
     runReplayQueryOptions
   } from '@shared/api'
@@ -103,13 +104,20 @@
    * Public replay at `/replay/:runId` — anyone with the link, no session.
    *
    * THREE requests, and the whole design is that their failures stay apart.
-   * (a) metadata names the run; (b) the event log and (c) the word list both
-   * depend only on (a), so they are two independent queries enabled by the same
+   * (a) metadata names the run; (b) the event log and (c) THE TEXT both depend
+   * only on (a), so they are two independent queries enabled by the same
    * condition and run CONCURRENTLY — chaining (c) behind (b) would serialize two
    * fetches that share no data. Only when all three have landed does
    * `replayFromApi` combine them, and the player receives a finished
    * `ReplayData`: it does zero fetching and has no loading or error state of its
    * own, so every one of those belongs here.
+   *
+   * (c) is TWO endpoints, because there are two kinds of run. A seeded run's
+   * text is a word list addressed by content hash; a quote run's text is a quote
+   * addressed by id, and its `dictHash` is `dictVersion([text])` — not a
+   * dictionary address. Sending every run to the dictionary endpoint is what
+   * made every quote replay fail with "could not load the word list this run was
+   * played on". Exactly one of the two is ever enabled.
    */
   const props = defineProps<{ runId: string }>()
 
@@ -142,6 +150,13 @@
     computed(() => gatedBy(runReplayLogQueryOptions(props.runId), runIsReal.value))
   )
 
+  /** The quote this run was played on, or `null` for a seeded run. */
+  const quoteRef = computed(() => {
+    const m = meta.data.value
+    return m ? quoteRefOf(m) : null
+  })
+  const isQuoteRun = computed(() => quoteRef.value !== null)
+
   // By CONTENT HASH, never by language: `lang` says what the run was played in,
   // the hash says which exact word list it was played on.
   const dictHash = computed(() => meta.data.value?.dictHash ?? '')
@@ -149,18 +164,45 @@
     computed(() =>
       gatedBy(
         dictionaryBodyByHashQueryOptions(dictHash.value),
-        runIsReal.value && dictHash.value !== ''
+        runIsReal.value && !isQuoteRun.value && dictHash.value !== ''
       )
     )
+  )
+
+  // By ID, and the bytes are verified against the run's `dictHash` in the
+  // adapter — a published quote is immutable, so this is as stable a read as the
+  // hash-addressed body it replaces.
+  const quote = useQuery(
+    computed(() =>
+      gatedBy(
+        quoteByIdQueryOptions(quoteRef.value?.quoteId ?? ''),
+        runIsReal.value && isQuoteRun.value
+      )
+    )
+  )
+
+  /** Whichever of the two carries this run's text, once it has landed. */
+  const textSource = computed<ReplayTextSource | null>(() => {
+    if (isQuoteRun.value) {
+      const q = quote.data.value
+      return q ? { kind: 'quote', quote: q } : null
+    }
+    const d = dict.data.value
+    return d ? { kind: 'dictionary', body: d } : null
+  })
+
+  /** The stage-3 query that is actually in play — the other one never runs. */
+  const textQueryFailed = computed(() =>
+    isQuoteRun.value ? quote.isError.value : dict.isError.value
   )
 
   /** `null` until all three have landed; otherwise the adapter's Result. */
   const built = computed(() => {
     const m = meta.data.value
     const l = log.data.value
-    const d = dict.data.value
-    if (!m || !l || !d) return null
-    return replayFromApi(m, l, d)
+    const s = textSource.value
+    if (!m || !l || !s) return null
+    return replayFromApi(m, l, s)
   })
 
   type ViewState =
@@ -183,7 +225,7 @@
     // Stages 2 and 3, in flight together. Their failures are separate states:
     // the run exists and is on screen, only its payload did not arrive.
     if (log.isError.value) return 'log-error'
-    if (dict.isError.value) return 'dict-error'
+    if (textQueryFailed.value) return 'dict-error'
 
     const result = built.value
     if (!result) return 'log-loading'
@@ -198,7 +240,20 @@
     return result?.isOk() === true ? result.value : null
   })
 
+  // Only a word list carries direction; a quote is rendered in the page's own.
   const isRightToLeft = computed(() => dict.data.value?.rightToleft ?? false)
+
+  /**
+   * The stage-3 copy names what actually failed. Both kinds share the STATE —
+   * "the run is on screen, its text did not arrive" — but a viewer told a word
+   * list failed on a quote run would go looking for the wrong thing.
+   */
+  const textErrorText = computed(() =>
+    isQuoteRun.value ? t('replay.quoteError') : t('replay.dictError')
+  )
+  const textMismatchText = computed(() =>
+    isQuoteRun.value ? t('replay.quoteMismatch') : t('replay.dictMismatch')
+  )
 
   /** Whose run this is — shown alongside a stage-2/3 failure, not just on success. */
   const byLine = computed(() => {
@@ -208,7 +263,7 @@
 
   /** Each retry refetches exactly the query that failed, never the whole page. */
   const retryLog = (): void => void log.refetch()
-  const retryDict = (): void => void dict.refetch()
+  const retryDict = (): void => void (isQuoteRun.value ? quote.refetch() : dict.refetch())
 
   /**
    * Back to the board the viewer came from. `?bucket=` is how the boards page

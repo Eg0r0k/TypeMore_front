@@ -39,7 +39,7 @@ import {
   type GameEvent
 } from '@shared/core'
 import type { ReplayData } from '@entities/game'
-import type { DictionaryBody, RunReplay, RunReplayLog } from '@shared/api'
+import type { DictionaryBody, Quote, RunReplay, RunReplayLog } from '@shared/api'
 
 /**
  * Why the reconstruction failed. Each variant is a DIFFERENT thing for the
@@ -89,6 +89,28 @@ const GenerationConfigSchema = v.looseObject({
   rawTokens: v.optional(v.boolean())
 })
 
+/**
+ * The quote reference inside a stored setup, read on its own rather than as a
+ * field of the generation schema above.
+ *
+ * Deliberately separate: what a run STORES is a `QuoteRef` — id and hash, never
+ * the text, because the client's copy of the bytes must not be the thing anyone
+ * trusts. The core's `GenerationTextSource` requires the `text`, so the stored
+ * shape is not the core's shape and typing it as such would either be a lie or
+ * force the text to be optional in the core, weakening the seed context for
+ * every caller. The two shapes meet exactly once, below, where the resolved
+ * bytes are put back.
+ */
+const StoredQuoteRefSchema = v.looseObject({
+  generation: v.looseObject({
+    textSource: v.looseObject({
+      kind: v.literal('quote'),
+      quoteId: v.string(),
+      quoteHash: v.string()
+    })
+  })
+})
+
 const ModsDeclarationSchema = v.looseObject({
   blind: v.boolean(),
   fading: v.boolean(),
@@ -118,22 +140,73 @@ const GradeSchema = v.picklist(['SS', 'S', 'A', 'B', 'C'])
 const explain = (issues: [v.BaseIssue<unknown>, ...v.BaseIssue<unknown>[]]): string =>
   v.summarize(issues)
 
+/**
+ * The text a run was played on, already fetched. Two shapes because there are
+ * two kinds of run and they are addressed differently: a seeded run names a
+ * word list by CONTENT HASH, a quote run names a quote by ID. Resolving a quote
+ * through the dictionary endpoint is what produced "could not load the word
+ * list this run was played on" for every quote replay — a quote's `dictHash` is
+ * `dictVersion([text])`, which is not a dictionary address and never will be.
+ */
+export type ReplayTextSource =
+  | { readonly kind: 'dictionary'; readonly body: DictionaryBody }
+  | { readonly kind: 'quote'; readonly quote: Quote }
+
+/**
+ * The quote a run was played on, or `null` for a seeded run. The page needs
+ * this BEFORE it can fetch anything, to know which endpoint holds the text, so
+ * it is a separate narrow read of the same snapshot the adapter parses in full.
+ */
+export function quoteRefOf(meta: RunReplay): { quoteId: string; quoteHash: string } | null {
+  const parsed = v.safeParse(StoredQuoteRefSchema, meta.setup)
+  if (!parsed.success) return null
+  const { quoteId, quoteHash } = parsed.output.generation.textSource
+  return { quoteId, quoteHash }
+}
+
 export function replayFromApi(
   meta: RunReplay,
   log: RunReplayLog,
-  dict: DictionaryBody
+  source: ReplayTextSource
 ): Result<ReplayData, ReplayFromApiError> {
-  // FIRST, before anything is trusted. The dictionary is fetched by content
-  // hash, so this should always hold — but if it ever does not, the words we
-  // regenerate below would differ from the ones the player actually typed and
-  // the replay would be a plausible lie rather than an obvious failure. Same
-  // check the live match path makes before it trusts a regenerated word.
-  const actualHash = dictVersion(dict.words)
-  if (actualHash !== meta.dictHash) {
-    return err({
-      kind: 'DictHashMismatch',
-      message: `dictionary "${dict.name}" hashes to ${actualHash}, run ${meta.runId} was played on ${meta.dictHash}`
-    })
+  // FIRST, before anything is trusted, and BEFORE the setup is parsed: a drifted
+  // text must never be reported as a bad run. Both branches RECOMPUTE the digest
+  // from the bytes they were handed rather than believing the server's claim
+  // about them — if it ever disagreed, the targets regenerated below would
+  // differ from the ones the player actually typed and the replay would be a
+  // plausible lie rather than an obvious failure. Same check the live match path
+  // makes before it trusts a regenerated word.
+  //
+  // Which bytes those are is the CALLER's answer, not the setup's, so the branch
+  // costs nothing here: the page already had to know which endpoint holds the
+  // text before it could fetch it.
+  let dictionary: Dictionary
+  if (source.kind === 'quote') {
+    const actualHash = dictVersion([source.quote.text])
+    if (actualHash !== meta.dictHash) {
+      return err({
+        kind: 'DictHashMismatch',
+        message: `quote ${source.quote.id} hashes to ${actualHash}, run ${meta.runId} was played on ${meta.dictHash}`
+      })
+    }
+    // `generateWords` never reads the dictionary on the quote branch — the text
+    // travels in the seed context instead.
+    dictionary = { name: 'quote', bcp47: '', words: [] }
+  } else {
+    const actualHash = dictVersion(source.body.words)
+    if (actualHash !== meta.dictHash) {
+      return err({
+        kind: 'DictHashMismatch',
+        message: `dictionary "${source.body.name}" hashes to ${actualHash}, run ${meta.runId} was played on ${meta.dictHash}`
+      })
+    }
+    // `generateWords` reads only `name` and `words`; `bcp47` is dictionary chrome
+    // the body may omit, and it never reaches the PRNG.
+    dictionary = {
+      name: source.body.name,
+      bcp47: source.body.bcp47 ?? '',
+      words: source.body.words
+    }
   }
 
   const setup = v.safeParse(SetupSchema, meta.setup)
@@ -143,6 +216,22 @@ export function replayFromApi(
       message: `run setup is unusable: ${explain(setup.issues)}`
     })
   }
+  const { config, generation, declaration } = setup.output
+
+  // The quote's bytes go back exactly where the run had them before the payload
+  // stripped them for the wire — the same thing the server does to judge it.
+  const played =
+    source.kind === 'quote'
+      ? {
+          ...generation,
+          textSource: {
+            kind: 'quote' as const,
+            quoteId: source.quote.id,
+            quoteHash: meta.dictHash,
+            text: source.quote.text
+          }
+        }
+      : generation
 
   const score = v.safeParse(ScoreResultSchema, meta.serverScore)
   if (!score.success) {
@@ -160,16 +249,7 @@ export function replayFromApi(
     })
   }
 
-  const { config, generation, declaration } = setup.output
-
-  // `generateWords` reads only `name` and `words`; `bcp47` is dictionary chrome
-  // the body may omit, and it never reaches the PRNG.
-  const dictionary: Dictionary = {
-    name: dict.name,
-    bcp47: dict.bcp47 ?? '',
-    words: dict.words
-  }
-  const generated = generateWords(dictionary, makeSeedContext(dictionary, meta.seed, generation))
+  const generated = generateWords(dictionary, makeSeedContext(dictionary, meta.seed, played))
   if (generated.isErr()) {
     return err({
       kind: 'GenerationFailed',
@@ -188,7 +268,10 @@ export function replayFromApi(
     // step. A malformed event surfaces as a reducer error during playback,
     // which is where it belongs.
     log: log.events as readonly GameEvent[],
-    generation,
+    // The generation AS PLAYED — for a quote that means with its text put back,
+    // so the player renders the run the way the run existed, not the way the
+    // payload was trimmed for the wire.
+    generation: played,
     declaration,
     score: score.output,
     grade: grade.output

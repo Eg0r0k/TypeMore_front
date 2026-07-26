@@ -397,6 +397,8 @@ export default {
     dictError: 'could not load the word list this run was played on',
     dictMismatch: 'this run’s word list no longer matches the published one',
     /** Regeneration from the seed produced nothing playable. */
+    quoteError: 'could not load the quote this run was played on',
+    quoteMismatch: 'this quote’s text no longer matches the one this run was played on',
     buildError: 'could not rebuild this run',
     retry: 'retry',
     back: 'back to the board',

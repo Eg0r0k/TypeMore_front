@@ -21,8 +21,8 @@ import {
   type ModsDeclaration,
   type ScoreResult
 } from '@shared/core'
-import type { DictionaryBody, RunReplay, RunReplayLog } from '@shared/api'
-import { replayFromApi } from '@/features/replay-view'
+import type { DictionaryBody, Quote, RunReplay, RunReplayLog } from '@shared/api'
+import { quoteRefOf, replayFromApi, type ReplayTextSource } from '@/features/replay-view'
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 // The hash is COMPUTED from the fixture word list, never written by hand: a
@@ -38,6 +38,16 @@ const dictBody = (over: Partial<DictionaryBody> = {}): DictionaryBody => ({
   bcp47: 'en-US',
   rightToleft: false,
   ...over
+})
+
+/**
+ * The adapter takes a discriminated TEXT SOURCE, not a dictionary body: a quote
+ * run's text lives in the quote registry and is addressed by id, so "the bytes
+ * this run was played on" has two shapes.
+ */
+const dictSource = (over: Partial<DictionaryBody> = {}): ReplayTextSource => ({
+  kind: 'dictionary',
+  body: dictBody(over)
 })
 
 const config: CoreConfig = {
@@ -99,7 +109,7 @@ const expectedWords = (): readonly string[] => {
 
 describe('replayFromApi — happy path', () => {
   it('regenerates the run text from the seed rather than trusting anything on the wire', () => {
-    const result = replayFromApi(metaOf(), logOf(), dictBody())
+    const result = replayFromApi(metaOf(), logOf(), dictSource())
 
     expect(result.isOk()).toBe(true)
     if (result.isErr()) return
@@ -110,8 +120,8 @@ describe('replayFromApi — happy path', () => {
   })
 
   it('a different seed yields a different text — the seed is actually used', () => {
-    const same = replayFromApi(metaOf(), logOf(), dictBody())
-    const other = replayFromApi(metaOf({ seed: SEED + 1 }), logOf(), dictBody())
+    const same = replayFromApi(metaOf(), logOf(), dictSource())
+    const other = replayFromApi(metaOf({ seed: SEED + 1 }), logOf(), dictSource())
 
     expect(same.isOk() && other.isOk()).toBe(true)
     if (same.isErr() || other.isErr()) return
@@ -122,7 +132,7 @@ describe('replayFromApi — happy path', () => {
     const result = replayFromApi(
       metaOf({ serverScore: { ...serverScore, total: 1 }, grade: 'C' }),
       logOf(),
-      dictBody()
+      dictSource()
     )
 
     expect(result.isOk()).toBe(true)
@@ -135,7 +145,7 @@ describe('replayFromApi — happy path', () => {
   })
 
   it('maps the rest of ReplayData from the setup snapshot and the log body', () => {
-    const result = replayFromApi(metaOf(), logOf(), dictBody())
+    const result = replayFromApi(metaOf(), logOf(), dictSource())
 
     expect(result.isOk()).toBe(true)
     if (result.isErr()) return
@@ -157,7 +167,7 @@ describe('replayFromApi — happy path', () => {
         }
       }),
       logOf(),
-      dictBody()
+      dictSource()
     )
 
     expect(result.isOk()).toBe(true)
@@ -168,7 +178,7 @@ describe('replayFromApi — happy path', () => {
 
 describe('replayFromApi — the dictionary must be the one the run was played on', () => {
   it('reports DictHashMismatch, distinctly from any other failure', () => {
-    const result = replayFromApi(metaOf(), logOf(), dictBody({ words: [...WORDS, 'golf'] }))
+    const result = replayFromApi(metaOf(), logOf(), dictSource({ words: [...WORDS, 'golf'] }))
 
     expect(result.isErr()).toBe(true)
     if (result.isOk()) return
@@ -181,9 +191,7 @@ describe('replayFromApi — the dictionary must be the one the run was played on
     // against the wrong list produces a plausible lie, which is worse than a
     // loud parse failure.
     const result = replayFromApi(
-      metaOf({ setup: { nonsense: true } }),
-      logOf(),
-      dictBody({ words: ['nope'] })
+      metaOf({ setup: { nonsense: true } }), logOf(), dictSource({ words: ['nope'] })
     )
 
     expect(result.isErr()).toBe(true)
@@ -193,7 +201,7 @@ describe('replayFromApi — the dictionary must be the one the run was played on
 
   it('a same-length but different word list still mismatches', () => {
     const swapped = [...WORDS.slice(0, -1), 'golf']
-    const result = replayFromApi(metaOf(), logOf(), dictBody({ words: swapped }))
+    const result = replayFromApi(metaOf(), logOf(), dictSource({ words: swapped }))
 
     expect(result.isErr()).toBe(true)
     if (result.isOk()) return
@@ -207,9 +215,7 @@ describe('replayFromApi — generation failure is its own variant', () => {
     // own `EmptyDictionary` guard is what fires.
     const empty: string[] = []
     const result = replayFromApi(
-      metaOf({ dictHash: dictVersion(empty) }),
-      logOf(),
-      dictBody({ words: empty })
+      metaOf({ dictHash: dictVersion(empty) }), logOf(), dictSource({ words: empty })
     )
 
     expect(result.isErr()).toBe(true)
@@ -221,7 +227,7 @@ describe('replayFromApi — generation failure is its own variant', () => {
 
 describe('replayFromApi — malformed boundary fields fail loudly', () => {
   it('rejects a setup missing `generation` rather than half-building a ReplayData', () => {
-    const result = replayFromApi(metaOf({ setup: { config, declaration } }), logOf(), dictBody())
+    const result = replayFromApi(metaOf({ setup: { config, declaration } }), logOf(), dictSource())
 
     expect(result.isErr()).toBe(true)
     if (result.isOk()) return
@@ -232,7 +238,7 @@ describe('replayFromApi — malformed boundary fields fail loudly', () => {
     const result = replayFromApi(
       metaOf({ setup: { config: { ...config, minWpm: 'fast' }, generation, declaration } }),
       logOf(),
-      dictBody()
+      dictSource()
     )
 
     expect(result.isErr()).toBe(true)
@@ -241,7 +247,7 @@ describe('replayFromApi — malformed boundary fields fail loudly', () => {
   })
 
   it('rejects `setup: null` — the whole snapshot absent', () => {
-    const result = replayFromApi(metaOf({ setup: null }), logOf(), dictBody())
+    const result = replayFromApi(metaOf({ setup: null }), logOf(), dictSource())
 
     expect(result.isErr()).toBe(true)
     if (result.isOk()) return
@@ -249,7 +255,7 @@ describe('replayFromApi — malformed boundary fields fail loudly', () => {
   })
 
   it('rejects a serverScore that is not a ScoreResult', () => {
-    const result = replayFromApi(metaOf({ serverScore: { total: 10 } }), logOf(), dictBody())
+    const result = replayFromApi(metaOf({ serverScore: { total: 10 } }), logOf(), dictSource())
 
     expect(result.isErr()).toBe(true)
     if (result.isOk()) return
@@ -257,10 +263,118 @@ describe('replayFromApi — malformed boundary fields fail loudly', () => {
   })
 
   it('rejects a grade outside the letter set', () => {
-    const result = replayFromApi(metaOf({ grade: 'A+' }), logOf(), dictBody())
+    const result = replayFromApi(metaOf({ grade: 'A+' }), logOf(), dictSource())
 
     expect(result.isErr()).toBe(true)
     if (result.isOk()) return
     expect(result.error.kind).toBe('MalformedGrade')
+  })
+})
+
+/**
+ * Quote runs. Their text is NOT a word list: it lives in the quote registry and
+ * is addressed by id, while the run's `dictHash` is `dictVersion([text])`.
+ * Sending them through the dictionary endpoint is what made every quote replay
+ * fail with "could not load the word list this run was played on" — the hash was
+ * a perfectly valid address for a document that does not exist.
+ */
+describe('a quote run replays from the quote, not from a dictionary', () => {
+  const QUOTE_TEXT = 'p.center {\n\ttext-align: center;\n}'
+  const QUOTE_HASH = dictVersion([QUOTE_TEXT])
+  const QUOTE_ID = '34173500-3ac6-4edb-a21b-00f02c1acf6e'
+
+  const quote = (over: Partial<Quote> = {}): Quote => ({
+    id: QUOTE_ID,
+    lang: 'code_css',
+    upstreamId: 3,
+    source: 'W3Schools CSS Class Selector',
+    length: QUOTE_TEXT.length,
+    lenGroup: 'short',
+    textHash: QUOTE_HASH,
+    text: QUOTE_TEXT,
+    superseded: false,
+    ...over
+  })
+
+  const quoteSource = (over: Partial<Quote> = {}): ReplayTextSource => ({
+    kind: 'quote',
+    quote: quote(over)
+  })
+
+  /** The setup as `build-payload` writes it: the quote by id and hash, no text. */
+  const quoteMeta = (over: Partial<RunReplay> = {}): RunReplay =>
+    metaOf({
+      mode: 'quote',
+      wordCount: undefined,
+      lang: 'code_css',
+      dictHash: QUOTE_HASH,
+      setup: {
+        config: { ...config, mode: 'quote' },
+        generation: {
+          ...generation,
+          mode: 'quote',
+          length: 0,
+          textSource: { kind: 'quote', quoteId: QUOTE_ID, quoteHash: QUOTE_HASH }
+        },
+        declaration
+      },
+      ...over
+    })
+
+  it('names the quote a run was played on, and nothing for a seeded run', () => {
+    expect(quoteRefOf(quoteMeta())).toEqual({ quoteId: QUOTE_ID, quoteHash: QUOTE_HASH })
+    expect(quoteRefOf(metaOf())).toBeNull()
+  })
+
+  it('regenerates the targets from the resolved text', () => {
+    const result = replayFromApi(quoteMeta(), logOf(), quoteSource())
+
+    expect(result.isOk()).toBe(true)
+    // The generator's newline rule: a line break ends its token, so the text is
+    // its own visual lines. This is the run as played, not a re-split.
+    expect(result._unsafeUnwrap().words).toEqual([
+      'p.center',
+      '{\n',
+      '\ttext-align:',
+      'center;\n',
+      '}'
+    ])
+  })
+
+  it('puts the text back into the generation the player renders', () => {
+    // The payload strips it for the wire; a replay that kept it stripped would
+    // hand the player a seed context that cannot produce the run.
+    const played = replayFromApi(quoteMeta(), logOf(), quoteSource())._unsafeUnwrap().generation
+    expect(played.textSource).toEqual({
+      kind: 'quote',
+      quoteId: QUOTE_ID,
+      quoteHash: QUOTE_HASH,
+      text: QUOTE_TEXT
+    })
+  })
+
+  it('rejects a quote whose bytes no longer hash to the run’s dictHash', () => {
+    // Same class of failure as a drifted word list, and for the same reason: the
+    // targets would differ from the ones the player typed.
+    const result = replayFromApi(quoteMeta(), logOf(), quoteSource({ text: 'something else' }))
+
+    expect(result.isErr()).toBe(true)
+    expect(result._unsafeUnwrapErr().kind).toBe('DictHashMismatch')
+    expect(result._unsafeUnwrapErr().message).toContain(QUOTE_ID)
+  })
+
+  it('never consults the dictionary — an empty one still replays', () => {
+    // The proof that the quote branch is text-driven: `generateWords` reads no
+    // word list at all, so the stub the adapter passes cannot matter.
+    expect(replayFromApi(quoteMeta(), logOf(), quoteSource()).isOk()).toBe(true)
+  })
+
+  it('checks the quote hash BEFORE the setup, like the dictionary path', () => {
+    const result = replayFromApi(
+      quoteMeta({ setup: { nonsense: true } }),
+      logOf(),
+      quoteSource({ text: 'drifted' })
+    )
+    expect(result._unsafeUnwrapErr().kind).toBe('DictHashMismatch')
   })
 })

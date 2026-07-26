@@ -13,10 +13,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // No network, no router, no real player: the page's own state machine is the
 // system under test.
-const { metaFn, logFn, dictFn, pushMock } = vi.hoisted(() => ({
+const { metaFn, logFn, dictFn, quoteFn, pushMock } = vi.hoisted(() => ({
   metaFn: vi.fn(),
   logFn: vi.fn(),
   dictFn: vi.fn(),
+  quoteFn: vi.fn(),
   pushMock: vi.fn()
 }))
 
@@ -26,6 +27,14 @@ vi.mock('@shared/api', () => ({
   dictionaryBodyByHashQueryOptions: (hash: string) => ({
     queryKey: ['dict-by-hash', hash],
     queryFn: dictFn
+  }),
+  // Stage 3 has two endpoints now — a seeded run's word list by content hash,
+  // a quote run's text by id. These specs drive the seeded path, so this one is
+  // never enabled; it must exist all the same, or the page throws on an
+  // undefined import before any state can render.
+  quoteByIdQueryOptions: (id: string) => ({
+    queryKey: ['quote-by-id', id],
+    queryFn: quoteFn
   })
 }))
 
