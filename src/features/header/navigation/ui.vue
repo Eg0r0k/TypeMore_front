@@ -20,16 +20,6 @@
         <IconBell class="size-6" />
       </Button>
 
-      <Button
-        size="icon-sm"
-        color="shadow"
-        :aria-label="t('settings.title')"
-        :title="t('settings.title')"
-        @click="settingsOpen = true"
-      >
-        <IconSettings class="size-6" aria-hidden="true" />
-      </Button>
-
       <DropdownMenu v-if="isAuth">
         <DropdownMenuTrigger as-child>
           <Button color="shadow" size="s" class="controls__user" :button-label="displayName">
@@ -49,7 +39,6 @@
         </Link>
       </Button>
     </div>
-    <SettingsModal v-model:open="settingsOpen" />
   </nav>
 </template>
 
@@ -67,8 +56,7 @@
   import type { HeaderLink } from '@/widgets/header/types/links'
   import IconBell from '~icons/tabler/bell'
   import IconUser from '~icons/tabler/user'
-  import IconSettings from '~icons/tabler/settings'
-  import { SettingsModal } from '@/features/modal/settings'
+
   import { computed, ref } from 'vue'
   import { storeToRefs } from 'pinia'
   import { useRouter } from 'vue-router'
@@ -85,7 +73,6 @@
 
   const { t } = useI18n()
   const router = useRouter()
-  const settingsOpen = ref(false)
 
   const { isAuth } = storeToRefs(useAuthStore())
   const { data: user } = useCurrentUser()
