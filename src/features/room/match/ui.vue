@@ -1,9 +1,9 @@
 <template>
   <div class="room-match flex h-full items-center justify-center">
-    <TimeProgress
-      v-if="timeDurationMs !== null"
+    <TestProgress
       :running="session.phase === 'running'"
-      :duration-ms="timeDurationMs"
+      :duration-ms="timeDurationMs ?? undefined"
+      :value="timeDurationMs === null ? wordProgress : undefined"
     />
     <div
       v-if="session.phase === 'countdown' && countdownLabel"
@@ -78,7 +78,7 @@
   import type { PeerRailEntry } from '@/entities/lobby'
   import { useMatchSessionStore } from '@/entities/match'
   import { useConfigStore } from '@/entities/config/model/store'
-  import { TimeProgress } from '@/features/test/time-progress'
+  import { TestProgress } from '@/features/test/progress'
   import { Test, type TestGhostCaret } from '@/widgets/test'
   import OpponentsRail from './opponents-rail.vue'
 
@@ -106,6 +106,13 @@
     const settings = session.room?.settings
     if (settings === undefined || settings.mode !== 'time') return null
     return settings.durationMs ?? null
+  })
+
+  /** The counted arm of the same bar: the local seat's share of the words. */
+  const wordProgress = computed(() => {
+    const view = session.selfView
+    const total = view?.words.length ?? 0
+    return total > 0 ? Math.min(1, view.wordIndex / total) : 0
   })
 
   const railPeers = computed<PeerRailEntry[]>(() =>

@@ -1,80 +1,102 @@
 <template>
-  <main class="home relative">
-    <TimeProgress
-      v-if="config.mode === 'time'"
+  <main class="home">
+    <!--
+      Pinned to the viewport, not to the stage: it is `position: fixed`. A timed
+      run drains its duration, a counted one fills with the words committed —
+      same bar, same question ("how much of this is left").
+    -->
+    <TestProgress
       :running="isRunning"
-      :duration-ms="config.time * 1000"
+      :duration-ms="config.mode === 'time' ? config.time * 1000 : undefined"
+      :value="config.mode === 'time' ? undefined : wordProgress"
     />
-    <SettingsBar v-show="!isRunning && !replaying" class="absolute top-0" />
-    <ScoreHud
-      v-show="isRunning && !config.blind"
-      class="absolute inset-x-0 top-0"
-      :score="game.score"
-      :combo="game.combo"
-      :multiplier="game.comboMultiplier"
-      :mod-multiplier="game.modMultiplier"
-      :wpm="game.metrics.wpm"
-      :raw="game.metrics.raw"
-    />
+
+    <!--
+      One of three screens, never two: the replay player, the results, or the
+      typing stage. The results are their own shape (a chart, a breakdown, a list
+      of mistyped words) and do not belong in the stage's fixed field row — the
+      row exists precisely so nothing can resize it.
+    -->
     <ReplayPlayer
       v-if="replaying && replayData"
       :replay="replayData"
       :is-right-to-left="isRightToLeft"
       @exit="replaying = false"
     />
-    <Transition v-else name="fade" mode="out-in">
-      <TestResults
-        v-if="isFinished"
-        key="results"
-        :metrics="game.metrics"
-        :timeline="game.timeline"
-        :error-words="game.errorWords"
-        :fail-reason="game.snapshot.failReason"
-        :summary="summary"
-        :score="game.scoreResult"
-        :active-mods="game.activeMods"
-        :save-state="saveState"
-        :afk-ms="game.afk.afkMs"
-        @retry="runSubmission.retry"
-        @signin="onSignIn"
-        @replay="onReplay"
-      />
-      <div v-else-if="setupState !== 'ready'" key="setup" class="home__notice">
-        <Typography v-if="setupState === 'loading'" size="m" color="sub">
-          {{ t('game.setup.loading') }}
-        </Typography>
-        <template v-else>
-          <Typography size="m" color="error">
-            {{ setupErrorText }}
+
+    <TestResults
+      v-else-if="isFinished"
+      :metrics="game.metrics"
+      :timeline="game.timeline"
+      :fail-reason="game.snapshot.failReason"
+      :summary="summary"
+      :score="game.scoreResult"
+      :active-mods="game.activeMods"
+      :save-state="saveState"
+      :afk-ms="game.afk.afkMs"
+      :quote-id="activeQuote?.id ?? null"
+      :quote-source="activeQuote?.source ?? null"
+      @retry="runSubmission.retry"
+      @signin="onSignIn"
+      @replay="onReplay"
+      @next="loadAndSetup"
+    />
+
+    <TestStage v-else>
+      <!-- Settings, then the language, then the words: the language is the last
+           thing above the field because it is the one that names what is in it. -->
+      <template #above>
+        <SettingsBar v-show="!isRunning" />
+        <ScoreHud
+          v-show="isRunning && !config.blind"
+          :score="game.score"
+          :combo="game.combo"
+          :multiplier="game.comboMultiplier"
+          :mod-multiplier="game.modMultiplier"
+          :wpm="game.metrics.wpm"
+          :raw="game.metrics.raw"
+        />
+      </template>
+
+      <Transition name="fade" mode="out-in">
+        <div v-if="setupState !== 'ready'" key="setup" class="home__notice">
+          <Typography v-if="setupState === 'loading'" size="m" color="sub">
+            {{ t('game.setup.loading') }}
           </Typography>
-          <Button color="main-outline" size="s" @click="loadAndSetup">
-            {{ t('game.setup.retry') }}
-          </Button>
-        </template>
-      </div>
-      <Test
-        v-else
-        key="field"
-        :store="localSession"
-        :is-right-to-left="isRightToLeft"
-        :fading="config.fading"
-        :flashlight="config.flashlight"
-        :caret-style="config.caretStyle"
-        :smooth-caret="config.smoothCaret"
-      />
-    </Transition>
-    <!--
-      Attribution. Upstream's `source` is not decoration and not optional: a
-      fixed text is somebody's, and the run is played on their bytes.
-    -->
-    <Typography
-      v-if="activeQuote && !replaying && setupState === 'ready' && !isFinished"
-      class="home__quote-source"
-      size="s"
-      color="sub"
-    >
-      {{ t('game.quote.source', { source: activeQuote.source }) }}
-    </Typography>
+          <template v-else>
+            <Typography size="m" color="error">
+              {{ setupErrorText }}
+            </Typography>
+            <Button color="main-outline" size="s" @click="loadAndSetup">
+              {{ t('game.setup.retry') }}
+            </Button>
+          </template>
+        </div>
+
+        <Test
+          v-else
+          key="field"
+          :store="localSession"
+          :is-right-to-left="isRightToLeft"
+          :fading="config.fading"
+          :flashlight="config.flashlight"
+          :caret-style="config.caretStyle"
+          :smooth-caret="config.smoothCaret"
+        />
+      </Transition>
+
+      <template #below>
+        <Button
+          color="shadow"
+          size="icon"
+          :aria-label="t('game.restart')"
+          data-testid="restart-test"
+          @click="loadAndSetup"
+        >
+          <IconRestart class="size-6" />
+        </Button>
+      </template>
+    </TestStage>
   </main>
 </template>
 
@@ -84,9 +106,10 @@
   import { useI18n } from 'vue-i18n'
 
   import { Test } from '@/widgets/test'
+  import { TestStage } from '@/features/layouts/test-stage'
   import { SettingsBar } from '@/features/test/settings-bar'
   import { ScoreHud } from '@/features/test/score-hud'
-  import { TimeProgress } from '@/features/test/time-progress'
+  import { TestProgress } from '@/features/test/progress'
   import { type ResultSummary, TestResults } from '@/features/test/results'
   import { ReplayPlayer } from '@/features/test/replay'
   import { type ReplayData, toCoreSetup, toGameSession, useGameStore } from '@entities/game'
@@ -95,6 +118,7 @@
     isApiError,
     loadDictionaryBody,
     loadRandomQuote,
+    quoteCorpusLang,
     type DictionaryBody,
     type Quote
   } from '@shared/api'
@@ -111,6 +135,7 @@
   import { type RunSubmitContext, useRunSubmission } from '@/features/run-submit'
   import { Button } from '@shared/ui/button'
   import { Typography } from '@shared/ui/typography'
+  import IconRestart from '~icons/tabler/refresh'
 
   /**
    * The game lives on `/`. This page owns the session lifecycle so the field can be
@@ -130,6 +155,17 @@
   const isFinished = computed(() => game.phase === 'finished')
 
   /**
+   * Share of the words committed — what the progress bar fills to in a counted
+   * run. Measured against the words the run ACTUALLY has, not the configured
+   * count: a quote has no configured length, and `generateWords` is free to
+   * return a different number than was asked for.
+   */
+  const wordProgress = computed(() => {
+    const total = game.words.length
+    return total > 0 ? Math.min(1, game.wordIndex / total) : 0
+  })
+
+  /**
    * Whether a test exists to type into. `dictionary-error` — the word list
    * failed to load (server down, unknown language); `generation-error` — the
    * settings produced no words; `quote-empty` — the language/length filter
@@ -141,7 +177,11 @@
     'loading' | 'ready' | 'dictionary-error' | 'generation-error' | 'quote-empty' | 'quote-error'
   const setupState = ref<SetupState>('loading')
 
-  /** The quote the current run is played on, `null` for a seeded run. */
+  /**
+   * The quote the current run is played on, `null` for a seeded run. Its
+   * attribution is shown on the RESULTS screen only: under the field it would be
+   * one more thing changing height around the words.
+   */
   const activeQuote = ref<Quote | null>(null)
 
   const setupErrorText = computed(() => {
@@ -149,8 +189,12 @@
       case 'dictionary-error':
         return t('game.setup.dictionaryError', { lang: config.language })
       case 'quote-empty':
+        // The corpus that was actually asked for, not the dictionary key: a
+        // draw for `russian_50k` is a draw for `russian`, and naming the key
+        // the player set would send them looking for a filter that was never
+        // sent.
         return t('game.setup.quoteEmpty', {
-          lang: config.language,
+          lang: quoteCorpusLang(config.language),
           group: t(`game.quote.group.${config.quoteGroup}`)
         })
       case 'quote-error':
@@ -250,7 +294,10 @@
     if (quoteMode) {
       try {
         quote = await loadRandomQuote({
-          lang: config.language,
+          // A size variant is not a language: `russian_50k` is Russian with a
+          // longer word list, and the quote registry publishes Russian quotes
+          // once, under `russian`. See `quoteCorpusLang`.
+          lang: quoteCorpusLang(config.language),
           // `all` is the absence of a filter, not a sixth band: the parameter
           // is omitted rather than sent as a value the server rejects (400).
           group: config.quoteGroup === 'all' ? undefined : config.quoteGroup
@@ -376,12 +423,24 @@
 </script>
 
 <style lang="scss" scoped>
+  // Layout lives in `TestStage`; the page only sizes its bands, and the sizes are
+  // fixed on purpose. The band above holds either the whole settings bar (mods,
+  // modes, amount, the chips, the language) or the score HUD; the field row is
+  // exactly the field's viewport, so the words land where the loading notice
+  // stood; the band below holds the restart button. Nothing here reacts to its
+  // content — that is what stops the words moving.
   .home {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: 60vh;
-    padding: 2rem 0;
+    --tm-stage-above: 8rem;
+    --tm-stage-field: 10rem;
+    --tm-stage-below: 3rem;
+  }
+
+  // The bar wraps before the field does; give it the room rather than letting it
+  // climb out of its band.
+  @media screen and (width <= 900px) {
+    .home {
+      --tm-stage-above: 11rem;
+    }
   }
 
   .home__notice {
@@ -390,13 +449,7 @@
     gap: 1rem;
     align-items: center;
     justify-content: center;
-    min-height: 8rem;
-    text-align: center;
-  }
-
-  /* Attribution under the typing field — never above it, never beside it. */
-  .home__quote-source {
-    margin-top: 1.5rem;
+    height: 100%;
     text-align: center;
   }
 

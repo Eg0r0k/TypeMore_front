@@ -30,6 +30,7 @@ export default {
       none: 'no quotes in {lang}',
       noneSwitched: 'no quotes in {lang} — switched to words'
     },
+    restart: 'restart test',
     /** The `mods` chip: what it opens, and what is on behind it. */
     mods: {
       label: 'mods',

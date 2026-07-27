@@ -29,6 +29,7 @@ export default {
       none: 'для языка {lang} нет цитат',
       noneSwitched: 'для языка {lang} нет цитат — режим переключён на слова'
     },
+    restart: 'перезапустить тест',
     mods: {
       label: 'моды',
       active: 'вкл: {count} · ×{multiplier}'
