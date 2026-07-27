@@ -35,7 +35,7 @@
  * batch forms cannot drift.
  */
 import type { GameEvent, Ms } from './events'
-import { asMs, sortEvents } from './events'
+import { asMs, isTelemetryEvent, sortEvents } from './events'
 import type { CoreContext } from './game-core'
 import { minSpeedFailInstant, settle } from './game-core'
 import type { Metrics } from './stats'
@@ -294,11 +294,14 @@ export function finalizeScore(
  */
 export function scoreOfLog(log: readonly GameEvent[], setup: CoreContext): ScoreResult {
   const ctx: CoreContext = { config: setup.config, words: setup.words }
-  const ordered = sortEvents(log)
+  // Score is a function of the STATE events alone: log-v2 telemetry is inert in
+  // `scoreStep` and must not move `endMs` either (a trailing key release after
+  // the last insert is not part of the measured run) — the stripping property.
+  const ordered = sortEvents(log).filter((e) => !isTelemetryEvent(e))
   const state = initialScoreState()
   for (const event of ordered) scoreStep(state, event, ctx)
   const endMs = ordered.length > 0 ? ordered[ordered.length - 1].t : asMs(0)
-  const metrics = computeMetrics(ctx, log, endMs)
+  const metrics = computeMetrics(ctx, ordered, endMs)
   return finalizeScore(state.base, state.comboPeak, metrics, ctx.config.mode)
 }
 
@@ -354,7 +357,9 @@ export function scoreV2OfLog(
   declaration: ModsDeclaration
 ): ScoreResult {
   const ctx: CoreContext = { config: setup.config, words: setup.words }
-  const ordered = sortEvents(log)
+  // State events only — see scoreOfLog: telemetry is inert for the score and
+  // must not move the finish-instant fallback.
+  const ordered = sortEvents(log).filter((e) => !isTelemetryEvent(e))
   const lastT = ordered.length > 0 ? ordered[ordered.length - 1].t : asMs(0)
 
   // Authoritative finish instant (mirrors validateLog): replay, then surface a

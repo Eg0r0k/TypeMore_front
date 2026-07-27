@@ -10,7 +10,13 @@
 import { Result, err, ok } from 'neverthrow'
 
 import type { EventLog, Ms } from './events'
-import { EVENT_LOG_VERSION, asMs, sortEvents } from './events'
+import {
+  EVENT_LOG_VERSION,
+  EVENT_LOG_VERSION_TELEMETRY,
+  asMs,
+  isTelemetryEvent,
+  sortEvents
+} from './events'
 import type { CoreConfig, CoreContext, GameState } from './game-core'
 import { foldLog, minSpeedFailInstant, settle } from './game-core'
 import type { Dictionary, GenerationConfig } from './words'
@@ -67,6 +73,7 @@ export type FlagCode =
   | 'superhuman-burst'
   | 'afk-heavy'
   | 'trailing-afk'
+  | 'unpaired-keyup'
 
 export interface ScoredFlag {
   readonly code: FlagCode
@@ -123,13 +130,29 @@ export function validateLog(input: ValidateLogInput): Result<ValidationReport, V
 
   const ctx: CoreContext = { config, words: generated.value.words }
   const events = sortEvents(input.log.events)
+  // The state-event view of the log. Telemetry (`down`/`up`, log v2) is folded
+  // as a no-op and MUST be invisible to every measured quantity: metrics, AFK,
+  // the two-clock deadline and the run-window instants all read this view, so a
+  // v2 log judges bit-identically to the same run captured as v1 (the stripping
+  // property). The full `events` view feeds only the structural pass (telemetry
+  // consumes `seq`, so contiguity is its tamper-evidence) and the replay fold.
+  const stateEvents = events.filter((e) => !isTelemetryEvent(e))
+  const telemetry = events.filter(isTelemetryEvent)
   const flags: ScoredFlag[] = []
   const invalid = (reason: string): Result<ValidationReport, ValidationError> =>
     ok({ verdict: 'invalid', reason, flags, metrics: ZERO_METRICS })
 
   // (1) Structural: version, contiguous seq (no gaps/dups), monotonic t.
-  if (input.log.version !== EVENT_LOG_VERSION) {
+  if (
+    input.log.version !== EVENT_LOG_VERSION &&
+    input.log.version !== EVENT_LOG_VERSION_TELEMETRY
+  ) {
     return invalid(`log version ${input.log.version} != ${EVENT_LOG_VERSION}`)
+  }
+  // Telemetry is what v2 IS: a v1 log carrying it is structurally invalid (a v1
+  // producer cannot emit these kinds; only a tampered or mislabeled log can).
+  if (input.log.version === EVENT_LOG_VERSION && telemetry.length > 0) {
+    return invalid(`log version ${EVENT_LOG_VERSION} must not contain telemetry events`)
   }
   for (let i = 0; i < events.length; i++) {
     if (events[i].seq !== i + 1)
@@ -139,6 +162,32 @@ export function validateLog(input: ValidateLogInput): Result<ValidationReport, V
   }
   if (events.length > 0 && events[0].t < 0) return invalid('first event has negative t')
 
+  // (1b) Telemetry pairing sanity — a structural FLAG, not a verdict: a release
+  // without a preceding press is physically possible (the key was held before
+  // the log started, focus was lost mid-hold on another surface), so it is
+  // reported, never invalidating. A press without a release is normal (the last
+  // key of the run is released after capture stops) and is not flagged.
+  if (telemetry.length > 0) {
+    const held = new Map<string, number>()
+    let unpaired = 0
+    for (const e of telemetry) {
+      if (e.kind === 'down') {
+        held.set(e.code, (held.get(e.code) ?? 0) + 1)
+      } else {
+        const open = held.get(e.code) ?? 0
+        if (open > 0) held.set(e.code, open - 1)
+        else unpaired++
+      }
+    }
+    if (unpaired > 0) {
+      flags.push({
+        code: 'unpaired-keyup',
+        score: Math.min(1, unpaired / telemetry.length),
+        detail: `${unpaired} key release(s) without a preceding press`
+      })
+    }
+  }
+
   // (3) Commit-consistency, branched on nospace (from the snapshot).
   if (config.nospace && events.some((e) => e.kind === 'commit')) {
     return invalid(
@@ -147,13 +196,18 @@ export function validateLog(input: ValidateLogInput): Result<ValidationReport, V
   }
 
   // (6) Two-clock: cross-check the event timeline against the configured-duration
-  // clock. In timed mode no event may fall on/after the deadline (time teleport).
-  // The zero point follows the START POLICY: a match log is anchored at the go
-  // instant (t = 0), a solo log at its first event.
-  const startT = config.startPolicy === 'go' ? asMs(0) : (events[0]?.t ?? asMs(0))
+  // clock. In timed mode no STATE event may fall on/after the deadline (time
+  // teleport). The zero point follows the START POLICY: a match log is anchored
+  // at the go instant (t = 0), a solo log at its first STATE event — a v2 log's
+  // opening key-down lands before the first insert, and anchoring on it would
+  // move the deadline relative to the same run captured as v1. Telemetry is
+  // exempt from the deadline rule for the same reason it is a fold no-op: it
+  // cannot score, and the release of the key that typed the final grapheme
+  // legitimately lands after a timed run's deadline.
+  const startT = config.startPolicy === 'go' ? asMs(0) : (stateEvents[0]?.t ?? asMs(0))
   const deadline = startT + config.durationMs
   if (config.mode === 'time') {
-    const past = events.find((e) => e.t >= deadline)
+    const past = stateEvents.find((e) => e.t >= deadline)
     if (past)
       return invalid(`event at seq ${past.seq} (t=${past.t}) is at/after the deadline ${deadline}`)
   }
@@ -247,7 +301,9 @@ export function validateLog(input: ValidateLogInput): Result<ValidationReport, V
   // silence cannot be seen from the log alone (it needs the server's receive
   // clock — the "second clock" of the network phase).
   const runEnd =
-    finalState.finishedAt ?? endMs ?? (events.length > 0 ? events[events.length - 1].t : startT)
+    finalState.finishedAt ??
+    endMs ??
+    (stateEvents.length > 0 ? stateEvents[stateEvents.length - 1].t : startT)
   // `runEnd` already resolves `finalState.finishedAt`, so this is byte-for-byte
   // the window `afkOf` would have re-folded the entire log to rediscover.
   const afk = afkBetween(events, finalState.startedAt, runEnd)
@@ -262,7 +318,7 @@ export function validateLog(input: ValidateLogInput): Result<ValidationReport, V
       })
     }
   }
-  const lastEventT = events.length > 0 ? events[events.length - 1].t : null
+  const lastEventT = stateEvents.length > 0 ? stateEvents[stateEvents.length - 1].t : null
   if (lastEventT !== null) {
     const tailMs = runEnd - lastEventT
     if (tailMs >= thresholds.trailingAfkMs) {

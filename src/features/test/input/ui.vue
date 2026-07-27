@@ -10,6 +10,7 @@
     :rows="1"
     @beforeinput="onBeforeInput"
     @keydown="onKeydown"
+    @keyup="onKeyup"
     @paste="onPaste"
     @focus="emit('focus')"
     @blur="emit('blur')"
@@ -90,7 +91,31 @@
     store.commit()
   }
 
+  /**
+   * Log v2 keystroke telemetry: the PHYSICAL key stream (`KeyboardEvent.code`),
+   * captured alongside the text path through the same stamping pipeline, so a
+   * `down` is stamped before the `insert` it produces (DOM order: keydown →
+   * beforeinput) and the matching `up` after it. Rules:
+   *  - composition sessions are suppressed entirely (no half-captured IME
+   *    noise) — `isComposing` covers both halves;
+   *  - auto-repeat `keydown`s (`event.repeat`) are skipped: telemetry records
+   *    physical presses and releases, and a held key is exactly one pair;
+   *  - modifiers are captured like any key (a Shift hold IS the signal);
+   *  - empty `code` (some synthetic/virtual sources) records nothing.
+   * The store drops these on a v1 run, so no capability check happens here.
+   */
+  const onTelemetryDown = (event: KeyboardEvent): void => {
+    if (event.isComposing || event.repeat || event.code === '') return
+    store.keyDown?.(event.code)
+  }
+
+  const onKeyup = (event: KeyboardEvent): void => {
+    if (event.isComposing || event.code === '') return
+    store.keyUp?.(event.code)
+  }
+
   const onKeydown = (event: KeyboardEvent): void => {
+    onTelemetryDown(event)
     if (event.isComposing) return // composition unsupported: ignore
     if (event.key === ' ' || event.code === 'Space') {
       event.preventDefault()

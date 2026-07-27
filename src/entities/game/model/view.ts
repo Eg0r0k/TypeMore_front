@@ -34,6 +34,14 @@ export interface GameInputSink {
   replace(from: number, to: number, text: string, source: 'ime' | 'paste'): void
   deleteBackward(unit?: 'char' | 'word'): void
   commit(): void
+  /**
+   * Log v2 keystroke telemetry (physical `KeyboardEvent.code`). Optional: a
+   * sink without capture support (ghosts, replay views, older fixtures) simply
+   * records nothing, and the adapter calls them with `?.` — a run on such a
+   * sink is a v1 run.
+   */
+  keyDown?(code: string): void
+  keyUp?(code: string): void
 }
 
 /** A playable game: readable by the field AND writable by the input adapter. */
@@ -71,7 +79,9 @@ export function toGameSession(store: GameSessionSource, isBlind: () => boolean):
     insert: (text) => store.insert(text),
     replace: (from, to, text, source) => store.replace(from, to, text, source),
     deleteBackward: (unit) => store.deleteBackward(unit),
-    commit: () => store.commit()
+    commit: () => store.commit(),
+    keyDown: (code) => store.keyDown?.(code),
+    keyUp: (code) => store.keyUp?.(code)
   }
 }
 

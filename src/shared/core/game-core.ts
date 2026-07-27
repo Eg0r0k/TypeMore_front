@@ -875,6 +875,16 @@ export function reduce(
       seq: event.seq
     })
   }
+  // Log v2 telemetry is a STATE NO-OP: the exact same state object comes back,
+  // untouched — including `lastSeq`, so stripping every down/up out of a v2 log
+  // folds to a bit-identical state (the v2 compatibility property). It is also
+  // the one kind legal after `finished`: the key that typed the final grapheme
+  // is still physically released after the run ends, and rejecting that `up`
+  // would turn every honest v2 log invalid. Cross-event guarantees (contiguous
+  // seq over ALL events, monotonic t) are validateLog's structural layer.
+  if (event.kind === 'down' || event.kind === 'up') {
+    return ok(state)
+  }
   if (state.phase === 'finished') {
     return err({ kind: 'TestFinished', message: 'test already finished', seq: event.seq })
   }
