@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
   import { Button } from '@/shared/ui/button'
-  import type { FooterLink } from '@/widgets/footer/model/types/links'
+  import type { FooterLink } from './types/links'
   interface Props {
     links: readonly FooterLink[]
   }

@@ -1,4 +1,4 @@
-import type { FooterLink } from '../types/links'
+import type { FooterLink } from '@/features/footer/links'
 import IconBrandGithub from '~icons/tabler/brand-github'
 import IconShield from '~icons/tabler/shield'
 import IconFileText from '~icons/tabler/file-text'

@@ -53,7 +53,7 @@
     DropdownMenuSeparator,
     DropdownMenuItem
   } from '@/shared/ui/dropdown-menu'
-  import type { HeaderLink } from '@/widgets/header/types/links'
+  import type { HeaderLink } from './types/links'
   import IconBell from '~icons/tabler/bell'
   import IconUser from '~icons/tabler/user'
 

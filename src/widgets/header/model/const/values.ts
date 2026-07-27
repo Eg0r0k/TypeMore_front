@@ -1,4 +1,4 @@
-import type { HeaderLink } from '../../types/links'
+import type { HeaderLink } from '@/features/header/navigation'
 import IconKeyboard from '~icons/tabler/keyboard'
 import IconChartBar from '~icons/tabler/chart-bar'
 import IconNetwork from '~icons/tabler/network'
