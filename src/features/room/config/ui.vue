@@ -69,7 +69,7 @@
             class="config__lang bg-sub-alt border border-sub rounded-md transition-tm focus-ring flex h-9 w-full cursor-pointer items-center px-3 text-sm text-text"
             @click="languageOpen = true"
           >
-            <span class="truncate">{{ settings.lang }}</span>
+            <span class="truncate">{{ languageName(settings.lang) }}</span>
           </button>
           <LanguageModal
             v-model:open="languageOpen"
@@ -115,7 +115,7 @@
         </div>
         <div class="config__row">
           <dt>{{ t('game.language') }}</dt>
-          <dd>{{ settings.lang }}</dd>
+          <dd>{{ languageName(settings.lang) }}</dd>
         </div>
         <div v-if="activeTextMods.length" class="config__row">
           <dt>{{ t('room.textMods') }}</dt>
@@ -172,6 +172,7 @@
   import { useConfigStore } from '@/entities/config/model/store'
   import { useMatchSessionStore } from '@/entities/match'
   import { loadDictionaryBody } from '@shared/api'
+  import { useLanguageNames } from '@/shared/lib/hooks/useLanguageNames'
   import { TextInput } from '@/shared/ui/input'
   import { Toggle } from '@/shared/ui/toggle'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
@@ -196,6 +197,8 @@
   const TEXT_MOD_KEYS = ['punctuation', 'numbers', 'randomCase', 'reverse'] as const
 
   const { t } = useI18n()
+  // `lang` is the key the room settings travel as; the catalogue owns its name.
+  const { languageName } = useLanguageNames()
   const session = useMatchSessionStore()
   const room = computed(() => session.room)
 

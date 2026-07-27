@@ -147,18 +147,66 @@ const NAMES: Record<string, string> = {
   code_css: 'CSS (code)'
 }
 
-/** Installs the catalogue + body routes on `page`. Call before the first `goto`. */
-export async function stubDictionaries(page: Page): Promise<void> {
-  const catalogue = Object.entries(WORDS).map(([lang, words]) => {
-    const body = JSON.stringify({ name: lang, words })
+/**
+ * Filler rows, so a spec can drive the pickers at the size the real catalogue
+ * now is (430 languages) rather than at the three this file hand-writes.
+ *
+ * They are real rows in every respect a picker cares about — a key, a name that
+ * is not derivable from it, a hash that addresses a body — because the thing
+ * under test is whether a picker stays usable at that length, and a stub that
+ * shrank the list would be testing the opposite.
+ */
+const FILLER_COUNT = 427
+
+function fillerRows(): { lang: string; name: string; words: string[] }[] {
+  // Distinct, pronounceable-ish, and deliberately NOT a title-cased key: the
+  // name has to be something no transformation of `lang` could produce, which
+  // is the property the catalogue exists to carry.
+  const stems = ['ka', 'lo', 'mi', 'ne', 'po', 'ru', 'sa', 'te', 'vi', 'zu']
+  return Array.from({ length: FILLER_COUNT }, (_, i) => {
+    const stem = stems[i % stems.length]
     return {
-      lang,
-      name: NAMES[lang],
-      dictHash: HASHES[lang],
-      wordCount: words.length,
-      bytes: new TextEncoder().encode(body).length
+      lang: `filler_${stem}_${String(i).padStart(3, '0')}`,
+      name: `Filler ${stem.toUpperCase()} #${i}`,
+      words: Array.from({ length: 24 }, (_, w) => `${stem}${w}`)
     }
   })
+}
+
+/**
+ * Installs the catalogue + body routes on `page`. Call before the first `goto`.
+ *
+ * Every call builds its OWN corpus from the constants above and never writes
+ * back into them. That is not tidiness: Playwright reuses a worker process
+ * across the tests in a file, so a fixture that appended its filler rows to the
+ * module-level maps would hand the second test a catalogue twice the size of
+ * the first one's and the third a catalogue three times the size — which is
+ * exactly what it did, and it read as a search filter that had stopped working.
+ */
+export async function stubDictionaries(page: Page, opts: { full?: boolean } = {}): Promise<void> {
+  const words: Record<string, string[]> = { ...WORDS }
+  const hashes: Record<string, string> = { ...HASHES }
+  const names: Record<string, string> = { ...NAMES }
+
+  if (opts.full === true) {
+    fillerRows().forEach((row, i) => {
+      words[row.lang] = row.words
+      hashes[row.lang] = `e2ef${String(i).padStart(4, '0')}`
+      names[row.lang] = row.name
+    })
+  }
+
+  // The catalogue is served ordered by key; the picker must not depend on
+  // having been handed it in any other order.
+  const catalogue = Object.keys(words)
+    .sort()
+    .map((lang) => ({
+      lang,
+      name: names[lang],
+      dictHash: hashes[lang],
+      wordCount: words[lang].length,
+      bytes: new TextEncoder().encode(JSON.stringify({ name: lang, words: words[lang] })).length
+    }))
 
   await page.route('**/api/v1/dictionaries', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(catalogue) })
@@ -166,8 +214,8 @@ export async function stubDictionaries(page: Page): Promise<void> {
 
   await page.route('**/static/dictionaries/*.json', (route) => {
     const hash = new URL(route.request().url()).pathname.split('/').pop()!.replace('.json', '')
-    const lang = Object.keys(HASHES).find((l) => HASHES[l] === hash)
-    if (!lang) {
+    const lang = Object.keys(hashes).find((l) => hashes[l] === hash)
+    if (lang === undefined) {
       return route.fulfill({
         status: 404,
         contentType: 'application/json',
@@ -178,7 +226,7 @@ export async function stubDictionaries(page: Page): Promise<void> {
       status: 200,
       contentType: 'application/json',
       headers: { 'cache-control': 'public, max-age=31536000, immutable' },
-      body: JSON.stringify({ name: lang, words: WORDS[lang] })
+      body: JSON.stringify({ name: lang, words: words[lang] })
     })
   })
 }
