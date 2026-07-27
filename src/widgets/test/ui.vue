@@ -17,6 +17,7 @@
     <div ref="viewportRef" class="game__viewport">
       <div ref="hostRef" class="game__host"></div>
     </div>
+
     <Teleport v-if="shadowContainer" :to="shadowContainer">
       <div
         ref="wordsRef"
@@ -90,7 +91,6 @@
   import { useScrollTape } from '@/shared/lib/hooks/useScrollTape'
   import { WORDS_SHADOW_STYLES, FADE_MS, SMOOTH_CARET_MS } from './game-styles'
   import type { CaretStyle, SmoothCaret } from '@/shared/constants/type'
-
   /**
    * Pure view over a `GameView`: renders the windowed words + caret in a shadow
    * root and forwards keystrokes via the hidden input. It owns NO session
@@ -244,6 +244,16 @@
     return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
   }
 
+  /**
+   * Something modal owns the keyboard — a dialog, or a popover (reka gives both
+   * `role="dialog"`). Two paths have to honour it, not one: re-arming on a
+   * keypress obviously, but ALSO the rebuild below. A settings change rebuilds
+   * the run, and arming the field from inside that rebuild yanks focus out of
+   * the panel the change was made in, which dismisses it on focus-outside — so
+   * toggling a second mod would mean opening the panel again.
+   */
+  const modalIsOpen = (): boolean => document.querySelector('[role="dialog"]') !== null
+
   useEventListener(document, 'keydown', (event: KeyboardEvent) => {
     if (props.viewOnly || !hasWords.value || typingFocused.value) return
     if (event.ctrlKey || event.metaKey || event.altKey) return
@@ -257,7 +267,7 @@
       (event.key === 'Tab' && typesTab.value)
     if (!typesThisKey) return
     if (isEditableTarget(event.target)) return
-    if (document.querySelector('[role="dialog"]') !== null) return
+    if (modalIsOpen()) return
     focusInput()
     event.preventDefault()
   })
@@ -307,7 +317,10 @@
   onMounted(async () => {
     mountShadow()
     await nextTick() // Teleport mounts the words container into the shadow root
-    if (hasWords.value) focusInput()
+    // Same rule as the rebuild below: a settings change swaps this component out
+    // and back (the page shows its loading notice in between), so the mount is
+    // ALSO a path that would arm the field from under an open panel.
+    if (hasWords.value && !modalIsOpen()) focusInput()
     await applyGeometry()
     updateGhosts()
     document.fonts?.ready.then(() => {
@@ -326,7 +339,21 @@
   // flex-wrap can push it onto a new line mid-word. caretIndexRef tracks that
   // growth, so watching both keeps the active word off the third line in either
   // case. Both refs change together on commit, so applyGeometry runs once per edit.
-  watch([wordIndexRef, caretIndexRef], () => void applyGeometry())
+  watch([wordIndexRef, caretIndexRef], ([index]) => {
+    /*
+     * The window only ever ADVANCES — `rebalance` drops whole lines above the
+     * active one and never gives them back — so a jump backwards past its start
+     * leaves a slice that no longer contains the active word. The rendered range
+     * is `[start .. index + WINDOW_AHEAD]`, so with `start` past that end it is
+     * EMPTY, and an empty field has no `.word` for the next rebalance to measure:
+     * the view is stuck showing the tail of the text for good. That is a replay
+     * restarting (`driver.reset()` keeps the same words array, so the words
+     * watcher below never fires), and it bites hardest on a text with newlines,
+     * where the short lines mean many were dropped.
+     */
+    if (index < windowStart.value) resetWindow()
+    void applyGeometry()
+  })
   // A window shift (line jump) moves every rendered word — re-anchor the ghosts.
   watch(windowStart, () => void applyGhostGeometry())
   // Ghost prop churn (relay batches): cache-gated update, no invalidation.
@@ -338,8 +365,9 @@
       void applyGeometry()
       void applyGhostGeometry()
       // Words arriving late (first setup, or a retry after a failed load) mount
-      // the input adapter only now — arm it once it exists.
-      if (!hasWords.value) return
+      // the input adapter only now — arm it once it exists, unless a panel is
+      // open (see `modalIsOpen`): the next keypress arms it instead.
+      if (!hasWords.value || modalIsOpen()) return
       await nextTick()
       focusInput()
     }
