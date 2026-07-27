@@ -42,10 +42,27 @@ export type OptionSlot = 'generation' | 'core' | 'view'
  * can forget an option. `solo` is the settings bar above the field;
  * `settingsModal` is the app settings dialog, which owns the input-behaviour
  * options the bar has no room for.
+ *
+ * `roomSettings`, `freemod` and `roomLocal` are three DIFFERENT things inside a
+ * room, and the distinction is the wire:
+ *  - `roomSettings` — host-owned, `settings_update`, identical for every seat;
+ *  - `freemod` — per-seat and ON THE WIRE (`set_freemods`), so it is frozen at
+ *    countdown and multiplies that seat's score;
+ *  - `roomLocal` — per-seat and NOT on the wire. The view-only mods live here:
+ *    they leave no trace in the event log, so they cannot be scored and are not
+ *    freemods — which is a reason to keep them off the protocol, not a reason
+ *    to withhold them from the player who wants to type blindfolded. They apply
+ *    from the player's own config, exactly as in solo.
  */
-export type OptionContext = 'solo' | 'settingsModal' | 'roomSettings' | 'freemod'
+export type OptionContext = 'solo' | 'settingsModal' | 'roomSettings' | 'freemod' | 'roomLocal'
 
-export const OPTION_CONTEXTS = ['solo', 'settingsModal', 'roomSettings', 'freemod'] as const
+export const OPTION_CONTEXTS = [
+  'solo',
+  'settingsModal',
+  'roomSettings',
+  'freemod',
+  'roomLocal'
+] as const
 
 export type OptionControl =
   | { readonly kind: 'boolean' }
@@ -67,6 +84,7 @@ export interface OptionContexts {
   readonly settingsModal: boolean
   readonly roomSettings: boolean
   readonly freemod: boolean
+  readonly roomLocal: boolean
 }
 
 /**
@@ -114,8 +132,11 @@ export interface OptionDescriptor<K extends GameOptionKey = GameOptionKey> {
  * `emitsRawTokens` the moment the core grows another verbatim source (a code
  * dictionary sets `rawTokens` without being a quote at all). Routing the intent
  * through the real predicate keeps exactly one.
+ *
+ * Exported for `plannedMods`, which needs the same stand-in for the same reason:
+ * it asks the core what the planned run would score before a quote is drawn.
  */
-const QUOTE_PROBE: GenerationTextSource = {
+export const QUOTE_PROBE: GenerationTextSource = {
   kind: 'quote',
   quoteId: '',
   quoteHash: '',
@@ -165,12 +186,15 @@ export const GAME_OPTIONS = [
     slot: 'generation',
     control: {
       kind: 'enum',
-      values: ['words', 'time', 'quote'],
-      // PROTOCOL.md §5: room settings are `"time" | "words"`. `quote` is solo
-      // until the server accepts a non-seeded `textSource`.
-      valuesByContext: { roomSettings: ['time', 'words'] }
+      values: ['words', 'time', 'quote']
     },
-    contexts: { solo: true, settingsModal: false, roomSettings: true, freemod: false },
+    contexts: {
+      solo: true,
+      settingsModal: false,
+      roomSettings: true,
+      freemod: false,
+      roomLocal: false
+    },
     i18nKey: 'room.mode',
     ariaLabel: 'mode',
     valueI18nPrefix: 'game.mode',
@@ -182,7 +206,13 @@ export const GAME_OPTIONS = [
     // SECONDS. The room form sends `durationMs` and multiplies at its own
     // adapter — the wire shape is the protocol's, not this table's.
     control: { kind: 'presets', values: [15, 30, 60, 120] },
-    contexts: { solo: true, settingsModal: false, roomSettings: true, freemod: false },
+    contexts: {
+      solo: true,
+      settingsModal: false,
+      roomSettings: true,
+      freemod: false,
+      roomLocal: false
+    },
     i18nKey: 'room.duration',
     ariaLabel: 'amount',
     defaultValue: D.time,
@@ -193,7 +223,13 @@ export const GAME_OPTIONS = [
     key: 'words',
     slot: 'generation',
     control: { kind: 'presets', values: [10, 25, 50, 100] },
-    contexts: { solo: true, settingsModal: false, roomSettings: true, freemod: false },
+    contexts: {
+      solo: true,
+      settingsModal: false,
+      roomSettings: true,
+      freemod: false,
+      roomLocal: false
+    },
     i18nKey: 'room.wordCount',
     ariaLabel: 'amount',
     defaultValue: D.words,
@@ -207,7 +243,15 @@ export const GAME_OPTIONS = [
       kind: 'enum',
       values: ['all', 'short', 'medium', 'long', 'thicc']
     },
-    contexts: { solo: true, settingsModal: false, roomSettings: false, freemod: false },
+    contexts: {
+      solo: true,
+      settingsModal: false,
+      // A room draws its quote from the same length band, once, when the host
+      // picks it — the band is a filter on the draw, not a wire field.
+      roomSettings: true,
+      freemod: false,
+      roomLocal: false
+    },
     i18nKey: 'game.quote.length',
     ariaLabel: 'quote length',
     valueI18nPrefix: 'game.quote.group',
@@ -221,7 +265,13 @@ export const GAME_OPTIONS = [
     // Free-form: the catalogue is fetched, so the registry names the control
     // rather than enumerating values it cannot know at build time.
     control: { kind: 'enum', values: [] },
-    contexts: { solo: true, settingsModal: false, roomSettings: true, freemod: false },
+    contexts: {
+      solo: true,
+      settingsModal: false,
+      roomSettings: true,
+      freemod: false,
+      roomLocal: false
+    },
     i18nKey: 'game.language',
     defaultValue: D.language
   }),
@@ -231,7 +281,13 @@ export const GAME_OPTIONS = [
     key: 'punctuation',
     slot: 'generation',
     control: { kind: 'boolean' },
-    contexts: { solo: true, settingsModal: false, roomSettings: true, freemod: false },
+    contexts: {
+      solo: true,
+      settingsModal: false,
+      roomSettings: true,
+      freemod: false,
+      roomLocal: false
+    },
     i18nKey: 'game.punctuation',
     defaultValue: D.punctuation,
     dependsOn: ['mode'],
@@ -241,7 +297,13 @@ export const GAME_OPTIONS = [
     key: 'numbers',
     slot: 'generation',
     control: { kind: 'boolean' },
-    contexts: { solo: true, settingsModal: false, roomSettings: true, freemod: false },
+    contexts: {
+      solo: true,
+      settingsModal: false,
+      roomSettings: true,
+      freemod: false,
+      roomLocal: false
+    },
     i18nKey: 'game.numbers',
     defaultValue: D.numbers,
     dependsOn: ['mode'],
@@ -251,7 +313,13 @@ export const GAME_OPTIONS = [
     key: 'randomCase',
     slot: 'generation',
     control: { kind: 'boolean' },
-    contexts: { solo: true, settingsModal: false, roomSettings: true, freemod: false },
+    contexts: {
+      solo: true,
+      settingsModal: false,
+      roomSettings: true,
+      freemod: false,
+      roomLocal: false
+    },
     i18nKey: 'game.randomCase',
     defaultValue: D.randomCase,
     dependsOn: ['mode'],
@@ -261,7 +329,13 @@ export const GAME_OPTIONS = [
     key: 'reverse',
     slot: 'generation',
     control: { kind: 'boolean' },
-    contexts: { solo: true, settingsModal: false, roomSettings: true, freemod: false },
+    contexts: {
+      solo: true,
+      settingsModal: false,
+      roomSettings: true,
+      freemod: false,
+      roomLocal: false
+    },
     i18nKey: 'game.reverse',
     defaultValue: D.reverse,
     dependsOn: ['mode'],
@@ -276,7 +350,13 @@ export const GAME_OPTIONS = [
       kind: 'enum',
       values: ['normal', 'expert', 'master']
     },
-    contexts: { solo: true, settingsModal: false, roomSettings: false, freemod: true },
+    contexts: {
+      solo: true,
+      settingsModal: false,
+      roomSettings: false,
+      freemod: true,
+      roomLocal: false
+    },
     i18nKey: 'game.difficulty.label',
     ariaLabel: 'difficulty',
     valueI18nPrefix: 'game.difficulty',
@@ -286,7 +366,13 @@ export const GAME_OPTIONS = [
     key: 'minWpm',
     slot: 'core',
     control: { kind: 'presets', values: [0, 60, 80, 100] },
-    contexts: { solo: true, settingsModal: false, roomSettings: false, freemod: true },
+    contexts: {
+      solo: true,
+      settingsModal: false,
+      roomSettings: false,
+      freemod: true,
+      roomLocal: false
+    },
     i18nKey: 'game.minSpeed',
     ariaLabel: 'min speed',
     defaultValue: D.minWpm
@@ -295,7 +381,13 @@ export const GAME_OPTIONS = [
     key: 'nospace',
     slot: 'core',
     control: { kind: 'boolean' },
-    contexts: { solo: true, settingsModal: false, roomSettings: false, freemod: true },
+    contexts: {
+      solo: true,
+      settingsModal: false,
+      roomSettings: false,
+      freemod: true,
+      roomLocal: false
+    },
     i18nKey: 'game.nospace',
     defaultValue: D.nospace
   }),
@@ -305,7 +397,13 @@ export const GAME_OPTIONS = [
     key: 'freedomMode',
     slot: 'core',
     control: { kind: 'boolean' },
-    contexts: { solo: false, settingsModal: true, roomSettings: false, freemod: false },
+    contexts: {
+      solo: false,
+      settingsModal: true,
+      roomSettings: false,
+      freemod: false,
+      roomLocal: false
+    },
     i18nKey: 'settings.freedomMode.label',
     defaultValue: D.freedomMode
   }),
@@ -316,7 +414,13 @@ export const GAME_OPTIONS = [
       kind: 'enum',
       values: ['off', 'letter', 'word']
     },
-    contexts: { solo: false, settingsModal: true, roomSettings: false, freemod: false },
+    contexts: {
+      solo: false,
+      settingsModal: true,
+      roomSettings: false,
+      freemod: false,
+      roomLocal: false
+    },
     i18nKey: 'settings.stopOnError.label',
     valueI18nPrefix: 'settings.stopOnError',
     defaultValue: D.stopOnError
@@ -325,7 +429,13 @@ export const GAME_OPTIONS = [
     key: 'quickEnd',
     slot: 'core',
     control: { kind: 'boolean' },
-    contexts: { solo: false, settingsModal: true, roomSettings: false, freemod: false },
+    contexts: {
+      solo: false,
+      settingsModal: true,
+      roomSettings: false,
+      freemod: false,
+      roomLocal: false
+    },
     i18nKey: 'settings.quickEnd.label',
     defaultValue: D.quickEnd,
     dependsOn: ['mode'],
@@ -337,7 +447,13 @@ export const GAME_OPTIONS = [
     key: 'blind',
     slot: 'view',
     control: { kind: 'boolean' },
-    contexts: { solo: true, settingsModal: false, roomSettings: false, freemod: false },
+    contexts: {
+      solo: true,
+      settingsModal: false,
+      roomSettings: false,
+      freemod: false,
+      roomLocal: true
+    },
     i18nKey: 'game.blind',
     defaultValue: D.blind
   }),
@@ -345,7 +461,13 @@ export const GAME_OPTIONS = [
     key: 'fading',
     slot: 'view',
     control: { kind: 'boolean' },
-    contexts: { solo: true, settingsModal: false, roomSettings: false, freemod: false },
+    contexts: {
+      solo: true,
+      settingsModal: false,
+      roomSettings: false,
+      freemod: false,
+      roomLocal: true
+    },
     i18nKey: 'game.fading',
     defaultValue: D.fading
   }),
@@ -353,7 +475,13 @@ export const GAME_OPTIONS = [
     key: 'flashlight',
     slot: 'view',
     control: { kind: 'boolean' },
-    contexts: { solo: true, settingsModal: false, roomSettings: false, freemod: false },
+    contexts: {
+      solo: true,
+      settingsModal: false,
+      roomSettings: false,
+      freemod: false,
+      roomLocal: true
+    },
     i18nKey: 'game.flashlight',
     defaultValue: D.flashlight
   })

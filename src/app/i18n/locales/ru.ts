@@ -35,6 +35,11 @@ export default {
       quoteError: 'не удалось загрузить цитату',
       retry: 'повторить'
     },
+    slot: {
+      generation: 'текст',
+      core: 'правила',
+      view: 'вид'
+    },
     constraint: {
       fixedText: 'фиксированный текст — этот мод ничего не изменит'
     }

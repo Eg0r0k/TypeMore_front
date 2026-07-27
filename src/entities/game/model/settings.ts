@@ -13,9 +13,12 @@ import {
   type GenerationConfig,
   type GenerationMode,
   type GenerationTextSource,
+  type ModsDeclaration,
+  modMultiplierV1,
   CODE_MAX_EXTRA_CHARS,
   DEFAULT_MAX_EXTRA_CHARS
 } from '@shared/core'
+import { QUOTE_PROBE } from '../config/registry'
 
 /** The saved-config subset that influences the core. `blind` is deliberately absent — it is view-only. */
 export interface GameSettings {
@@ -111,4 +114,25 @@ export function toCoreSetup(settings: GameSettings): CoreSetup {
       textSource
     }
   }
+}
+
+/**
+ * The mod multiplier the CURRENT settings would be scored with, before a run
+ * exists.
+ *
+ * The settings bar shows this, and it cannot read the store: nothing is set up
+ * yet, and after a failed setup the store still holds the previous run's mods.
+ * Routing the intent through the same functions the real run uses (`toCoreSetup`
+ * → `modMultiplierV1`) is what makes the advertised number the one that will
+ * actually be paid.
+ *
+ * The quote case is why this is not simply a product over the toggles that are
+ * on: a quote's text is verbatim, so the four word-affecting mods pay nothing
+ * (`emitsRawTokens`). `QUOTE_PROBE` stands in for the quote that has not been
+ * drawn yet, rather than re-deciding "this text is fixed" here.
+ */
+export function plannedMultiplier(settings: GameSettings, declaration: ModsDeclaration): number {
+  const textSource = settings.textSource ?? (settings.mode === 'quote' ? QUOTE_PROBE : undefined)
+  const { coreConfig, generation } = toCoreSetup({ ...settings, textSource })
+  return modMultiplierV1({ config: coreConfig, generation }, declaration)
 }

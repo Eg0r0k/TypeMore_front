@@ -30,6 +30,16 @@ export default {
       quoteError: 'could not load a quote',
       retry: 'retry'
     },
+    /**
+     * What a group of mods affects — the registry's `slot`, used as the heading
+     * of each icon-only mod group. Deliberately one word each: the group label
+     * carries the distinction the icons cannot.
+     */
+    slot: {
+      generation: 'text',
+      core: 'rules',
+      view: 'view'
+    },
     /** Why a registry option is unavailable — rendered beside the disabled control. */
     constraint: {
       fixedText: 'fixed text — this mod would change nothing'

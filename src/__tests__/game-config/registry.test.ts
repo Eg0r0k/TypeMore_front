@@ -116,11 +116,7 @@ describe('optionsFor(context) — an option renders only where it is declared', 
   })
 
   it('lists the settings modal — the input-behaviour trio the bar has no room for', () => {
-    expect(keysOf(optionsFor('settingsModal'))).toEqual([
-      'freedomMode',
-      'stopOnError',
-      'quickEnd'
-    ])
+    expect(keysOf(optionsFor('settingsModal'))).toEqual(['freedomMode', 'stopOnError', 'quickEnd'])
   })
 
   it('gives each option exactly one editing home per audience', () => {
@@ -136,6 +132,7 @@ describe('optionsFor(context) — an option renders only where it is declared', 
       'mode',
       'time',
       'words',
+      'quoteGroup',
       'language',
       'punctuation',
       'numbers',
@@ -155,9 +152,8 @@ describe('optionsFor(context) — an option renders only where it is declared', 
         !o.contexts.roomSettings &&
         !o.contexts.freemod
     )
-    // The quote band, the input-behaviour trio, and the visual mods.
+    // The input-behaviour trio and the visual mods.
     expect(keysOf(soloOnly)).toEqual([
-      'quoteGroup',
       'freedomMode',
       'stopOnError',
       'quickEnd',
@@ -186,6 +182,9 @@ describe('PROTOCOL.md §5 — the registry maps to the wire, it does not reshape
     mode: 'mode',
     time: 'durationMs',
     words: 'wordCount',
+    // The band filters the host's draw; what travels is the drawn quote's id
+    // (`textSource.quoteId`) and its length (`wordCount`).
+    quoteGroup: 'textSource',
     language: 'lang',
     punctuation: 'textMods',
     numbers: 'textMods',
@@ -203,18 +202,21 @@ describe('PROTOCOL.md §5 — the registry maps to the wire, it does not reshape
     for (const option of optionsFor('roomSettings')) {
       expect(ROOM_WIRE_FIELD[option.key]).toBeDefined()
     }
-    expect(Object.keys(ROOM_WIRE_FIELD).sort()).toEqual([...keysOf(optionsFor('roomSettings'))].sort())
+    expect(Object.keys(ROOM_WIRE_FIELD).sort()).toEqual(
+      [...keysOf(optionsFor('roomSettings'))].sort()
+    )
   })
 
   it('maps every freemod option onto a documented freemods field', () => {
-    expect(Object.keys(FREEMOD_WIRE_FIELD).sort()).toEqual([...keysOf(optionsFor('freemod'))].sort())
+    expect(Object.keys(FREEMOD_WIRE_FIELD).sort()).toEqual(
+      [...keysOf(optionsFor('freemod'))].sort()
+    )
   })
 
-  it('offers a room only the two seeded modes — v0 validates textSource.kind == "seeded"', () => {
+  it('offers a room every mode — a room may race a quote, not only a seeded text', () => {
     const mode = optionOf('mode')
-    expect(valuesFor(mode, 'roomSettings')).toEqual(['time', 'words'])
+    expect(valuesFor(mode, 'roomSettings')).toEqual(['words', 'time', 'quote'])
     expect(valuesFor(mode, 'solo')).toEqual(['words', 'time', 'quote'])
-    expect(valuesFor(mode, 'roomSettings')).not.toContain('quote')
   })
 
   it('holds durations in SECONDS — the ms conversion belongs to the room adapter', () => {
