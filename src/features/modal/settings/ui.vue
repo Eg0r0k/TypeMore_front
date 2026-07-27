@@ -283,9 +283,7 @@
 
   .settings-dialog__pane {
     min-width: 0;
-
-    // Right padding keeps the first row's control clear of the close button.
-    padding: 16px 48px 24px 20px;
+    padding: 50px 48px 24px 20px;
     overflow-y: auto;
   }
 

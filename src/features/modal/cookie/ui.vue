@@ -35,7 +35,7 @@
         <DialogDescription class="sr-only">
           Choose which cookies you allow us to use.
         </DialogDescription>
-        <div class="cookie-modal__settings">
+        <div class="flex flex-col gap-4">
           <div v-for="cookie in Object.values(cookies)" :key="cookie.type">
             <Typography size="xl" color="primary">{{ cookie.type }}</Typography>
             <CheckBox v-model="cookie.enabled" :value="cookie.type">

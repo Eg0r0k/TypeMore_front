@@ -49,7 +49,7 @@
       <DialogClose
         v-if="showCloseButton"
         data-slot="dialog-close"
-        class="text-sub hover:text-text transition-tm focus-ring rounded-md absolute top-4 right-4 disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+        class="text-sub hover:text-text transition-tm focus-ring rounded-md absolute top-4 right-4 disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-6"
       >
         <X />
         <span class="sr-only">Close</span>

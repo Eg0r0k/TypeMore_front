@@ -1,6 +1,4 @@
 @use 'sass:meta';
-@use 'reset';
-@use 'normalize';
 @use 'scroll';
 
 $var-fonts: (
@@ -59,7 +57,6 @@ html {
   scroll-behavior: smooth;
   text-size-adjust: 100%;
   scrollbar-width: thin;
-  line-height: normal;
   -webkit-text-size-adjust: 100%;
 }
 body {
@@ -69,7 +66,6 @@ body {
   background-color: var(--bg-color);
   color: var(--text-color);
   font-family: var(--font);
-  line-height: normal;
 }
 
 /*
