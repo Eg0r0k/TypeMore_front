@@ -410,11 +410,28 @@ export default {
       player: 'player',
       mods: 'mods',
       wpm: 'wpm',
+      /** Paired column, same as the solo stats row: net wpm accented, raw beside it. */
+      wpmRaw: 'wpm / raw',
       acc: 'acc',
+      /** correct/incorrect/extra/missed, in that order. */
+      chars: 'chars',
       time: 'time',
       score: 'score',
       statusLabel: 'status',
-      status: { finished: 'finished', eliminated: 'out', dnf: 'dnf', left: 'left' },
+      /**
+       * The table is also rendered LIVE (an eliminated seat watching the rest of
+       * the match), so it needs the racing statuses too — not only the three a
+       * final standing can carry.
+       */
+      status: {
+        finished: 'finished',
+        eliminated: 'out',
+        dnf: 'dnf',
+        left: 'left',
+        racing: 'racing',
+        disconnected: 'disconnected',
+        desynced: 'out of sync'
+      },
       failReason: { master: 'master', expert: 'expert', minSpeed: 'min speed' },
       /** Server-measured idle share of a player's match window; explains an AFK dnf. */
       afkShare: 'afk {percent}%',
@@ -424,6 +441,8 @@ export default {
       },
       you: 'you',
       reReady: 'ready for rematch',
+      /** Keeps the seat — unlike `room.leave`, which gives it up. */
+      backToLobby: 'back to lobby',
       connectionLost: 'connection lost — reconnecting…'
     },
     error: {

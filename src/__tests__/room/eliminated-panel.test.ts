@@ -1,10 +1,19 @@
 /**
- * The elimination panel is the only place the local player learns why their own
- * run stopped while the match keeps going — the wire never says more than
- * "finished". Besides the freemod rules it now also covers the RELOAD forfeit:
- * a mid-match page reload kills the event log, the seq counter and the t=0
- * anchor, so the run cannot be resumed and the client forfeits instead of
- * hanging every other player until the server's deadline.
+ * The elimination panel: where the local player used to learn why their own run
+ * stopped while the match kept going — the wire never says more than "finished".
+ * Besides the freemod rules it also covers the RELOAD forfeit: a mid-match page
+ * reload kills the event log, the seq counter and the t=0 anchor, so the run
+ * cannot be resumed and the client forfeits instead of hanging every other
+ * player until the server's deadline.
+ *
+ * SUPERSEDED, and kept only until the match surface drops it. `/room` no longer
+ * routes the `eliminated` phase here: an eliminated seat gets the RESULTS screen
+ * (its own finished run, drawn exactly as a solo one, over a table that keeps
+ * updating while the rest race), and that screen carries both facts this panel
+ * carried — the rule that ended the run and the count still racing. See
+ * `results.test.ts` ("live (eliminated, match still running)") and
+ * `pages/room/ui.vue`. The panel itself is untouched, so what it renders when it
+ * IS mounted is still asserted below.
  *
  * The session store is a hand-built reactive stub — no Pinia, no transport
  * (same shape as controls.test.ts).

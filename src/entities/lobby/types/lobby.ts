@@ -5,7 +5,7 @@
  * host | player (host = `room_state.hostPlayerId`); spectators do not exist on
  * the wire.
  */
-import type { FailReason } from '@shared/core'
+import type { CharCounts, FailReason } from '@shared/core'
 import type { ChatKind, Freemods } from '@shared/match-transport'
 
 export type {
@@ -45,26 +45,39 @@ export interface PeerRailEntry {
   failReason?: FailReason | null
 }
 
-/** Structural mirror of the session store's StandingRow. */
+/**
+ * One row of the room's per-player table.
+ *
+ * A SUPERSET of the session store's StandingRow, because the same table is now
+ * also rendered while the match is still running (an eliminated seat watches the
+ * others finish): a live row carries the racing statuses, and its numbers come
+ * from a peer's ghost core rather than from a folded final log. Every field the
+ * session store does not fill is optional and renders as an em dash.
+ */
 export interface StandingRow {
   rank: number
   playerId: string
   nick: string
   isSelf: boolean
   /**
-   * The WIRE status — an eliminated player finished on the wire, so `failReason` is what actually happened.
-   * A `dnf` is no longer only a missed finish window: in `words` mode the server also dnf's a seat whose
-   * AFK share (see {@link StandingRow.afkShare}) crosses its threshold.
+   * Final rows carry the WIRE status — an eliminated player finished on the wire, so `failReason` is
+   * what actually happened. A `dnf` is no longer only a missed finish window: in `words` mode the
+   * server also dnf's a seat whose AFK share (see {@link StandingRow.afkShare}) crosses its
+   * threshold. Live rows use the wider peer set ({@link PeerRaceStatus}).
    */
-  status: 'finished' | 'dnf' | 'left'
+  status: PeerRaceStatus
   /** Present in `words` mode. */
   finishTimeMs?: number
   /** Present in `time` mode. */
   score?: number
   wpm?: number
+  /** Raw wpm — every keystroke, right or wrong. Absent while only wpm is known. */
+  raw?: number
   acc?: number
+  /** correct/incorrect/extra/missed at the row's measurement instant. */
+  chars?: CharCounts
   /** Set when a freemod rule ended the run (master/expert miss, MinSpeed floor) — ranks below every true finisher. */
-  failReason?: FailReason
+  failReason?: FailReason | null
   /**
    * Idle share of this player's match window in 0..1, measured by the SERVER from
    * `event_batch` ARRIVAL times (it never parses events) and relayed on

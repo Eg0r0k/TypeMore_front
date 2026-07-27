@@ -80,8 +80,7 @@ function mountMatch(config: Record<string, unknown>) {
   })
 }
 
-const fieldProps = (wrapper: VueWrapper) =>
-  wrapper.findComponent({ name: 'FieldStub' }).props()
+const fieldProps = (wrapper: VueWrapper) => wrapper.findComponent({ name: 'FieldStub' }).props()
 
 describe('a match field honours the local player’s visual mods', () => {
   it('passes fading through when the player has it on', () => {

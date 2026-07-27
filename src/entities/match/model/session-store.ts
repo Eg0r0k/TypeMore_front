@@ -28,6 +28,7 @@ import { defineStore } from 'pinia'
 import { computed, ref, shallowRef, watch } from 'vue'
 
 import {
+  type CharCounts,
   type CoreConfig,
   type Dictionary,
   type FailReason,
@@ -126,8 +127,12 @@ export interface MatchError {
 
 export interface PeerMetrics {
   readonly wpm: number
+  /** Unadjusted speed — what they typed, mistakes included. */
+  readonly raw: number
   /** Accuracy fraction in [0, 1]. */
   readonly acc: number
+  /** correct / incorrect / extra / missed, as the results table shows them. */
+  readonly chars: CharCounts
   /** Canonical target-based progress in [0, 1] (`progressOf`, shared/core) — extras never advance it. */
   readonly progress: number
 }
@@ -170,8 +175,12 @@ export interface StandingRow {
   /** scoreV2 total under this player's OWN frozen freemods (MATCH.md §3). */
   readonly score?: number
   readonly wpm?: number
+  /** Unadjusted speed — every keystroke, right or wrong. */
+  readonly raw?: number
   /** Accuracy fraction in [0, 1]. */
   readonly acc?: number
+  /** correct / incorrect / extra / missed at the row's measurement instant. */
+  readonly chars?: CharCounts
   /**
    * Set when the run ended on a freemod rule (master/expert miss, MinSpeed floor).
    * The wire status is a plain `finished` — the reason is proven by replaying the
@@ -228,7 +237,16 @@ interface PeerRecord {
   desynced: boolean
 }
 
+/**
+ * The core's AFK accounting granularity (`afkOf`, shared/core): idle time is
+ * counted in whole one-second buckets, so before the first one there is nothing
+ * to take a percentage of.
+ */
+const AFK_BUCKET_MS = 1000
+
 const NO_DECLARATION: ModsDeclaration = { blind: false, fading: false, flashlight: false }
+/** A peer with no ghost core yet has typed nothing — not "unknown", zero. */
+const EMPTY_CHARS: CharCounts = { correct: 0, incorrect: 0, extra: 0, missed: 0 }
 /** Defensive only: a match_end result whose seat is missing from the frozen countdown roster. */
 const FALLBACK_FREEMODS: Freemods = { difficulty: 'normal', minWpm: 0, nospace: false }
 /**
@@ -308,6 +326,13 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
   const matchEndReason = ref<MatchEndReason | null>(null)
   /** Δ2: this seat forfeited a match the page cannot play (see `forfeitStaleSeat`). */
   const reloadForfeit = ref(false)
+  /** This seat gave its run up for going idle (see `judgeIdle`). */
+  const afkForfeit = ref(false)
+  /**
+   * How far this seat is into the idle rule, 0…1 — a meter the match screen can
+   * fill so the kick is never a surprise. Only meaningful while `running`.
+   */
+  const afkProgress = ref(0)
 
   const localRef = shallowRef<GameStore | null>(null)
   const peerRecords = shallowRef<readonly PeerRecord[]>([])
@@ -365,7 +390,12 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
         view: rec.driver?.view ?? EMPTY_VIEW,
         metrics: {
           wpm: metrics?.wpm ?? 0,
+          // The ghost's core computes the whole `Metrics`; publishing only wpm
+          // meant the results table could show a peer's speed but not what it
+          // cost them. Same fold, two more fields.
+          raw: metrics?.raw ?? 0,
           acc: metrics?.accuracy ?? 0,
+          chars: metrics?.chars ?? EMPTY_CHARS,
           progress: peerProgress(rec)
         },
         status: statusOf(rec),
@@ -552,6 +582,8 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     goReached = false
     pendingFinish = false
     outCursor = 0
+    afkForfeit.value = false
+    afkProgress.value = 0
     goAnchorPerf = null
     goLocalMs = null
     countdownMsLeft.value = null
@@ -912,6 +944,43 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     if (goAnchorPerf === null) return
     const matchNow = performance.now() - goAnchorPerf
     for (const rec of peerRecords.value) rec.driver?.advance(matchNow)
+    judgeIdle(matchNow)
+  }
+
+  /**
+   * The AFK rule, judged on the client that can see it first — on the SHARE the
+   * app already measures, not on a stopwatch of its own.
+   *
+   * `afk.afkMs` is the run's idle time by the core's own one-second bucket
+   * accounting (`afkOf`, shared/core): a bucket with no event in it is an idle
+   * second, and every event is a keystroke. Divided by the run window so far,
+   * that is the same percentage the results screen prints — so "kicked at 100%"
+   * means exactly what a player later reads as `afk 12s · 100%`, rather than a
+   * second, invisible rule with its own threshold.
+   *
+   * At 100% the seat gives itself up rather than making everyone else wait out
+   * the server's sweep or the hard deadline. It forfeits (`dnf`), never
+   * finishes: there is no result behind a run nobody was typing.
+   */
+  function judgeIdle(matchNow: number): void {
+    if (phase.value !== 'running' || matchId === null) return
+    const afkMs = localRef.value?.afk.afkMs ?? 0
+    // Below one bucket there is nothing measured yet — 0/0 is not 100%.
+    const share = matchNow >= AFK_BUCKET_MS ? afkMs / matchNow : 0
+    afkProgress.value = Math.min(1, Math.max(0, share))
+    if (share < 1) return
+    afkForfeit.value = true
+    reloadForfeit.value = true // `finish{forfeit:true}` — recorded dnf, no phantom result
+    /*
+     * Stop the local run's OWN clock. A run that ends by rule (master, MinSpeed)
+     * or by running out of text settles its core, which stops the timer with it;
+     * an idle forfeit settles nothing — the core is still `running`, so without
+     * this its timer keeps ticking and the seat keeps watching its own seconds
+     * and wpm move after it is already out. The ghost fan-out is unaffected: the
+     * match clock is a separate timer (see `startMatchClock`).
+     */
+    localRef.value?.detachTimer()
+    endLocalRun()
   }
 
   /**
@@ -965,6 +1034,16 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
    * flowing and the ghosts keep ticking, so being out means spectating.
    */
   function onSelfFinished(): void {
+    endLocalRun()
+  }
+
+  /**
+   * Hand this seat's run in. One path for all three ways a run can end — the
+   * text ran out, a freemod rule ended it, or the player stopped typing — because
+   * the wire has one frame for all three and the batcher has to be closed the
+   * same way whichever it was.
+   */
+  function endLocalRun(): void {
     if (phase.value !== 'running' || batcher === null || matchId === null) return
     drainOutgoing()
     batcher.flush()
@@ -972,8 +1051,11 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     batcherArmed = false
     trySendFinish()
     // Δ3: our run is over but the match is not — others may still race.
-    // `match_end` (and only it) moves the session on to the results.
-    phase.value = (localRef.value?.snapshot.failReason ?? null) !== null ? 'eliminated' : 'waiting'
+    // `match_end` (and only it) moves the session on to the results. An idle
+    // forfeit lands on the same screen as a freemod fail: the run is over and
+    // the player is now a spectator.
+    const out = afkForfeit.value || (localRef.value?.snapshot.failReason ?? null) !== null
+    phase.value = out ? 'eliminated' : 'waiting'
   }
 
   /**
@@ -1128,7 +1210,9 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
             : undefined,
         score: score?.total,
         wpm: metrics.wpm,
+        raw: metrics.raw,
         acc: metrics.accuracy,
+        chars: metrics.chars,
         failReason,
         progress: finalState === null ? 0 : progressOf(ctx, finalState),
         freemods: isSelf ? (selfFreemods ?? rosterFreemods) : (rec?.freemods ?? rosterFreemods),
@@ -1248,12 +1332,23 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
 
   /** Results → lobby: clears the finished match and re-readies this seat. */
   function reReady(): void {
-    if (phase.value !== 'results') return
+    if (!backToLobby()) return
+    safeSend({ type: 'ready' })
+  }
+
+  /**
+   * Results → lobby WITHOUT readying up. The seat is kept and the room's
+   * settings are still there; only this match is cleared. `reReady` is this plus
+   * the ready flag — the two differ by one frame, not by one screen, so they
+   * share the teardown rather than each remembering what a match leaves behind.
+   */
+  function backToLobby(): boolean {
+    if (phase.value !== 'results') return false
     resetMatchState()
     standings.value = null
     localRef.value?.reset()
     phase.value = 'lobby'
-    safeSend({ type: 'ready' })
+    return true
   }
 
   return {
@@ -1282,8 +1377,10 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     transferHost,
     sendChat,
     reReady,
+    backToLobby,
     // match
     phase,
+    afkProgress,
     countdownMsLeft,
     matchError,
     selfView,

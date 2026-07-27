@@ -396,11 +396,21 @@ export default {
       player: 'игрок',
       mods: 'моды',
       wpm: 'wpm',
+      wpmRaw: 'wpm / raw',
       acc: 'точн',
+      chars: 'символы',
       time: 'время',
       score: 'счёт',
       statusLabel: 'статус',
-      status: { finished: 'финиш', eliminated: 'выбыл', dnf: 'dnf', left: 'вышел' },
+      status: {
+        finished: 'финиш',
+        eliminated: 'выбыл',
+        dnf: 'dnf',
+        left: 'вышел',
+        racing: 'в гонке',
+        disconnected: 'отключился',
+        desynced: 'рассинхрон'
+      },
       failReason: { master: 'мастер', expert: 'эксперт', minSpeed: 'мин. скорость' },
       afkShare: 'afk {percent}%',
       reason: {
@@ -409,6 +419,7 @@ export default {
       },
       you: 'вы',
       reReady: 'готов к реваншу',
+      backToLobby: 'вернуться в лобби',
       connectionLost: 'соединение потеряно — переподключение…'
     },
     error: {

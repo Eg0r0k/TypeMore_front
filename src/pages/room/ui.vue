@@ -1,5 +1,5 @@
 <template>
-  <div class="room-page">
+  <div class="room-page flex-1!">
     <Typography
       v-if="session.connection === 'reconnecting'"
       class="room-page__banner"
@@ -9,30 +9,42 @@
       {{ t('servers.status.reconnecting') }}
     </Typography>
 
-    <!-- Blocking match error (e.g. dict-hash-mismatch): never a silent fallback. -->
-    <div v-if="session.phase === 'error'" class="room-page__error error-panel">
-      <Typography size="l" tag-name="h2" color="error">{{ t('room.error.title') }}</Typography>
+    <div
+      v-if="session.phase === 'error'"
+      class="flex h-full items-center flex-col w-full justify-center"
+    >
+      <Typography size="l" tag-name="h2" color="error" class="capitalize flex items-center gap-2">
+        {{ t('room.error.title') }}
+        <IconError class="size-10" />
+      </Typography>
+
       <Typography color="sub">{{ session.matchError?.message }}</Typography>
       <Button color="gray" @click="session.leaveRoom()">{{ t('room.error.leave') }}</Button>
     </div>
 
-    <!-- `eliminated` still renders the match surface: being out is spectating, not a dead screen. -->
     <RoomMatch
       v-else-if="
-        session.phase === 'countdown' ||
-        session.phase === 'running' ||
-        session.phase === 'waiting' ||
-        session.phase === 'eliminated'
+        session.phase === 'countdown' || session.phase === 'running' || session.phase === 'waiting'
       "
     />
 
+    <!--
+      Being eliminated shows the RESULTS, not a consolation panel: the player's
+      own run is finished and worth reading, and the table below it keeps
+      updating while everyone else races.
+    -->
     <RoomResults
-      v-else-if="session.phase === 'results'"
-      :standings="session.standings ?? []"
-      :mode="session.room?.settings.mode ?? 'time'"
+      v-else-if="showing"
+      :standings="rows"
+      :mode="mode"
+      :self="selfRun"
+      :live="live"
+      :racing-count="racingCount"
+      :outcome-reason="outcomeReason"
       :connection-lost="session.connection === 'reconnecting'"
       :reason="session.matchEndReason"
       @re-ready="session.reReady()"
+      @lobby="session.backToLobby()"
       @leave="session.leaveRoom()"
     />
 
@@ -65,19 +77,24 @@
   import { RoomControls } from '@/features/room/controls'
   import { RoomMatch } from '@/features/room/match'
   import { RoomPlayers } from '@/features/room/players'
-  import { RoomResults } from '@/features/room/results'
+  import { RoomResults, useMatchResults } from '@/features/room/results'
   import { Button } from '@/shared/ui/button'
   import { Typography } from '@/shared/ui/typography'
-
+  import IconError from '~icons/tabler/alert-circle'
   /**
    * The room, phase-routed off the session store: lobby grid → countdown /
-   * running match surface → results standings → blocking error panel. Losing
-   * the seat (leave or kick) drops back to /servers; the middleware guards
-   * direct entry without a room.
+   * running match surface → results → blocking error panel. Losing the seat
+   * (leave or kick) drops back to /servers; the middleware guards direct entry
+   * without a room.
+   *
+   * `eliminated` routes to the results too, not to the match surface: this seat's
+   * run is over and the results screen is where a finished run belongs — it just
+   * shows a live table instead of a final one until `match_end` lands.
    */
   const { t } = useI18n()
   const router = useRouter()
   const session = useMatchSessionStore()
+  const { showing, live, mode, rows, selfRun, racingCount, outcomeReason } = useMatchResults()
 
   watch(
     () => session.room,
@@ -97,15 +114,6 @@
       margin-bottom: 1rem;
       text-align: center;
     }
-  }
-
-  .error-panel {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    padding: 3rem 1rem;
-    text-align: center;
   }
 
   .lobby {
