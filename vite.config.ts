@@ -13,7 +13,16 @@ const options = {
   fallbacks: ['BlinkMacSystemFont', 'Segoe UI', 'Helvetica Neue', 'Arial', 'Noto Sans'],
   resolvePath: () => `file://${dirname(fileURLToPath(new URL(import.meta.url)))}public`
 }
+
+// Set by `tauri dev` when targeting a physical device: the webview then loads the
+// dev server over the LAN, so HMR has to advertise that address instead of localhost.
+const tauriHost = process.env.TAURI_DEV_HOST
+
 export default defineConfig({
+  // Tauri owns the terminal during `tauri dev`; Vite must not wipe its output.
+  clearScreen: false,
+  // TAURI_ENV_* carries the target platform/arch into the frontend build.
+  envPrefix: ['VITE_', 'TAURI_ENV_'],
   plugins: [
     vue(),
     vueDevTools(),
@@ -48,7 +57,17 @@ export default defineConfig({
     }
   },
   server: {
-    host: '0.0.0.0'
+    host: tauriHost || '0.0.0.0',
+    // The project's port, and Tauri's `devUrl` follows IT rather than the other
+    // way round: the API server's CORS allowlist is keyed on this origin, so
+    // moving the dev server moves the app off the allowlist and every request
+    // fails preflight.
+    port: 5173,
+    strictPort: true,
+    hmr: tauriHost ? { protocol: 'ws', host: tauriHost, port: 5174 } : undefined,
+    watch: {
+      ignored: ['**/src-tauri/**']
+    }
   },
   build: {
     rollupOptions: {

@@ -72,6 +72,26 @@ body {
   line-height: normal;
 }
 
+/*
+ * Desktop build (see `is-tauri`). The window's chrome is the app's own titlebar,
+ * so the scrolling has to be the app's too: the document stops scrolling
+ * entirely — otherwise its permanent gutter above sits beside the app's scroller
+ * as a second, dead bar — and the shell inside becomes the window-tall box whose
+ * CONTENT area scrolls. `height: 100%` all the way down is what lets that box be
+ * exactly the window and not a pixel more.
+ */
+html.is-tauri {
+  height: 100%;
+  overflow: hidden;
+
+  body,
+  #app {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
 // Global styles for elements
 kbd {
   color: var(--text-color);

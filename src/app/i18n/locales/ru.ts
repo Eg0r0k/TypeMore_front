@@ -39,6 +39,13 @@ export default {
       fixedText: 'фиксированный текст — этот мод ничего не изменит'
     }
   },
+  window: {
+    controls: 'управление окном',
+    minimize: 'свернуть',
+    maximize: 'развернуть',
+    restore: 'восстановить',
+    close: 'закрыть'
+  },
   picker: {
     search: 'поиск…',
     empty: 'ничего не найдено',

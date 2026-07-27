@@ -35,6 +35,14 @@ export default {
       fixedText: 'fixed text — this mod would change nothing'
     }
   },
+  /** The desktop build's own titlebar — never rendered in a browser. */
+  window: {
+    controls: 'window controls',
+    minimize: 'minimize',
+    maximize: 'maximize',
+    restore: 'restore',
+    close: 'close'
+  },
   picker: {
     search: 'search…',
     empty: 'nothing found',
