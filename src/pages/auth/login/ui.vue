@@ -98,7 +98,7 @@
   import { TextInput } from '@shared/ui/input'
   import { Button } from '@shared/ui/button'
   import { oauthStartUrl, useLoginMutation, type OAuthProvider } from '@shared/api'
-  import { routeLocation } from '@/app/router/route-locations'
+  import { routeLocation } from '@/shared/router'
 
   const { t } = useI18n()
   const router = useRouter()

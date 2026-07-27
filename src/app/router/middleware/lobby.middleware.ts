@@ -1,5 +1,5 @@
 import type { RouteLocationNormalized, RouteLocationRaw } from 'vue-router'
-import { ROUTE_NAMES } from '@/app/router/route-names'
+import { ROUTE_NAMES } from '@/shared/router'
 import { useMatchSessionStore } from '@/entities/match'
 
 // Global guard: `/room` is only reachable while the match session actually has

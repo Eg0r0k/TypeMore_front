@@ -31,7 +31,7 @@
   import { ServersControls } from '@/features/servers/contols'
   import { ServersLobby } from '@/features/servers/lobby'
   import { ServerPing } from '@/features/servers/ping'
-  import { routeLocation } from '@/app/router/route-locations'
+  import { routeLocation } from '@/shared/router'
   import { useMatchSessionStore } from '@/entities/match'
   import logger from '@/shared/lib/helpers/logger'
 

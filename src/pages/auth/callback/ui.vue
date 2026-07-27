@@ -27,7 +27,7 @@
   import { Typography } from '@shared/ui/typography'
   import { authKeys, meQueryOptions } from '@shared/api'
   import { useAuthStore } from '@/entities/auth'
-  import { routeLocation } from '@/app/router/route-locations'
+  import { routeLocation } from '@/shared/router'
 
   const { t } = useI18n()
   const route = useRoute()

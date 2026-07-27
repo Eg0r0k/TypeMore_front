@@ -1,5 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
-import { ROUTE_NAMES } from '@/app/router/route-names'
+import { ROUTE_NAMES } from '@/shared/router'
 
 // The multiplayer room (lobby → countdown → match → results). Gated by
 // `lobbyMiddleware`: entering without an active room redirects to /servers.

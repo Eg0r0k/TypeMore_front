@@ -63,7 +63,7 @@
   import { useI18n } from 'vue-i18n'
   import { useAuthStore, useCurrentUser } from '@/entities/auth'
   import { useLogoutMutation } from '@shared/api'
-  import { routeLocation } from '@/app/router/route-locations'
+  import { routeLocation } from '@/shared/router'
 
   interface Props {
     links: readonly HeaderLink[]

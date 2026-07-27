@@ -1,7 +1,7 @@
 import type { RouteLocationNormalized } from 'vue-router'
 import { meQueryOptions, queryClient } from '@shared/api'
 import { useAuthStore } from '@/entities/auth'
-import { routeLocation } from '@/app/router/route-locations'
+import { routeLocation } from '@/shared/router'
 
 // Global guard: routes flagged `meta.requiresAuth` resolve the session before
 // deciding. We can't trust `status` on a hard load (bootstrap in App.vue has not

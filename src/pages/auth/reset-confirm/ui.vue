@@ -70,7 +70,7 @@
   import { TextInput } from '@shared/ui/input'
   import { Button } from '@shared/ui/button'
   import { usePasswordResetConfirmMutation } from '@shared/api'
-  import { routeLocation } from '@/app/router/route-locations'
+  import { routeLocation } from '@/shared/router'
 
   const { t } = useI18n()
   const route = useRoute()

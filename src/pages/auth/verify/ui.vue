@@ -79,7 +79,7 @@
     isCaptchaError,
     type TurnstileFieldExpose
   } from '@/features/captcha/turnstile'
-  import { routeLocation } from '@/app/router/route-locations'
+  import { routeLocation } from '@/shared/router'
 
   const { t } = useI18n()
   const route = useRoute()
