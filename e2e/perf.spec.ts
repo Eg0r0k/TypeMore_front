@@ -231,7 +231,14 @@ test('10000-word test stays windowed and O(1) per keystroke', async ({ page }) =
 for (const mods of [['fading'], ['flashlight'], ['fading', 'flashlight']]) {
   test(`keystroke budget holds with view mods active: ${mods.join('+')}`, async ({ page }) => {
     await page.goto('/')
-    await page.evaluate(() => localStorage.clear())
+    // Consent given along with the cleared config: the cookie dialog puts
+    // `aria-hidden` on everything behind it, so with it open the mod toggles
+    // exist in the DOM but not in the accessibility tree — and they are
+    // addressed below by their accessible name, being icon-only.
+    await page.evaluate(() => {
+      localStorage.clear()
+      localStorage.setItem('cookieConsentGiven', 'true')
+    })
     await page.reload()
     await page.waitForSelector('.settings-bar__btn')
 
@@ -246,7 +253,10 @@ for (const mods of [['fading'], ['flashlight'], ['fading', 'flashlight']]) {
     await page.waitForTimeout(80)
     await useWordCount(page, 10000)
     for (const mod of mods) {
-      await clickBarButton(mod)
+      // The view mods are chips on the bar's notice line, addressed by their
+      // accessible name — which is also the check that a chip a screen reader
+      // can announce is what a pointer clicks.
+      await page.getByRole('button', { name: mod, exact: true }).click()
       await page.waitForTimeout(40)
     }
     await page.waitForFunction(

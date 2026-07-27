@@ -20,7 +20,20 @@ export default {
     quote: {
       length: 'length',
       group: { all: 'all', short: 'short', medium: 'medium', long: 'long', thicc: 'thicc' },
-      source: '— {source}'
+      source: '— {source}',
+      /**
+       * Only 86 of the catalogue's languages have a quote corpus, so this is a
+       * permanent fact about a perfectly good language rather than an error:
+       * `none` explains the disabled mode, `noneSwitched` reports the fallback
+       * when the language changed under a quote run that was already chosen.
+       */
+      none: 'no quotes in {lang}',
+      noneSwitched: 'no quotes in {lang} — switched to words'
+    },
+    /** The `mods` chip: what it opens, and what is on behind it. */
+    mods: {
+      label: 'mods',
+      active: '{count} on · ×{multiplier}'
     },
     setup: {
       loading: 'loading words…',

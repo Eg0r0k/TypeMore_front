@@ -25,7 +25,13 @@ export default {
         long: 'длинная',
         thicc: 'огромная'
       },
-      source: '— {source}'
+      source: '— {source}',
+      none: 'для языка {lang} нет цитат',
+      noneSwitched: 'для языка {lang} нет цитат — режим переключён на слова'
+    },
+    mods: {
+      label: 'моды',
+      active: 'вкл: {count} · ×{multiplier}'
     },
     setup: {
       loading: 'загрузка слов…',

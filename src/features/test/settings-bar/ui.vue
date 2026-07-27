@@ -1,136 +1,127 @@
 <template>
-  <div
-    class="mb-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-3 py-2.5 text-sm text-sub"
-  >
-    <!-- modifiers (multi-select) — every boolean the registry puts in this context -->
-    <ToggleGroup
-      type="multiple"
-      :model-value="activeToggles"
-      aria-label="modifiers"
-      @update:model-value="setActiveToggles"
-    >
-      <ToggleGroupItem
-        v-for="option in toggleOptions"
-        :key="option.key"
-        :value="option.key"
-        :disabled="reasonOf(option) !== null"
-        :title="titleOf(option)"
-        class="settings-bar__btn"
-      >
-        {{ t(option.i18nKey) }}
-      </ToggleGroupItem>
-    </ToggleGroup>
-
-    <!-- why a disabled modifier is disabled — the registry's reason, rendered once -->
-    <span v-for="reason in activeReasons" :key="reason" class="settings-bar__reason">
-      {{ t(reason) }}
-    </span>
-
-    <!-- mode: the values this context accepts (solo adds `quote`; a room does not) -->
-    <ToggleGroup
-      :model-value="config.mode"
-      :aria-label="modeOption.ariaLabel"
-      @update:model-value="onMode"
-    >
-      <ToggleGroupItem
-        v-for="value in modeValues"
-        :key="value"
-        :value="value"
-        class="settings-bar__btn"
-      >
-        {{ t(`${modeOption.valueI18nPrefix}.${value}`) }}
-      </ToggleGroupItem>
-    </ToggleGroup>
-
+  <div class="settings-bar">
     <!--
-      The dimension control, whichever one the current mode makes visible:
-      seconds, word count, or a quote's length band. Exactly one is ever shown —
-      `visibleWhen` in the registry decides, not a chain of `v-if`s here.
+      The bar proper: text mods | modes | amount, monkeytype's three groups. Only
+      what shapes the TEXT lives here, and each group is one ToggleGroup, so the
+      pills and the separators between them carry the grouping.
     -->
-    <template v-if="dimension">
+    <div class="settings-bar__row">
       <ToggleGroup
-        v-if="dimension.control.kind === 'presets'"
-        :model-value="String(config[dimension.key])"
-        :aria-label="dimension.ariaLabel"
-        @update:model-value="onDimensionPreset"
+        v-if="textMods.length"
+        type="multiple"
+        :model-value="activeTextMods"
+        aria-label="text modifiers"
+        @update:model-value="onTextMods"
       >
         <ToggleGroupItem
-          v-for="preset in presetsFor(dimension)"
-          :key="preset"
-          :value="String(preset)"
+          v-for="option in textMods"
+          :key="option.key"
+          :value="option.key"
           class="settings-bar__btn"
+          :disabled="reasonOf(option) !== null"
+          :title="titleOf(option)"
         >
-          {{ preset }}
+          <component :is="OPTION_ICONS[option.key]" aria-hidden="true" />
+          {{ t(option.i18nKey) }}
         </ToggleGroupItem>
       </ToggleGroup>
 
-      <!-- A plain wrapper, not a <label>: the group already labels itself. -->
-      <div v-else class="flex items-center gap-2 text-sub">
-        <span>{{ t(dimension.i18nKey) }}</span>
+      <span class="settings-bar__sep" aria-hidden="true"></span>
+
+      <ToggleGroup
+        :model-value="config.mode"
+        :aria-label="modeOption.ariaLabel"
+        @update:model-value="onMode"
+      >
+        <ToggleGroupItem
+          v-for="value in modeValues"
+          :key="value"
+          :value="value"
+          class="settings-bar__btn"
+          :disabled="modeReason(value) !== null"
+          :title="modeReason(value) ?? undefined"
+        >
+          <component :is="modeIconOf(value)" v-if="modeIconOf(value)" aria-hidden="true" />
+          {{ t(`${modeOption.valueI18nPrefix}.${value}`) }}
+        </ToggleGroupItem>
+      </ToggleGroup>
+
+      <!-- The amount for the current mode: seconds, words, or a quote's length band. -->
+      <template v-if="dimension">
+        <span class="settings-bar__sep" aria-hidden="true"></span>
+
         <ToggleGroup
           :model-value="String(config[dimension.key])"
           :aria-label="dimension.ariaLabel"
-          @update:model-value="onDimensionEnum"
+          @update:model-value="onDimension(dimension, $event)"
         >
           <ToggleGroupItem
-            v-for="value in valuesFor(dimension, 'solo')"
+            v-for="value in valuesOf(dimension)"
             :key="value"
             :value="value"
             class="settings-bar__btn"
           >
-            {{ t(`${dimension.valueI18nPrefix}.${value}`) }}
+            {{ labelOf(dimension, value) }}
           </ToggleGroupItem>
         </ToggleGroup>
-      </div>
-    </template>
+      </template>
+    </div>
 
-    <!-- difficulty (single) -->
-    <ToggleGroup
-      :model-value="config.difficulty"
-      :aria-label="difficultyOption.ariaLabel"
-      @update:model-value="onDifficulty"
-    >
-      <ToggleGroupItem
-        v-for="value in valuesFor(difficultyOption, 'solo')"
-        :key="value"
-        :value="value"
-        class="settings-bar__btn"
-      >
-        {{ t(`${difficultyOption.valueI18nPrefix}.${value}`) }}
-      </ToggleGroupItem>
-    </ToggleGroup>
+    <!--
+      The notice line (monkeytype's `#testModesNotice`): the settings that do not
+      shape the text, as small grey chips — highlighted when they are not at their
+      default, so the line reads as "what is unusual about this run".
+    -->
+    <div class="settings-bar__notice">
+      <!-- Graded settings (difficulty, speed floor): the values in a small popover. -->
+      <Popover v-for="option in gradedSettings" :key="option.key">
+        <PopoverTrigger :class="chipClass(isCustom(option))">
+          <component :is="OPTION_ICONS[option.key]" aria-hidden="true" />
+          {{ t(option.i18nKey) }}: {{ labelOf(option, String(config[option.key])) }}
+        </PopoverTrigger>
+        <PopoverContent class="w-auto">
+          <ToggleGroup
+            :model-value="String(config[option.key])"
+            :aria-label="option.ariaLabel"
+            @update:model-value="onGraded(option, $event)"
+          >
+            <ToggleGroupItem
+              v-for="value in valuesOf(option)"
+              :key="value"
+              :value="value"
+              class="settings-bar__btn"
+            >
+              {{ labelOf(option, value) }}
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </PopoverContent>
+      </Popover>
 
-    <!-- min speed floor (single) -->
-    <label class="flex items-center gap-2 text-sub">
-      {{ t(minWpmOption.i18nKey) }}
-      <ToggleGroup
-        :model-value="String(config.minWpm)"
-        :aria-label="minWpmOption.ariaLabel"
-        @update:model-value="onMinSpeed"
-      >
-        <ToggleGroupItem
-          v-for="ms in presetsFor(minWpmOption)"
-          :key="ms"
-          :value="String(ms)"
-          class="settings-bar__btn"
-        >
-          {{ ms === 0 ? t('game.minSpeedOff') : ms }}
-        </ToggleGroupItem>
-      </ToggleGroup>
-    </label>
-
-    <!-- language (searchable console modal) -->
-    <label class="flex items-center gap-2 text-sub">
-      {{ t(languageOption.i18nKey) }}
+      <!-- Flags: one click is the whole interaction, so they need no popover. -->
       <button
+        v-for="option in flagSettings"
+        :key="option.key"
         type="button"
-        class="transition-tm focus-ring inline-flex cursor-pointer items-center rounded-md px-3 py-1.5 text-sm text-sub hover:text-text"
-        data-testid="language-picker"
-        @click="languageOpen = true"
+        :class="chipClass(config[option.key] === true)"
+        :aria-pressed="config[option.key] === true"
+        @click="onFlag(option)"
       >
-        {{ languageName(config.language) }}
+        <component :is="OPTION_ICONS[option.key]" aria-hidden="true" />
+        {{ t(option.i18nKey) }}
       </button>
-    </label>
+    </div>
+
+    <!-- Last above the field: the language names what is in it. -->
+    <button
+      type="button"
+      :class="chipClass(true)"
+      data-testid="language-picker"
+      :aria-label="`${t('game.language')}: ${languageName(config.language)}`"
+      @click="languageOpen = true"
+    >
+      <component :is="OPTION_ICONS.language" aria-hidden="true" />
+      {{ languageName(config.language) }}
+    </button>
 
     <LanguageModal
       v-model:open="languageOpen"
@@ -141,12 +132,17 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, ref } from 'vue'
+  import { computed, ref, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
+  import { useQuery } from '@tanstack/vue-query'
+  import clsx from 'clsx'
 
   import { useConfigStore } from '@/entities/config/model/store'
+  import { toast } from '@/shared/ui/sonner'
   import {
+    OPTION_ICONS,
     disabledReason,
+    modeIconOf,
     optionOf,
     presetsFor,
     valuesFor,
@@ -154,121 +150,203 @@
     type ConstraintContext,
     type GameOption
   } from '@/entities/game'
-  import { ConfigModes, type Config, type QuoteGroup } from '@/shared/constants/type'
+  import { languageHasQuotesQueryOptions } from '@shared/api'
+  import { ConfigModes, type Config } from '@/shared/constants/type'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
+  import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
   import { LanguageModal } from '@/features/modal/language'
   import { useLanguageNames } from '@/shared/lib/hooks/useLanguageNames'
 
-  /** The `Config` fields the multi-select group writes — every boolean one. */
-  type BooleanOptionKey = {
-    [K in keyof Config]: Config[K] extends boolean ? K : never
-  }[keyof Config]
-
   /**
-   * Compact game settings bar, rendered from the game-config registry filtered
-   * to the `solo` context. Which options exist, which values they accept and
-   * when they are unavailable all come from that one table — this file owns only
-   * the LAYOUT and the writes.
+   * Solo settings above the typing field, laid out as monkeytype's: a bar of
+   * three groups for everything that shapes the TEXT, and a notice line below it
+   * for everything that only changes how the run is scored.
    *
-   * The writes are deliberately unchanged from the pre-registry bar
-   * (setMode/setTime/setWords/setLanguage, `setConfig` for quoteGroup/minWpm,
-   * direct `config.difficulty` and `config[key]` for the flags), so the
-   * home-page rebuild-run watcher semantics are exactly what they were.
+   * Which options exist, which values they take and when they are unavailable all
+   * come from the game-config registry filtered to the `solo` context — this file
+   * owns the layout and the writes. The split between the two rows is the
+   * registry's own `slot` plus the amount/mode keys the bar draws by name.
    */
   const { t } = useI18n()
   const configStore = useConfigStore()
   const config = configStore.config
+  const { languageName } = useLanguageNames()
+
+  const modeOption = optionOf('mode')
+  const modeValues = computed(() => valuesFor(modeOption, 'solo'))
 
   /** Constraint input: the run's intent. No quote is drawn yet at this point. */
   const ctx = computed<ConstraintContext>(() => ({ mode: config.mode }))
+  const soloOptions = computed(() => visibleOptionsFor('solo', ctx.value))
 
-  const modeOption = optionOf('mode')
-  const difficultyOption = optionOf('difficulty')
-  const minWpmOption = optionOf('minWpm')
-  const languageOption = optionOf('language')
+  /** The keys the bar draws itself; everything else in `solo` is a notice chip. */
+  const AMOUNT_KEYS = ['time', 'words', 'quoteGroup']
+  const BAR_KEYS = ['mode', 'language', ...AMOUNT_KEYS]
 
-  // The catalogue names the language; the config only ever holds its key.
-  const { languageName } = useLanguageNames()
+  const isTextMod = (option: GameOption): boolean =>
+    option.slot === 'generation' && option.control.kind === 'boolean'
 
-  const modeValues = computed(() => valuesFor(modeOption, 'solo'))
-
-  /** Every boolean this context owns, in registry order. */
-  const toggleOptions = computed(() =>
-    visibleOptionsFor('solo', ctx.value).filter((o) => o.control.kind === 'boolean')
+  const textMods = computed(() => soloOptions.value.filter(isTextMod))
+  const activeTextMods = computed(() =>
+    textMods.value.filter((option) => config[option.key] === true).map((option) => option.key)
   )
 
-  /** The one dimension control the current mode makes visible. */
-  const DIMENSION_KEYS: readonly string[] = ['time', 'words', 'quoteGroup']
+  /** The one amount control the current mode makes visible. */
   const dimension = computed(() =>
-    visibleOptionsFor('solo', ctx.value).find((o) => DIMENSION_KEYS.includes(o.key))
+    soloOptions.value.find((option) => AMOUNT_KEYS.includes(option.key))
   )
 
+  const noticeOptions = computed(() =>
+    soloOptions.value.filter((option) => !BAR_KEYS.includes(option.key) && !isTextMod(option))
+  )
+  const gradedSettings = computed(() =>
+    noticeOptions.value.filter((option) => option.control.kind !== 'boolean')
+  )
+  const flagSettings = computed(() =>
+    noticeOptions.value.filter((option) => option.control.kind === 'boolean')
+  )
+
+  /** i18n key of why a text mod cannot be toggled right now, or `null`. */
   const reasonOf = (option: GameOption): string | null => disabledReason(option, ctx.value)
-  const titleOf = (option: GameOption): string | undefined => {
+
+  const titleOf = (option: GameOption): string => {
     const reason = reasonOf(option)
-    return reason ? t(reason) : undefined
+    return reason === null ? t(option.i18nKey) : `${t(option.i18nKey)} — ${t(reason)}`
   }
 
-  /**
-   * The distinct reasons currently gating something, so the bar explains itself
-   * once instead of hiding the explanation in a tooltip nobody hovers.
-   */
-  const activeReasons = computed(() => [
-    ...new Set(toggleOptions.value.map(reasonOf).filter((r): r is string => r !== null))
-  ])
+  /** Values as strings, whichever control the option uses. */
+  const valuesOf = (option: GameOption): readonly string[] =>
+    option.control.kind === 'presets' ? presetsFor(option).map(String) : valuesFor(option, 'solo')
 
-  // Multi-select model over the boolean flags. The setter writes each flag to its
-  // membership in the selection; unchanged flags resolve to the same value and do
-  // not re-trigger reactivity (so only the flipped flag fires the watcher).
-  const activeToggles = computed<string[]>(() =>
-    toggleOptions.value.filter((o) => config[o.key] === true).map((o) => o.key)
-  )
-  const setActiveToggles = (value: unknown): void => {
+  /** A value's label: an enum's from its i18n prefix, a preset's from the number. */
+  const labelOf = (option: GameOption, value: string): string => {
+    if (option.valueI18nPrefix !== undefined) return t(`${option.valueI18nPrefix}.${value}`)
+    if (option.key === 'minWpm' && value === '0') return t('game.minSpeedOff')
+    return value
+  }
+
+  /** Whether the option is away from its default — the notice line highlights those. */
+  const isCustom = (option: GameOption): boolean => config[option.key] !== option.defaultValue
+
+  const CHIP =
+    'inline-flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs transition-tm focus-ring [&_svg]:size-3.5'
+
+  const chipClass = (active: boolean): string =>
+    clsx(CHIP, active ? 'text-text' : 'text-sub opacity-60 hover:opacity-100')
+
+  /**
+   * A gated mod keeps its stored value: a disabled item cannot appear in the
+   * incoming selection, and writing that absence back would clear a setting the
+   * player never touched — so leaving a quote restores the mods it greyed out.
+   */
+  const onTextMods = (value: unknown): void => {
     const next = new Set(Array.isArray(value) ? (value as string[]) : [])
-    // A gated flag keeps its stored value: a disabled item can never appear in
-    // `next`, and writing that absence back would silently clear a setting the
-    // player did not touch — so switching away from a quote restores them.
-    for (const option of toggleOptions.value) {
+    for (const option of textMods.value) {
       if (reasonOf(option) !== null) continue
-      config[option.key as BooleanOptionKey] = next.has(option.key)
+      config[option.key as 'punctuation'] = next.has(option.key)
     }
+  }
+
+  const onFlag = (option: GameOption): void => {
+    config[option.key as 'blind'] = config[option.key] !== true
   }
 
   const onMode = (value: unknown): void => {
     if (value) configStore.setMode(value as ConfigModes)
   }
 
-  const onDimensionPreset = (value: unknown): void => {
+  const onDimension = (option: GameOption, value: unknown): void => {
     if (value === null || value === undefined || value === '') return
-    const amount = Number(value)
-    if (config.mode === ConfigModes.Time) configStore.setTime(amount)
-    else configStore.setWords(amount)
+    if (option.key === 'time') configStore.setTime(Number(value))
+    else if (option.key === 'words') configStore.setWords(Number(value))
+    else configStore.setConfig(option.key as keyof Config, value as never)
   }
 
-  const onDimensionEnum = (value: unknown): void => {
-    if (!value) return
-    configStore.setConfig('quoteGroup', value as QuoteGroup)
-  }
-
-  const onDifficulty = (value: unknown): void => {
-    if (value) config.difficulty = value as (typeof config)['difficulty']
-  }
-
-  const onMinSpeed = (value: unknown): void => {
+  /**
+   * `setConfig` is generic in the key and a union of keys cannot satisfy that
+   * generic, hence the cast; the validator table still checks the value at
+   * runtime, exactly as it does for every other write.
+   */
+  const onGraded = (option: GameOption, value: unknown): void => {
     if (value === null || value === undefined || value === '') return
-    configStore.setConfig('minWpm', Number(value))
+    const parsed = option.control.kind === 'presets' ? Number(value) : String(value)
+    configStore.setConfig(option.key as keyof Config, parsed as never)
   }
 
   const languageOpen = ref(false)
   const onLanguage = (value: string): void => {
     void configStore.setLanguage(value)
   }
+
+  /**
+   * Whether the chosen language has quotes at all. `undefined` while unknown
+   * (loading, or the request failed) and the unknown case never acts: a network
+   * blip must not rewrite the player's mode.
+   */
+  const { data: quotesAvailable } = useQuery(
+    computed(() => languageHasQuotesQueryOptions(config.language))
+  )
+
+  const modeReason = (value: string): string | null =>
+    value === ConfigModes.Quote && quotesAvailable.value === false
+      ? t('game.quote.none', { lang: languageName(config.language) })
+      : null
+
+  /**
+   * Only 86 of the catalogue's 430 languages have a quote corpus (QUOTES.md), so
+   * quote mode can become unrunnable just by picking a language. Fall back to
+   * words and say why, instead of leaving the run setup to fail with a 404.
+   *
+   * A watcher rather than a hook in the picker's callback: a persisted config
+   * holds the language AND the mode, so it can restore the same dead pair on boot.
+   */
+  watch([() => config.mode, quotesAvailable], ([mode, available]) => {
+    if (mode !== ConfigModes.Quote || available !== false) return
+    configStore.setMode(ConfigModes.Words)
+    toast.warning(t('game.quote.noneSwitched', { lang: languageName(config.language) }))
+  })
 </script>
 
 <style lang="scss" scoped>
-  .settings-bar__reason {
-    font-size: 0.75rem;
-    color: var(--sub-color);
-    opacity: 0.8;
+  // No outer margin: the stage's band owns the distance to the words.
+  .settings-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+
+    &__row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      justify-content: center;
+    }
+
+    &__sep {
+      width: 1px;
+      height: 1.25rem;
+      background-color: var(--sub-color);
+      opacity: 0.25;
+    }
+
+    &__notice {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem 0.75rem;
+      align-items: center;
+      justify-content: center;
+    }
+
+    // Reserved whether it has anything to say or not — see the template.
+    &__note {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      min-height: 1.0625rem;
+      font-size: 0.75rem;
+      color: var(--sub-color);
+      opacity: 0.6;
+    }
   }
 </style>
