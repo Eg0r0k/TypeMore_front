@@ -69,6 +69,7 @@ import {
   type TransportState,
   type Unsubscribe,
   EventBatcher,
+  measureRtt,
   sampleNtp
 } from '@shared/match-transport'
 import {
@@ -334,6 +335,13 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
    */
   const afkProgress = ref(0)
 
+  /**
+   * Round-trip time to the server in ms, or `null` while it has never been
+   * measured. This is OUR ping and only ours: the protocol carries no peer
+   * latency, so a room cannot show anybody else's without a new frame.
+   */
+  const pingMs = ref<number | null>(null)
+
   const localRef = shallowRef<GameStore | null>(null)
   const peerRecords = shallowRef<readonly PeerRecord[]>([])
   /** Bumped on non-reactive record mutations (status/desync) to refresh `peers`. */
@@ -524,6 +532,29 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     await transport.connect({ resumeToken: storedToken ?? undefined })
     selfId.value = transport.playerId
     ntp = await sampleNtp(transport)
+    // The sync already paid for the round trips; `minRtt` is the same number a
+    // later `measurePing` would go and fetch.
+    pingMs.value = Math.round(ntp.minRtt)
+  }
+
+  /** Guards against two overlapping measurements racing for the same pongs. */
+  let pinging = false
+
+  /**
+   * Re-measure the round trip. Silent on failure: a ping that times out is a
+   * number missing from a status line, and turning that into a visible error
+   * would be louder than the fact deserves. Returns once the value has landed.
+   */
+  async function measurePing(): Promise<void> {
+    if (transport === null || pinging) return
+    pinging = true
+    try {
+      pingMs.value = Math.round(await measureRtt(transport))
+    } catch {
+      pingMs.value = null
+    } finally {
+      pinging = false
+    }
   }
 
   function dispose(): void {
@@ -550,6 +581,7 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     selfId.value = null
     connection.value = 'disconnected'
     connectionError.value = null
+    pingMs.value = null
     lastError.value = null
     standings.value = null
     matchError.value = null
@@ -1359,6 +1391,8 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     // connection & room
     connection,
     connectionError,
+    pingMs,
+    measurePing,
     room,
     selfId,
     resumeAttempted,

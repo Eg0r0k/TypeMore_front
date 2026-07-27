@@ -294,6 +294,7 @@ export default {
       failed: 'не удалось подключиться',
       offline: 'офлайн'
     },
+    ping: { label: 'ваш пинг', value: '{ms} мс' },
     create: 'Создать комнату',
     joinByCode: 'Войти по коду',
     join: {

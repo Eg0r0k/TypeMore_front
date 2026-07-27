@@ -306,6 +306,7 @@ export default {
       failed: 'connection failed',
       offline: 'offline'
     },
+    ping: { label: 'your ping', value: '{ms} ms' },
     create: 'Create room',
     joinByCode: 'Join by code',
     join: {

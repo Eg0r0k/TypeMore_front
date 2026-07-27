@@ -7,8 +7,8 @@
       :disabled="!canAct"
       @click="session.createRoom()"
     >
-      <div>
-        <IconUsers width="40" height="40" />
+      <div class="flex flex-col gap-2 items-center">
+        <IconUsers class="size-10" />
         <Typography is-bold>{{ t('servers.create') }}</Typography>
       </div>
     </Button>
@@ -19,8 +19,8 @@
       :disabled="!canAct"
       @click="joinOpen = true"
     >
-      <div>
-        <IconCode width="40" height="40" />
+      <div class="flex flex-col gap-2 items-center">
+        <IconCode class="size-10" />
         <Typography is-bold>{{ t('servers.joinByCode') }}</Typography>
         <Typography size="xs">{{ t('servers.join.hint') }}</Typography>
       </div>

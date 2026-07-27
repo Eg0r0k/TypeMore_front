@@ -12,6 +12,7 @@
           {{ t('servers.status.label') }}
           <Typography tag-name="span" size="m" :color="statusColor">{{ statusText }}</Typography>
         </Typography>
+        <ServerPing />
       </div>
     </div>
     <Typography v-if="session.connectionError" class="server-page__error" size="s" color="error">
@@ -29,6 +30,7 @@
   import { Typography } from '@/shared/ui/typography'
   import { ServersControls } from '@/features/servers/contols'
   import { ServersLobby } from '@/features/servers/lobby'
+  import { ServerPing } from '@/features/servers/ping'
   import { routeLocation } from '@/app/router/route-locations'
   import { useMatchSessionStore } from '@/entities/match'
 

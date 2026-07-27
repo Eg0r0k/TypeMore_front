@@ -70,18 +70,15 @@ export interface SampleNtpOptions {
 }
 
 /**
- * Run the full §4 procedure over a connected transport: sends the pings
- * sequentially (one outstanding pair at a time, so pongs match trivially),
- * then folds the pairs through {@link computeNtp}.
+ * Collect `count` completed pairs, sequentially: one outstanding pair at a
+ * time, so a pong matches the ping it answers without a correlation id.
  */
-export async function sampleNtp(
+async function collectSamples(
   transport: MatchTransport,
-  options?: SampleNtpOptions
-): Promise<NtpSync> {
-  const count = Math.max(options?.samples ?? NTP_MIN_SAMPLES, NTP_MIN_SAMPLES)
-  const now = options?.now ?? Date.now
-  const timeoutMs = options?.timeoutMs ?? 2000
-
+  count: number,
+  now: () => number,
+  timeoutMs: number
+): Promise<NtpSample[]> {
   const samples: NtpSample[] = []
   for (let i = 0; i < count; i++) {
     const t0 = now()
@@ -106,6 +103,20 @@ export async function sampleNtp(
     })
     samples.push({ t0: pong.t0, t1: pong.t1, t2: pong.t2, t3: now() })
   }
+  return samples
+}
+
+/**
+ * Run the full §4 procedure over a connected transport, then fold the pairs
+ * through {@link computeNtp}.
+ */
+export async function sampleNtp(
+  transport: MatchTransport,
+  options?: SampleNtpOptions
+): Promise<NtpSync> {
+  const count = Math.max(options?.samples ?? NTP_MIN_SAMPLES, NTP_MIN_SAMPLES)
+  const now = options?.now ?? Date.now
+  const samples = await collectSamples(transport, count, now, options?.timeoutMs ?? 2000)
 
   const computation = computeNtp(samples)
   return {
@@ -113,4 +124,31 @@ export async function sampleNtp(
     toLocalTime: (serverMs) => serverMs - computation.offset,
     toServerTime: (localMs) => localMs + computation.offset
   }
+}
+
+/**
+ * Round-trip time to the server, in ms — the ping, and nothing else.
+ *
+ * Deliberately NOT `sampleNtp().minRtt`: that call also produces a clock
+ * offset, and the offset is what anchors a countdown. Re-running it to refresh
+ * a number on a lobby screen would move `t = 0` for a match in flight. This
+ * one computes the same §4 `rtt = (t3 − t0) − (t2 − t1)` and throws the offset
+ * away, so measuring the ping can never move the clock.
+ *
+ * The MINIMUM of the samples, not the mean: rtt is bounded below by the true
+ * path latency and inflated by scheduling jitter on both ends, so the smallest
+ * observation is the closest thing to the real number. Same reason §4 filters
+ * outliers against `minRtt` rather than against an average.
+ *
+ * Three samples by default rather than five — nothing downstream depends on
+ * this figure, so it is cheap on purpose.
+ */
+export async function measureRtt(
+  transport: MatchTransport,
+  options?: SampleNtpOptions
+): Promise<number> {
+  const count = Math.max(options?.samples ?? 3, 1)
+  const now = options?.now ?? Date.now
+  const samples = await collectSamples(transport, count, now, options?.timeoutMs ?? 2000)
+  return Math.min(...samples.map(({ t0, t1, t2, t3 }) => t3 - t0 - (t2 - t1)))
 }
