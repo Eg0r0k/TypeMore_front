@@ -33,7 +33,7 @@
 <script setup lang="ts">
   import { useI18n } from 'vue-i18n'
 
-  import { useConfigStore } from '@/entities/config/model/store'
+  import { useConfigStore } from '@/entities/config'
   import type { StopOnError } from '@/shared/constants/type'
   import { Switch } from '@/shared/ui/switch'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'

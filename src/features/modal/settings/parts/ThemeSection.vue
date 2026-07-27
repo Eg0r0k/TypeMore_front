@@ -79,7 +79,7 @@
   import { useI18n } from 'vue-i18n'
   import { useDebounceFn } from '@vueuse/core'
 
-  import { useConfigStore } from '@/entities/config/model/store'
+  import { useConfigStore } from '@/entities/config'
   import { SETTINGS_NAV } from '../model/registry'
   import type { BackgroundSize } from '@/shared/constants/type'
   import { readImageFile } from '@/shared/lib/helpers/image'

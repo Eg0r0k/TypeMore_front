@@ -21,7 +21,7 @@
 
   import { wordsHaveTab, type GameSession } from '@entities/game'
   import { useSounds } from '@/shared/lib/hooks/useSounds'
-  import { useConfigStore } from '@/entities/config/model/store'
+  import { useConfigStore } from '@/entities/config'
   import { getSoundPack } from '@/shared/constants/sound-packs'
 
   /**

@@ -18,7 +18,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { useAlertStore } from '@/entities/alert/model/store'
+  import { useAlertStore } from '@/entities/alert'
   import { Alert } from '@/shared/ui/alert'
 
   const alertStore = useAlertStore()

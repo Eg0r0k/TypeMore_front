@@ -16,7 +16,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { useConfigStore } from '@/entities/config/model/store'
+  import { useConfigStore } from '@/entities/config'
   import { BackgroundImage } from '@/features/home/background'
 
   import { Footer } from '@/widgets/footer'

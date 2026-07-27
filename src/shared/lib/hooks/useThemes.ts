@@ -2,7 +2,7 @@ import { loadThemes, type Theme } from '@shared/api'
 import { computed, reactive, watchEffect } from 'vue'
 import { useScreenStore } from '@/entities/screen'
 
-import { useConfigStore } from '@/entities/config/model/store'
+import { useConfigStore } from '@/entities/config'
 
 const root = document.documentElement
 

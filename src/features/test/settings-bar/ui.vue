@@ -137,7 +137,7 @@
   import { useQuery } from '@tanstack/vue-query'
   import clsx from 'clsx'
 
-  import { useConfigStore } from '@/entities/config/model/store'
+  import { useConfigStore } from '@/entities/config'
   import { toast } from '@/shared/ui/sonner'
   import {
     OPTION_ICONS,

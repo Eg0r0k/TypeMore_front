@@ -48,7 +48,7 @@
 
   import { Test } from '@/widgets/test'
   import { addLoopbackBot, useMatchSessionStore } from '@entities/match'
-  import { useConfigStore } from '@/entities/config/model/store'
+  import { useConfigStore } from '@/entities/config'
   import { loadDictionaryBody } from '@shared/api'
   import { type Dictionary, dictVersion, mulberry32 } from '@shared/core'
   import { LoopbackServer, LoopbackTransport } from '@shared/match-transport'

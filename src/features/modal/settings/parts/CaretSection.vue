@@ -30,7 +30,7 @@
 <script setup lang="ts">
   import { useI18n } from 'vue-i18n'
 
-  import { useConfigStore } from '@/entities/config/model/store'
+  import { useConfigStore } from '@/entities/config'
   import type { CaretStyle, SmoothCaret } from '@/shared/constants/type'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
   import SettingRow from './SettingRow.vue'

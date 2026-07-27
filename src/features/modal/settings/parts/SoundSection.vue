@@ -33,7 +33,7 @@
   import { computed } from 'vue'
   import { useI18n } from 'vue-i18n'
 
-  import { useConfigStore } from '@/entities/config/model/store'
+  import { useConfigStore } from '@/entities/config'
   import { SOUND_PACKS } from '@/shared/constants/sound-packs'
   import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
   import { Slider } from '@/shared/ui/slider'

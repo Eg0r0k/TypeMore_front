@@ -1,6 +1,6 @@
 import { ref, watch, type Ref } from 'vue'
 import { useSound } from '@vueuse/sound'
-import { useConfigStore } from '@/entities/config/model/store'
+import { useConfigStore } from '@/entities/config'
 import { RandomElementFromArray } from '../helpers/arrays'
 
 interface SoundInstance {

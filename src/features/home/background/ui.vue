@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-  import { useConfigStore } from '@/entities/config/model/store'
+  import { useConfigStore } from '@/entities/config'
 
   import { computed, ref, watch } from 'vue'
 

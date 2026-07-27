@@ -23,7 +23,7 @@
   import { inject } from 'vue'
   import { ConsoleModal } from '../console'
   import { Typography } from '@/shared/ui/typography'
-  import { useConfigStore } from '@/entities/config/model/store'
+  import { useConfigStore } from '@/entities/config'
   import { THEMES_KEY } from '@/shared/constants/inject-keys'
 
   const open = defineModel<boolean>('open', { required: true })

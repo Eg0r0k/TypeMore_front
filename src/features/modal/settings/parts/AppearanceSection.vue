@@ -50,7 +50,7 @@
 <script setup lang="ts">
   import { useI18n } from 'vue-i18n'
 
-  import { useConfigStore } from '@/entities/config/model/store'
+  import { useConfigStore } from '@/entities/config'
   import {
     FONT_FAMILIES,
     FONT_SIZE_MAX,

@@ -247,3 +247,24 @@ keydown/keyup.
 
 **Риск и чем прикрыт**: низкий; vue-tsc + vitest зелёные, eslint ровно
 58 предупреждений (базлайн).
+
+### Стейдж 4 — FSD-1: public API для entities/config (2026-07-28)
+
+**Что** (два коммита): (a) аддитивно созданы `entities/config/index.ts`
+(`useConfigStore`) и value-экспорт `AlertType` в бареле `entities/alert`;
+(b) 18 незамороженных файлов переведены с deep-импортов на public API
+(однострочные механические замены).
+
+**Оставлены deep-импорты (замороженные зоны, в «Отложено»)**:
+`entities/match/model/session-store.ts:82`, `pages/home/ui.vue:116`,
+`features/room/match/ui.vue:80`, `features/room/config/ui.vue:172`
+(конфиг-стор) и `features/test/results/ui.vue:210` (`AlertType`) — файлы
+заморожены под формат v2 / keydown-keyup / UI-передизайн; правка даже
+импорт-строки нарушила бы заморозку. Перевести при разморозке — механика.
+
+**Тесты не тронуты**: `vi.mock('@/entities/config/model/store')` мокает
+транзитивный модуль — барель реэкспортирует замоканное, моки работают.
+
+**Риск и чем прикрыт**: низкий; vue-tsc, vitest 88/1912, Playwright 35/36
+(единственный красный — известный пре-существующий quote-language-fallback,
+набор красных не вырос).

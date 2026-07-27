@@ -1,4 +1,4 @@
-import { useConfigStore } from '@/entities/config/model/store'
+import { useConfigStore } from '@/entities/config'
 import { useThemes } from '@/shared/lib/hooks/useThemes'
 import { useUiLanguage } from '@/shared/lib/hooks/useUiLanguage'
 import { useFavicon } from '@vueuse/core'

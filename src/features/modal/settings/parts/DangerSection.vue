@@ -40,7 +40,7 @@
   import { inject, ref, useTemplateRef } from 'vue'
   import { useI18n } from 'vue-i18n'
 
-  import { useConfigStore } from '@/entities/config/model/store'
+  import { useConfigStore } from '@/entities/config'
   import { SETTINGS_NAV } from '../model/registry'
   import defaultConfig from '@/shared/constants/default-config'
   import type { Config } from '@/shared/constants/type'

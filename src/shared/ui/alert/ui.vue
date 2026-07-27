@@ -48,7 +48,7 @@
   import type { Component } from 'vue'
   import Error from '/static/sounds/Error.mp3'
   import Info from '/static/sounds/Stop.mp3'
-  import { useConfigStore } from '@/entities/config/model/store'
+  import { useConfigStore } from '@/entities/config'
   import { cn } from '@/shared/lib/utils'
   import { alertVariants, alertIconVariants, type AlertVariants } from './index'
   const titleId = `alert-title-${Date.now()}`
