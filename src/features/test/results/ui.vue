@@ -1,99 +1,150 @@
 <template>
-  <div class="results">
+  <div class="empty"></div>
+  <div ref="rootRef" class="results">
+    <!--
+      The verdict beside the shape of the run: the grade is what a glance is for,
+      the score is the number that is compared, and the chart is the story. Both
+      columns are declared here so the stats row below can line its first cell up
+      with the grade — one grid, one left edge.
+    -->
     <div class="results__main">
-      <div class="results__primary">
-        <div class="results__metric">
-          <span class="results__label">wpm</span>
-          <span class="results__value results__value--hero">{{ Math.round(metrics.wpm) }}</span>
-        </div>
-        <div class="results__metric">
-          <span class="results__label">acc</span>
-          <span class="results__value results__value--hero">
-            {{ Math.round(metrics.accuracy * 100) }}%
+      <div class="results__verdict">
+        <!-- What the run was worth before a single key: the mods it was cleared under. -->
+        <span v-if="modLabel" class="text-sm tabular-nums text-sub">{{ modLabel }}</span>
+
+        <!-- Grade and combo are one mark, not two facts: the combo hangs off the
+             grade's baseline rather than starting a line of its own. -->
+        <div class="results__mark">
+          <span
+            class="text-7xl relative leading-none font-bold"
+            :class="isTopGrade ? 'text-main' : 'text-text'"
+          >
+            {{ grade }}
+            <span
+              v-if="comboLabel"
+              class="absolute text-2xl tabular-nums text-primary font-black -top-2 -right-6"
+            >
+              {{ comboLabel }}
+            </span>
           </span>
         </div>
+
+        <Tooltip v-if="score">
+          <TooltipTrigger as-child>
+            <div class="results__score" data-testid="results-score">
+              <span class="text-xs text-sub">score</span>
+              <span class="text-main text-4xl leading-tight tabular-nums">{{ scoreText }}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right" class="w-56">
+            <dl class="flex flex-col gap-0.5 text-xs tabular-nums">
+              <div v-for="row in scoreFormula" :key="row.label" class="flex justify-between gap-4">
+                <dt class="text-sub">{{ row.label }}</dt>
+                <dd>{{ row.value }}</dd>
+              </div>
+            </dl>
+          </TooltipContent>
+        </Tooltip>
       </div>
+
       <div class="results__chart">
         <WpmChart :timeline="timeline" />
       </div>
     </div>
 
-    <div v-if="score" class="results__score">
-      <span class="results__grade" :class="{ 'results__grade--top': isTopGrade }">{{ grade }}</span>
-      <div class="results__metric results__score-total">
-        <span class="results__label">score</span>
-        <span class="results__value results__value--hero">{{ score.total }}</span>
+    <!--
+      One row of everything else, its first cell under the grade. Only `wpm` is
+      accented: it is the number the reader came for, and a screen where six
+      things shout has nothing left to emphasise with.
+    -->
+    <dl class="results__stats">
+      <div class="results__stat">
+        <dt class="text-xs text-sub">test type</dt>
+        <dd class="m-0 flex flex-col text-sm text-sub">
+          <span v-for="line in testType" :key="line">{{ line }}</span>
+        </dd>
       </div>
-      <div class="results__breakdown">
-        <span>base {{ Math.round(score.base) }}</span>
-        <span>combo &times;{{ score.comboPeak }}</span>
-        <span>acc {{ score.accMultiplier.toFixed(2) }}&times;</span>
-        <span v-if="score.timeBonus !== null">time {{ score.timeBonus.toFixed(2) }}&times;</span>
-        <span v-if="score.modMultiplier && score.modMultiplier > 1">
-          mods &times;{{ score.modMultiplier.toFixed(2) }}
-        </span>
-        <span v-for="mod in activeMods" :key="mod.id" class="results__mod">
-          {{ mod.id }} &times;{{ mod.multiplier.toFixed(2) }}
-        </span>
-        <span class="results__score-version">score v{{ score.version }}</span>
+      <div class="results__stat">
+        <dt class="text-xs text-sub">wpm / raw</dt>
+        <dd class="m-0 text-2xl/tight tabular-nums">
+          <span class="text-main">{{ Math.round(metrics.wpm) }}</span>
+          <span class="text-sub">/{{ Math.round(metrics.raw) }}</span>
+        </dd>
       </div>
+      <div class="results__stat">
+        <dt class="text-xs text-sub">acc</dt>
+        <dd class="m-0 text-2xl/tight tabular-nums">{{ Math.round(metrics.accuracy * 100) }}%</dd>
+      </div>
+      <div class="results__stat">
+        <dt class="text-xs text-sub">chars</dt>
+        <!-- correct / incorrect / extra / missed. The three failure counts are
+             sub-coloured rather than red: this is a summary read after the fact,
+             not an alarm going off. -->
+        <dd class="m-0 text-2xl/tight tabular-nums">
+          {{ metrics.chars.correct }}/{{ metrics.chars.incorrect }}/{{ metrics.chars.extra }}/{{
+            metrics.chars.missed
+          }}
+        </dd>
+      </div>
+      <div class="results__stat">
+        <dt class="text-xs text-sub">consistency</dt>
+        <dd class="m-0 text-2xl/tight tabular-nums">{{ Math.round(metrics.consistency) }}%</dd>
+      </div>
+      <div class="results__stat">
+        <dt class="text-xs text-sub">time</dt>
+        <dd class="m-0 text-2xl/tight tabular-nums">{{ Math.round(metrics.durationSec) }}s</dd>
+      </div>
+
+      <!-- Quote runs only: who wrote it, and the one way into its board. -->
+      <div v-if="quoteSource" class="results__stat" data-testid="results-quote-source">
+        <dt class="text-xs text-sub">source</dt>
+        <dd class="m-0 flex items-center gap-2 text-sm">
+          <span class="min-w-0 truncate">{{ quoteSource }}</span>
+          <Tooltip v-if="quoteBoard">
+            <TooltipTrigger as-child>
+              <!-- The name is a real (visually hidden) child rather than an
+                   `aria-label`: this is a component, and the rule that would
+                   check the attribute cannot see what it renders. -->
+              <Link
+                :to="quoteBoard"
+                class="text-sub hover:text-text transition-tm focus-ring inline-flex shrink-0 items-center rounded-md p-1 [&_svg]:size-4"
+                data-testid="quote-board-link"
+              >
+                <IconBoard />
+                <span class="sr-only">{{ t('results.quoteBoard') }}</span>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>{{ t('results.quoteBoard') }}</TooltipContent>
+          </Tooltip>
+        </dd>
+      </div>
+    </dl>
+
+    <!-- Anything unusual about the run, and nothing else. -->
+    <div v-if="failReason || afkLabel" class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-sub">
+      <span v-if="failReason">{{ reason }}</span>
+      <span v-if="afkLabel" data-testid="results-afk">{{ afkLabel }}</span>
     </div>
 
-    <!-- <div class="results__secondary">
-      <div class="results__metric">
-        <span class="results__label">raw</span>
-        <span class="results__value">{{ Math.round(metrics.raw) }}</span>
-      </div>
-      <div class="results__metric">
-        <span class="results__label">consistency</span>
-        <span class="results__value">{{ Math.round(metrics.consistency) }}%</span>
-      </div>
-      <div class="results__metric">
-        <span class="results__label">characters</span>
-        <span class="results__value results__value--chars">
-          <span class="results__char results__char--correct">{{ metrics.chars.correct }}</span>
-          /
-          <span class="results__char results__char--incorrect">{{ metrics.chars.incorrect }}</span>
-          /
-          <span class="results__char results__char--extra">{{ metrics.chars.extra }}</span>
-          /
-          <span class="results__char results__char--missed">{{ metrics.chars.missed }}</span>
-        </span>
-      </div>
-      <div class="results__metric">
-        <span class="results__label">time</span>
-        <span class="results__value">{{ Math.round(metrics.durationSec) }}s</span>
-      </div>
-    </div> -->
-
-    <div class="results__meta">
-      <span class="results__reason" :class="{ 'results__reason--fail': failReason }">
-        {{ reason }}
-      </span>
-      <span class="results__config">{{ configLine }}</span>
-      <span v-if="afkLabel" class="results__afk" data-testid="results-afk">{{ afkLabel }}</span>
-    </div>
-
-    <div class="results__actions">
-      <Button
-        color="main"
-        button-label="watch replay"
-        class="results__replay"
-        @click="$emit('replay')"
-      >
-        <IconPlayerPlay />
-        watch demo
-      </Button>
-    </div>
-
-    <div v-if="errorWords.length" class="results__errors">
-      <span class="results__label">error words</span>
-      <ul class="results__errors-list">
-        <li v-for="(word, index) in errorWords" :key="index" class="results__error-word">
-          <span class="results__error-expected">{{ word.expected }}</span>
-          <span class="results__error-typed">{{ word.typed || '∅' }}</span>
-        </li>
-      </ul>
+    <!--
+      Icon-only actions. Each carries its label twice: `aria-label` for a screen
+      reader, a tooltip for a pointer — an icon alone names nothing.
+    -->
+    <div v-if="actions.length" class="flex w-full justify-center gap-5 items-center">
+      <Tooltip v-for="action in actions" :key="action.key">
+        <TooltipTrigger as-child>
+          <Button
+            color="shadow"
+            size="icon"
+            :aria-label="action.label"
+            :data-testid="`results-${action.key}`"
+            @click="action.run"
+          >
+            <component :is="action.icon" class="size-6" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{{ action.label }}</TooltipContent>
+      </Tooltip>
     </div>
 
     <div
@@ -104,46 +155,32 @@
       <button
         v-if="saveState === 'guest'"
         type="button"
-        class="results__save-link"
+        class="text-sub hover:text-text focus-ring transition-tm cursor-pointer text-sm underline underline-offset-2"
         data-testid="save-signin"
         @click="$emit('signin')"
       >
         {{ t('results.signIn') }}
       </button>
-      <span
-        v-else-if="saveState === 'saving'"
-        class="results__save-status"
-        data-testid="save-saving"
-      >
+      <span v-else-if="saveState === 'saving'" class="text-sm text-sub" data-testid="save-saving">
         {{ t('results.saving') }}
       </span>
-      <span
-        v-else-if="saveState === 'saved'"
-        class="results__save-status results__save-status--ok"
-        data-testid="save-saved"
-      >
+      <span v-else-if="saveState === 'saved'" class="text-main text-sm" data-testid="save-saved">
         {{ t('results.savedPending') }}
       </span>
       <span
         v-else-if="saveState === 'restricted'"
-        class="results__save-status results__save-status--restricted"
+        class="text-sm text-sub"
         data-testid="save-restricted"
       >
         {{ t('results.notCountedRestricted') }}
       </span>
       <span
         v-else-if="saveState === 'error'"
-        class="results__save-status results__save-status--error"
+        class="inline-flex items-center gap-3 text-sm text-sub"
         data-testid="save-error"
       >
         {{ t('results.saveFailed') }}
-        <Button
-          color="main"
-          button-label="retry"
-          class="results__save-retry"
-          data-testid="save-retry"
-          @click="$emit('retry')"
-        >
+        <Button color="gray" size="s" data-testid="save-retry" @click="$emit('retry')">
           {{ t('results.retry') }}
         </Button>
       </span>
@@ -152,12 +189,11 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue'
+  import { computed, ref } from 'vue'
   import { useI18n } from 'vue-i18n'
 
   import {
     type ActiveMod,
-    type ErrorWord,
     type FailReason,
     type Metrics,
     type ScoreResult,
@@ -165,8 +201,18 @@
     gradeOf
   } from '@shared/core'
   import WpmChart from './wpm-chart.vue'
-  import IconPlayerPlay from '~icons/tabler/player-play'
+  import IconPlayerPlay from '~icons/tabler/player-track-prev-filled'
+  import IconNext from '~icons/tabler/player-play-filled'
+  import IconCamera from '~icons/tabler/camera-filled'
+  import IconBoard from '~icons/tabler/trophy'
+  import { quoteBucketKey } from '@shared/api'
+  import { routeLocation } from '@/app/router/route-locations'
+  import { AlertType } from '@/entities/alert/types/alertData'
+  import { useAlertStore } from '@/entities/alert'
   import { Button } from '@/shared/ui/button'
+  import { Link } from '@/shared/ui/link'
+  import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
+  import { useScreenshot } from '@/shared/lib/hooks/useScreenshot'
 
   /**
    * Pure results view. Every input is a pure function of the log (metrics, the wpm
@@ -174,6 +220,10 @@
    * state. Shows wpm/raw/accuracy/consistency, the character breakdown
    * (correct/incorrect/extra/missed), a wpm-over-time chart, the completion reason
    * (time / words / difficulty fail), the test config, and the mistyped words.
+   *
+   * ONE side effect, and it is over this component's own DOM: "copy screenshot"
+   * rasterises the element below and puts it on the clipboard. Everything else
+   * leaves as an event for the page to act on.
    */
   export interface ResultSummary {
     mode: string
@@ -194,11 +244,18 @@
   export type ResultsSaveState =
     'idle' | 'ineligible' | 'guest' | 'saving' | 'saved' | 'restricted' | 'error'
 
+  /**
+   * The icon-only actions, in the order they render. Not every surface can offer
+   * all three: a MATCH result has no next test to load and no replay screen to
+   * open, so it asks for the screenshot alone rather than showing buttons that
+   * lead nowhere.
+   */
+  export type ResultsAction = 'next' | 'replay' | 'screenshot'
+
   const props = withDefaults(
     defineProps<{
       metrics: Metrics
       timeline: readonly TimelinePoint[]
-      errorWords: readonly ErrorWord[]
       failReason: FailReason | null
       summary: ResultSummary
       /** Finalized score (v2); `null` hides the score block. */
@@ -209,13 +266,81 @@
       saveState?: ResultsSaveState
       /** Idle time inside the run window (`afkOf`, shared/core); `0` hides the line. */
       afkMs?: number
+      /**
+       * The quote this run was played on, when it was a quote run. Present ⇒ a
+       * link to that quote's board, which is the ONLY place that board is
+       * offered: there is one per quote, so it is not in the picker (they run
+       * to thousands) and this is where it is worth reaching — the reader just
+       * typed the text it ranks.
+       */
+      quoteId?: string | null
+      /** Upstream's attribution for that quote, shown under the run's summary. */
+      quoteSource?: string | null
+      /** Which of the icon actions to offer. Defaults to all three (the solo run). */
+      actions?: readonly ResultsAction[]
     }>(),
-    { saveState: 'idle', afkMs: 0 }
+    {
+      saveState: 'idle',
+      afkMs: 0,
+      quoteId: null,
+      quoteSource: null,
+      // Inline rather than a shared const: `withDefaults` is hoisted out of
+      // setup(), so it cannot reference anything declared in this block.
+      actions: () => ['next', 'replay', 'screenshot'] as const
+    }
   )
 
-  defineEmits<{ (event: 'replay'): void; (event: 'retry'): void; (event: 'signin'): void }>()
+  const emit = defineEmits<{
+    (event: 'replay'): void
+    (event: 'retry'): void
+    (event: 'signin'): void
+    (event: 'next'): void
+  }>()
 
   const { t } = useI18n()
+  const alerts = useAlertStore()
+
+  const rootRef = ref<HTMLElement | null>(null)
+  const { copy: copyScreenshot } = useScreenshot(rootRef)
+
+  /**
+   * Copying an image can fail for reasons that are not this app's doing (an
+   * insecure context, a browser that refuses image writes), so the outcome is
+   * always reported — a button that silently does nothing reads as broken.
+   */
+  const onScreenshot = async (): Promise<void> => {
+    const ok = await copyScreenshot()
+    alerts.addAlert({
+      type: ok ? AlertType.Success : AlertType.Error,
+      msg: ok ? t('results.screenshotCopied') : t('results.screenshotFailed')
+    })
+  }
+
+  // Filtering the catalogue, rather than mapping the prop, keeps the buttons in
+  // the same places whatever order a caller happens to list them in.
+  const actions = computed(() => {
+    const catalogue = [
+      {
+        key: 'next' as const,
+        icon: IconNext,
+        label: t('results.nextTest'),
+        run: () => emit('next')
+      },
+      {
+        key: 'replay' as const,
+        icon: IconPlayerPlay,
+        label: t('results.watchReplay'),
+        run: () => emit('replay')
+      },
+      {
+        key: 'screenshot' as const,
+        icon: IconCamera,
+        label: t('results.copyScreenshot'),
+        run: onScreenshot
+      }
+    ]
+    return catalogue.filter((action) => props.actions.includes(action.key))
+  })
 
   const reason = computed(() => {
     if (props.failReason) return `failed · ${props.failReason}`
@@ -224,20 +349,69 @@
       : `words · ${props.summary.amount}`
   })
 
+  /** Where "this quote's board" goes, or `null` for a seeded run. */
+  const quoteBoard = computed(() => {
+    const id = props.quoteId
+    if (id === null || id === undefined || id === '') return null
+    return routeLocation.boards(quoteBucketKey(id))
+  })
+
   // Grade by accuracy (SCORING_CONCEPT §4); SS/S get the main accent color.
   const grade = computed(() => gradeOf(props.metrics.accuracy))
   const isTopGrade = computed(() => grade.value === 'SS' || grade.value === 'S')
 
-  const configLine = computed(() => {
+  /** Thousands-grouped: a score has no ceiling and reads as noise without them. */
+  const scoreText = computed(() => props.score?.total.toLocaleString() ?? '')
+
+  /** The peak streak, hung under the grade — the other half of how the run went. */
+  const comboLabel = computed(() => (props.score ? `x${props.score.comboPeak}` : ''))
+
+  /** What the run was played under, above the grade. Absent when nothing was on. */
+  const modLabel = computed(() => {
+    const multiplier = props.score?.modMultiplier ?? 1
+    return multiplier > 1 ? t('results.mods', { multiplier: multiplier.toFixed(2) }) : ''
+  })
+
+  /**
+   * The score's arithmetic, for the tooltip. On the surface a score is one
+   * number to compare; the five factors behind it are for the reader who asks
+   * "why", and asking is a hover.
+   */
+  const scoreFormula = computed(() => {
+    const score = props.score
+    if (!score) return []
+    const rows = [
+      { label: 'base', value: String(Math.round(score.base)) },
+      { label: 'combo', value: `×${score.comboPeak}` },
+      { label: 'acc', value: `×${score.accMultiplier.toFixed(2)}` }
+    ]
+    if (score.timeBonus !== null)
+      rows.push({ label: 'time', value: `×${score.timeBonus.toFixed(2)}` })
+    for (const mod of props.activeMods) {
+      rows.push({ label: mod.id, value: `×${mod.multiplier.toFixed(2)}` })
+    }
+    rows.push({ label: `score v${score.version}`, value: scoreText.value })
+    return rows
+  })
+
+  /**
+   * The "test type" cell, one fact per line: what was typed, in what language,
+   * and under which mods. A quote run says `quote` and the word count it turned
+   * out to be — a quote has no configured length to report.
+   */
+  const testType = computed(() => {
     const s = props.summary
+    const shape =
+      s.mode === 'time' ? `time ${s.amount}` : s.mode === 'quote' ? 'quote' : `words ${s.amount}`
     const mods = [
       s.punctuation && 'punctuation',
       s.numbers && 'numbers',
       s.randomCase && 'random case',
       s.nospace && 'no space'
     ].filter(Boolean)
-    const parts = [s.language, s.difficulty, ...mods]
-    return parts.join(' · ')
+    const lines = [shape, s.language, s.difficulty]
+    if (mods.length) lines.push(mods.join(' '))
+    return lines
   })
 
   /**
@@ -261,146 +435,62 @@
   .results {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 12px;
     width: 100%;
     margin: 0 auto;
 
+    // The verdict column's width is shared with the stats row below, so the
+    // first stat lines up under the grade instead of merely starting near it.
+    --results-verdict: minmax(9rem, 12rem);
+
     &__main {
-      display: flex;
-      gap: 28px;
+      display: grid;
+      grid-template-columns: var(--results-verdict) minmax(0, 1fr);
       align-items: center;
     }
 
-    &__primary {
+    &__verdict {
       display: flex;
-      flex: 0 0 auto;
       flex-direction: column;
-      gap: 12px;
-    }
-
-    &__chart {
-      flex: 1 1 auto;
+      gap: 8px;
       min-width: 0;
     }
 
-    &__secondary {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 28px;
-      align-items: baseline;
+    &__chart {
+      min-width: 0;
     }
 
-    &__metric {
+    // Grade and combo read as one mark; the combo is tucked against the grade's
+    // baseline rather than spaced away from it.
+    &__mark {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    // A score has no bound worth designing around, so it is the one number given
+    // room to break rather than to push the chart off the row.
+    &__score {
       display: flex;
       flex-direction: column;
       gap: 2px;
+      min-width: 0;
+      cursor: help;
+      overflow-wrap: anywhere;
     }
 
-    &__label {
-      font-size: 14px;
-      color: var(--sub-color);
-    }
-
-    &__value {
-      font-size: 28px;
-      color: var(--main-color);
-
-      &--hero {
-        font-size: 56px;
-        line-height: 1;
-      }
-
-      &--chars {
-        font-size: 24px;
-        color: var(--text-color);
-      }
-    }
-
-    &__char {
-      &--incorrect,
-      &--extra {
-        color: var(--error-color);
-      }
-
-      &--missed {
-        color: var(--sub-color);
-      }
-    }
-
-    &__score {
-      display: flex;
-      gap: 20px;
-      align-items: center;
-      font-variant-numeric: tabular-nums;
-    }
-
-    &__grade {
-      font-size: 56px;
-      font-weight: 700;
-      line-height: 1;
-      color: var(--sub-color);
-
-      &--top {
-        color: var(--main-color);
-      }
-    }
-
-    &__breakdown {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px 14px;
-      font-size: 14px;
-      color: var(--sub-color);
-    }
-
-    &__score-version {
-      opacity: 0.6;
-    }
-
-    &__meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 16px;
-      font-size: 14px;
-      color: var(--sub-color);
-    }
-
-    &__reason--fail {
-      color: var(--error-color);
-    }
-
-    &__errors {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    &__errors-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+    &__stats {
+      display: grid;
+      grid-template-columns: var(--results-verdict) repeat(auto-fit, minmax(6rem, 1fr));
+      gap: 16px 28px;
       margin: 0;
-      padding: 0;
-      list-style: none;
     }
 
-    &__error-word {
+    &__stat {
       display: flex;
       flex-direction: column;
-      padding: 6px 10px;
-      background-color: var(--sub-alt-color);
-      border-radius: var(--border-radius);
-    }
-
-    &__error-expected {
-      font-size: 14px;
-      color: var(--sub-color);
-    }
-
-    &__error-typed {
-      font-size: 16px;
-      color: var(--error-color);
-      text-decoration: line-through;
+      gap: 2px;
+      min-width: 0;
     }
 
     &__save {
@@ -411,56 +501,23 @@
       margin-top: 0.5rem;
     }
 
-    &__save-link {
-      padding: 0;
-      font-size: 14px;
-      color: var(--sub-color);
-      text-decoration: underline;
-      text-underline-offset: 2px;
-      cursor: pointer;
-      background: none;
-      border: none;
-      transition: color 0.15s ease;
-
-      &:hover {
-        color: var(--text-color);
-      }
-    }
-
-    &__save-status {
-      display: inline-flex;
-      gap: 0.75rem;
-      align-items: center;
-      font-size: 14px;
-      color: var(--sub-color);
-
-      &--ok {
-        color: var(--main-color);
-      }
-
-      &--error {
-        color: var(--error-color);
-      }
-
-      // Informational, not alarming, and with no retry beside it: a ban is not
-      // a transient failure, so offering to try again would offer nothing. It
-      // stays the inherited sub colour deliberately — the modifier exists so
-      // the state is addressable, not so it can shout.
-      &--restricted {
-        color: var(--sub-color);
-      }
-    }
-
+    // Narrow: the chart drops under the verdict, and the two grids stop sharing
+    // a first column — there is no room left for them to line up in.
     @media screen and (width <= 700px) {
+      --results-verdict: minmax(0, 1fr);
+
       &__main {
-        flex-direction: column;
-        align-items: stretch;
+        grid-template-columns: minmax(0, 1fr);
       }
 
-      &__primary {
+      &__verdict {
         flex-direction: row;
-        gap: 32px;
-        justify-content: center;
+        gap: 24px;
+        align-items: baseline;
+      }
+
+      &__stats {
+        grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
       }
     }
   }

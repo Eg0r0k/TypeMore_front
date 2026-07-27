@@ -273,7 +273,15 @@ export default {
     saveFailed: 'не удалось сохранить',
     retry: 'повторить',
     afk: 'afk {seconds}с',
-    afkWithShare: 'afk {seconds}с · {percent}%'
+    afkWithShare: 'afk {seconds}с · {percent}%',
+    quoteBoard: 'таблица этой цитаты',
+    combo: 'комбо {combo}x',
+    mods: 'моды ×{multiplier}',
+    nextTest: 'следующий тест',
+    watchReplay: 'смотреть реплей',
+    copyScreenshot: 'скопировать скриншот',
+    screenshotCopied: 'скриншот скопирован в буфер обмена',
+    screenshotFailed: 'не удалось скопировать скриншот'
   },
   servers: {
     title: { lead: 'Добро пожаловать в', name: 'Серверы' },

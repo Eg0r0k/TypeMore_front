@@ -581,9 +581,9 @@ test('replay field honors the DOM corridor and line-position invariant', async (
     }
   })
 
-  // Results screen, then open the replay.
-  await page.waitForSelector('.results__replay', { timeout: 8000 })
-  await page.click('.results__replay')
+  // Results screen, then open the replay (an icon-only action, addressed by id).
+  await page.waitForSelector('[data-testid="results-replay"]', { timeout: 8000 })
+  await page.click('[data-testid="results-replay"]')
   await page.waitForSelector('.game__host', { timeout: 8000 })
 
   const result = await page.evaluate(async () => {

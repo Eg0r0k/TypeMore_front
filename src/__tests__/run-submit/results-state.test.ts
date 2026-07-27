@@ -1,7 +1,10 @@
 import { mount } from '@vue/test-utils'
-import { describe, it, expect, vi } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
+import { h } from 'vue'
+import { beforeEach, describe, it, expect, vi } from 'vitest'
 
 import { TestResults, type ResultSummary } from '@/features/test/results'
+import { TooltipProvider } from '@/shared/ui/tooltip'
 import { i18n } from '@app/i18n'
 import type { Metrics } from '@shared/core'
 
@@ -32,22 +35,35 @@ const summary: ResultSummary = {
   nospace: false
 }
 
-const mountResults = (saveState: string) =>
-  mount(TestResults, {
+// The view reports the outcome of "copy screenshot" through the alert store, so
+// it needs a pinia even though nothing here presses that button.
+beforeEach(() => setActivePinia(createPinia()))
+
+/**
+ * Mounted UNDER a TooltipProvider, because the icon-only actions are tooltipped
+ * and reka refuses to build a tooltip without one (the app installs it once, in
+ * `App.vue`). The component under test is returned, so every assertion below
+ * still addresses it directly.
+ */
+const mountResults = (saveState: string, extra: Record<string, unknown> = {}) =>
+  mount(TooltipProvider, {
     global: { plugins: [i18n] },
-    props: {
-      metrics,
-      timeline: [],
-      errorWords: [],
-      failReason: null,
-      summary,
-      score: null,
-      activeMods: [],
-      // Cast: `saveState` is a string-literal union on the component; the test
-      // sweeps every member by name.
-      saveState: saveState as never
+    slots: {
+      default: () =>
+        h(TestResults, {
+          metrics,
+          timeline: [],
+          failReason: null,
+          summary,
+          score: null,
+          activeMods: [],
+          // Cast: `saveState` is a string-literal union on the component; the test
+          // sweeps every member by name.
+          saveState: saveState as never,
+          ...extra
+        })
     }
-  })
+  }).findComponent(TestResults)
 
 describe('TestResults — save-state machine', () => {
   it('hides the save region for idle and ineligible runs', () => {
@@ -94,6 +110,37 @@ describe('TestResults — save-state machine', () => {
     // The flow maps a mid-flight 401 to `guest`; the view renders the sign-in link.
     const wrapper = mountResults('guest')
     expect(wrapper.find('[data-testid="save-signin"]').exists()).toBe(true)
+  })
+})
+
+/**
+ * The same view now serves a MATCH result, where two of the three icon actions
+ * lead nowhere: there is no next test to load and no replay screen in a room. So
+ * the set is a prop — and its default has to leave the solo screen exactly as it
+ * was, which is the first half of what this asserts.
+ */
+describe('TestResults — action set', () => {
+  it('offers all three actions by default', () => {
+    const wrapper = mountResults('idle')
+    for (const key of ['next', 'replay', 'screenshot']) {
+      expect(wrapper.find(`[data-testid="results-${key}"]`).exists()).toBe(true)
+    }
+  })
+
+  it('renders only the actions it was given, in the canonical order', () => {
+    const wrapper = mountResults('idle', { actions: ['screenshot', 'next'] })
+
+    expect(wrapper.find('[data-testid="results-replay"]').exists()).toBe(false)
+    const buttons = wrapper.findAll('button[data-testid^="results-"]')
+    expect(buttons.map((button) => button.attributes('data-testid'))).toEqual([
+      'results-next',
+      'results-screenshot'
+    ])
+  })
+
+  it('drops the action row entirely when no action is offered', () => {
+    const wrapper = mountResults('idle', { actions: [] })
+    expect(wrapper.find('[data-testid="results-screenshot"]').exists()).toBe(false)
   })
 })
 

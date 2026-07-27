@@ -283,7 +283,17 @@ export default {
     retry: 'retry',
     afk: 'afk {seconds}s',
     /** Same line with the share of the run window that was idle (afkMs / duration). */
-    afkWithShare: 'afk {seconds}s · {percent}%'
+    afkWithShare: 'afk {seconds}s · {percent}%',
+    quoteBoard: 'this quote’s board',
+    /** Hung under the grade and above it: the run's peak streak and its mods. */
+    combo: '{combo}x combo',
+    mods: 'mods ×{multiplier}',
+    /** Icon-only actions: each label is both the tooltip and the accessible name. */
+    nextTest: 'next test',
+    watchReplay: 'watch replay',
+    copyScreenshot: 'copy screenshot',
+    screenshotCopied: 'screenshot copied to the clipboard',
+    screenshotFailed: 'could not copy the screenshot'
   },
   servers: {
     title: { lead: 'Welcome to', name: 'Servers' },

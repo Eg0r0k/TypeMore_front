@@ -1,2 +1,2 @@
 export { default as TestResults } from './ui.vue'
-export type { ResultSummary } from './ui.vue'
+export type { ResultsAction, ResultSummary } from './ui.vue'
