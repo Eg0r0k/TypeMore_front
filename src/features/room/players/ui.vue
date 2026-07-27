@@ -7,12 +7,24 @@
           <button
             type="button"
             class="players__code-value"
+            :class="{ 'players__code-value--masked': isPrivate }"
             :aria-label="t('room.copy')"
+            data-testid="room-code"
             @click="copyCode"
           >
             <Typography tag-name="span" size="l" color="main">{{ room.code }}</Typography>
             <IconCheck v-if="copied" class="players__code-icon players__code-icon--done" />
             <IconCopy v-else class="players__code-icon" />
+            <!--
+              A private room's code is the whole of its privacy: it is on screen
+              while someone is streaming or sharing a window, and it is the one
+              thing that lets a stranger in. Cover it until it is asked for —
+              focus counts as asking, so the keyboard is not locked out.
+            -->
+            <span v-if="isPrivate" class="players__code-cover" aria-hidden="true">
+              <IconEyeOff class="size-5 shrink-0" />
+              {{ t('room.codeHidden') }}
+            </span>
           </button>
         </TooltipTrigger>
         <TooltipContent>{{ copied ? t('room.copied') : t('room.copy') }}</TooltipContent>
@@ -85,6 +97,7 @@
   import { Tooltip, TooltipTrigger, TooltipContent } from '@/shared/ui/tooltip'
   import IconCheck from '~icons/tabler/check'
   import IconCopy from '~icons/tabler/copy'
+  import IconEyeOff from '~icons/tabler/eye-off'
   import IconCrown from '~icons/tabler/crown'
   import IconUser from '~icons/tabler/user'
   import IconUserX from '~icons/tabler/user-x'
@@ -97,6 +110,7 @@
   const { t } = useI18n()
   const session = useMatchSessionStore()
   const room = computed(() => session.room)
+  const isPrivate = computed(() => room.value?.settings.visibility === 'private')
 
   const seatClass = (player: RoomPlayer) =>
     clsx('seat', {
@@ -172,13 +186,42 @@
     gap: 1rem;
 
     &__code-value {
+      position: relative;
       display: flex;
+      gap: 0.5rem;
       align-items: center;
       padding: 0;
+      cursor: pointer;
       background: none;
       border: none;
-      gap: 0.5rem;
-      cursor: pointer;
+    }
+
+    // The cover fades on the design system's own cadence (§2: 0.08s linear) —
+    // the same duration every hover in this app uses, so uncovering a code does
+    // not feel like a different kind of motion.
+    &__code-cover {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 8px;
+      font-size: 0.75rem;
+      color: var(--sub-color);
+      inset: -0.25rem -0.5rem;
+      gap: 0.375rem;
+      background-color: var(--sub-alt-color);
+      border-radius: var(--border-radius);
+      transition: opacity var(--transition-duration) linear;
+
+      svg {
+        width: 0.875rem;
+        height: 0.875rem;
+      }
+    }
+
+    &__code-value--masked:hover .players__code-cover,
+    &__code-value--masked:focus-visible .players__code-cover {
+      opacity: 0;
     }
 
     &__code-icon {

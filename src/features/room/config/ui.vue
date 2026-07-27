@@ -1,32 +1,7 @@
 <template>
   <div v-if="room" class="config">
     <div class="config__settings">
-      <!-- Host between matches: live editor. Everyone else: read-only view. -->
       <div v-if="session.isHost" class="config__editor">
-        <div class="config__field">
-          <Typography size="xs" color="sub">{{ t('room.name') }}</Typography>
-          <TextInput
-            v-model="localName"
-            v-max-chars="32"
-            :placeholder="t('room.name')"
-            @keydown.enter="commitName"
-            @blur="commitName"
-          />
-        </div>
-
-        <div class="config__field">
-          <Typography size="xs" color="sub">{{ t('room.visibility') }}</Typography>
-          <ToggleGroup
-            :model-value="settings.visibility"
-            aria-label="visibility"
-            @update:model-value="onVisibility"
-          >
-            <ToggleGroupItem v-for="vis in VISIBILITIES" :key="vis" :value="vis">
-              {{ t(`room.visibilityKind.${vis}`) }}
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
-
         <div class="config__field">
           <Typography size="xs" color="sub">{{ t('room.mode') }}</Typography>
           <ToggleGroup :model-value="settings.mode" aria-label="mode" @update:model-value="onMode">
@@ -49,6 +24,25 @@
           </ToggleGroup>
         </div>
 
+        <!--
+          Quote: the band is a filter on the DRAW, not a wire field. Picking one
+          redraws immediately, so the room always advertises a quote that exists
+          and every seat can resolve by id.
+        -->
+        <div v-else-if="settings.mode === 'quote'" class="config__field">
+          <Typography size="xs" color="sub">{{ t('game.quote.length') }}</Typography>
+          <ToggleGroup
+            :model-value="quoteGroup"
+            aria-label="quote length"
+            @update:model-value="onQuoteGroup"
+          >
+            <ToggleGroupItem v-for="band in QUOTE_GROUPS" :key="band" :value="band">
+              {{ t(`game.quote.group.${band}`) }}
+            </ToggleGroupItem>
+          </ToggleGroup>
+          <Typography v-if="quoteError" size="xs" color="error">{{ quoteError }}</Typography>
+        </div>
+
         <div v-else class="config__field">
           <Typography size="xs" color="sub">{{ t('room.wordCount') }}</Typography>
           <ToggleGroup
@@ -66,7 +60,7 @@
           <Typography size="xs" color="sub">{{ t('game.language') }}</Typography>
           <button
             type="button"
-            class="config__lang bg-sub-alt border border-sub rounded-md transition-tm focus-ring flex h-9 w-full cursor-pointer items-center px-3 text-sm text-text"
+            class="config__lang bg-sub-alt border border-sub rounded-md transition-tm focus-ring flex py-2 w-full cursor-pointer items-center px-3 text-sm text-text"
             @click="languageOpen = true"
           >
             <span class="truncate">{{ languageName(settings.lang) }}</span>
@@ -78,30 +72,22 @@
           />
         </div>
 
-        <div class="config__field">
-          <Typography size="xs" color="sub">{{ t('room.textMods') }}</Typography>
-          <ToggleGroup
-            type="multiple"
-            :model-value="activeTextMods"
-            aria-label="text mods"
-            @update:model-value="onTextMods"
-          >
-            <ToggleGroupItem v-for="mod in TEXT_MOD_KEYS" :key="mod" :value="mod">
-              {{ t(`game.${mod}`) }}
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
+        <!--
+          The same component, the same glyphs and the same group label the solo
+          bar uses. That is the point of it living in `entities/game`: a mod a
+          player learned on the home page is the same picture here, and it is so
+          by construction rather than by two templates agreeing.
+        -->
+        <ModGroup
+          :options="TEXT_MOD_OPTIONS"
+          :active="activeTextMods"
+          :label="t('game.slot.generation')"
+          group-aria-label="text mods"
+          @update:active="onTextMods"
+        />
       </div>
 
       <dl v-else class="config__summary">
-        <div class="config__row">
-          <dt>{{ t('room.name') }}</dt>
-          <dd>{{ settings.name }}</dd>
-        </div>
-        <div class="config__row">
-          <dt>{{ t('room.visibility') }}</dt>
-          <dd>{{ t(`room.visibilityKind.${settings.visibility}`) }}</dd>
-        </div>
         <div class="config__row">
           <dt>{{ t('room.mode') }}</dt>
           <dd>
@@ -151,16 +137,30 @@
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
-      <div class="config__field">
-        <Toggle
-          size="sm"
-          :pressed="myFreemods.nospace"
-          aria-label="nospace"
-          @update:pressed="onNospace"
-        >
-          {{ t('game.nospace') }}
-        </Toggle>
-      </div>
+      <ModGroup
+        :options="NOSPACE_OPTIONS"
+        :active="activeFreemodFlags"
+        :label="t('game.slot.core')"
+        group-aria-label="nospace"
+        @update:active="onNospaceKeys"
+      />
+
+      <!--
+        Visual mods. Local to this player and NOT on the wire: they leave no
+        trace in the event log, so they cannot be scored — which is why they are
+        not freemods (PROTOCOL.md §5) and why nothing needs to guard them. They
+        are self-handicaps: they hide information from the person who turned
+        them on. The field already applied them in a match; only the switch was
+        missing, so it lived on the home page and nowhere a player in a room
+        could reach it.
+      -->
+      <ModGroup
+        :options="VIEW_MODS"
+        :active="activeViewMods"
+        :label="t('game.slot.view')"
+        group-aria-label="view mods"
+        @update:active="onViewMods"
+      />
     </div>
   </div>
 </template>
@@ -170,15 +170,16 @@
   import { useI18n } from 'vue-i18n'
   import type { Freemods, RoomPlayer, RoomSettings } from '@/entities/lobby'
   import { useConfigStore } from '@/entities/config/model/store'
-  import { useMatchSessionStore } from '@/entities/match'
-  import { loadDictionaryBody } from '@shared/api'
+  import { ModGroup, optionOf, optionsFor, valuesFor } from '@/entities/game'
+  import { isApiError, loadDictionaryBody, loadRandomQuote, quoteCorpusLang } from '@shared/api'
+  import type { QuoteGroup } from '@/shared/constants/type'
   import { useLanguageNames } from '@/shared/lib/hooks/useLanguageNames'
-  import { TextInput } from '@/shared/ui/input'
-  import { Toggle } from '@/shared/ui/toggle'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
   import { LanguageModal } from '@/features/modal/language'
   import { Typography } from '@/shared/ui/typography'
   import { dictVersion } from '@shared/core'
+
+  import { useRoomSettings } from './model/use-room-settings'
 
   /**
    * Room settings (host-only, §5 `settings_update` — the server resets every
@@ -188,45 +189,29 @@
    * (FNV-1a via core's `dictVersion`) so every client verifies the same
    * dictionary fingerprint.
    */
-  const VISIBILITIES = ['open', 'private'] as const
-  const MODES = ['time', 'words'] as const
+  const MODES = valuesFor(optionOf('mode'), 'roomSettings')
   const DURATIONS_MS = [15000, 30000, 60000, 120000] as const
   const WORD_COUNTS = [10, 25, 50, 100] as const
+  const QUOTE_GROUPS = valuesFor(optionOf('quoteGroup'), 'roomSettings')
   const DIFFICULTIES = ['normal', 'expert', 'master'] as const
   const MIN_WPMS = [0, 60, 80, 100] as const
-  const TEXT_MOD_KEYS = ['punctuation', 'numbers', 'randomCase', 'reverse'] as const
+
+  /**
+   * The shared text mods, from the registry rather than from a list retyped
+   * here — the same four the solo bar shows, in the same order, with the same
+   * glyphs. The wire shape (`textMods` as four named booleans, §5) is still the
+   * protocol's and is assembled in `onTextMods`; the registry only says which
+   * options this surface may edit.
+   */
+  const TEXT_MOD_OPTIONS = optionsFor('roomSettings').filter((o) => o.control.kind === 'boolean')
+  const TEXT_MOD_KEYS = TEXT_MOD_OPTIONS.map((o) => o.key)
+  /** `nospace` is a freemod and travels per seat; it is grouped as a RULE, not as text. */
+  const NOSPACE_OPTIONS = [optionOf('nospace')]
 
   const { t } = useI18n()
   // `lang` is the key the room settings travel as; the catalogue owns its name.
   const { languageName } = useLanguageNames()
-  const session = useMatchSessionStore()
-  const room = computed(() => session.room)
-
-  const FALLBACK_SETTINGS: RoomSettings = {
-    name: '',
-    visibility: 'private',
-    mode: 'time',
-    durationMs: 30000,
-    lang: 'english',
-    dictHash: '',
-    textMods: { punctuation: false, numbers: false, randomCase: false, reverse: false },
-    textSource: { kind: 'seeded' }
-  }
-  const settings = computed<RoomSettings>(() => room.value?.settings ?? FALLBACK_SETTINGS)
-
-  const apply = (patch: Partial<RoomSettings>) => {
-    const next: RoomSettings = { ...settings.value, ...patch }
-    // `durationMs` / `wordCount` are mode-conditional on the wire (§5): send
-    // only the active one.
-    if (next.mode === 'time') {
-      next.durationMs = next.durationMs ?? 30000
-      delete next.wordCount
-    } else {
-      next.wordCount = next.wordCount ?? 25
-      delete next.durationMs
-    }
-    session.updateSettings(next)
-  }
+  const { session, room, settings, apply } = useRoomSettings()
 
   // Host bootstrap: a fresh `create_room` arrives with server placeholder
   // settings (lang/dictHash the client may not have). The creating host —
@@ -258,23 +243,59 @@
     { immediate: true }
   )
 
-  // Room name commits on blur/enter, not per keystroke.
-  const localName = ref(settings.value.name)
-  watch(
-    () => settings.value.name,
-    (name) => (localName.value = name)
-  )
-  const commitName = () => {
-    const name = localName.value.trim()
-    if (!name || name === settings.value.name) return
-    apply({ name })
+  const onMode = (value: unknown) => {
+    if (typeof value !== 'string' || !MODES.includes(value)) return
+    if (value === 'quote') {
+      void drawQuote(quoteGroup.value)
+      return
+    }
+    apply({ mode: value as RoomSettings['mode'] })
   }
 
-  const onVisibility = (value: unknown) => {
-    if (value === 'open' || value === 'private') apply({ visibility: value })
+  // ── Quote mode ────────────────────────────────────────────────────────────
+  /**
+   * The room races ONE published quote, and the host is who draws it: the id is
+   * what travels (PROTOCOL.md §5), never the bytes, so every seat resolves the
+   * same immutable text from `/quotes/{id}` — no seed, no dictionary, no hash.
+   *
+   * `wordCount` goes along as the drawn text's length. It is not a target the
+   * run reads; the server uses it for the counted-mode duration ceiling, which
+   * otherwise has nothing to scale by.
+   */
+  const quoteGroup = ref<QuoteGroup>('all')
+  const quoteError = ref('')
+
+  const drawQuote = async (group: QuoteGroup): Promise<void> => {
+    quoteError.value = ''
+    try {
+      const quote = await loadRandomQuote({
+        // A size variant is not a language: the corpus publishes `russian` once.
+        lang: quoteCorpusLang(settings.value.lang),
+        // `all` is the absence of a filter, not a sixth band.
+        group: group === 'all' ? undefined : group
+      })
+      quoteGroup.value = group
+      apply({
+        mode: 'quote',
+        wordCount: quote.text.split(/\s+/).filter(Boolean).length,
+        // A quote carries no dictionary to fingerprint — quote-only languages
+        // have none at all.
+        dictHash: '',
+        textSource: { kind: 'quote', quoteId: quote.id }
+      })
+    } catch (error) {
+      quoteError.value =
+        isApiError(error) && error.status === 404
+          ? t('game.setup.quoteEmpty', {
+              lang: quoteCorpusLang(settings.value.lang),
+              group: t(`game.quote.group.${group}`)
+            })
+          : t('game.setup.quoteError')
+    }
   }
-  const onMode = (value: unknown) => {
-    if (value === 'time' || value === 'words') apply({ mode: value })
+
+  const onQuoteGroup = (value: unknown) => {
+    if (typeof value === 'string') void drawQuote(value as QuoteGroup)
   }
   const onDuration = (value: unknown) => {
     const ms = Number(value)
@@ -288,13 +309,22 @@
   const languageOpen = ref(false)
   const onLanguage = async (lang: string) => {
     if (lang === settings.value.lang) return
+    // In quote mode the language IS the corpus: a new one means a new draw, and
+    // there is no dictionary to fingerprint on this path at all.
+    if (settings.value.mode === 'quote') {
+      apply({ lang })
+      await drawQuote(quoteGroup.value)
+      return
+    }
     const dictionary = await loadDictionaryBody(lang)
     apply({ lang, dictHash: dictVersion(dictionary.words) })
   }
 
-  const activeTextMods = computed(() => TEXT_MOD_KEYS.filter((key) => settings.value.textMods[key]))
-  const onTextMods = (value: unknown) => {
-    const active = new Set(Array.isArray(value) ? (value as string[]) : [])
+  const activeTextMods = computed(() =>
+    TEXT_MOD_KEYS.filter((key) => settings.value.textMods[key as keyof RoomSettings['textMods']])
+  )
+  const onTextMods = (keys: readonly string[]) => {
+    const active = new Set(keys)
     apply({
       textMods: {
         punctuation: active.has('punctuation'),
@@ -324,7 +354,29 @@
     const wpm = Number(value)
     if (wpm === 0 || wpm === 60 || wpm === 80 || wpm === 100) setFreemods({ minWpm: wpm })
   }
-  const onNospace = (pressed: boolean) => setFreemods({ nospace: pressed })
+  /** `nospace` as a one-key group, so it wears the same control as every other mod. */
+  const activeFreemodFlags = computed(() => (myFreemods.value.nospace ? ['nospace'] : []))
+  const onNospaceKeys = (keys: readonly string[]) =>
+    setFreemods({ nospace: keys.includes('nospace') })
+
+  // ── Own visual mods (local; never sent) ───────────────────────────────────
+  /** The `Config` fields this group writes — every boolean one. */
+  type BooleanConfigKey = {
+    [K in keyof typeof configStore.config]: (typeof configStore.config)[K] extends boolean
+      ? K
+      : never
+  }[keyof typeof configStore.config]
+
+  const VIEW_MODS = optionsFor('roomLocal')
+  const activeViewMods = computed(() =>
+    VIEW_MODS.filter((mod) => configStore.config[mod.key] === true).map((mod) => mod.key)
+  )
+  const onViewMods = (keys: readonly string[]) => {
+    const active = new Set(keys)
+    for (const mod of VIEW_MODS) {
+      configStore.config[mod.key as BooleanConfigKey] = active.has(mod.key)
+    }
+  }
 </script>
 
 <style lang="scss" scoped>

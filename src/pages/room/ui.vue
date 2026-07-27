@@ -36,9 +36,18 @@
       @leave="session.leaveRoom()"
     />
 
+    <!--
+      The left column is the ROOM: what it is called, who may walk in, the code
+      that lets them, and who is already here — in that order, because that is
+      the order someone reads them in when they are about to invite a friend.
+      The run configuration is a different question and lives on the right.
+    -->
     <div v-else class="room-page__lobby lobby">
+      <div class="lobby__room">
+        <RoomIdentity />
+        <RoomPlayers class="lobby__players" />
+      </div>
       <RoomConfig class="lobby__config" />
-      <RoomPlayers class="lobby__players" />
       <RoomControls class="lobby__controls" />
       <RoomChat class="lobby__chat" />
     </div>
@@ -52,7 +61,7 @@
   import { routeLocation } from '@/app/router/route-locations'
   import { useMatchSessionStore } from '@/entities/match'
   import { RoomChat } from '@/features/room/chat'
-  import { RoomConfig } from '@/features/room/config'
+  import { RoomConfig, RoomIdentity } from '@/features/room/config'
   import { RoomControls } from '@/features/room/controls'
   import { RoomMatch } from '@/features/room/match'
   import { RoomPlayers } from '@/features/room/players'
@@ -109,6 +118,14 @@
       'player chat' 1fr
       'controls chat' auto / 1fr 3fr;
 
+    &__room {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      grid-area: player;
+      min-height: 0;
+    }
+
     &__config {
       grid-area: config;
     }
@@ -118,7 +135,7 @@
     }
 
     &__players {
-      grid-area: player;
+      min-height: 0;
     }
 
     &__controls {
@@ -129,9 +146,9 @@
   @media (width <=768px) {
     .lobby {
       grid-template:
+        'player' auto
         'config' auto
         'controls' auto
-        'player' 1fr
         'chat' 1fr / 1fr;
     }
   }
