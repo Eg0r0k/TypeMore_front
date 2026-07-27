@@ -157,10 +157,13 @@
    * The mode, rendered as the dimension it names — seconds for `time`, words
    * for `words` — so a reader never has to know that "the number" means
    * milliseconds here and words there. Same rule as the leaderboard buckets.
+   * A quote room names itself: its length is the text's, not a target anyone
+   * chose.
    */
   const dimensionLabel = (room: RoomListEntry): string => {
     const dimension = roomDimension(room.settings)
     if (dimension === null) return room.settings.mode
+    if (dimension.kind === 'quote') return t('game.mode.quote')
     return dimension.kind === 'time'
       ? t('servers.lobby.time', { seconds: Math.round(dimension.durationMs / MS_PER_SECOND) })
       : t('servers.lobby.words', { count: dimension.wordCount })

@@ -34,6 +34,7 @@ import {
   type GameEvent,
   type GameState,
   type GenerationConfig,
+  type GenerationTextSource,
   type ModsDeclaration,
   asMs,
   computeMetrics,
@@ -83,10 +84,19 @@ import { DEFAULT_GHOST_DELAY_MS, GhostDriver } from './ghost-driver'
 import { createMatchTransport } from './create-transport'
 import {
   freemodsConfig,
+  isQuoteMatch,
   loadMatchDictionary,
+  loadMatchQuote,
   matchGeneration,
   scoringGeneration
 } from './match-setup'
+
+/**
+ * Stand-in for the word list a quote match never reads: the core takes a
+ * dictionary to derive the seed context's content hash, and for a quote that
+ * hash comes from the text instead (`makeSeedContext`, shared/core).
+ */
+const EMPTY_DICTIONARY: Dictionary = { name: '', bcp47: '', words: [] }
 
 /** The session's dedicated local game-store id — never 'local' (the solo run). */
 export const MATCH_SESSION_STORE_ID = 'match:session'
@@ -755,7 +765,30 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
       )
       return
     }
-    const generation = matchGeneration(frame.settings)
+    /*
+     * Two text paths, and only one of them involves a dictionary. A QUOTE match
+     * resolves its bytes by id and needs neither a word list nor a hash check —
+     * the quote is immutable, so the id IS the guarantee that every seat types
+     * the same characters, and quote-only languages (`code_python`) have no
+     * dictionary to fetch in the first place. A seeded match keeps the fetch and
+     * the fingerprint check exactly as before.
+     */
+    const quoteMatch = isQuoteMatch(frame.settings)
+    let quoteSource: GenerationTextSource | undefined
+    if (quoteMatch) {
+      try {
+        quoteSource = await loadMatchQuote(frame.settings)
+      } catch (error) {
+        if (token === matchToken)
+          failSetup(
+            `quote '${frame.settings.textSource.quoteId ?? ''}' failed to load: ${error instanceof Error ? error.message : String(error)}`
+          )
+        return
+      }
+      if (token !== matchToken) return
+    }
+
+    const generation = matchGeneration(frame.settings, quoteSource)
     if (generation === null) {
       failSetup(
         `countdown settings are missing ${frame.settings.mode === 'time' ? 'durationMs' : 'wordCount'} for mode '${frame.settings.mode}'`
@@ -763,27 +796,29 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
       return
     }
 
-    let dictionary: Dictionary
-    try {
-      dictionary = await deps.loadDictionary(frame.settings.lang)
-    } catch (error) {
-      if (token === matchToken)
-        failSetup(
-          `dictionary '${frame.settings.lang}' failed to load: ${error instanceof Error ? error.message : String(error)}`
-        )
-      return
-    }
-    if (token !== matchToken) return
-
-    const actualHash = dictVersion(dictionary.words)
-    if (actualHash !== frame.settings.dictHash) {
-      matchError.value = {
-        kind: 'dict-hash-mismatch',
-        message: `dictionary '${frame.settings.lang}' hashes to ${actualHash}, server expects ${frame.settings.dictHash}`
+    let dictionary: Dictionary = EMPTY_DICTIONARY
+    if (!quoteMatch) {
+      try {
+        dictionary = await deps.loadDictionary(frame.settings.lang)
+      } catch (error) {
+        if (token === matchToken)
+          failSetup(
+            `dictionary '${frame.settings.lang}' failed to load: ${error instanceof Error ? error.message : String(error)}`
+          )
+        return
       }
-      phase.value = 'error'
-      stopCountdownTicker()
-      return
+      if (token !== matchToken) return
+
+      const actualHash = dictVersion(dictionary.words)
+      if (actualHash !== frame.settings.dictHash) {
+        matchError.value = {
+          kind: 'dict-hash-mismatch',
+          message: `dictionary '${frame.settings.lang}' hashes to ${actualHash}, server expects ${frame.settings.dictHash}`
+        }
+        phase.value = 'error'
+        stopCountdownTicker()
+        return
+      }
     }
 
     const generated = generateWords(dictionary, makeSeedContext(dictionary, frame.seed, generation))
@@ -1032,12 +1067,12 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     const settings = frame.settings
     const deadline = settings.mode === 'time' ? asMs(settings.durationMs ?? 0) : undefined
 
-    // Δ3 words-mode rank key: the LOG's completion instant among finishers;
+    // Δ3 counted-mode rank key: the LOG's completion instant among finishers;
     // FALLBACK `match_end.finishedAtMs` for a truncated/desynced log. Server
     // receipt time is epoch ms — orders of magnitude above any run-relative
     // instant — so log-proven finishers always rank ahead, and fallback
     // finishers order among themselves by server receipt.
-    const wordsRankKey = new Map<string, number>()
+    const countedRankKey = new Map<string, number>()
 
     const rows = results.map((result) => {
       const isSelf = result.playerId === selfId.value
@@ -1081,8 +1116,11 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
           : (rec?.nick ?? result.playerId.slice(0, 8)),
         isSelf,
         status,
+        // Every COUNTED mode ranks by the clock — words and quote alike, since
+        // everyone typed the same text. Naming `words` here is what left a quote
+        // match's standings with no finish time to show at all.
         finishTimeMs:
-          settings.mode === 'words' &&
+          settings.mode !== 'time' &&
           status === 'finished' &&
           failReason === undefined &&
           typeof finalState?.finishedAt === 'number'
@@ -1097,7 +1135,7 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
         afkShare: result.afkShare
       }
       if (status === 'finished' && failReason === undefined) {
-        wordsRankKey.set(
+        countedRankKey.set(
           result.playerId,
           row.finishTimeMs ?? result.finishedAtMs ?? Number.POSITIVE_INFINITY
         )
@@ -1119,11 +1157,12 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
       const tierB = tierOf(b)
       if (tierA !== tierB) return tierA - tierB
       if (tierA === 0) {
-        // Words mode: first to complete the map (log time). Time mode: scoreV2.
-        if (settings.mode === 'words') {
+        // Counted modes (words, quote): first to complete the map, by log time.
+        // Time mode: scoreV2.
+        if (settings.mode !== 'time') {
           return (
-            (wordsRankKey.get(a.playerId) ?? Number.POSITIVE_INFINITY) -
-            (wordsRankKey.get(b.playerId) ?? Number.POSITIVE_INFINITY)
+            (countedRankKey.get(a.playerId) ?? Number.POSITIVE_INFINITY) -
+            (countedRankKey.get(b.playerId) ?? Number.POSITIVE_INFINITY)
           )
         }
         return (b.score ?? 0) - (a.score ?? 0)

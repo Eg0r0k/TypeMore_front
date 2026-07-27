@@ -28,10 +28,10 @@ import type { RoomDimension } from './types'
  */
 export const RoomListSettingsSchema = v.pipe(
   v.object({
-    mode: v.picklist(['time', 'words']),
+    mode: v.picklist(['time', 'words', 'quote']),
     /** Present for `time` mode, absent otherwise. */
     durationMs: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
-    /** Present for `words` mode, absent otherwise. */
+    /** Present for the counted modes (`words`, `quote`), absent otherwise. */
     wordCount: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
     /** The canonical dictionary key. Never a display name — see `useLanguageNames`. */
     lang: v.string()
@@ -41,7 +41,7 @@ export const RoomListSettingsSchema = v.pipe(
       settings.mode === 'time'
         ? settings.durationMs !== undefined && settings.wordCount === undefined
         : settings.wordCount !== undefined && settings.durationMs === undefined,
-    'A room carries exactly the dimension its mode names: durationMs for time, wordCount for words'
+    'A room carries exactly the dimension its mode names: durationMs for time, wordCount for the counted modes'
   )
 )
 export type RoomListSettings = v.InferOutput<typeof RoomListSettingsSchema>
@@ -89,6 +89,7 @@ export type RoomList = v.InferOutput<typeof RoomListSchema>
  */
 export const roomDimension = (settings: RoomListSettings): RoomDimension | null => {
   const { durationMs, wordCount } = settings
+  if (settings.mode === 'quote') return { kind: 'quote' }
   if (settings.mode === 'time' && durationMs !== undefined) return { kind: 'time', durationMs }
   if (settings.mode === 'words' && wordCount !== undefined) return { kind: 'words', wordCount }
   return null

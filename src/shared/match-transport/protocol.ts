@@ -25,22 +25,28 @@ export const TextModsSchema = v.object({
 export type TextMods = v.InferOutput<typeof TextModsSchema>
 
 /**
- * v0 is `{ kind: "seeded" }` only, but the quote phase extends this
- * additively with no protocol bump (§5) — so inbound validation accepts any
- * `kind` and preserves extra fields for forward compatibility.
+ * `seeded` (server seed + dictionary) or `quote` (one published text, by id).
+ * Still a LOOSE object with a free-form `kind`: the protocol grows text sources
+ * additively with no version bump (§5), so an unknown kind must survive
+ * validation and reach the code that can report it rather than fail the frame.
  */
-export const TextSourceSchema = v.looseObject({ kind: v.string() })
+export const TextSourceSchema = v.looseObject({
+  kind: v.string(),
+  /** Present for `kind: 'quote'` — the id `GET /quotes/{id}` resolves. */
+  quoteId: v.optional(v.string())
+})
 export type TextSource = v.InferOutput<typeof TextSourceSchema>
 
 export const RoomSettingsSchema = v.object({
   name: v.string(),
   visibility: v.picklist(['open', 'private']),
-  mode: v.picklist(['time', 'words']),
+  mode: v.picklist(['time', 'words', 'quote']),
   /** Present for `time` mode. */
   durationMs: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
-  /** Present for `words` mode. */
+  /** Present for `words` and `quote` mode; for a quote, the drawn text's length. */
   wordCount: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
   lang: v.string(),
+  /** Empty for a quote match: a quote has no dictionary to fingerprint. */
   dictHash: v.string(),
   textMods: TextModsSchema,
   textSource: TextSourceSchema

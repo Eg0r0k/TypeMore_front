@@ -100,10 +100,17 @@ interface Seat {
 
 type ParticipantStatus = 'racing' | 'finished' | 'dnf' | 'left'
 
+/**
+ * A match that ends by running out of TEXT rather than out of clock — words and
+ * quote alike. Mirrors the server's `protocol.IsCounted`: the finish window and
+ * the AFK sweep exist because a counted match has no deadline of its own.
+ */
+const isCountedMode = (mode: Match['mode']): boolean => mode === 'words' || mode === 'quote'
+
 interface Match {
   matchId: string
-  /** Frozen at start — the words-mode AFK rules key off this, never live settings. */
-  mode: 'time' | 'words'
+  /** Frozen at start — the counted-mode AFK rules key off this, never live settings. */
+  mode: 'time' | 'words' | 'quote'
   /** Local clock instant of GO — bucket zero of the AFK accounting. */
   goAtMs: number
   /** As broadcast in `countdown`; re-served in `room_state.match` for resumers. */
@@ -778,7 +785,7 @@ export class LoopbackServer {
     this.endParticipation(match, client.playerId, 'finished')
     // Δ3: finishedAtMs = server clock at receipt of this player's finish.
     match.finishedAtMs.set(client.playerId, Math.round(this.now() + this.clockOffsetMs))
-    if (match.mode === 'words' && match.finishWindowTimer === null) {
+    if (isCountedMode(match.mode) && match.finishWindowTimer === null) {
       // Δ3: the FIRST finish opens the finish window; at close every
       // still-racing seat dnfs and the match ends with reason finish_window.
       match.finishWindowTimer = setTimeout(() => {
@@ -906,9 +913,9 @@ export class LoopbackServer {
     return { elapsed, idle: elapsed - active }
   }
 
-  /** Δ3 AFK sweep: once a second from GO, words mode only. Time mode is never swept. */
+  /** Δ3 AFK sweep: once a second from GO, counted modes only. Time mode is never swept. */
   private startAfkSweep(room: Room, match: Match): void {
-    if (match.mode !== 'words') return
+    if (!isCountedMode(match.mode)) return
     const tick = (): void => {
       if (room.match !== match) return
       this.sweepAfk(room, match)

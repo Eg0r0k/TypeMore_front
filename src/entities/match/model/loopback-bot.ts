@@ -21,7 +21,10 @@ import {
 import { type Dictionary, generateWords, makeSeedContext } from '@shared/core'
 
 import { synthesizeBotLog } from './demo-feed'
-import { loadMatchDictionary, matchGeneration } from './match-setup'
+import { isQuoteMatch, loadMatchDictionary, loadMatchQuote, matchGeneration } from './match-setup'
+
+/** The word list a quote match never reads — its hash comes from the text. */
+const EMPTY_DICTIONARY: Dictionary = { name: '', bcp47: '', words: [] }
 
 export interface LoopbackBotOptions {
   /** Typing speed. Default 45. `0` ⇒ join + ready, never type, never finish. */
@@ -66,9 +69,15 @@ export async function addLoopbackBot(
   }
 
   const race = async (countdown: CountdownFrame): Promise<void> => {
-    const generation = matchGeneration(countdown.settings)
+    // Same two text paths the real client takes: a quote match resolves its
+    // bytes by id and never touches a dictionary. A bot typing a different text
+    // than the seat beside it would not be an opponent.
+    const quote = isQuoteMatch(countdown.settings)
+      ? await loadMatchQuote(countdown.settings)
+      : undefined
+    const generation = matchGeneration(countdown.settings, quote)
     if (generation === null) return
-    const dictionary = await loadDictionary(countdown.settings.lang)
+    const dictionary = quote ? EMPTY_DICTIONARY : await loadDictionary(countdown.settings.lang)
     const generated = generateWords(
       dictionary,
       makeSeedContext(dictionary, countdown.seed, generation)

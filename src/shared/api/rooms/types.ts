@@ -18,3 +18,10 @@
 export type RoomDimension =
   | { readonly kind: 'time'; readonly durationMs: number }
   | { readonly kind: 'words'; readonly wordCount: number }
+  /**
+   * A quote room's length is the drawn text's, and a listing has no business
+   * advertising it as a target: nobody picks a room because the quote is 23
+   * words long. The count rides along for the server's counted deadline; the
+   * list says what it IS.
+   */
+  | { readonly kind: 'quote' }
