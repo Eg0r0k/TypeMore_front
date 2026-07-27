@@ -5,8 +5,9 @@
   import type { toggleVariants } from '@/shared/ui/toggle'
   import { reactiveOmit } from '@vueuse/core'
   import { ToggleGroupRoot, useForwardPropsEmits } from 'reka-ui'
-  import { provide } from 'vue'
+  import { computed, provide, reactive } from 'vue'
   import { cn } from '@/shared/lib/utils'
+  import { TOGGLE_GROUP_KEY } from './context'
 
   type ToggleGroupVariants = VariantProps<typeof toggleVariants>
 
@@ -26,11 +27,16 @@
 
   const emits = defineEmits<ToggleGroupRootEmits>()
 
-  provide('toggleGroup', {
-    variant: props.variant,
-    size: props.size,
-    spacing: props.spacing
-  })
+  // Computed-backed, not a snapshot of props: items keep following the group
+  // if a variant ever changes after mount.
+  provide(
+    TOGGLE_GROUP_KEY,
+    reactive({
+      variant: computed(() => props.variant),
+      size: computed(() => props.size),
+      spacing: computed(() => props.spacing)
+    })
+  )
 
   const delegatedProps = reactiveOmit(props, 'class', 'size', 'variant')
   const forwarded = useForwardPropsEmits(delegatedProps, emits)

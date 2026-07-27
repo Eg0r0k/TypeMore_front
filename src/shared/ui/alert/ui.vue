@@ -44,7 +44,7 @@
   import IconAlertTriangle from '~icons/tabler/alert-triangle'
   import IconX from '~icons/tabler/x'
   import { useSound } from '@vueuse/sound'
-  import { computed, onMounted, ref } from 'vue'
+  import { computed, onMounted, onUnmounted, ref } from 'vue'
   import type { Component } from 'vue'
   import Error from '/static/sounds/Error.mp3'
   import Info from '/static/sounds/Stop.mp3'
@@ -121,10 +121,18 @@
   defineExpose({
     close
   })
+  // Held so unmount can clear them: a queue-dismissed alert must not fire
+  // `close` (a ref write + emit) after it is gone.
+  let closeTimer: ReturnType<typeof setTimeout> | undefined
+  let soundTimer: ReturnType<typeof setTimeout> | undefined
   onMounted(() => {
     if (props.closable && props.duration > 0) {
-      setTimeout(close, props.duration)
+      closeTimer = setTimeout(close, props.duration)
     }
-    setTimeout(playSound, 100)
+    soundTimer = setTimeout(playSound, 100)
+  })
+  onUnmounted(() => {
+    clearTimeout(closeTimer)
+    clearTimeout(soundTimer)
   })
 </script>

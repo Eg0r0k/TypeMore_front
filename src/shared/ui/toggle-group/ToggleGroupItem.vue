@@ -7,10 +7,9 @@
   import { inject } from 'vue'
   import { cn } from '@/shared/lib/utils'
   import type { toggleVariants } from '@/shared/ui/toggle'
+  import { TOGGLE_GROUP_KEY } from './context'
 
-  type ToggleGroupVariants = VariantProps<typeof toggleVariants> & {
-    spacing?: number
-  }
+  type ToggleGroupVariants = VariantProps<typeof toggleVariants>
 
   const props = defineProps<
     ToggleGroupItemProps & {
@@ -20,7 +19,7 @@
     }
   >()
 
-  const context = inject<ToggleGroupVariants>('toggleGroup')
+  const context = inject(TOGGLE_GROUP_KEY)
 
   const delegatedProps = reactiveOmit(props, 'class', 'size', 'variant')
   const forwardedProps = useForwardProps(delegatedProps)

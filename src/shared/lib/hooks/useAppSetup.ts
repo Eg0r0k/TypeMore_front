@@ -3,12 +3,13 @@ import { useThemes } from '@/shared/lib/hooks/useThemes'
 import { useUiLanguage } from '@/shared/lib/hooks/useUiLanguage'
 import { useFavicon } from '@vueuse/core'
 import { THEMES_KEY } from '@/shared/constants/inject-keys'
-import { onBeforeMount, onMounted, onUnmounted, provide, ref } from 'vue'
+import { onBeforeMount, onMounted, provide, ref } from 'vue'
 import logger from '@/shared/lib/helpers/logger'
 
 export const useAppSetup = () => {
   const configStore = useConfigStore()
-  const { applyTheme, themesList, themesOnUnmounted, favicon } = useThemes()
+  // The themes hook disconnects its own observer on scope dispose.
+  const { applyTheme, themesList, favicon } = useThemes()
   // Locale follows the saved preference (or the browser under `system`) for the
   // whole app lifetime, not just while the settings dialog is mounted.
   useUiLanguage()
@@ -34,10 +35,6 @@ export const useAppSetup = () => {
     } catch (e) {
       logger.error('Failed to get localstorage', e)
     }
-  })
-
-  onUnmounted(() => {
-    themesOnUnmounted()
   })
 
   return { cookieOpen }

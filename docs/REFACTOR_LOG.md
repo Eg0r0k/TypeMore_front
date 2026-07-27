@@ -108,6 +108,12 @@ Playwright-детали:
 6. `src/entities/config` persist: `backgroundLocal` (base64 data-URL картинки)
    персистится в общем ключе `config` — большая картинка может упереться в
    квоту localStorage (~5 MB) и уронить запись ВСЕГО конфига.
+7a. **useThemes() течёт вне компонентного scope** (найдено стейджем 7):
+   каждый вызов `useThemes()` создаёт новый `MutationObserver` + `watchEffect`;
+   вызовы из конфиг-экшенов (`setTheme` в `setConfigSettings.ts`) происходят
+   вне effect-scope, где ни ручной teardown (раньше), ни `onScopeDispose`
+   (теперь) не срабатывают — по observer'у на каждую смену темы. Правка — это
+   изменение поведения (кэш/синглтонизация хука), оставлено владельцу.
 7. **Скриншот-фидбек невидим** (найдено предстейджем): новый экран результатов
    (`features/test/results/ui.vue:301,314`) сообщает «скриншот скопирован /
    не удался» через `useAlertStore.addAlert`, но `widgets/alerts` после переезда
@@ -305,3 +311,27 @@ keydown/keyup.
 Тип должен уехать вниз вместе с UI/UX-передизайном профиля.
 
 **Риск и чем прикрыт**: низкий; vue-tsc + vitest зелёные.
+
+### Стейдж 7 — Vue-утечки и типизированные provide (2026-07-28)
+
+**Что**:
+- `vMaxChars` — слушатель хранится в WeakMap и снимается в `unmounted`
+  (логика re-dispatch не тронута: она нерекурсивна, т.к. новое событие не
+  всплывает);
+- `shared/ui/alert/ui.vue` — оба `setTimeout` (закрытие, звук) сохраняются и
+  чистятся в `onUnmounted`;
+- `useThemes` — ручной opt-in `themesOnUnmounted` заменён на
+  `onScopeDispose(…, failSilently)`; потребители (`useAppSetup`,
+  `ThemeSection`) обновлены тем же коммитом (контракт слайса);
+- `useCookiesConsent` — deep-watch заменён точечным watch по флагам
+  `enabled` (единственное мутируемое поле; те же триггеры и та же
+  синхронизация);
+- `ToggleGroup`/`ToggleGroupItem` — строковый provide-ключ заменён
+  типизированным `InjectionKey<ToggleGroupContext>` (`context.ts`), значения
+  провайдятся computed-backed reactive-объектом вместо снапшота props.
+
+**Риск и чем прикрыт**: средний (toggle-group — вся поверхность
+settings-bar); vue-tsc + vitest зелёные; Playwright: 34/36, известный
+fallback-красный + разовое падение перф-гейта `replay field corridor`,
+которое изолированный перепрогон на тихой машине НЕ подтвердил (по
+регламенту — не регрессия).

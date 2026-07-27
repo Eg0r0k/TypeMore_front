@@ -40,12 +40,14 @@ export const useCookieConsentLogic = (onDone?: () => void) => {
   const { cookies, updateCookie } = useCookieStore()
   const showDefaultView = ref(true)
 
+  // `enabled` is the only field that ever mutates (name/type are fixed), so
+  // watching the flags directly replaces the old deep watch over the whole
+  // record — same triggers, no deep traversal per change.
   watch(
-    () => Object.values(cookies),
-    (updatedCookies) => {
-      updatedCookies.forEach(updateCookie)
-    },
-    { deep: true }
+    () => Object.values(cookies).map((cookie) => cookie.enabled),
+    () => {
+      Object.values(cookies).forEach(updateCookie)
+    }
   )
 
   const setConsentFlag = () => {

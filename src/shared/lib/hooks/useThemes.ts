@@ -1,5 +1,5 @@
 import { loadThemes, type Theme } from '@shared/api'
-import { computed, reactive, watchEffect } from 'vue'
+import { computed, onScopeDispose, reactive, watchEffect } from 'vue'
 import { useScreenStore } from '@/entities/screen'
 
 import { useConfigStore } from '@/entities/config'
@@ -116,12 +116,10 @@ export function useThemes() {
     attributeFilter: ['style']
   })
 
-  /**
-   * Disconnects the style observer when the component is unmounted.
-   */
-  const themesOnUnmounted = () => {
-    styleObserver.disconnect()
-  }
+  // Tied to the calling effect scope instead of a teardown the caller must
+  // remember to invoke. `failSilently`: callers outside a scope (config
+  // actions) behave exactly as before — no warning, no disconnect.
+  onScopeDispose(() => styleObserver.disconnect(), true)
 
   return {
     themesList,
@@ -129,7 +127,6 @@ export function useThemes() {
     refColors,
     applyTheme,
     fetchThemes,
-    currentTheme,
-    themesOnUnmounted
+    currentTheme
   }
 }

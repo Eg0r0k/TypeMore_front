@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, inject, onUnmounted, ref, useTemplateRef, watch } from 'vue'
+  import { computed, inject, ref, useTemplateRef, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
   import { useDebounceFn } from '@vueuse/core'
 
@@ -111,7 +111,8 @@
   const { t } = useI18n()
   const configStore = useConfigStore()
   const config = configStore.config
-  const { refColors, themesOnUnmounted } = useThemes()
+  // The themes hook disconnects its own observer on scope dispose.
+  const { refColors } = useThemes()
 
   const nav = inject(SETTINGS_NAV, undefined)
   const error = ref('')
@@ -196,8 +197,6 @@
       toast.error(t('settings.colors.copyFailed'), { description: String(cause) })
     }
   }
-
-  onUnmounted(themesOnUnmounted)
 </script>
 
 <style lang="scss" scoped>
