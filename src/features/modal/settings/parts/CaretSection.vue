@@ -31,6 +31,7 @@
   import { useI18n } from 'vue-i18n'
 
   import { useConfigStore } from '@/entities/config'
+  import { narrowTo } from '@/shared/lib/helpers/narrow'
   import type { CaretStyle, SmoothCaret } from '@/shared/constants/type'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
   import SettingRow from './SettingRow.vue'
@@ -43,15 +44,13 @@
   const config = configStore.config
 
   const onSmooth = (value: unknown): void => {
-    if (typeof value === 'string' && (SMOOTH_CARET as readonly string[]).includes(value)) {
-      configStore.setConfig('smoothCaret', value as SmoothCaret)
-    }
+    const smooth = narrowTo(SMOOTH_CARET, value)
+    if (smooth !== null) configStore.setConfig('smoothCaret', smooth)
   }
 
   const onStyle = (value: unknown): void => {
-    if (typeof value === 'string' && (CARET_STYLES as readonly string[]).includes(value)) {
-      configStore.setConfig('caretStyle', value as CaretStyle)
-    }
+    const style = narrowTo(CARET_STYLES, value)
+    if (style !== null) configStore.setConfig('caretStyle', style)
   }
 </script>
 

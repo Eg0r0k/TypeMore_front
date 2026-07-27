@@ -58,6 +58,7 @@
     FONT_SIZE_STEP
   } from '@/shared/constants/fonts'
   import { SUPPORTED_LOCALES, type UiLanguage } from '@/shared/lib/i18n/locale'
+  import { narrowTo } from '@/shared/lib/helpers/narrow'
   import { useUiLanguage } from '@/shared/lib/hooks/useUiLanguage'
   import { Combobox } from '@/shared/ui/combobox'
   import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
@@ -68,6 +69,7 @@
 
   /** Endonyms: a language is always listed in its own words. */
   const LOCALE_NATIVE: Record<string, string> = { en: 'English', ru: 'Русский' }
+  const UI_LANGUAGES: readonly UiLanguage[] = ['system', ...SUPPORTED_LOCALES]
 
   /**
    * Font family and size are applied through the store setters (they also push
@@ -80,9 +82,8 @@
   const { language, setLanguage } = useUiLanguage()
 
   const onUiLanguage = (value: unknown): void => {
-    if (value === 'system' || (typeof value === 'string' && value in LOCALE_NATIVE)) {
-      setLanguage(value as UiLanguage)
-    }
+    const lang = narrowTo(UI_LANGUAGES, value)
+    if (lang !== null) setLanguage(lang)
   }
 
   const onFontFamily = (value: string | undefined): void => {

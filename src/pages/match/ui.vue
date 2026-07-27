@@ -126,9 +126,13 @@
       textSource: { kind: 'seeded' }
     })
 
+    // The loopback room_state has already landed by here; an explicit throw
+    // replaces the old non-null assertion without hiding the impossible case.
+    const roomCode = session.room?.code
+    if (roomCode === undefined) throw new Error('loopback harness: no room after updateSettings')
     for (let i = 0; i < ghostCount; i++) {
       // Staggered speeds like the Phase B bots; wpm 0 = seated, never types.
-      void addLoopbackBot(server, session.room!.code, {
+      void addLoopbackBot(server, roomCode, {
         wpm: botWpm > 0 ? botWpm + i * 10 : 0,
         seed: seed + i,
         loadDictionary

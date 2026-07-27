@@ -34,6 +34,7 @@
   import { useI18n } from 'vue-i18n'
 
   import { useConfigStore } from '@/entities/config'
+  import { narrowTo } from '@/shared/lib/helpers/narrow'
   import type { StopOnError } from '@/shared/constants/type'
   import { Switch } from '@/shared/ui/switch'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
@@ -47,9 +48,8 @@
   const config = configStore.config
 
   const onStopOnError = (value: unknown): void => {
-    if (typeof value === 'string' && (STOP_ON_ERROR as readonly string[]).includes(value)) {
-      configStore.setConfig('stopOnError', value as StopOnError)
-    }
+    const stop = narrowTo(STOP_ON_ERROR, value)
+    if (stop !== null) configStore.setConfig('stopOnError', stop)
   }
 </script>
 

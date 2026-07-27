@@ -80,6 +80,7 @@
   import { useDebounceFn } from '@vueuse/core'
 
   import { useConfigStore } from '@/entities/config'
+  import { narrowTo } from '@/shared/lib/helpers/narrow'
   import { SETTINGS_NAV } from '../model/registry'
   import type { BackgroundSize } from '@/shared/constants/type'
   import { readImageFile } from '@/shared/lib/helpers/image'
@@ -165,9 +166,8 @@
   }
 
   const onSize = (value: unknown): void => {
-    if (typeof value === 'string' && (BACKGROUND_SIZES as readonly string[]).includes(value)) {
-      configStore.setConfig('backgroundSize', value as BackgroundSize)
-    }
+    const size = narrowTo(BACKGROUND_SIZES, value)
+    if (size !== null) configStore.setConfig('backgroundSize', size)
   }
 
   const label = (color: ColorVar): string => color.replace('--', '').replace('-color', '')

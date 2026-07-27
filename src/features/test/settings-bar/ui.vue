@@ -152,6 +152,7 @@
   } from '@/entities/game'
   import { languageHasQuotesQueryOptions } from '@shared/api'
   import { ConfigModes, type Config } from '@/shared/constants/type'
+  import { narrowTo } from '@/shared/lib/helpers/narrow'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
   import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
   import { LanguageModal } from '@/features/modal/language'
@@ -254,7 +255,8 @@
   }
 
   const onMode = (value: unknown): void => {
-    if (value) configStore.setMode(value as ConfigModes)
+    const mode = narrowTo(Object.values(ConfigModes), value)
+    if (mode !== null) configStore.setMode(mode)
   }
 
   const onDimension = (option: GameOption, value: unknown): void => {
