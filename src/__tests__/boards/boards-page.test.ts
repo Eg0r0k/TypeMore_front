@@ -13,7 +13,12 @@ import type { BucketInfo } from '@shared/api'
 import { i18n } from '@app/i18n'
 import { ROUTE_NAMES } from '@/app/router/route-names'
 
-const h = vi.hoisted(() => ({ catalogue: vi.fn(), page: vi.fn(), me: vi.fn() }))
+const h = vi.hoisted(() => ({
+  catalogue: vi.fn(),
+  page: vi.fn(),
+  me: vi.fn(),
+  quote: vi.fn()
+}))
 
 vi.mock('@shared/api', () => {
   class ApiError extends Error {
@@ -51,6 +56,11 @@ vi.mock('@shared/api', () => {
     boardMeQueryOptions: (bucket: string) => ({
       queryKey: ['board', bucket, 'me'],
       queryFn: () => h.me(bucket)
+    }),
+    // The quote board's heading resolves its own text by id.
+    quoteByIdQueryOptions: (id: string) => ({
+      queryKey: ['quote', id],
+      queryFn: () => h.quote(id)
     })
   }
 })
@@ -76,6 +86,17 @@ const WORDS_25: BucketInfo = {
   entries: 11
 }
 
+/**
+ * A quote board, deliberately the BUSIEST row in the catalogue: the picker must
+ * skip it for being a quote board, not for being small.
+ */
+const QUOTE_ID = '0a6c0103-89c8-43be-bd66-1371216d4a53'
+const QUOTE_BOARD: BucketInfo = {
+  bucket: `quote:${QUOTE_ID}`,
+  quoteId: QUOTE_ID,
+  entries: 99
+}
+
 let router: Router
 let queryClient: QueryClient
 
@@ -99,6 +120,12 @@ beforeEach(async () => {
   h.me.mockReset()
   h.page.mockResolvedValue({ bucket: WORDS_25.bucket, entries: [] })
   h.me.mockRejectedValue(new ApiError({ status: 401, code: 'unauthorized' }))
+  h.quote.mockResolvedValue({
+    id: QUOTE_ID,
+    lang: 'russian',
+    source: 'Собачье сердце',
+    text: 'Лаской-с. Единственным способом, который возможен в обращении с живым существом.'
+  })
   i18n.global.locale.value = 'en'
   queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: 0 } }
@@ -189,6 +216,49 @@ describe('boards page', () => {
     expect(wrapper.text()).toContain(i18n.global.t('boards.loading'))
     expect(wrapper.find('[data-testid="boards-error"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="boards-no-boards"]').exists()).toBe(false)
+
+    wrapper.unmount()
+  })
+
+  /**
+   * There is one quote board per quote and the corpus is ~15 800 of them, so
+   * they are not browsable and are not offered. The two halves of that decision
+   * are asserted separately, because getting one right and the other wrong is
+   * exactly how this breaks: unlisted must not mean unreachable.
+   */
+  it('never lands on a quote board, however busy it is', async () => {
+    h.catalogue.mockResolvedValue([TIME_15, WORDS_25, QUOTE_BOARD])
+
+    const wrapper = await mountPage()
+
+    // QUOTE_BOARD has 99 entries against WORDS_25's 11 and would win on count
+    // alone. It is skipped for being a quote board.
+    expect(h.page).toHaveBeenCalledWith(WORDS_25.bucket, undefined)
+    const picker = wrapper.get('[data-testid="boards-bucket-picker"]')
+    expect(picker.text()).not.toContain(QUOTE_ID)
+    expect(wrapper.find('[data-testid="quote-board-header"]').exists()).toBe(false)
+
+    wrapper.unmount()
+  })
+
+  it('still resolves a shared quote link, and names the quote instead of the uuid', async () => {
+    await router.push(`/boards?bucket=${QUOTE_BOARD.bucket}`)
+    h.catalogue.mockResolvedValue([TIME_15, WORDS_25, QUOTE_BOARD])
+
+    const wrapper = await mountPage()
+
+    expect(h.page).toHaveBeenCalledWith(QUOTE_BOARD.bucket, undefined)
+
+    // The heading is the TEXT, not the id — that is the whole complaint the
+    // per-quote board had against it.
+    const header = wrapper.get('[data-testid="quote-board-header"]')
+    expect(header.text()).toContain('Лаской-с')
+    expect(header.text()).toContain('Собачье сердце')
+    expect(header.text()).not.toContain(QUOTE_ID)
+
+    // No picker: a list of a few hundred language boards is not the way back
+    // from here, the link in the heading is.
+    expect(wrapper.find('[data-testid="boards-bucket-picker"]').exists()).toBe(false)
 
     wrapper.unmount()
   })

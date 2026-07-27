@@ -60,6 +60,23 @@ export type BucketInfo = v.InferOutput<typeof BucketInfoSchema>
 /** Narrow a catalogue row to the quote shape. */
 export const isQuoteBucket = (bucket: BucketInfo): bucket is QuoteBucket => 'quoteId' in bucket
 
+/**
+ * The bucket key of a quote's board.
+ *
+ * The server owns the key format (`LEADERBOARDS.md`: `leaderboard.Bucket.Key`
+ * is its one producer, deliberately), and this is the single place on the
+ * client that reproduces any of it. It exists because a finished quote run
+ * knows its quote id and needs to LINK to that board, and looking the key up in
+ * the catalogue does not work at the moment it is needed: a board only appears
+ * there once a run on it has been accepted, which happens after this screen is
+ * drawn.
+ *
+ * `bucket-schema.test.ts` asserts this against a real catalogue payload, so if
+ * the server's format ever moves, the mirror fails rather than producing a link
+ * to a board that does not exist.
+ */
+export const quoteBucketKey = (quoteId: string): string => `quote:${quoteId}`
+
 export const BucketCatalogueSchema = v.object({
   buckets: v.array(BucketInfoSchema)
 })

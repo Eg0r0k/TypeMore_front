@@ -18,11 +18,12 @@
     </div>
 
     <!--
-      An empty catalogue is a real 200: no bucket anywhere holds a visible
-      entry. Not a failure, and not something a spinner will fix.
+      Nothing to show is a real 200: either no bucket anywhere holds a visible
+      entry, or the only ones that do are quote boards nobody asked for by id.
+      Not a failure, and not something a spinner will fix.
     -->
     <Typography
-      v-else-if="buckets.length === 0"
+      v-else-if="selected === undefined"
       class="boards-page__state"
       data-testid="boards-no-boards"
       size="s"
@@ -31,12 +32,19 @@
       {{ t('boards.noBoards') }}
     </Typography>
 
-    <template v-else-if="selected !== undefined">
+    <template v-else>
       <!--
-        The picker sits OUTSIDE the ranking on purpose: a board that fails to
+        The heading sits OUTSIDE the ranking on purpose: a board that fails to
         load must still leave the user a way to pick another one.
+
+        Which heading depends on what KIND of board this is. A language board is
+        one of a few hundred and is chosen from the picker. A quote board is one
+        of ~15 800, so it is not in the picker at all — it is arrived at from
+        the quote (the results screen, or a link), and what it needs is not a
+        chooser but a statement of which text this ranks.
       -->
-      <BoardBucketPicker :buckets="buckets" :selected="selected" @select="select" />
+      <QuoteBoardHeader v-if="quoteId !== null" :quote-id="quoteId" />
+      <BoardBucketPicker v-else :buckets="browsable" :selected="selected" @select="select" />
       <BoardView :bucket="selected" />
     </template>
   </div>
@@ -46,8 +54,14 @@
   import { computed } from 'vue'
   import { useQuery } from '@tanstack/vue-query'
   import { useI18n } from 'vue-i18n'
-  import { bucketCatalogueQueryOptions } from '@shared/api'
-  import { BoardBucketPicker, BoardView, useBucketSelection } from '@/features/leaderboards'
+  import { bucketCatalogueQueryOptions, isQuoteBucket } from '@shared/api'
+  import {
+    BoardBucketPicker,
+    BoardView,
+    QuoteBoardHeader,
+    browsableBuckets,
+    useBucketSelection
+  } from '@/features/leaderboards'
   import { Button } from '@/shared/ui/button'
   import { Typography } from '@/shared/ui/typography'
 
@@ -63,7 +77,19 @@
   const catalogue = useQuery(bucketCatalogueQueryOptions())
   const buckets = computed(() => catalogue.data.value ?? [])
 
+  /** What the picker offers: the language boards. */
+  const browsable = computed(() => browsableBuckets(buckets.value))
+
+  // Validated against the FULL catalogue, not against `browsable`: a quote
+  // board is unlisted, not unreachable, and `?bucket=quote:<id>` has to keep
+  // resolving or every link ever shared to one silently redirects.
   const { selected, select } = useBucketSelection(catalogue.data)
+
+  /** The quote this board ranks, or `null` for a language board. */
+  const quoteId = computed<string | null>(() => {
+    const current = buckets.value.find((bucket) => bucket.bucket === selected.value)
+    return current !== undefined && isQuoteBucket(current) ? current.quoteId : null
+  })
 
   const retryCatalogue = (): void => {
     void catalogue.refetch()

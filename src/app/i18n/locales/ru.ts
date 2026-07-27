@@ -413,8 +413,11 @@ export default {
       label: 'таблица',
       time: '{seconds}с · {lang}',
       words: '{count} слов · {lang}',
-      quote: 'цитата · {id}',
       entries: 'записей: {count}'
+    },
+    quote: {
+      back: '← все таблицы',
+      unknown: 'не удалось загрузить эту цитату'
     },
     column: {
       rank: '#',

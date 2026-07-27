@@ -11,7 +11,7 @@
  * and fall back to the key ONLY while the catalogue has not loaded.
  */
 import { flushPromises, mount } from '@vue/test-utils'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { nextTick } from 'vue'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import * as v from 'valibot'
@@ -25,7 +25,14 @@ import {
   type DictionaryCatalogue
 } from '@shared/api'
 import { LanguageModal } from '@/features/modal/language'
-import { BoardBucketPicker } from '@/features/leaderboards'
+import { BoardBucketPicker, browsableBuckets } from '@/features/leaderboards'
+import { stubElementSize } from './helpers/element-size'
+
+// Both pickers render through the virtualized console list, which needs a
+// viewport height happy-dom does not compute.
+let restoreSizes: () => void
+beforeAll(() => (restoreSizes = stubElementSize()))
+afterAll(() => restoreSizes())
 
 /**
  * Three rows chosen to be adversarial: a key that is already a word
@@ -182,7 +189,9 @@ const mountBuckets = async (
 ) => {
   seedCatalogue(catalogue)
   const wrapper = mount(BoardBucketPicker, {
-    props: { buckets: [LANGUAGE_BOARD, QUOTE_BOARD], selected },
+    // Through the same filter the page applies, so what the picker is handed
+    // here is what it is handed in the app.
+    props: { buckets: browsableBuckets([LANGUAGE_BOARD, QUOTE_BOARD]), selected },
     global: { plugins: [i18n, [VueQueryPlugin, { queryClient }]] }
   })
   mounted.push(wrapper)
@@ -207,10 +216,19 @@ describe('the leaderboard bucket picker', () => {
     expect(triggerText(wrapper)).toContain('15s · code_css')
   })
 
-  it('leaves a quote board named by its id stem — it has no language at all', async () => {
-    const wrapper = await mountBuckets(QUOTE_BOARD.bucket)
+  /**
+   * A quote board has no language to be named by, and naming it by a stem of
+   * its uuid was the version nobody could read. It is no longer offered here at
+   * all: there is one per quote, the corpus is ~15 800, and the board is
+   * reached from the quote instead. This asserts the filter, not the label.
+   */
+  it('never offers a quote board — it has no language, and there are thousands', async () => {
+    const wrapper = await mountBuckets(LANGUAGE_BOARD.bucket)
+    await wrapper.get('[data-testid="boards-bucket-picker"]').trigger('click')
+    await settle()
 
-    expect(triggerText(wrapper)).toContain('quote · 0a6c0103')
+    expect(optionTexts()).toEqual(['15s · CSS (code)4 entries'])
+    expect(document.body.textContent).not.toContain(QUOTE_BOARD.quoteId.slice(0, 8))
   })
 })
 

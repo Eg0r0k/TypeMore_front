@@ -427,8 +427,12 @@ export default {
       label: 'board',
       time: '{seconds}s · {lang}',
       words: '{count} words · {lang}',
-      quote: 'quote · {id}',
       entries: '{count} entries'
+    },
+    /** A quote board: not in the picker (one per quote), reached from the quote. */
+    quote: {
+      back: '← all boards',
+      unknown: 'this quote could not be loaded'
     },
     column: { rank: '#', player: 'player', wpm: 'wpm', acc: 'acc', score: 'score', when: 'when' },
     /** Row affordance — the whole row is the control, this is its accessible name. */

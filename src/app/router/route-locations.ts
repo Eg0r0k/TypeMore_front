@@ -11,6 +11,11 @@ export const routeLocation = {
   reset: (): RouteLocationRaw => ({ name: ROUTE_NAMES.RESET }),
   resetConfirm: (): RouteLocationRaw => ({ name: ROUTE_NAMES.RESET_CONFIRM }),
   servers: (): RouteLocationRaw => ({ name: ROUTE_NAMES.SERVERS }),
+  /** `bucket` selects one board; omitted, the page picks the busiest language one. */
+  boards: (bucket?: string): RouteLocationRaw => ({
+    name: ROUTE_NAMES.BOARDS,
+    ...(bucket === undefined ? {} : { query: { bucket } })
+  }),
   room: (): RouteLocationRaw => ({ name: ROUTE_NAMES.ROOM }),
   profile: (): RouteLocationRaw => ({ name: ROUTE_NAMES.PROFILE })
 } as const

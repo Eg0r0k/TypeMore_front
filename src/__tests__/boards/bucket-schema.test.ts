@@ -6,6 +6,7 @@ import {
   BucketCatalogueSchema,
   BucketInfoSchema,
   isQuoteBucket,
+  quoteBucketKey,
   type BucketInfo
 } from '@shared/api'
 
@@ -49,6 +50,14 @@ describe('the catalogue parses both kinds of board', () => {
     const parsed = v.parse(BucketInfoSchema, QUOTE_BUCKET)
     expect(isQuoteBucket(parsed)).toBe(true)
     expect(parsed).toEqual(QUOTE_BUCKET)
+  })
+
+  it('mirrors the server’s quote key format', () => {
+    // The client builds this key in exactly one place, and only because the
+    // results screen has to link to a board before that board exists in the
+    // catalogue. Asserted against a REAL payload, so the mirror breaks loudly
+    // if `leaderboard.Bucket.Key` ever changes shape.
+    expect(quoteBucketKey(QUOTE_BUCKET.quoteId)).toBe(QUOTE_BUCKET.bucket)
   })
 
   it('parses a mixed catalogue — one bad row must not take the page down', () => {

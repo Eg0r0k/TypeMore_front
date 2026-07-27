@@ -11,8 +11,8 @@ export const NAV_LINKS: readonly HeaderLink[] = [
   },
   {
     icon: IconChartBar,
-    label: 'Leaderbord',
-    link: '/'
+    label: 'Leaderboards',
+    link: '/boards'
   },
   {
     icon: IconNetwork,

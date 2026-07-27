@@ -9,6 +9,7 @@ export {
 
 export {
   isQuoteBucket,
+  quoteBucketKey,
   LanguageBucketSchema,
   QuoteBucketSchema,
   BucketInfoSchema,

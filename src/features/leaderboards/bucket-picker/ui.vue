@@ -50,10 +50,10 @@
    * `time`, words for `words` — so the picker never asks a reader to know that
    * "the number" means milliseconds here and words there.
    *
-   * It is a SEARCHABLE picker rather than a dropdown because the bucket list is
-   * a function of the corpus, and the corpus is now 430 languages. A board
-   * exists for every (mode, dimension, language) anyone has played, plus one per
-   * quote, so this list runs to hundreds of rows and scrolling it is not a way
+   * It is a SEARCHABLE, virtualized picker rather than a dropdown because the
+   * bucket list is a function of the corpus, and the corpus is now 430
+   * languages: a board exists for every (mode, dimension, language) anyone has
+   * played, so this list runs to hundreds of rows and scrolling it is not a way
    * to find anything. Search covers the label AND the raw bucket key, so a URL
    * someone pasted is findable by the string they have in hand.
    */
@@ -73,20 +73,15 @@
   const open = ref(false)
 
   const MS_PER_SECOND = 1000
-  /** Enough of a uuid to tell two quote boards apart in a dropdown. */
-  const QUOTE_ID_STEM = 8
 
   /**
-   * A quote board has no mode, dimension or language to be named by — everyone
-   * types the same fixed text, so it is named by the quote. The catalogue only
-   * carries the id (attribution lives on the board's rows and on
-   * `GET /quotes/{id}`), so the label uses a stem of it, which is at least
-   * unambiguous between two quote boards.
+   * Every bucket here is a LANGUAGE board — the page filters quote boards out
+   * before handing the list over (`browsableBuckets`). A quote board has no
+   * mode, dimension or language to be named by and there is one per quote, so
+   * it is reached from the quote rather than chosen from a list of thousands.
    */
   const label = (bucket: BucketInfo): string => {
-    if (isQuoteBucket(bucket)) {
-      return t('boards.bucket.quote', { id: bucket.quoteId.slice(0, QUOTE_ID_STEM) })
-    }
+    if (isQuoteBucket(bucket)) return bucket.bucket
     const lang = languageName(bucket.lang)
     return bucket.mode === 'time'
       ? t('boards.bucket.time', {
