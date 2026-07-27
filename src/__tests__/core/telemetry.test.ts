@@ -223,17 +223,25 @@ describe('the stripping property: telemetry is invisible', () => {
       expect(computeMetrics(ctx, v2.events, end)).toEqual(computeMetrics(ctx, bare, end))
       expect(scoreOfLog(v2.events, ctx)).toEqual(scoreOfLog(bare, ctx))
       expect(
-        scoreV2OfLog(v2.events, { ...ctx, generation: s.generation }, {
-          blind: false,
-          fading: false,
-          flashlight: false
-        })
+        scoreV2OfLog(
+          v2.events,
+          { ...ctx, generation: s.generation },
+          {
+            blind: false,
+            fading: false,
+            flashlight: false
+          }
+        )
       ).toEqual(
-        scoreV2OfLog(bare, { ...ctx, generation: s.generation }, {
-          blind: false,
-          fading: false,
-          flashlight: false
-        })
+        scoreV2OfLog(
+          bare,
+          { ...ctx, generation: s.generation },
+          {
+            blind: false,
+            fading: false,
+            flashlight: false
+          }
+        )
       )
     })
 
@@ -373,8 +381,11 @@ describe('validateLog and telemetry', () => {
       ...e,
       seq: asSeq(i + 1)
     }))
-    const report = validate(7, { version: EVENT_LOG_VERSION_TELEMETRY, events }, snap)
-      ._unsafeUnwrap()
+    const report = validate(
+      7,
+      { version: EVENT_LOG_VERSION_TELEMETRY, events },
+      snap
+    )._unsafeUnwrap()
     expect(report.verdict).toBe('valid')
     const flag = report.flags.find((f) => f.code === 'unpaired-keyup')
     expect(flag).toBeDefined()
@@ -420,10 +431,7 @@ describe('validateLog and telemetry', () => {
       config: coreCfg({ mode: 'time', durationMs: 5000 }),
       generation: timedGen
     }
-    const events: GameEvent[] = [
-      insertEvent(1, 0, words[0][0]),
-      insertEvent(2, 6000, words[0][1])
-    ]
+    const events: GameEvent[] = [insertEvent(1, 0, words[0][0]), insertEvent(2, 6000, words[0][1])]
     const report = validate(
       9,
       { version: EVENT_LOG_VERSION_TELEMETRY, events },
