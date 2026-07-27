@@ -11,7 +11,7 @@
       </router-view>
     </main>
     <Footer />
-    <asyncAlerts />
+    <Toaster />
   </div>
 </template>
 
@@ -21,10 +21,10 @@
 
   import { Footer } from '@/widgets/footer'
   import { Header } from '@/widgets/header'
+  import { Toaster } from '@/shared/ui/sonner'
   import { defineAsyncComponent } from 'vue'
 
   const asyncFpsIndecator = defineAsyncComponent(() => import('@widgets/fps/ui.vue'))
-  const asyncAlerts = defineAsyncComponent(() => import('@widgets/alerts/ui.vue'))
   const configStore = useConfigStore()
 </script>
 
@@ -51,5 +51,16 @@
     margin: 0 auto;
     padding: 28px 16px;
     background-size: cover;
+  }
+
+  /*
+   * The page area absorbs the slack, which is what actually pins the footer to
+   * the bottom: a full-height COLUMN only reaches the bottom, it does not push
+   * its last child there — without this the footer stops wherever the content
+   * happens to end.
+   */
+  #main {
+    flex: 1;
+    min-height: 0;
   }
 </style>

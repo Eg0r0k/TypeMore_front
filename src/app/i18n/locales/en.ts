@@ -279,6 +279,7 @@ export default {
       placeholder: 'Code',
       hint: 'If you have a room code, enter it here to connect.',
       paste: 'Paste code',
+      pasteFailed: 'could not read the clipboard',
       submit: 'join',
       invalid: 'Room codes are 6 characters',
       notFound: 'Room not found',

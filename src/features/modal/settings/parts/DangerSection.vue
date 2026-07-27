@@ -40,13 +40,12 @@
   import { inject, ref, useTemplateRef } from 'vue'
   import { useI18n } from 'vue-i18n'
 
-  import { AlertType } from '@/entities/alert/types/alertData'
-  import { useAlertStore } from '@/entities/alert'
   import { useConfigStore } from '@/entities/config/model/store'
   import { SETTINGS_NAV } from '../model/registry'
   import defaultConfig from '@/shared/constants/default-config'
   import type { Config } from '@/shared/constants/type'
   import { Button } from '@/shared/ui/button'
+  import { toast } from '@/shared/ui/sonner'
   import SettingRow from './SettingRow.vue'
 
   /**
@@ -58,7 +57,6 @@
   const { t } = useI18n()
   const configStore = useConfigStore()
   const config = configStore.config
-  const alerts = useAlertStore()
 
   const nav = inject(SETTINGS_NAV, undefined)
   const fileRef = useTemplateRef<HTMLInputElement>('fileRef')
@@ -69,7 +67,7 @@
   const resetSettings = async (): Promise<void> => {
     confirmingReset.value = false
     await configStore.resetSettings()
-    alerts.addAlert({ type: AlertType.Success, msg: t('settings.reset.done'), duration: 2000 })
+    toast.success(t('settings.reset.done'))
   }
 
   const exportSettings = (): void => {
@@ -97,11 +95,7 @@
       parsed = null
     }
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      alerts.addAlert({
-        type: AlertType.Error,
-        msg: t('settings.data.importFailed'),
-        duration: 3000
-      })
+      toast.error(t('settings.data.importFailed'))
       return
     }
 
@@ -129,14 +123,10 @@
     }
 
     if (applied === 0) {
-      alerts.addAlert({
-        type: AlertType.Error,
-        msg: t('settings.data.importFailed'),
-        duration: 3000
-      })
+      toast.error(t('settings.data.importFailed'))
       return
     }
-    alerts.addAlert({ type: AlertType.Success, msg: t('settings.data.imported'), duration: 2000 })
+    toast.success(t('settings.data.imported'))
   }
 </script>
 

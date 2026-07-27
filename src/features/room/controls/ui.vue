@@ -1,22 +1,17 @@
 <template>
   <div class="controls">
-    <template v-if="session.isHost">
-      <Button data-testid="start-button" :disabled="!canStart" @click="session.startMatch()">
-        <IconPlayerPlay />
-        {{ t('room.start') }}
-      </Button>
-      <Typography
-        v-if="gateHint"
-        data-testid="start-hint"
-        class="controls__hint"
-        size="xs"
-        color="sub"
-      >
-        {{ gateHint }}
-      </Typography>
-    </template>
+    <!--
+      The button stays live when the gate is closed. A disabled control with a
+      line of small print under it makes the player read to find out why; a
+      press that answers is one gesture, and the answer lands where every other
+      answer in this app lands.
+    -->
+    <Button v-if="session.isHost" data-testid="start-button" @click="onStart">
+      <IconPlayerPlay />
+      {{ t('room.start') }}
+    </Button>
     <Button
-      v-else
+      v-if="!session.isHost"
       data-testid="ready-button"
       :color="isReady ? 'gray' : undefined"
       @click="session.setReady(!isReady)"
@@ -38,7 +33,7 @@
   import type { RoomPlayer } from '@/entities/lobby'
   import { useMatchSessionStore } from '@/entities/match'
   import { Button } from '@/shared/ui/button'
-  import { Typography } from '@/shared/ui/typography'
+  import { toast } from '@/shared/ui/sonner'
   import IconCheck from '~icons/tabler/check'
   import IconX from '~icons/tabler/x'
   import IconLogout from '~icons/tabler/logout'
@@ -46,8 +41,9 @@
 
   /**
    * Lobby actions. `start_match` gating mirrors §3: at least two seats and
-   * every NON-host seat ready (the host itself never needs to ready up). A
-   * server-side `not_ready` rejection surfaces through the same hint line.
+   * every NON-host seat ready (the host itself never needs to ready up). The
+   * gate is explained on the attempt, as a toast, rather than as standing small
+   * print under a dead button.
    */
   const { t } = useI18n()
   const session = useMatchSessionStore()
@@ -60,12 +56,18 @@
     () =>
       players.value.length >= 2 && nonHostSeats.value.every((player: RoomPlayer) => player.ready)
   )
-  const gateHint = computed(() => {
-    if (session.lastError?.code === 'not_ready') return t('room.gate.notReady')
-    if (canStart.value) return null
-    if (players.value.length < 2) return t('room.gate.needPlayers')
-    return t('room.gate.notReady')
-  })
+  /**
+   * Why the match cannot start, said only when someone tries. The gate itself is
+   * still §3's — two seats, every non-host seat ready — and the server enforces
+   * it regardless of what this button does.
+   */
+  const onStart = (): void => {
+    if (canStart.value) {
+      session.startMatch()
+      return
+    }
+    toast.warning(players.value.length < 2 ? t('room.gate.needPlayers') : t('room.gate.notReady'))
+  }
 
   const isReady = computed(
     () =>
@@ -78,9 +80,5 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-
-    &__hint {
-      text-align: center;
-    }
   }
 </style>

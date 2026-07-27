@@ -79,8 +79,6 @@
   import { useI18n } from 'vue-i18n'
   import { useDebounceFn } from '@vueuse/core'
 
-  import { AlertType } from '@/entities/alert/types/alertData'
-  import { useAlertStore } from '@/entities/alert'
   import { useConfigStore } from '@/entities/config/model/store'
   import { SETTINGS_NAV } from '../model/registry'
   import type { BackgroundSize } from '@/shared/constants/type'
@@ -88,6 +86,7 @@
   import { useThemes } from '@/shared/lib/hooks/useThemes'
   import { validateConfig } from '@/shared/lib/helpers/validation'
   import { Button } from '@/shared/ui/button'
+  import { toast } from '@/shared/ui/sonner'
   import { TextInput } from '@/shared/ui/input'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
   import { Typography } from '@/shared/ui/typography'
@@ -112,7 +111,6 @@
   const { t } = useI18n()
   const configStore = useConfigStore()
   const config = configStore.config
-  const alerts = useAlertStore()
   const { refColors, themesOnUnmounted } = useThemes()
 
   const nav = inject(SETTINGS_NAV, undefined)
@@ -193,14 +191,9 @@
     )
     try {
       await navigator.clipboard.writeText(JSON.stringify(theme, null, 2))
-      alerts.addAlert({ type: AlertType.Success, msg: t('settings.colors.copied'), duration: 2000 })
+      toast.success(t('settings.colors.copied'))
     } catch (cause) {
-      alerts.addAlert({
-        type: AlertType.Error,
-        msg: t('settings.colors.copyFailed'),
-        title: `${cause}`,
-        duration: 2000
-      })
+      toast.error(t('settings.colors.copyFailed'), { description: String(cause) })
     }
   }
 

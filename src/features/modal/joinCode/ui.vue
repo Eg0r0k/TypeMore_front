@@ -43,11 +43,10 @@
 <script lang="ts" setup>
   import { computed, ref, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
-  import { useAlertStore } from '@/entities/alert'
-  import { AlertType } from '@/entities/alert/types/alertData'
   import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog'
   import { useMatchSessionStore } from '@/entities/match'
   import { Button } from '@/shared/ui/button'
+  import { toast } from '@/shared/ui/sonner'
   import { TextInput } from '@/shared/ui/input'
   import { Typography } from '@/shared/ui/typography'
   import IconClipboard from '~icons/tabler/clipboard'
@@ -62,7 +61,6 @@
   const { t } = useI18n()
   const inputCode = ref('')
   const invalid = ref(false)
-  const alert = useAlertStore()
   const session = useMatchSessionStore()
 
   const normalized = computed(() => inputCode.value.trim().toUpperCase())
@@ -88,12 +86,7 @@
       const text = await navigator.clipboard.readText()
       inputCode.value = text
     } catch (e) {
-      alert.addAlert({
-        type: AlertType.Error,
-        msg: `Paste from clipboard failed: ${e}`,
-        title: 'Clipboard Error',
-        duration: 0
-      })
+      toast.error(t('servers.join.pasteFailed'), { description: String(e) })
     }
   }
 

@@ -1,11 +1,12 @@
 /**
  * Lobby controls against the match-session contract (§3 `start_match` gating):
- * the start button is host-only and enabled only with ≥2 seats and every
- * non-host seat ready; non-hosts get a ready/un-ready toggle (Δ1).
+ * the start button is host-only and only actually starts with ≥2 seats and
+ * every non-host seat ready — a press that cannot start explains itself in a
+ * toast; non-hosts get a ready/un-ready toggle (Δ1).
  * The session store is a hand-built reactive stub — no Pinia, no transport.
  */
 import { mount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Mock } from 'vitest'
 import { reactive } from 'vue'
 
@@ -16,6 +17,14 @@ const h = vi.hoisted(() => ({ store: {} as unknown }))
 vi.mock('@/entities/match', () => ({
   useMatchSessionStore: () => h.store
 }))
+
+vi.mock('@/shared/ui/sonner', () => ({
+  toast: { warning: vi.fn(), error: vi.fn(), success: vi.fn(), info: vi.fn() }
+}))
+
+import { toast } from '@/shared/ui/sonner'
+
+beforeEach(() => vi.mocked(toast.warning).mockClear())
 
 vi.mock('~icons/tabler/check', () => ({
   default: { name: 'IconCheck', template: '<svg data-icon="check" />' }
@@ -88,34 +97,39 @@ function makeStore(opts: { selfId: string; hostId: string; seats: SeatSpec[] }):
 
 const mountControls = () => mount(RoomControls, { global: { plugins: [i18n] } })
 
+/**
+ * The gate is §3's — two seats, every non-host seat ready — but it is no longer
+ * a DISABLED button with standing small print under it. The button always
+ * presses; a press that cannot start the match says why, once, as a toast. So
+ * what these assert is the toast and the absence of `start_match`, not an
+ * attribute.
+ */
 describe('RoomControls — start gating (host)', () => {
-  it('disables start with a single seat and hints for more players', () => {
-    makeStore({ selfId: 'p1', hostId: 'p1', seats: [{ playerId: 'p1' }] })
+  it('refuses a single-seat start and says what is missing', async () => {
+    const store = makeStore({ selfId: 'p1', hostId: 'p1', seats: [{ playerId: 'p1' }] })
     const wrapper = mountControls()
 
-    const start = wrapper.find('[data-testid="start-button"]')
-    expect(start.exists()).toBe(true)
-    expect(start.attributes('disabled')).toBeDefined()
-    expect(wrapper.find('[data-testid="start-hint"]').text()).toBe(
-      'waiting for at least one more player'
-    )
+    await wrapper.find('[data-testid="start-button"]').trigger('click')
+
+    expect(store.startMatch).not.toHaveBeenCalled()
+    expect(toast.warning).toHaveBeenCalledWith('waiting for at least one more player')
   })
 
-  it('disables start while any non-host seat is unready', () => {
-    makeStore({
+  it('refuses to start while any non-host seat is unready', async () => {
+    const store = makeStore({
       selfId: 'p1',
       hostId: 'p1',
       seats: [{ playerId: 'p1' }, { playerId: 'p2', ready: true }, { playerId: 'p3', ready: false }]
     })
     const wrapper = mountControls()
 
-    expect(wrapper.find('[data-testid="start-button"]').attributes('disabled')).toBeDefined()
-    expect(wrapper.find('[data-testid="start-hint"]').text()).toBe(
-      'waiting for everyone to ready up'
-    )
+    await wrapper.find('[data-testid="start-button"]').trigger('click')
+
+    expect(store.startMatch).not.toHaveBeenCalled()
+    expect(toast.warning).toHaveBeenCalledWith('waiting for everyone to ready up')
   })
 
-  it('enables start with 2+ seats and every non-host seat ready (host itself unready)', async () => {
+  it('starts with 2+ seats and every non-host seat ready (host itself unready)', async () => {
     const store = makeStore({
       selfId: 'p1',
       hostId: 'p1',
@@ -126,26 +140,10 @@ describe('RoomControls — start gating (host)', () => {
     })
     const wrapper = mountControls()
 
-    const start = wrapper.find('[data-testid="start-button"]')
-    expect(start.attributes('disabled')).toBeUndefined()
-    expect(wrapper.find('[data-testid="start-hint"]').exists()).toBe(false)
+    await wrapper.find('[data-testid="start-button"]').trigger('click')
 
-    await start.trigger('click')
     expect(store.startMatch).toHaveBeenCalledTimes(1)
-  })
-
-  it('surfaces a server-side not_ready rejection through the hint', () => {
-    const store = makeStore({
-      selfId: 'p1',
-      hostId: 'p1',
-      seats: [{ playerId: 'p1' }, { playerId: 'p2', ready: true }]
-    })
-    store.lastError = { code: 'not_ready', message: 'not ready' }
-    const wrapper = mountControls()
-
-    expect(wrapper.find('[data-testid="start-hint"]').text()).toBe(
-      'waiting for everyone to ready up'
-    )
+    expect(toast.warning).not.toHaveBeenCalled()
   })
 })
 

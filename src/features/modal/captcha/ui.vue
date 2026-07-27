@@ -16,8 +16,7 @@
 </template>
 
 <script setup lang="ts">
-  import { useAlertStore } from '@/entities/alert'
-  import { AlertType } from '@/entities/alert/types/alertData'
+  import { toast } from '@/shared/ui/sonner'
   import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog'
   import { RecaptchaV2 } from 'vue3-recaptcha-v2'
 
@@ -28,19 +27,12 @@
     expired: []
   }>()
 
-  const alertStore = useAlertStore()
-
   const handleWidgetId = (widgetId: number) => {
     console.log(widgetId)
   }
 
   const showAlert = (message: string): void => {
-    alertStore.addAlert({
-      type: AlertType.Error,
-      title: 'Error',
-      msg: message,
-      duration: 3000
-    })
+    toast.error(message)
   }
 
   const handleLoadCallback = (response: unknown) => {
