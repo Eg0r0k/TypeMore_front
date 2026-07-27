@@ -1,5 +1,6 @@
 import type { Directive } from 'vue'
 import { getInputOrTextarea, type TextInputComponent } from './utils'
+import logger from '@/shared/lib/helpers/logger'
 
 const VSelect: Directive = {
   mounted(el: HTMLElement & TextInputComponent) {
@@ -8,7 +9,7 @@ const VSelect: Directive = {
       inputEl.focus()
       inputEl.select()
     } else {
-      console.warn('[v-select] Не удалось найти элемент <input> или <textarea>.')
+      logger.warn('[v-select] Не удалось найти элемент <input> или <textarea>.')
     }
   }
 }

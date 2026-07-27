@@ -4,6 +4,7 @@ import { useUiLanguage } from '@/shared/lib/hooks/useUiLanguage'
 import { useFavicon } from '@vueuse/core'
 import { THEMES_KEY } from '@/shared/constants/inject-keys'
 import { onBeforeMount, onMounted, onUnmounted, provide, ref } from 'vue'
+import logger from '@/shared/lib/helpers/logger'
 
 export const useAppSetup = () => {
   const configStore = useConfigStore()
@@ -31,7 +32,7 @@ export const useAppSetup = () => {
         cookieOpen.value = true
       }
     } catch (e) {
-      console.error('Failed to get localstorage', e)
+      logger.error('Failed to get localstorage', e)
     }
   })
 

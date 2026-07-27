@@ -6,7 +6,6 @@
         Confirm you are not a robot to continue.
       </DialogDescription>
       <RecaptchaV2
-        @widget-id="handleWidgetId"
         @error-callback="handleErrorCallback"
         @expired-callback="handleExpiredCallback"
         @load-callback="handleLoadCallback"
@@ -19,6 +18,7 @@
   import { toast } from '@/shared/ui/sonner'
   import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog'
   import { RecaptchaV2 } from 'vue3-recaptcha-v2'
+  import logger from '@/shared/lib/helpers/logger'
 
   const open = defineModel<boolean>('open', { required: true })
   const emit = defineEmits<{
@@ -26,10 +26,6 @@
     error: []
     expired: []
   }>()
-
-  const handleWidgetId = (widgetId: number) => {
-    console.log(widgetId)
-  }
 
   const showAlert = (message: string): void => {
     toast.error(message)
@@ -39,7 +35,7 @@
     if (typeof response === 'string') {
       emit('verified', response)
     } else {
-      console.error('Unexpected response type from reCAPTCHA')
+      logger.error('Unexpected response type from reCAPTCHA')
       showAlert('An unexpected error occurred. Please try again.')
     }
   }

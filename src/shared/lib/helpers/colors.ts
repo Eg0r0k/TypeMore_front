@@ -1,6 +1,8 @@
 /**
  * Clamps a number between min and max values
  */
+import logger from './logger'
+
 const clamp = (num: number, min: number, max: number): number => {
   return Math.min(Math.max(num, min), max)
 }
@@ -47,7 +49,7 @@ export const lightenColor = (color: string, amount: number): string => {
 
     return rgbToHex(lighten(r), lighten(g), lighten(b))
   } catch (error) {
-    console.error('Error in lightenColor:', error)
+    logger.error('Error in lightenColor:', error)
     return '#FFFFFF' // Возвращаем белый как fallback
   }
 }

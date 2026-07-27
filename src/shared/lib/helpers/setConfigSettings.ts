@@ -4,6 +4,7 @@ import { loadDictionaryBody, type DictionaryBody } from '@shared/api'
 import { configState, setConfig } from './config'
 import { ConfigModes } from '@/shared/constants/type'
 import defaultConfig from '@/shared/constants/default-config'
+import logger from './logger'
 
 //TODO: Add validation for some func
 export const setWords = (amount: number) => {
@@ -22,7 +23,6 @@ export const toggleFps = () => {
   configState.showFps = !configState.showFps
 }
 export const setMode = (mode: ConfigModes) => {
-  console.log('Setting mode to:', mode)
   setConfig('mode', mode)
 }
 export const toggleKeyboard = () => {
@@ -40,7 +40,7 @@ export const setLanguage = async (lang: string): Promise<void> => {
       const languageObj = await loadDictionaryBody(lang)
       currentLang.value = languageObj
     } catch (error) {
-      console.error(`Error fetching language file for ${lang}:`, error)
+      logger.error(`Error fetching language file for ${lang}:`, error)
     }
   }
 }

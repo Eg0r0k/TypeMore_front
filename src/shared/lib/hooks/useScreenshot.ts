@@ -1,5 +1,6 @@
 import type { Ref } from 'vue'
 import { ref } from 'vue'
+import logger from '@/shared/lib/helpers/logger'
 
 /**
  * Copy an element to the clipboard as a PNG.
@@ -36,7 +37,7 @@ export function useScreenshot(target: Ref<HTMLElement | null>) {
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
       return true
     } catch (error) {
-      console.error('screenshot failed', error)
+      logger.error('screenshot failed', error)
       return false
     } finally {
       busy.value = false
