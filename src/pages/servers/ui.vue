@@ -33,6 +33,7 @@
   import { ServerPing } from '@/features/servers/ping'
   import { routeLocation } from '@/app/router/route-locations'
   import { useMatchSessionStore } from '@/entities/match'
+  import logger from '@/shared/lib/helpers/logger'
 
   /**
    * Multiplayer entry point. PROTOCOL v1 has no online-count message, so the
@@ -61,8 +62,15 @@
       case 'in_room':
       case 'in_match':
         return t('servers.status.connected')
-      default:
+      case 'disconnected':
         return t('servers.status.offline')
+      default: {
+        // Exhaustiveness: a new TransportState fails to compile here; at runtime
+        // the fallback stays what it always was.
+        const unhandled: never = session.connection
+        logger.warn('unhandled transport state', unhandled)
+        return t('servers.status.offline')
+      }
     }
   })
 

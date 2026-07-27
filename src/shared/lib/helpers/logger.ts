@@ -1,11 +1,11 @@
 type LogLevel = 'info' | 'warn' | 'error' | 'debug'
 
 interface Logger {
-  log: (level: LogLevel, message: string, ...data: any[]) => void
-  info: (message: string, ...data: any[]) => void
-  warn: (message: string, ...data: any[]) => void
-  error: (message: string, ...data: any[]) => void
-  debug: (message: string, ...data: any[]) => void
+  log: (level: LogLevel, message: string, ...data: unknown[]) => void
+  info: (message: string, ...data: unknown[]) => void
+  warn: (message: string, ...data: unknown[]) => void
+  error: (message: string, ...data: unknown[]) => void
+  debug: (message: string, ...data: unknown[]) => void
 }
 
 const colors = {

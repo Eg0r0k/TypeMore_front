@@ -221,3 +221,29 @@ keydown/keyup.
 **Риск и чем прикрыт**: низкий — logger пишет через `console.log`, тесты за
 `console.error/warn` этих модулей не шпионят (проверено); vue-tsc + vitest
 зелёные.
+
+### Стейдж 3 — TS-мелочи (2026-07-28)
+
+**Что**:
+- `validation.ts`: `any` → `unknown` в `ValidatorFn` и `validateConfig`; в
+  валидаторы без typeof-guard'ов добавлены guard'ы (`mode`, `backgroundSize`,
+  `quoteGroup`, `minWpm`, `stopOnError`, `smoothCaret`, `caretStyle`, `words`,
+  `time`). Поведение идентично: `includes`/сравнение на чужом типе и раньше
+  давали false → то же сообщение об ошибке.
+- `logger.ts`: `any[]` → `unknown[]`.
+- `pages/servers/ui.vue`: switch по `TransportState` стал исчерпывающим —
+  явный `case 'disconnected'` + default-guard с `never`-присваиванием и
+  `logger.warn` (рантайм-фолбэк прежний, недостижим).
+- `THEMES_KEY` типизирован: `InjectionKey<MaybeRef<Theme[]>>` (type-only импорт
+  `Theme` — рантайм-цикла shared/constants ↔ shared/api нет);
+  `modal/themes/ui.vue` — каст `as Ref<Theme[]>` заменён на
+  `inject(THEMES_KEY, [])`. Найдено попутно: старый каст ВРАЛ — приложение
+  провайдит `reactive<Theme[]>` (не Ref), работало только благодаря
+  template-unwrap; `MaybeRef` описывает оба реальных случая (прод и тест).
+
+**Исключение (замороженная зона)**: глотающий `default:` в
+`pages/home/ui.vue:188` из плана стейджа НЕ тронут — конфликт с заморозкой
+`pages/home` (setup-пайплайн, задача keydown/keyup); заморозка приоритетнее.
+
+**Риск и чем прикрыт**: низкий; vue-tsc + vitest зелёные, eslint ровно
+58 предупреждений (базлайн).

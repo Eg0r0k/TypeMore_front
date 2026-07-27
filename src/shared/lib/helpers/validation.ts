@@ -2,14 +2,17 @@ import type { Config } from '@/shared/constants/type'
 import { isSupportedLocale } from '@/shared/lib/i18n/locale'
 import { SOUND_PACKS } from '@/shared/constants/sound-packs'
 
-type ValidatorFn = (value: any) => boolean | string
+type ValidatorFn = (value: unknown) => boolean | string
 
 const validators: Record<keyof Config, ValidatorFn> = {
   //TODO: Dont forget make infiniy mode
   words: (value) =>
-    (Number.isInteger(value) && value >= 0 && value <= 10000) || 'Words must be a positive integer',
+    (typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 10000) ||
+    'Words must be a positive integer',
   //TODO: Dont forget make infiniy mode
-  time: (value) => (Number.isInteger(value) && value > 0) || 'Time must be a non-negative integer',
+  time: (value) =>
+    (typeof value === 'number' && Number.isInteger(value) && value > 0) ||
+    'Time must be a non-negative integer',
   devTools: (value) => typeof value === 'boolean' || 'Show devtools must be boolean',
   language: (value) =>
     (typeof value === 'string' && value.length > 0) || 'Language must be a non-empty string',
@@ -22,7 +25,7 @@ const validators: Record<keyof Config, ValidatorFn> = {
   theme: (value) =>
     (typeof value === 'string' && value.length > 0) || 'Theme must be a non-empty string',
   mode: (value) => {
-    if (['words', 'free', 'time', 'quote'].includes(value)) {
+    if (typeof value === 'string' && ['words', 'free', 'time', 'quote'].includes(value)) {
       return true
     }
     return 'Invalid mode selected'
@@ -41,7 +44,8 @@ const validators: Record<keyof Config, ValidatorFn> = {
     (typeof value === 'string' && (value.length === 0 || value.startsWith('data:image/'))) ||
     'Local background must be an image data URL',
   backgroundSize: (value) =>
-    ['cover', 'contain', 'max'].includes(value) || 'Invalid background size',
+    (typeof value === 'string' && ['cover', 'contain', 'max'].includes(value)) ||
+    'Invalid background size',
   showFps: (value) => typeof value === 'boolean' || 'Show FPS must be a boolean',
   soundVolume: (value) =>
     (typeof value === 'number' && value >= 0 && value <= 1.0) ||
@@ -63,19 +67,27 @@ const validators: Record<keyof Config, ValidatorFn> = {
   blind: (value) => typeof value === 'boolean' || 'Blind must be a boolean',
   reverse: (value) => typeof value === 'boolean' || 'Reverse must be a boolean',
   quoteGroup: (value) =>
-    ['all', 'short', 'medium', 'long', 'thicc'].includes(value) || 'Invalid quote length',
-  minWpm: (value) => [0, 60, 80, 100].includes(value) || 'MinSpeed must be 0, 60, 80 or 100',
+    (typeof value === 'string' && ['all', 'short', 'medium', 'long', 'thicc'].includes(value)) ||
+    'Invalid quote length',
+  minWpm: (value) =>
+    (typeof value === 'number' && [0, 60, 80, 100].includes(value)) ||
+    'MinSpeed must be 0, 60, 80 or 100',
   fading: (value) => typeof value === 'boolean' || 'Fading must be a boolean',
   flashlight: (value) => typeof value === 'boolean' || 'Flashlight must be a boolean',
   freedomMode: (value) => typeof value === 'boolean' || 'Freedom mode must be a boolean',
-  stopOnError: (value) => ['off', 'word', 'letter'].includes(value) || 'Invalid stop on error',
+  stopOnError: (value) =>
+    (typeof value === 'string' && ['off', 'word', 'letter'].includes(value)) ||
+    'Invalid stop on error',
   quickEnd: (value) => typeof value === 'boolean' || 'Quick end must be a boolean',
   smoothCaret: (value) =>
-    ['off', 'slow', 'medium', 'fast'].includes(value) || 'Invalid smooth caret',
+    (typeof value === 'string' && ['off', 'slow', 'medium', 'fast'].includes(value)) ||
+    'Invalid smooth caret',
   caretStyle: (value) =>
-    ['off', 'default', 'block', 'outline', 'underline'].includes(value) || 'Invalid caret style'
+    (typeof value === 'string' &&
+      ['off', 'default', 'block', 'outline', 'underline'].includes(value)) ||
+    'Invalid caret style'
 }
-export const validateConfig = (key: keyof Config, value: any): boolean | string => {
+export const validateConfig = (key: keyof Config, value: unknown): boolean | string => {
   const validator = validators[key]
 
   return validator ? validator(value) : true

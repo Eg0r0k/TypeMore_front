@@ -20,9 +20,8 @@
 </template>
 
 <script lang="ts" setup>
-  import { inject, type Ref } from 'vue'
+  import { inject } from 'vue'
   import { ConsoleModal } from '../console'
-  import type { Theme } from '@shared/api'
   import { Typography } from '@/shared/ui/typography'
   import { useConfigStore } from '@/entities/config/model/store'
   import { THEMES_KEY } from '@/shared/constants/inject-keys'
@@ -30,7 +29,8 @@
   const open = defineModel<boolean>('open', { required: true })
 
   const configStore = useConfigStore()
-  const themeList = inject(THEMES_KEY) as Ref<Theme[]>
+  // The key is typed; the default covers a mount with no provider (unit tests).
+  const themeList = inject(THEMES_KEY, [])
 
   const changeTheme = async (name: string | string[] | null): Promise<void> => {
     if (typeof name === 'string') await configStore.setTheme(name)
