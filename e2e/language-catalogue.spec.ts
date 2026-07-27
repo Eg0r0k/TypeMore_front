@@ -28,18 +28,33 @@ async function openLanguagePicker(page: import('@playwright/test').Page): Promis
   await expect(page.getByRole('listbox')).toBeVisible()
 }
 
+/**
+ * How long the list is, as the list itself reports it.
+ *
+ * The rows are virtualized, so counting DOM nodes counts the WINDOW, not the
+ * catalogue — `aria-setsize` is the number a screen reader is given and the
+ * only honest measure of "how many are on offer". It is also the thing that
+ * breaks if the list is ever silently capped.
+ */
+const offeredCount = async (page: import('@playwright/test').Page): Promise<number> =>
+  Number(await page.getByRole('option').first().getAttribute('aria-setsize'))
+
 test('the picker offers the whole catalogue, not a truncated head of it', async ({ page }) => {
   await openLanguagePicker(page)
 
   // 430 = the three hand-written stub rows plus 427 filler. The assertion is on
   // the exact count because "some of them" is how a silently capped list looks.
-  await expect(page.getByRole('option')).toHaveCount(430)
+  await expect.poll(() => offeredCount(page)).toBe(430)
 
-  // A row far past any plausible truncation point is present and named by the
+  // ...and only a window of them is mounted. This is the other half of the same
+  // claim: a list that offers 430 rows by rendering 430 rows is the version
+  // that made the picker slow.
+  expect(await page.getByRole('option').count()).toBeLessThan(430)
+
+  // A row far past any plausible truncation point is reachable and named by the
   // catalogue — the key never reaches the screen.
-  const exotic = page.getByRole('option', { name: EXOTIC.name, exact: true })
-  await exotic.scrollIntoViewIfNeeded()
-  await expect(exotic).toBeVisible()
+  await page.getByRole('textbox').first().fill(EXOTIC.name)
+  await expect(page.getByRole('option', { name: EXOTIC.name, exact: true })).toBeVisible()
 })
 
 test('search narrows the full catalogue', async ({ page }) => {
@@ -49,7 +64,7 @@ test('search narrows the full catalogue', async ({ page }) => {
   // One tenth of the 427 filler rows carry the `zu` stem: i % 10 === 9, i.e.
   // 9 through 419, which is 42 of them.
   await search.fill('filler zu')
-  await expect(page.getByRole('option')).toHaveCount(42)
+  await expect.poll(() => offeredCount(page)).toBe(42)
 
   await search.fill(EXOTIC.name)
   await expect(page.getByRole('option')).toHaveCount(1)

@@ -4,11 +4,18 @@
  * `document`, not the wrapper.
  */
 import { mount } from '@vue/test-utils'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { nextTick } from 'vue'
 
 import { i18n } from '@app/i18n'
 import { ConsoleModal } from '@/features/modal/console'
+import { stubElementSize } from './helpers/element-size'
+
+// The option list is virtualized: without a viewport height the virtualizer
+// renders no rows at all in happy-dom.
+let restoreSizes: () => void
+beforeAll(() => (restoreSizes = stubElementSize()))
+afterAll(() => restoreSizes())
 
 const global = { plugins: [i18n] }
 

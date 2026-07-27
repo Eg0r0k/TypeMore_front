@@ -5,11 +5,18 @@
  */
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, reactive, ref } from 'vue'
 
 import { i18n } from '@app/i18n'
 import { THEMES_KEY } from '@/shared/constants/inject-keys'
+import { stubElementSize } from './helpers/element-size'
+
+// The themes dialog is a console list, and that list is virtualized: with no
+// viewport height happy-dom renders zero rows.
+let restoreSizes: () => void
+beforeAll(() => (restoreSizes = stubElementSize()))
+afterAll(() => restoreSizes())
 
 vi.mock('~icons/tabler/cookie', () => ({
   default: { name: 'IconCookie', template: '<svg data-icon="cookie" />' }

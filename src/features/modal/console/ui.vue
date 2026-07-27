@@ -19,20 +19,23 @@
           <SearchBar v-model="searchQuery" :placeholder="searchPlaceholder ?? t('picker.search')" />
         </div>
 
-        <Scrollable class="console-modal__scroll">
-          <div
-            ref="itemsList"
-            role="listbox"
-            :aria-label="title"
-            :aria-multiselectable="multiple"
-            class="console-modal__body"
-          >
+        <VirtualScrollable
+          ref="itemsList"
+          role="listbox"
+          :aria-label="title"
+          :aria-multiselectable="multiple"
+          class="console-modal__scroll"
+          :items="filteredItems"
+          :estimate-size="ITEM_HEIGHT"
+          :get-item-key="keyAt"
+        >
+          <template #default="{ item, index }">
             <div
-              v-for="(item, index) in filteredItems"
-              :key="valueOf(item)"
               :data-index="index"
               role="option"
               :aria-selected="isSelected(item)"
+              :aria-setsize="filteredItems.length"
+              :aria-posinset="index + 1"
               class="console-modal__item"
               :class="{
                 'console-modal__item--active': isSelected(item),
@@ -56,12 +59,14 @@
                 :class="{ 'console-modal__check--on': isSelected(item) }"
               />
             </div>
+          </template>
 
-            <Typography v-if="!filteredItems.length" class="console-modal__empty" color="sub">
+          <template #empty>
+            <Typography class="console-modal__empty" color="sub">
               {{ t('picker.empty') }}
             </Typography>
-          </div>
-        </Scrollable>
+          </template>
+        </VirtualScrollable>
 
         <div v-if="multiple" class="console-modal__footer">
           <Typography size="xs" color="sub">
@@ -81,9 +86,9 @@
 
   import { Button } from '@/shared/ui/button'
   import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/shared/ui/dialog'
-  import { Scrollable } from '@/shared/ui/scrollable'
   import { SearchBar } from '@/shared/ui/search'
   import { Typography } from '@/shared/ui/typography'
+  import { VirtualScrollable } from '@/shared/ui/virtualScrollable'
 
   /**
    * Searchable console-style picker (the themes/language modal): a dialog with a
@@ -96,6 +101,16 @@
    * — a language is findable by its name AND by the key it is stored under.
    * Custom rows go through the `#item` slot; the option wrapper (role,
    * aria-selected, focus/active state, click) is ours.
+   *
+   * The list is VIRTUALISED, because both of its real callers outgrew a plain
+   * `v-for`: the language picker is 430 rows and the board picker is one row per
+   * (mode, size, language) plus one per quote, which the corpus puts in the
+   * thousands. Only the visible window is in the DOM, so an option a keyboard
+   * cursor lands on may not be mounted — hence `scrollToIndex` on the
+   * virtualizer rather than `scrollIntoView` on a node that might not exist, and
+   * `aria-setsize` / `aria-posinset` on every option so a screen reader (and a
+   * test) is told how long the list really is instead of counting what is
+   * currently rendered.
    */
   interface Props {
     items?: T[]
@@ -130,9 +145,24 @@
 
   const { t } = useI18n()
 
+  /** Row height estimate; rows are one line, and the virtualizer measures the rest. */
+  const ITEM_HEIGHT = 28
+
   const searchQuery = ref('')
   const focusedItemIndex = ref(-1)
-  const itemsList = ref<HTMLElement | null>(null)
+
+  /**
+   * Structural, not `InstanceType<typeof VirtualScrollable>`: the component is
+   * generic, so naming its instance type here would pin `T` to whatever this
+   * file happens to infer. Only the one method is used.
+   */
+  interface VirtualList {
+    scrollToIndex: (
+      index: number,
+      options?: { align?: 'start' | 'center' | 'end' | 'auto' }
+    ) => void
+  }
+  const itemsList = ref<VirtualList | null>(null)
 
   const fieldOf = (item: T, key: string): string => {
     if (typeof item === 'string') return item
@@ -142,6 +172,16 @@
 
   const labelOf = (item: T): string => fieldOf(item, props.searchKey)
   const valueOf = (item: T): string => fieldOf(item, props.valueKey ?? props.searchKey)
+
+  /**
+   * Row identity for the virtualizer, which addresses rows by index. Keyed by
+   * VALUE rather than by index so a row keeps its measured height when the
+   * search query re-orders the list under it.
+   */
+  const keyAt = (index: number): string | number => {
+    const item = filteredItems.value[index]
+    return item === undefined ? index : valueOf(item)
+  }
 
   /** Every field the query is tested against: the label, plus whatever `searchKeys` adds. */
   const matches = (item: T, term: string): boolean =>
@@ -181,10 +221,14 @@
     if (item !== undefined) selectItem(item)
   }
 
+  /**
+   * Bring the keyboard cursor into view. `auto` is the virtualizer's "only if it
+   * is off screen", which is what `scrollIntoView({ block: 'nearest' })` used to
+   * do — and unlike that call it works for a row that is not mounted at all.
+   */
   const revealFocusedItem = (): void => {
-    itemsList.value
-      ?.querySelector<HTMLElement>(`[data-index="${focusedItemIndex.value}"]`)
-      ?.scrollIntoView({ block: 'nearest' })
+    if (focusedItemIndex.value < 0) return
+    itemsList.value?.scrollToIndex(focusedItemIndex.value, { align: 'auto' })
   }
 
   const navigateItems = async (step: 1 | -1): Promise<void> => {
@@ -258,13 +302,8 @@
       min-height: 0;
     }
 
-    &__body {
-      display: grid;
-      align-content: start;
-      cursor: pointer;
-      user-select: none;
-    }
-
+    // The rows are positioned by the virtualizer, so `cursor` and `user-select`
+    // moved onto the row itself — there is no list wrapper left to carry them.
     &__item {
       display: flex;
       gap: 8px;
@@ -272,6 +311,8 @@
       justify-content: space-between;
       padding: 4px 20px;
       color: var(--sub-color);
+      cursor: pointer;
+      user-select: none;
       outline: none;
       transition: background-color var(--transition-duration) linear;
 
