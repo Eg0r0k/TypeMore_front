@@ -1,7 +1,2 @@
-import type { Component } from 'vue'
-
-export interface FooterLink {
-  icon: Component
-  label: string
-  link: string
-}
+// Compatibility shim: the link shape belongs to the feature that renders it.
+export type { FooterLink } from '@/features/footer/links'
