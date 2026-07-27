@@ -1,18 +1,5 @@
-export const ROUTE_NAMES = {
-  HOME: 'home',
-  LOGIN: 'login',
-  REGISTER: 'register',
-  VERIFY: 'verify',
-  RESET: 'reset',
-  RESET_CONFIRM: 'reset-confirm',
-  CALLBACK: 'auth-callback',
-  SERVERS: 'servers',
-  ROOM: 'room',
-  PROFILE: 'profile',
-  ERROR: 'error',
-  MATCH: 'match',
-  BOARDS: 'boards',
-  REPLAY: 'replay'
-} as const
-
-export type AppRouteName = (typeof ROUTE_NAMES)[keyof typeof ROUTE_NAMES]
+// Compatibility shim: the names live in shared/router now, so features and
+// pages can navigate without importing from the app layer. This re-export
+// stays for the frozen zones (replay path, presentational room/results/boards)
+// and the tests that address the old path — re-route them when they unfreeze.
+export { ROUTE_NAMES, type AppRouteName } from '@/shared/router'
