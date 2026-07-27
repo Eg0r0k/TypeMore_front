@@ -59,6 +59,11 @@ export function useRunSubmission(opts: UseRunSubmissionOptions): RunSubmission {
         buildPayload: () => buildRunPayload(ctx as RunSubmitContext),
         isNetworkError: (error) => isApiError(error) && error.status === 0,
         isAuthError: (error) => isApiError(error) && error.status === 401,
+        // Matched on the CODE, not on the bare 403: a 403 is also what an
+        // Origin check refuses with, and that one is a bug worth surfacing as
+        // an error rather than telling the player their account is restricted.
+        isRestrictedError: (error) =>
+          isApiError(error) && error.status === 403 && error.code === 'account_restricted',
         onState: (next) => {
           state.value = next
         }

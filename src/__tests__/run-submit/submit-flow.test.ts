@@ -18,6 +18,16 @@ class FakeApiError extends Error {
 const networkError = new FakeApiError(0)
 const authError = new FakeApiError(401)
 const validationError = new FakeApiError(422)
+// A 403 the flow must treat as terminal. Carries the CODE too, because the real
+// predicate matches on it — a bare 403 is also what an Origin check refuses
+// with, and that one is a bug, not a restriction.
+class FakeRestrictedError extends FakeApiError {
+  readonly code = 'account_restricted'
+  constructor() {
+    super(403)
+  }
+}
+const restrictedError = new FakeRestrictedError()
 
 const dummyPayload = { mode: 'time' } as unknown as RunSubmitInput
 
@@ -31,6 +41,7 @@ function makeDeps(overrides: Partial<RunSubmissionDeps> = {}): {
     buildPayload: vi.fn(() => dummyPayload),
     isNetworkError: (e) => e instanceof FakeApiError && e.status === 0,
     isAuthError: (e) => e instanceof FakeApiError && e.status === 401,
+    isRestrictedError: (e) => e instanceof FakeRestrictedError,
     onState: (s) => states.push(s),
     ...overrides
   }
@@ -126,6 +137,56 @@ describe('runSubmissionFlow — retry policy', () => {
     const { deps } = makeDeps({ submit })
     const result = await runSubmissionFlow(authedEligible, deps)
     expect(result).toBe('guest')
+    expect(submit).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('runSubmissionFlow — a restricted account is terminal, never retried', () => {
+  const gate: SubmissionGate = { finished: true, authed: true, eligible: true }
+
+  it('maps 403 account_restricted to its own state', async () => {
+    const { deps, states } = makeDeps({ submit: vi.fn().mockRejectedValue(restrictedError) })
+
+    await expect(runSubmissionFlow(gate, deps)).resolves.toBe('restricted')
+    expect(states).toEqual(['saving', 'restricted'])
+  })
+
+  // The point of the state existing. A ban is not transient, so a second POST
+  // is the same refusal half a second later — and the retry budget is meant for
+  // a dropped connection, not for a moderation decision.
+  it('does NOT retry: submit is called exactly once', async () => {
+    const submit = vi.fn().mockRejectedValue(restrictedError)
+    const { deps } = makeDeps({ submit })
+
+    await runSubmissionFlow(gate, deps)
+
+    expect(submit).toHaveBeenCalledTimes(1)
+  })
+
+  // The contrast that makes the assertion above mean something: the SAME flow
+  // does retry a network error, so "called once" is a property of this branch
+  // and not of the harness.
+  it('still retries a network error exactly once', async () => {
+    const submit = vi.fn().mockRejectedValue(networkError)
+    const { deps } = makeDeps({ submit })
+
+    await runSubmissionFlow(gate, deps)
+
+    expect(submit).toHaveBeenCalledTimes(2)
+  })
+
+  // A restriction discovered on the RETRY is terminal too: the first failure
+  // was a dropped connection, the second is a refusal, and the flow must report
+  // the refusal rather than a generic error.
+  it('reports restricted when the retry is the one that is refused', async () => {
+    const submit = vi
+      .fn()
+      .mockRejectedValueOnce(networkError)
+      .mockRejectedValueOnce(restrictedError)
+    const { deps, states } = makeDeps({ submit })
+
+    await expect(runSubmissionFlow(gate, deps)).resolves.toBe('restricted')
+    expect(states).toEqual(['saving', 'restricted'])
     expect(submit).toHaveBeenCalledTimes(2)
   })
 })

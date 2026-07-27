@@ -243,6 +243,7 @@ export default {
     header: {
       login: 'Вход',
       account: 'Аккаунт',
+      restricted: 'аккаунт ограничен',
       logout: 'Выйти'
     }
   },
@@ -250,6 +251,7 @@ export default {
     signIn: 'войдите, чтобы сохранить',
     saving: 'сохранение…',
     savedPending: 'сохранено · ждёт проверки',
+    notCountedRestricted: 'не засчитан — аккаунт ограничен',
     saveFailed: 'не удалось сохранить',
     retry: 'повторить',
     afk: 'afk {seconds}с',

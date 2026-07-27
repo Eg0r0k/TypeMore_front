@@ -125,6 +125,13 @@
         {{ t('results.savedPending') }}
       </span>
       <span
+        v-else-if="saveState === 'restricted'"
+        class="results__save-status results__save-status--restricted"
+        data-testid="save-restricted"
+      >
+        {{ t('results.notCountedRestricted') }}
+      </span>
+      <span
         v-else-if="saveState === 'error'"
         class="results__save-status results__save-status--error"
         data-testid="save-error"
@@ -184,7 +191,8 @@
    * local so this pure view carries no feature→feature import. `saved` means the
    * run is PENDING server validation — never a rank or leaderboard placement.
    */
-  export type ResultsSaveState = 'idle' | 'ineligible' | 'guest' | 'saving' | 'saved' | 'error'
+  export type ResultsSaveState =
+    'idle' | 'ineligible' | 'guest' | 'saving' | 'saved' | 'restricted' | 'error'
 
   const props = withDefaults(
     defineProps<{
@@ -432,6 +440,14 @@
 
       &--error {
         color: var(--error-color);
+      }
+
+      // Informational, not alarming, and with no retry beside it: a ban is not
+      // a transient failure, so offering to try again would offer nothing. It
+      // stays the inherited sub colour deliberately — the modifier exists so
+      // the state is addressable, not so it can shout.
+      &--restricted {
+        color: var(--sub-color);
       }
     }
 

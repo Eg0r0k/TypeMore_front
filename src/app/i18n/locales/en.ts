@@ -238,6 +238,7 @@ export default {
     },
     header: {
       login: 'Login',
+      restricted: 'account restricted',
       account: 'Account',
       logout: 'Log out'
     }
@@ -246,6 +247,7 @@ export default {
     signIn: 'sign in to save',
     saving: 'saving…',
     savedPending: 'saved · pending validation',
+    notCountedRestricted: 'not counted — account restricted',
     saveFailed: "couldn't save",
     retry: 'retry',
     afk: 'afk {seconds}s',
