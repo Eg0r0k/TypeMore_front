@@ -1,6 +1,6 @@
 import { computed, watch, type ComputedRef, type Ref } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
-import { boardMeQueryOptions, isApiError, type BoardEntry } from '@shared/api'
+import { boardMeQueryOptions, isApiError, type BoardEntry, type BoardMe } from '@shared/api'
 import logger from '@shared/lib/helpers/logger'
 
 export interface OwnRank {
@@ -30,14 +30,21 @@ export interface OwnRank {
  * problem and swallowing it silently is how it stays one.
  */
 export function useOwnRank(bucket: Ref<string>): OwnRank {
-  const query = useQuery(computed(() => boardMeQueryOptions(bucket.value)))
+  // The strip reads only the entry, so the cache subscription narrows to it —
+  // consumer-side, because the factory's shape is the whole response.
+  const query = useQuery(
+    computed(() => ({
+      ...boardMeQueryOptions(bucket.value),
+      select: (me: BoardMe | null) => me?.entry ?? null
+    }))
+  )
 
   const isGuest = computed(() => {
     const error = query.error.value
     return isApiError(error) && error.status === 401
   })
 
-  const ownEntry = computed<BoardEntry | null>(() => query.data.value?.entry ?? null)
+  const ownEntry = computed<BoardEntry | null>(() => query.data.value ?? null)
 
   const isOwnRankVisible = computed(() => query.isSuccess.value)
 
