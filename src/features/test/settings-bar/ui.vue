@@ -243,12 +243,14 @@
     const next = new Set(Array.isArray(value) ? (value as string[]) : [])
     for (const option of textMods.value) {
       if (reasonOf(option) !== null) continue
-      config[option.key as 'punctuation'] = next.has(option.key)
+      // Through the action, not a raw field write: the store's validator is
+      // the single gate every config write goes through.
+      configStore.setConfig(option.key, next.has(option.key))
     }
   }
 
   const onFlag = (option: GameOption): void => {
-    config[option.key as 'blind'] = config[option.key] !== true
+    configStore.setConfig(option.key, config[option.key] !== true)
   }
 
   const onMode = (value: unknown): void => {
