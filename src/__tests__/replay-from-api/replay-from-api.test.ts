@@ -191,7 +191,9 @@ describe('replayFromApi — the dictionary must be the one the run was played on
     // against the wrong list produces a plausible lie, which is worse than a
     // loud parse failure.
     const result = replayFromApi(
-      metaOf({ setup: { nonsense: true } }), logOf(), dictSource({ words: ['nope'] })
+      metaOf({ setup: { nonsense: true } }),
+      logOf(),
+      dictSource({ words: ['nope'] })
     )
 
     expect(result.isErr()).toBe(true)
@@ -215,7 +217,9 @@ describe('replayFromApi — generation failure is its own variant', () => {
     // own `EmptyDictionary` guard is what fires.
     const empty: string[] = []
     const result = replayFromApi(
-      metaOf({ dictHash: dictVersion(empty) }), logOf(), dictSource({ words: empty })
+      metaOf({ dictHash: dictVersion(empty) }),
+      logOf(),
+      dictSource({ words: empty })
     )
 
     expect(result.isErr()).toBe(true)

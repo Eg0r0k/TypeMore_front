@@ -24,7 +24,8 @@ import {
 } from '@shared/core'
 
 /** The owner's screenshot text. */
-const CSS_TEXT = 'p.center {\n\ttext-align: center;\n\tcolor: red;\n}\n\np.large {\n\tfont-size: 300%\n;}'
+const CSS_TEXT =
+  'p.center {\n\ttext-align: center;\n\tcolor: red;\n}\n\np.large {\n\tfont-size: 300%\n;}'
 
 /** A quote run's targets, straight out of the core. */
 function targetsOf(text: string): readonly string[] {

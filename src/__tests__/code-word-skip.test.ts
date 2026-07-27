@@ -42,7 +42,8 @@ import {
   type GenerationConfig
 } from '@shared/core'
 
-const CSS_TEXT = 'p.center {\n\ttext-align: center;\n\tcolor: red;\n}\n\np.large {\n\tfont-size: 300%\n;}'
+const CSS_TEXT =
+  'p.center {\n\ttext-align: center;\n\tcolor: red;\n}\n\np.large {\n\tfont-size: 300%\n;}'
 
 /** The screenshot text's real targets, straight out of the core. */
 const CSS_WORDS = ((): readonly string[] => {
