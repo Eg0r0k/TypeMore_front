@@ -1,9 +1,7 @@
 import type { App } from 'vue'
 
 import { createPinia } from 'pinia'
-import { install as VueReCaptcha } from 'vue3-recaptcha-v2'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
-import { recaptchaOptions } from '@shared/constants/recaptcha.config'
 import { VueQueryPlugin } from '@tanstack/vue-query'
 import { queryClient } from '@shared/api'
 import { MotionPlugin } from '@vueuse/motion'
@@ -16,7 +14,6 @@ export const installPlugins = (app: App) => {
   const pinia = createPinia()
   app.use(pinia)
   pinia.use(piniaPluginPersistedstate)
-  app.use(VueReCaptcha, recaptchaOptions)
   // One client app-wide: router guards and pinia actions read the very same
   // cache the components do (see `shared/api/query-client.ts`).
   app.use(VueQueryPlugin, { queryClient })

@@ -75,7 +75,6 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes('node_modules')) return
           if (id.includes('html2canvas')) return 'html2canvas'
-          if (id.includes('vue3-recaptcha-v2')) return 'rare'
           if (id.includes('/vue/') || id.includes('/vue-router/')) return 'vendor'
         }
       }

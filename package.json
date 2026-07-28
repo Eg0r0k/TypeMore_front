@@ -61,8 +61,7 @@
     "vue": "^3.5.40",
     "vue-i18n": "^11.4.7",
     "vue-router": "^5.2.0",
-    "vue-sonner": "^2.0.9",
-    "vue3-recaptcha-v2": "^2.1.0"
+    "vue-sonner": "^2.0.9"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

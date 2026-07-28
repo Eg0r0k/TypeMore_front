@@ -18,11 +18,10 @@ test('loopback lobby: create → bot joins → race → standings → re-ready',
   test.setTimeout(90_000)
 
   // Environment noise, not app errors: the REST backend is absent in this
-  // harness (VITE_API_URL → dead localhost:8090 ⇒ CORS/net failures on /me)
-  // and the external recaptcha script fails its integrity check offline.
+  // harness (VITE_API_URL → dead localhost:8090 ⇒ CORS/net failures on /me).
   // Dictionaries also come from that backend now, so they are stubbed below —
   // everything else must be clean.
-  const IGNORED_SOURCES = ['localhost:8090', 'recaptcha']
+  const IGNORED_SOURCES = ['localhost:8090']
   const consoleErrors: string[] = []
   page.on('console', (msg) => {
     if (msg.type() !== 'error') return
