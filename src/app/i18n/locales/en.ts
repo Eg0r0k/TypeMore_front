@@ -490,9 +490,17 @@ export default {
     /** Row affordance — the whole row is the control, this is its accessible name. */
     watch: 'watch {player}’s run',
     you: 'you',
-    yourRank: 'your rank: #{rank}',
-    /** 204 from /me: a real answer, not a failure. */
-    notRanked: 'you hold no slot on this board yet',
+    /** The pinned self row and its two hint states (204 / 401 from /me). */
+    self: {
+      top: 'Top {percent}%',
+      play: 'play this mode to take a place here',
+      signIn: 'sign in to see your place'
+    },
+    controls: {
+      label: 'board controls',
+      top: 'back to the top',
+      me: 'jump to my row'
+    },
     loading: 'loading the board…',
     empty: 'no one has set a time on this board yet',
     /** The catalogue itself is empty — no bucket anywhere has a visible entry. */

@@ -1,12 +1,15 @@
 /**
- * The own-rank strip, whose whole job is telling three answers apart:
+ * The pinned self row, whose whole job is telling three answers apart:
  *
- *   `204` (`null`)  — asked, you hold no visible slot here. A SUCCESS.
- *   `401`           — nobody is signed in. Expected on a public board.
- *   an entry        — your rank, and your row marked on the board below.
+ *   `204` (`null`)  — asked, you hold no visible slot here. A SUCCESS: the
+ *                     quiet "play this mode" invitation.
+ *   `401`           — nobody is signed in. Expected on a public board: the
+ *                     sign-in hint, never a red box.
+ *   an entry        — your rank writ large, your percentile, your metrics in
+ *                     the table's own columns, and your row marked below.
  *
- * None of them is the error state, and a signed-out visitor must never see a
- * red box on a page that needs no account.
+ * None of them is the error state, and a signed-out visitor must never see an
+ * error on a page that needs no account.
  */
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
@@ -88,9 +91,9 @@ const settle = async (): Promise<void> => {
   await flushPromises()
 }
 
-const mountView = async () => {
+const mountView = async (entriesTotal?: number) => {
   const wrapper = mount(BoardView, {
-    props: { bucket: BUCKET },
+    props: { bucket: BUCKET, entriesTotal },
     global: { plugins: [i18n, router, [VueQueryPlugin, { queryClient }]] }
   })
   await settle()
@@ -108,6 +111,8 @@ beforeEach(async () => {
   router = createRouter({
     history: createMemoryHistory(),
     routes: [
+      { path: '/', name: ROUTE_NAMES.HOME, component: { template: '<div />' } },
+      { path: '/login', name: ROUTE_NAMES.LOGIN, component: { template: '<div />' } },
       { path: '/boards', name: ROUTE_NAMES.BOARDS, component: { template: '<div />' } },
       { path: '/replay/:runId', name: ROUTE_NAMES.REPLAY, component: { template: '<div />' } }
     ]
@@ -116,37 +121,45 @@ beforeEach(async () => {
   await router.isReady()
 })
 
-describe('own rank', () => {
-  it('reads a 204 as “no slot yet”, never as a failure', async () => {
+describe('the pinned self row', () => {
+  it('reads a 204 as an invitation to play, never as a failure', async () => {
     h.me.mockResolvedValue(null)
 
     const wrapper = await mountView()
 
-    expect(wrapper.get('[data-testid="boards-my-rank"]').text()).toBe(
-      i18n.global.t('boards.notRanked')
+    expect(wrapper.get('[data-testid="boards-self-play"]').text()).toBe(
+      i18n.global.t('boards.self.play')
     )
     expect(wrapper.find('[data-testid="boards-error"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="boards-self-rank"]').exists()).toBe(false)
     // The board underneath is untouched by the caller having no slot on it.
     expect(wrapper.findAll('[data-testid="boards-row"]')).toHaveLength(1)
 
     wrapper.unmount()
   })
 
-  it('renders neither a rank nor an error for a signed-out visitor', async () => {
+  it('hints sign-in for a signed-out visitor — no rank, no error', async () => {
     h.me.mockRejectedValue(new ApiError({ status: 401, code: 'unauthorized' }))
 
     const wrapper = await mountView()
 
-    expect(wrapper.find('[data-testid="boards-my-rank"]').exists()).toBe(false)
+    expect(wrapper.get('[data-testid="boards-self-sign-in"]').text()).toBe(
+      i18n.global.t('boards.self.signIn')
+    )
     expect(wrapper.find('[data-testid="boards-error"]').exists()).toBe(false)
-    // A public board still renders in full without a session.
+    // A public board still renders in full without a session, and there is no
+    // row to jump to, so the person control is gone too.
     expect(wrapper.findAll('[data-testid="boards-row"]')).toHaveLength(1)
+    expect(wrapper.find('[data-testid="boards-to-me"]').exists()).toBe(false)
 
     wrapper.unmount()
   })
 
-  it('shows the rank and marks the caller’s row when they hold a slot', async () => {
-    const mine: BoardMe = { bucket: BUCKET, entry: entry({ rank: 7, userId: 'me' }) }
+  it('pins the rank, the percentile and the table’s own columns when ranked', async () => {
+    const mine: BoardMe = {
+      bucket: BUCKET,
+      entry: entry({ rank: 7, userId: 'me', displayName: 'myself', score: 1234, wpm: 96.6 })
+    }
     h.me.mockResolvedValue(mine)
     h.page.mockResolvedValue({
       bucket: BUCKET,
@@ -156,14 +169,32 @@ describe('own rank', () => {
       ]
     })
 
-    const wrapper = await mountView()
+    const wrapper = await mountView(50)
 
-    expect(wrapper.get('[data-testid="boards-my-rank"]').text()).toBe(
-      i18n.global.t('boards.yourRank', { rank: 7 })
+    expect(wrapper.get('[data-testid="boards-self-rank"]').text()).toBe('#7')
+    // 7 of 50 → 14%.
+    expect(wrapper.get('[data-testid="boards-self-top"]').text()).toBe(
+      i18n.global.t('boards.self.top', { percent: 14 })
     )
+    // The metrics are the table's columns: score formatted the same way.
+    expect(wrapper.get('[data-testid="boards-self-score"]').text()).toBe('1234')
+    // And the caller's row below is marked as theirs.
     const players = wrapper.findAll('[data-testid="boards-player"]').map((node) => node.text())
     expect(players[0]).not.toContain(i18n.global.t('boards.you'))
     expect(players[1]).toContain(i18n.global.t('boards.you'))
+    // The person control exists exactly because there is a row to jump to.
+    expect(wrapper.find('[data-testid="boards-to-me"]').exists()).toBe(true)
+
+    wrapper.unmount()
+  })
+
+  it('shows the rank alone when the catalogue cannot supply a denominator', async () => {
+    h.me.mockResolvedValue({ bucket: BUCKET, entry: entry({ rank: 7, userId: 'me' }) })
+
+    const wrapper = await mountView(undefined)
+
+    expect(wrapper.get('[data-testid="boards-self-rank"]').text()).toBe('#7')
+    expect(wrapper.find('[data-testid="boards-self-top"]').exists()).toBe(false)
 
     wrapper.unmount()
   })
@@ -176,7 +207,8 @@ describe('own rank', () => {
 
     // Secondary read: it is logged, not rendered, and it does not make the
     // board itself look broken.
-    expect(wrapper.find('[data-testid="boards-my-rank"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="boards-self"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="boards-self-play"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="boards-error"]').exists()).toBe(false)
     expect(logged).toHaveBeenCalled()
 

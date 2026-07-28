@@ -15,12 +15,16 @@
         <span class="board__cell board__cell--when">{{ t('boards.column.when') }}</span>
       </div>
 
-      <ul v-if="entries.length > 0" class="board__rows">
+      <ul v-if="entries.length > 0" ref="rows" class="board__rows">
         <li
           v-for="entry in entries"
           :key="entry.runId"
           class="board__row"
-          :class="{ 'board__row--self': entry.userId === selfUserId }"
+          :class="{
+            'board__row--self': entry.userId === selfUserId,
+            'board__row--flash': entry.userId === flashUserId
+          }"
+          :data-user-id="entry.userId"
           data-testid="boards-row"
         >
           <!--
@@ -91,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-  import { toRef } from 'vue'
+  import { onUnmounted, ref, toRef, useTemplateRef } from 'vue'
   import { useRouter } from 'vue-router'
   import { useI18n } from 'vue-i18n'
   import type { BoardEntry } from '@shared/api'
@@ -121,6 +125,39 @@
 
   const whenLabel = (entry: BoardEntry): string => formatAchievedAt(entry.achievedAt, locale.value)
 
+  // ── Scroll targets for the controls strip ──────────────────────────────────
+
+  const rows = useTemplateRef('rows')
+  const flashUserId = ref<string | undefined>()
+  let flashTimer: ReturnType<typeof setTimeout> | undefined
+
+  const scrollToTop = (): void => {
+    rows.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  /**
+   * Scroll to a player's LOADED row and flash it so the eye lands somewhere.
+   * Answers whether the row was there — the caller owns what to do when it
+   * was not (today: nothing; the around=me window is the missing half).
+   */
+  const scrollToUser = (userId: string): boolean => {
+    const row = rows.value?.querySelector(`[data-user-id="${CSS.escape(userId)}"]`)
+    if (!(row instanceof HTMLElement)) return false
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    flashUserId.value = userId
+    clearTimeout(flashTimer)
+    flashTimer = setTimeout(() => {
+      flashUserId.value = undefined
+    }, FLASH_MS)
+    return true
+  }
+
+  const FLASH_MS = 1600
+
+  onUnmounted(() => clearTimeout(flashTimer))
+
+  defineExpose({ scrollToTop, scrollToUser })
+
   /** The bucket rides along so the replay page can offer a link back to it. */
   const watchRun = (entry: BoardEntry): void => {
     void router.push({
@@ -132,6 +169,8 @@
 </script>
 
 <style lang="scss" scoped>
+  @use '../board-grid' as grid;
+
   .board {
     display: flex;
     flex-direction: column;
@@ -145,12 +184,7 @@
 
     &__head,
     &__watch {
-      display: grid;
-      align-items: center;
-      width: 100%;
-      gap: 0.75rem;
-      grid-template-columns: 2.5rem minmax(6rem, 1fr) minmax(0, 1.5fr) 4rem 4rem 5rem 5rem;
-      text-align: start;
+      @include grid.board-grid;
     }
 
     &__head {
@@ -172,6 +206,11 @@
 
     &__row--self .board__watch {
       color: var(--main-color);
+    }
+
+    /* The jump-to-me landing flash: long enough to catch, gone before it nags. */
+    &__row--flash .board__watch {
+      animation: board-flash 1.6s ease-out;
     }
 
     &__watch {
@@ -213,6 +252,17 @@
 
     &__more {
       align-self: center;
+    }
+  }
+
+  @keyframes board-flash {
+    0%,
+    40% {
+      background-color: var(--sub-alt-color);
+    }
+
+    100% {
+      background-color: transparent;
     }
   }
 </style>

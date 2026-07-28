@@ -160,6 +160,9 @@ beforeEach(async () => {
   router = createRouter({
     history: createMemoryHistory(),
     routes: [
+      // The self row links out to these two by name.
+      { path: '/', name: ROUTE_NAMES.HOME, component: { template: '<div />' } },
+      { path: '/login', name: ROUTE_NAMES.LOGIN, component: { template: '<div />' } },
       { path: '/boards', name: ROUTE_NAMES.BOARDS, component: { template: '<div />' } },
       { path: '/replay/:runId', name: ROUTE_NAMES.REPLAY, component: { template: '<div />' } }
     ]

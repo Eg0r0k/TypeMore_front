@@ -1,7 +1,6 @@
 import { expect, test } from '@playwright/test'
 import {
   QUOTE_BUCKET,
-  QUOTE_ID,
   QUOTE_SOURCE,
   QUOTE_TEXT,
   row,

@@ -3,11 +3,22 @@ import { useQuery } from '@tanstack/vue-query'
 import { boardMeQueryOptions, isApiError, type BoardEntry, type BoardMe } from '@shared/api'
 import logger from '@shared/lib/helpers/logger'
 
+/**
+ * What the pinned strip can honestly claim about the caller:
+ *
+ * - `ranked`   — a slot with a rank; the full self row.
+ * - `unranked` — a 204: identified, no visible slot here (a banned caller is
+ *   told the same, on purpose). The quiet "play this mode" CTA.
+ * - `guest`    — a 401: signed out. The sign-in hint, never an error box.
+ * - `hidden`   — the read failed for a real reason, or is still in flight;
+ *   the strip has nothing honest to say and says nothing.
+ */
+export type OwnRankState = 'ranked' | 'unranked' | 'guest' | 'hidden'
+
 export interface OwnRank {
   /** The caller's entry, or `null` for "asked, holds no slot here". */
   readonly ownEntry: ComputedRef<BoardEntry | null>
-  /** Whether the own-rank strip has anything honest to say. */
-  readonly isOwnRankVisible: ComputedRef<boolean>
+  readonly state: ComputedRef<OwnRankState>
   /** `userId` of the caller when known — the board marks that row as theirs. */
   readonly selfUserId: ComputedRef<string | undefined>
 }
@@ -46,7 +57,11 @@ export function useOwnRank(bucket: Ref<string>): OwnRank {
 
   const ownEntry = computed<BoardEntry | null>(() => query.data.value ?? null)
 
-  const isOwnRankVisible = computed(() => query.isSuccess.value)
+  const state = computed<OwnRankState>(() => {
+    if (query.isSuccess.value) return ownEntry.value === null ? 'unranked' : 'ranked'
+    if (isGuest.value) return 'guest'
+    return 'hidden'
+  })
 
   // Logging is a side effect and has no business inside a computed.
   watch(
@@ -59,7 +74,7 @@ export function useOwnRank(bucket: Ref<string>): OwnRank {
 
   return {
     ownEntry,
-    isOwnRankVisible,
+    state,
     selfUserId: computed(() => ownEntry.value?.userId)
   }
 }

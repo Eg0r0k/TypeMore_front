@@ -57,7 +57,7 @@
             text this ranks — the attribution is the headline of the page.
           -->
           <QuoteBoardHeader v-if="quoteId !== null" :quote-id="quoteId" />
-          <BoardView :bucket="selected" />
+          <BoardView :bucket="selected" :entries-total="selectedEntries" />
         </template>
 
         <QuotePicker
@@ -176,6 +176,11 @@
   const openQuoteBoard = (id: string): void => {
     select(quoteBucketKey(id))
   }
+
+  /** The visible entry count of the board on screen — the percentile's denominator. */
+  const selectedEntries = computed<number | undefined>(
+    () => buckets.value.find((bucket) => bucket.bucket === selected.value)?.entries
+  )
 
   const retryCatalogue = (): void => {
     void catalogue.refetch()
