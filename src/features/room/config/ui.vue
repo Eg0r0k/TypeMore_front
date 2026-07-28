@@ -3,7 +3,13 @@
     <div class="config__settings">
       <div v-if="session.isHost" class="config__editor">
         <div class="config__field">
-          <Typography size="xs" color="sub">{{ t('room.mode') }}</Typography>
+          <Typography size="xs" color="sub" class="flex items-center gap-1.5">
+            {{ t('room.mode') }}
+            <!-- A quote draw is a network round-trip: while it flies, the mode
+                 toggles LOOK dead (the patch only lands with the drawn id) —
+                 the spinner is that state made visible. -->
+            <IconLoader v-if="quoteBusy" class="animate-spin size-3" data-testid="quote-loader" />
+          </Typography>
           <ToggleGroup :model-value="settings.mode" aria-label="mode" @update:model-value="onMode">
             <ToggleGroupItem v-for="m in MODES" :key="m" :value="m">
               {{ t(`game.mode.${m}`) }}
@@ -40,7 +46,6 @@
               {{ t(`game.quote.group.${band}`) }}
             </ToggleGroupItem>
           </ToggleGroup>
-          <Typography v-if="quoteError" size="xs" color="error">{{ quoteError }}</Typography>
         </div>
 
         <div v-else class="config__field">
@@ -166,9 +171,10 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, ref, watch } from 'vue'
+  import { computed, onMounted, ref, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
   import type { Freemods, RoomPlayer, RoomSettings } from '@/entities/lobby'
+  import { AlertType, useAlertStore } from '@/entities/alert'
   import { useConfigStore } from '@/entities/config/model/store'
   import { ModGroup, optionOf, optionsFor, valuesFor } from '@/entities/game'
   import { isApiError, loadDictionaryBody, loadRandomQuote, quoteCorpusLang } from '@shared/api'
@@ -178,6 +184,7 @@
   import { LanguageModal } from '@/features/modal/language'
   import { Typography } from '@/shared/ui/typography'
   import { dictVersion } from '@shared/core'
+  import IconLoader from '~icons/tabler/loader-2'
 
   import { useRoomSettings } from './model/use-room-settings'
 
@@ -245,6 +252,7 @@
 
   const onMode = (value: unknown) => {
     if (typeof value !== 'string' || !MODES.includes(value)) return
+    if (quoteBusy.value) return
     if (value === 'quote') {
       void drawQuote(quoteGroup.value)
       return
@@ -261,7 +269,7 @@
   }
 
   const leaveQuote = async (mode: RoomSettings['mode']): Promise<void> => {
-    quoteError.value = ''
+    quoteBusy.value = true
     try {
       const dictionary = await loadDictionaryBody(settings.value.lang)
       apply({ mode, dictHash: dictVersion(dictionary.words) })
@@ -273,8 +281,13 @@
         const dictionary = await loadDictionaryBody(lang)
         apply({ mode, lang, dictHash: dictVersion(dictionary.words) })
       } catch {
-        quoteError.value = t('game.setup.dictionaryError', { lang: settings.value.lang })
+        alerts.addAlert({
+          type: AlertType.Error,
+          msg: t('game.setup.dictionaryError', { lang: settings.value.lang })
+        })
       }
+    } finally {
+      quoteBusy.value = false
     }
   }
 
@@ -289,10 +302,17 @@
    * otherwise has nothing to scale by.
    */
   const quoteGroup = ref<QuoteGroup>('all')
-  const quoteError = ref('')
+  /**
+   * A draw in flight. Every quote interaction is a network round-trip whose
+   * only visible effect is the settings patch at the end — without this flag
+   * the panel simply looks dead for its duration (and a second click starts a
+   * second draw). The spinner renders it; the handlers early-return on it.
+   */
+  const quoteBusy = ref(false)
+  const alerts = useAlertStore()
 
   const drawQuote = async (group: QuoteGroup): Promise<void> => {
-    quoteError.value = ''
+    quoteBusy.value = true
     try {
       const quote = await loadRandomQuote({
         // A size variant is not a language: the corpus publishes `russian` once.
@@ -310,19 +330,40 @@
         textSource: { kind: 'quote', quoteId: quote.id }
       })
     } catch (error) {
-      quoteError.value =
-        isApiError(error) && error.status === 404
-          ? t('game.setup.quoteEmpty', {
-              lang: quoteCorpusLang(settings.value.lang),
-              group: t(`game.quote.group.${group}`)
-            })
-          : t('game.setup.quoteError')
+      // A toast, not an inline note: the draw is triggered from OUTSIDE quote
+      // mode too (the mode toggle), where the quote panel — and any inline
+      // error in it — is not rendered at all. Failing there looked like a
+      // dead button.
+      alerts.addAlert({
+        type: AlertType.Warning,
+        msg:
+          isApiError(error) && error.status === 404
+            ? t('game.setup.quoteEmpty', {
+                lang: quoteCorpusLang(settings.value.lang),
+                group: t(`game.quote.group.${group}`)
+              })
+            : t('game.setup.quoteError')
+      })
+    } finally {
+      quoteBusy.value = false
     }
   }
 
   const onQuoteGroup = (value: unknown) => {
+    if (quoteBusy.value) return
     if (typeof value === 'string') void drawQuote(value as QuoteGroup)
   }
+
+  /**
+   * A fresh run deserves a fresh quote. This panel exists only in the lobby
+   * phase, so mounting it with quote mode already on means the room just came
+   * back from a match (or the host just arrived) — either way the room should
+   * not race yesterday's text again unless chance deals it twice. The band
+   * filter is component state and resets to `all` with the panel.
+   */
+  onMounted(() => {
+    if (session.isHost && settings.value.mode === 'quote') void drawQuote(quoteGroup.value)
+  })
   const onDuration = (value: unknown) => {
     const ms = Number(value)
     if (Number.isFinite(ms) && ms > 0) apply({ durationMs: ms })
@@ -335,6 +376,7 @@
   const languageOpen = ref(false)
   const onLanguage = async (lang: string) => {
     if (lang === settings.value.lang) return
+    if (quoteBusy.value) return
     // In quote mode the language IS the corpus: a new one means a new draw, and
     // there is no dictionary to fingerprint on this path at all.
     if (settings.value.mode === 'quote') {

@@ -358,10 +358,12 @@
       pointer-events: none;
     }
 
+    // Bottom-LEFT on purpose: top-left belongs to the idle meter, top-center
+    // to the ScoreHud — the scoreboard gets the quiet corner under the field.
     &__rail {
       position: absolute;
       top: calc(100% + 1.5rem);
-      right: 0;
+      left: 0;
       z-index: 5;
       width: 14rem;
       pointer-events: none;
