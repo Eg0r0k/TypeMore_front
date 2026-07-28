@@ -146,6 +146,8 @@ export interface BoardRowFixture {
   readonly acc: number
   readonly grade: string
   readonly mods: Record<string, unknown>
+  /** The quote's attribution — present on quote-board rows only. */
+  readonly source?: string
   readonly runId: string
   readonly achievedAt: string
 }
@@ -164,7 +166,7 @@ const CLEAN_MODS = {
   flashlight: false
 } as const
 
-const row = (
+export const row = (
   rank: number,
   displayName: string,
   runId: string,
@@ -338,6 +340,88 @@ export async function stubLeaderboards(
       boardStatus = null
     }
   }
+}
+
+// ── Quotes ───────────────────────────────────────────────────────────────────
+
+export const QUOTE_ID = '0a6c0103-89c8-43be-bd66-1371216d4a53'
+export const QUOTE_BUCKET = `quote:${QUOTE_ID}`
+export const QUOTE_SOURCE = 'Johann Wolfgang von Goethe'
+export const QUOTE_TEXT =
+  'Wer immer strebend sich bemüht, den können wir erlösen. Und hat an ihm die Liebe gar von oben teilgenommen.'
+
+export interface QuoteMetaFixture {
+  readonly id: string
+  readonly lang: string
+  readonly upstreamId: number
+  readonly source: string
+  readonly length: number
+  readonly lenGroup: 'short' | 'medium' | 'long' | 'thicc'
+  readonly textHash: string
+}
+
+const quoteMeta = (
+  id: string,
+  source: string,
+  length: number,
+  group: QuoteMetaFixture['lenGroup']
+): QuoteMetaFixture => ({
+  id,
+  lang: DICT_LANG,
+  upstreamId: 1,
+  source,
+  length,
+  lenGroup: group,
+  textHash: 'deadbeef'
+})
+
+export const DEFAULT_QUOTES: readonly QuoteMetaFixture[] = [
+  quoteMeta(QUOTE_ID, QUOTE_SOURCE, QUOTE_TEXT.length, 'medium'),
+  quoteMeta('7be00cfc-2b52-45f4-9d1e-1371216d4a54', 'Franz Kafka', 42, 'short')
+]
+
+/**
+ * The quote registry: the paged metadata index (`GET /quotes`) and the by-id
+ * read with the text (`GET /quotes/{id}`). Group/lang filters are applied the
+ * way the server does — an unknown lang is an EMPTY page, not an error.
+ */
+export async function stubQuotes(
+  page: Page,
+  options: { readonly quotes?: readonly QuoteMetaFixture[] } = {}
+): Promise<void> {
+  const quotes = options.quotes ?? DEFAULT_QUOTES
+
+  await page.route(/\/api\/v1\/quotes(\?|$)/, (route) => {
+    const url = new URL(route.request().url())
+    const lang = url.searchParams.get('lang')
+    const group = url.searchParams.get('group')
+    const filtered = quotes.filter(
+      (quote) =>
+        (lang === null || quote.lang === lang) && (group === null || quote.lenGroup === group)
+    )
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ quotes: filtered })
+    })
+  })
+
+  await page.route(/\/api\/v1\/quotes\/[^/?]+(\?|$)/, (route) => {
+    const id = new URL(route.request().url()).pathname.split('/').pop()
+    const meta = quotes.find((quote) => quote.id === id)
+    if (meta === undefined) {
+      return route.fulfill({
+        status: 404,
+        contentType: 'application/json',
+        body: '{"error":"not_found","message":"no such quote"}'
+      })
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ...meta, text: QUOTE_TEXT, superseded: false })
+    })
+  })
 }
 
 // ── Public replay ────────────────────────────────────────────────────────────

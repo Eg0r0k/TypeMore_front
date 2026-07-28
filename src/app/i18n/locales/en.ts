@@ -481,9 +481,10 @@ export default {
     },
     /** A quote board: one per quote, reached through the picker or a link. */
     quote: {
-      back: '← all boards',
       unknown: 'this quote could not be loaded',
-      pickerHint: 'quotes rank per quote — pick one to see its board'
+      length: '{count} chars',
+      pickerEmpty: 'no quotes match this filter',
+      pickerError: 'could not load the quotes'
     },
     column: { rank: '#', player: 'player', wpm: 'wpm', acc: 'acc', score: 'score', when: 'when' },
     /** Row affordance — the whole row is the control, this is its accessible name. */

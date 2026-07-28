@@ -77,6 +77,31 @@ export const isQuoteBucket = (bucket: BucketInfo): bucket is QuoteBucket => 'quo
  */
 export const quoteBucketKey = (quoteId: string): string => `quote:${quoteId}`
 
+/**
+ * A CANONICAL quote bucket key: `quote:` + a lowercase, dashed uuid — exactly
+ * the spellings the server's `ParseBucketKey` accepts (LEADERBOARDS.md rejects
+ * braces, `urn:uuid:`, undashed and upper case, because they name the same
+ * quote but not the same string, and the string is what people link to).
+ */
+const QUOTE_BUCKET_KEY = /^quote:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+
+/**
+ * Whether a bucket key names a quote board BY SHAPE, without the catalogue.
+ *
+ * This exists because membership in the catalogue is the wrong validity test
+ * for a quote board: the catalogue lists buckets with at least one visible
+ * entry, and the moment a quote board link matters most — the results screen
+ * right after a run, before the replay worker has accepted anything — is
+ * exactly the moment the board is not in it yet. A quote board is unlisted,
+ * not unreachable; a well-formed key resolves to a board (possibly an empty
+ * page), and a malformed one is the same 404 the server would answer.
+ */
+export const isQuoteBucketKey = (bucket: string): boolean => QUOTE_BUCKET_KEY.test(bucket)
+
+/** The quote id inside a canonical quote bucket key, or `null`. */
+export const quoteIdOfBucketKey = (bucket: string): string | null =>
+  isQuoteBucketKey(bucket) ? bucket.slice('quote:'.length) : null
+
 export const BucketCatalogueSchema = v.object({
   buckets: v.array(BucketInfoSchema)
 })

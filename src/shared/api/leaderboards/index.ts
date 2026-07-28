@@ -10,6 +10,8 @@ export {
 export {
   isQuoteBucket,
   quoteBucketKey,
+  isQuoteBucketKey,
+  quoteIdOfBucketKey,
   LanguageBucketSchema,
   QuoteBucketSchema,
   BucketInfoSchema,

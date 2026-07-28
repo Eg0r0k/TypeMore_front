@@ -1,6 +1,11 @@
 import { computed, watch, type ComputedRef, type Ref } from 'vue'
 import { useRoute, useRouter, type LocationQuery, type LocationQueryRaw } from 'vue-router'
-import { QuoteLengthGroupSchema, type BucketInfo, type QuoteLengthGroup } from '@shared/api'
+import {
+  QuoteLengthGroupSchema,
+  isQuoteBucketKey,
+  type BucketInfo,
+  type QuoteLengthGroup
+} from '@shared/api'
 import { mostPopulatedBucket } from './bucket'
 import { bucketForLanguage } from './rail'
 
@@ -50,7 +55,15 @@ export interface BoardsSelection {
  * shows another lies to whoever copies it next. The rewrite is `replace`:
  * correcting our own address is not a navigation the user made.
  */
-export function useBoardsSelection(catalogue: Ref<BucketInfo[] | undefined>): BoardsSelection {
+export function useBoardsSelection(
+  catalogue: Ref<BucketInfo[] | undefined>,
+  /**
+   * The language of the board on screen when the catalogue cannot say — a
+   * quote bucket carries nothing but the id, so the page resolves the quote
+   * and passes its corpus language here for the rail to highlight.
+   */
+  langHint?: Ref<string | undefined>
+): BoardsSelection {
   const route = useRoute()
   const router = useRouter()
 
@@ -70,17 +83,33 @@ export function useBoardsSelection(catalogue: Ref<BucketInfo[] | undefined>): Bo
       : 'all'
   })
 
+  /**
+   * A LANGUAGE bucket is valid iff the catalogue lists it — the catalogue is
+   * the only source of language keys. A QUOTE bucket is valid BY SHAPE: the
+   * catalogue only lists boards with a visible entry, and the moment a quote
+   * link matters most (the results screen, seconds after a run, before the
+   * replay worker accepted anything) is exactly when the board is not listed
+   * yet. Testing quote keys against the catalogue was the bug that sent
+   * "open this quote's leaderboard" to the busiest language board instead.
+   */
   const isKnown = (bucket: string | undefined): boolean =>
-    bucket !== undefined && (catalogue.value?.some((info) => info.bucket === bucket) ?? false)
+    bucket !== undefined &&
+    (isQuoteBucketKey(bucket) || (catalogue.value?.some((info) => info.bucket === bucket) ?? false))
 
   const selected = computed<string | undefined>(() => {
+    // A quote board does not wait for the catalogue: it is not in it anyway
+    // unless somebody already holds a slot, and the link that brought us here
+    // (the results screen) is older than the board's first accepted run.
+    const asked = requestedBucket.value
+    if (asked !== undefined && isQuoteBucketKey(asked)) return asked
+
     const buckets = catalogue.value
     if (buckets === undefined) return undefined
-    if (isKnown(requestedBucket.value)) return requestedBucket.value
+    if (isKnown(asked)) return asked
     // The picker and the empty-language state are bucketless on purpose; only
     // an address that ASKED for a board (or asked for nothing) gets one picked.
-    if (requestedBucket.value === undefined && wantsQuotes.value) return undefined
-    if (requestedBucket.value === undefined && requestedLang.value !== undefined) {
+    if (asked === undefined && wantsQuotes.value) return undefined
+    if (asked === undefined && requestedLang.value !== undefined) {
       return bucketForLanguage(buckets, requestedLang.value, undefined)
     }
     return mostPopulatedBucket(buckets)
@@ -92,10 +121,15 @@ export function useBoardsSelection(catalogue: Ref<BucketInfo[] | undefined>): Bo
   const language = computed<string | undefined>(() => {
     const info = infoOf(selected.value)
     if (info !== undefined && 'lang' in info) return info.lang
-    return requestedLang.value
+    return requestedLang.value ?? langHint?.value
   })
 
-  const source = computed<BoardsSource>(() => (wantsQuotes.value ? 'quotes' : 'random'))
+  /** A quote BOARD is the quotes source too — the rail must say where you are. */
+  const source = computed<BoardsSource>(() =>
+    wantsQuotes.value || (selected.value !== undefined && isQuoteBucketKey(selected.value))
+      ? 'quotes'
+      : 'random'
+  )
 
   const view = computed<BoardsView>(() => {
     if (selected.value !== undefined) return 'board'

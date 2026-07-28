@@ -177,6 +177,55 @@ describe('bucket selection', () => {
   })
 })
 
+describe('quote buckets resolve by shape, not by catalogue membership', () => {
+  const QUOTE_KEY = 'quote:1f5f1f2c-6f0f-4d5a-9f0a-3f2a1b0c9d8e'
+
+  /**
+   * REGRESSION — "open this quote's leaderboard" from the results screen. The
+   * catalogue lists only boards with a visible entry; seconds after a run the
+   * quote's board has none. Validating the key against the catalogue rewrote
+   * the URL to the busiest language board, so the button never opened the
+   * board it named.
+   */
+  it('keeps an unlisted quote bucket selected and does not rewrite the URL', async () => {
+    const { wrapper, replace, read } = await mountAt(`/boards?bucket=${QUOTE_KEY}`, [
+      TIME_15,
+      TIME_30
+    ])
+
+    expect(read('selected')).toBe(QUOTE_KEY)
+    expect(read('view')).toBe('board')
+    expect(read('source')).toBe('quotes')
+    expect(replace).not.toHaveBeenCalled()
+    expect(router.currentRoute.value.query.bucket).toBe(QUOTE_KEY)
+
+    wrapper.unmount()
+  })
+
+  it('resolves a quote bucket before the catalogue has answered at all', async () => {
+    const { wrapper, read } = await mountAt(`/boards?bucket=${QUOTE_KEY}`, undefined)
+
+    expect(read('selected')).toBe(QUOTE_KEY)
+
+    wrapper.unmount()
+  })
+
+  it('still corrects a MALFORMED quote key like any other unknown bucket', async () => {
+    // Uppercase uuid: the server stores and links the lowercase spelling;
+    // ParseBucketKey rejects the rest (LEADERBOARDS.md), and so does the
+    // client's shape test.
+    const { wrapper, replace, read } = await mountAt(
+      '/boards?bucket=quote:1F5F1F2C-6F0F-4D5A-9F0A-3F2A1B0C9D8E',
+      [TIME_15, TIME_30]
+    )
+
+    expect(read('selected')).toBe(TIME_30.bucket)
+    expect(replace).toHaveBeenCalledTimes(1)
+
+    wrapper.unmount()
+  })
+})
+
 describe('the rail groups in the URL', () => {
   const ALL = [TIME_15, TIME_30, TIME_60, TIME_15_RU, WORDS_25_RU]
 

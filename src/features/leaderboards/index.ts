@@ -8,6 +8,7 @@
  * consumes is a contract nobody checks.
  */
 export { BoardRail } from './rail'
+export { QuotePicker } from './quote-picker'
 export { BoardTable } from './board-table'
 export { BoardView } from './board-view'
 export { BoardModChips } from './mod-chips'

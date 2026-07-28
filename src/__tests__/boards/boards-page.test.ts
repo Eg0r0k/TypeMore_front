@@ -17,7 +17,8 @@ const h = vi.hoisted(() => ({
   catalogue: vi.fn(),
   page: vi.fn(),
   me: vi.fn(),
-  quote: vi.fn()
+  quote: vi.fn(),
+  quotePage: vi.fn()
 }))
 
 vi.mock('@shared/api', () => {
@@ -68,7 +69,22 @@ vi.mock('@shared/api', () => {
     quoteByIdQueryOptions: (id: string) => ({
       queryKey: ['quote', id],
       queryFn: () => h.quote(id)
-    })
+    }),
+    quotePageQueryOptions: (params: Record<string, unknown> = {}) => ({
+      queryKey: ['quotes', params.lang ?? null, params.group ?? null, params.cursor ?? null],
+      queryFn: () => h.quotePage(params)
+    }),
+    // The real mirrors, verbatim — the page builds and parses quote bucket
+    // keys through these, and a stub that drifted from the format would make
+    // every assertion below pass for the wrong reason.
+    quoteBucketKey: (quoteId: string) => `quote:${quoteId}`,
+    quoteIdOfBucketKey: (bucket: string) =>
+      /^quote:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(bucket)
+        ? bucket.slice('quote:'.length)
+        : null,
+    isQuoteBucketKey: (bucket: string) =>
+      /^quote:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(bucket),
+    quoteCorpusLang: (language: string) => /^(.+)_\d+k$/.exec(language)?.[1] ?? language
   }
 })
 
@@ -125,13 +141,17 @@ beforeEach(async () => {
   h.catalogue.mockReset()
   h.page.mockReset()
   h.me.mockReset()
+  h.quotePage.mockReset()
   h.page.mockResolvedValue({ bucket: WORDS_25.bucket, entries: [] })
   h.me.mockRejectedValue(new ApiError({ status: 401, code: 'unauthorized' }))
+  h.quotePage.mockResolvedValue({ quotes: [] })
   h.quote.mockResolvedValue({
     id: QUOTE_ID,
     lang: 'russian',
     source: 'Собачье сердце',
-    text: 'Лаской-с. Единственным способом, который возможен в обращении с живым существом.'
+    text: 'Лаской-с. Единственным способом, который возможен в обращении с живым существом.',
+    length: 81,
+    lenGroup: 'medium'
   })
   i18n.global.locale.value = 'en'
   queryClient = new QueryClient({
@@ -280,6 +300,102 @@ describe('boards page', () => {
     const activeVariation = wrapper.get('[data-testid="rail-variation"].board-rail__item--active')
     expect(activeVariation.text()).toContain('15s')
     expect(h.page).toHaveBeenCalledWith(TIME_15.bucket, undefined)
+
+    wrapper.unmount()
+  })
+
+  /**
+   * REGRESSION — the "open this quote's leaderboard" button. The results
+   * screen links to `?bucket=quote:<id>` seconds after a run, BEFORE the
+   * replay worker has accepted anything, so the board is not in the catalogue
+   * yet. The old selection validated every `?bucket=` against the catalogue
+   * and silently fell back to the busiest language board — the button
+   * "did not open the board". A quote key is valid by SHAPE.
+   */
+  it('opens a quote board that is not in the catalogue yet (the results-screen link)', async () => {
+    await router.push(`/boards?bucket=${QUOTE_BOARD.bucket}`)
+    // The catalogue does NOT list this quote board — nobody has an accepted
+    // run on it yet.
+    h.catalogue.mockResolvedValue([TIME_15, WORDS_25])
+    h.page.mockResolvedValue({ bucket: QUOTE_BOARD.bucket, entries: [] })
+
+    const wrapper = await mountPage()
+
+    // The board the link named, not the busiest one.
+    expect(h.page).toHaveBeenCalledWith(QUOTE_BOARD.bucket, undefined)
+    expect(wrapper.find('[data-testid="quote-board-header"]').exists()).toBe(true)
+    // And the URL still says what is on screen — no silent rewrite.
+    expect(router.currentRoute.value.query.bucket).toBe(QUOTE_BOARD.bucket)
+
+    wrapper.unmount()
+  })
+
+  it('shows the quote text and its attribution as the headline, above the board', async () => {
+    await router.push(`/boards?bucket=${QUOTE_BOARD.bucket}`)
+    h.catalogue.mockResolvedValue([TIME_15, WORDS_25, QUOTE_BOARD])
+    h.page.mockResolvedValue({ bucket: QUOTE_BOARD.bucket, entries: [] })
+
+    const wrapper = await mountPage()
+
+    const headline = wrapper.get('[data-testid="quote-board-source"]')
+    expect(headline.text()).toBe('Собачье сердце')
+    expect(wrapper.get('[data-testid="quote-board-text"]').text()).toContain(
+      'Единственным способом'
+    )
+    // Above the board: the header precedes the table in document order.
+    const html = wrapper.html()
+    expect(html.indexOf('quote-board-header')).toBeGreaterThan(-1)
+    expect(html.indexOf('quote-board-header')).toBeLessThan(html.indexOf('board__state'))
+    // And the rail marks where you are: the quotes source is active.
+    const activeSource = wrapper.get('[data-testid="rail-source"].board-rail__item--active')
+    expect(activeSource.attributes('data-source')).toBe('quotes')
+
+    wrapper.unmount()
+  })
+
+  it('renders the quote picker for ?source=quotes and opens a picked board', async () => {
+    await router.push('/boards?source=quotes&lang=russian')
+    h.catalogue.mockResolvedValue([TIME_15, WORDS_25])
+    h.quotePage.mockResolvedValue({
+      quotes: [
+        {
+          id: QUOTE_ID,
+          lang: 'russian',
+          upstreamId: 7,
+          source: 'Собачье сердце',
+          length: 81,
+          lenGroup: 'medium',
+          textHash: '8b1cf30a'
+        }
+      ]
+    })
+
+    const wrapper = await mountPage()
+
+    expect(h.quotePage).toHaveBeenCalledWith(expect.objectContaining({ lang: 'russian' }))
+    const row = wrapper.get('[data-testid="quote-picker-row"]')
+    expect(row.text()).toContain('Собачье сердце')
+    expect(row.text()).toContain('medium')
+
+    await row.trigger('click')
+    await settle()
+
+    expect(router.currentRoute.value.query.bucket).toBe(QUOTE_BOARD.bucket)
+    expect(h.page).toHaveBeenCalledWith(QUOTE_BOARD.bucket, undefined)
+
+    wrapper.unmount()
+  })
+
+  it('filters the picker by the rail’s length group', async () => {
+    await router.push('/boards?source=quotes&lang=russian&group=short')
+    h.catalogue.mockResolvedValue([TIME_15, WORDS_25])
+
+    const wrapper = await mountPage()
+
+    expect(h.quotePage).toHaveBeenCalledWith(
+      expect.objectContaining({ lang: 'russian', group: 'short' })
+    )
+    expect(wrapper.find('[data-testid="quote-picker-empty"]').exists()).toBe(true)
 
     wrapper.unmount()
   })

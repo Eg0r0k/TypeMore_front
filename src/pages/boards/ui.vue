@@ -60,15 +60,12 @@
           <BoardView :bucket="selected" />
         </template>
 
-        <Typography
+        <QuotePicker
           v-else-if="view === 'quote-picker'"
-          class="boards-page__state"
-          data-testid="boards-quote-picker"
-          size="s"
-          color="sub"
-        >
-          {{ t('boards.quote.pickerHint') }}
-        </Typography>
+          :lang="language"
+          :group="group"
+          @pick="openQuoteBoard"
+        />
 
         <!-- A language with no boards yet: the muted chips say which shapes exist. -->
         <Typography
@@ -87,17 +84,22 @@
 
 <script setup lang="ts">
   import { computed } from 'vue'
+  import { useRoute } from 'vue-router'
   import { useQuery } from '@tanstack/vue-query'
   import { useI18n } from 'vue-i18n'
   import {
     bucketCatalogueQueryOptions,
     dictionaryCatalogueQueryOptions,
-    isQuoteBucket
+    isQuoteBucket,
+    quoteBucketKey,
+    quoteByIdQueryOptions,
+    quoteIdOfBucketKey
   } from '@shared/api'
   import {
     BoardRail,
     BoardView,
     QuoteBoardHeader,
+    QuotePicker,
     railLanguages,
     railVariations,
     useBoardsSelection
@@ -115,6 +117,8 @@
    */
   const { t } = useI18n()
 
+  const route = useRoute()
+
   const catalogue = useQuery(bucketCatalogueQueryOptions())
   const buckets = computed(() => catalogue.data.value ?? [])
 
@@ -123,9 +127,34 @@
   // catalogue no longer serves keep their key as a fallback name.
   const dictionaries = useQuery(dictionaryCatalogueQueryOptions())
 
-  // Validated against the FULL catalogue, not only the language boards: a
-  // quote board is unlisted, not unreachable, and `?bucket=quote:<id>` has to
-  // keep resolving or every link ever shared to one silently redirects.
+  /**
+   * The quote this board ranks, or `null` for a language board — read off the
+   * KEY, never looked up in the catalogue. The catalogue only lists boards
+   * with a visible entry, and a freshly played quote's board is exactly the
+   * board that is not in it yet: deriving the id from a catalogue row was the
+   * second half of the bug that made a quote link render a language board.
+   */
+  const quoteId = computed<string | null>(() =>
+    typeof route.query.bucket === 'string' ? quoteIdOfBucketKey(route.query.bucket) : null
+  )
+
+  /**
+   * Attach `enabled` while keeping the options type INTACT — a literal spread
+   * collapses the `queryOptions()` intersection and vue-query's overloads
+   * reject the result (same note as the replay page's `gatedBy`).
+   */
+  const gatedBy = <T extends object>(options: T, enabled: boolean): T & { enabled: boolean } => ({
+    ...options,
+    enabled
+  })
+
+  // Resolved for the RAIL (which language row a quote board lights up); the
+  // header resolves the same id through the same cache entry for its text.
+  const quote = useQuery(
+    computed(() => gatedBy(quoteByIdQueryOptions(quoteId.value ?? ''), quoteId.value !== null))
+  )
+  const quoteLang = computed(() => quote.data.value?.lang)
+
   const {
     selected,
     view,
@@ -136,18 +165,17 @@
     selectLanguage,
     selectSource,
     selectGroup
-  } = useBoardsSelection(catalogue.data)
+  } = useBoardsSelection(catalogue.data, quoteLang)
 
   const hasAnyBoard = computed(() => buckets.value.some((bucket) => !isQuoteBucket(bucket)))
 
   const languages = computed(() => railLanguages(buckets.value, dictionaries.data.value))
   const variations = computed(() => railVariations(buckets.value, language.value))
 
-  /** The quote this board ranks, or `null` for a language board. */
-  const quoteId = computed<string | null>(() => {
-    const current = buckets.value.find((bucket) => bucket.bucket === selected.value)
-    return current !== undefined && isQuoteBucket(current) ? current.quoteId : null
-  })
+  /** A picked quote becomes its board's address — the one sanctioned mirror. */
+  const openQuoteBoard = (id: string): void => {
+    select(quoteBucketKey(id))
+  }
 
   const retryCatalogue = (): void => {
     void catalogue.refetch()

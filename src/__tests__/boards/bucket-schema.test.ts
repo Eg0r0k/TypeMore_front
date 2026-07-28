@@ -6,7 +6,9 @@ import {
   BucketCatalogueSchema,
   BucketInfoSchema,
   isQuoteBucket,
+  isQuoteBucketKey,
   quoteBucketKey,
+  quoteIdOfBucketKey,
   type BucketInfo
 } from '@shared/api'
 
@@ -58,6 +60,34 @@ describe('the catalogue parses both kinds of board', () => {
     // catalogue. Asserted against a REAL payload, so the mirror breaks loudly
     // if `leaderboard.Bucket.Key` ever changes shape.
     expect(quoteBucketKey(QUOTE_BUCKET.quoteId)).toBe(QUOTE_BUCKET.bucket)
+  })
+
+  it('recognises a canonical quote key by shape, and inverts it', () => {
+    // Round-trip through both mirrors: what `quoteBucketKey` builds,
+    // `quoteIdOfBucketKey` reads back — the same pairing the server keeps
+    // between `Bucket.Key` and `ParseBucketKey`.
+    expect(isQuoteBucketKey(QUOTE_BUCKET.bucket)).toBe(true)
+    expect(quoteIdOfBucketKey(quoteBucketKey(QUOTE_BUCKET.quoteId))).toBe(QUOTE_BUCKET.quoteId)
+  })
+
+  it('rejects every non-canonical uuid spelling, exactly as ParseBucketKey does', () => {
+    // LEADERBOARDS.md: braces, urn:uuid:, undashed and upper case name the
+    // same quote but not the same string, and the string is what the database
+    // stores and what people link to.
+    const id = QUOTE_BUCKET.quoteId
+    for (const bad of [
+      `quote:{${id}}`,
+      `quote:urn:uuid:${id}`,
+      `quote:${id.replaceAll('-', '')}`,
+      `quote:${id.toUpperCase()}`,
+      `quote:${id} `,
+      'quote:',
+      'words:50:en:quote',
+      LANGUAGE_BUCKET.bucket
+    ]) {
+      expect(isQuoteBucketKey(bad), bad).toBe(false)
+      expect(quoteIdOfBucketKey(bad), bad).toBeNull()
+    }
   })
 
   it('parses a mixed catalogue — one bad row must not take the page down', () => {
