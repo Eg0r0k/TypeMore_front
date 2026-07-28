@@ -1,48 +1,65 @@
 <template>
   <div v-if="room" class="identity">
+    <!--
+      Labelled like the rest of the column: the room code and the seat list
+      below already carry a sub-colored caption, so the name and the padlock
+      read as two more rows of the same list rather than a different widget.
+    -->
     <template v-if="session.isHost">
-      <TextInput
-        v-model="localName"
-        v-max-chars="32"
-        :placeholder="t('room.name')"
-        :aria-label="t('room.name')"
-        data-testid="room-name"
-        @keydown.enter="commitName"
-        @blur="commitName"
-      />
+      <div class="identity__field">
+        <Typography color="sub">{{ t('room.name') }}</Typography>
+        <TextInput
+          v-model="localName"
+          v-max-chars="32"
+          :placeholder="t('room.name')"
+          :aria-label="t('room.name')"
+          data-testid="room-name"
+          @keydown.enter="commitName"
+          @blur="commitName"
+        />
+      </div>
 
       <!--
         One control, two states: the padlock IS the setting. A pair of radio
         pills for a boolean spends a row saying what one glyph says, and the
         lock is the picture everyone already reads as "who can get in".
       -->
-      <Tooltip>
-        <TooltipTrigger as-child>
-          <button
-            type="button"
-            class="transition-tm focus-ring text-sub hover:text-text flex w-fit cursor-pointer items-center gap-2 rounded-md text-sm [&_svg]:size-4"
-            aria-label="visibility"
-            :aria-pressed="isPrivate"
-            data-testid="visibility-toggle"
-            @click="toggleVisibility"
-          >
-            <component :is="isPrivate ? IconLock : IconLockOpen" />
-            {{ t(`room.visibilityKind.${settings.visibility}`) }}
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>
-          {{ t(isPrivate ? 'room.makeOpen' : 'room.makePrivate') }}
-        </TooltipContent>
-      </Tooltip>
+      <div class="identity__field">
+        <Typography color="sub">{{ t('room.visibility') }}</Typography>
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <button
+              type="button"
+              class="transition-tm focus-ring text-sub hover:text-text flex w-fit cursor-pointer items-center gap-2 rounded-md text-sm [&_svg]:size-4"
+              aria-label="visibility"
+              :aria-pressed="isPrivate"
+              data-testid="visibility-toggle"
+              @click="toggleVisibility"
+            >
+              <component :is="isPrivate ? IconLock : IconLockOpen" />
+              {{ t(`room.visibilityKind.${settings.visibility}`) }}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {{ t(isPrivate ? 'room.makeOpen' : 'room.makePrivate') }}
+          </TooltipContent>
+        </Tooltip>
+      </div>
     </template>
 
     <!-- A guest reads the same two facts; only the host can change them. -->
     <template v-else>
-      <Typography size="l">{{ settings.name }}</Typography>
-      <span class="text-sub flex items-center gap-2 text-sm [&_svg]:size-4">
-        <component :is="isPrivate ? IconLock : IconLockOpen" aria-hidden="true" />
-        {{ t(`room.visibilityKind.${settings.visibility}`) }}
-      </span>
+      <div class="identity__field">
+        <Typography color="sub">{{ t('room.name') }}</Typography>
+        <Typography size="l">{{ settings.name }}</Typography>
+      </div>
+      <div class="identity__field">
+        <Typography color="sub">{{ t('room.visibility') }}</Typography>
+        <span class="text-sub flex items-center gap-2 text-sm [&_svg]:size-4">
+          <component :is="isPrivate ? IconLock : IconLockOpen" aria-hidden="true" />
+          {{ t(`room.visibilityKind.${settings.visibility}`) }}
+        </span>
+      </div>
     </template>
   </div>
 </template>
@@ -87,7 +104,13 @@
   .identity {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 1rem;
     align-items: flex-start;
+
+    &__field {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
   }
 </style>
