@@ -9,7 +9,7 @@
  */
 
 import type { GameEvent, Ms } from './events'
-import { asMs, sortEvents } from './events'
+import { asMs, isTelemetryEvent, sortEvents } from './events'
 import type { CoreContext, GameState } from './game-core'
 import {
   GameCore,
@@ -104,6 +104,13 @@ export function analyzeLog(ctx: CoreContext, events: readonly GameEvent[]): LogA
   const keyTimes: number[] = []
   const keyCorrect: boolean[] = []
   const commitTimes: number[] = []
+
+  // Metrics and score are functions of the STATE events alone: log-v2 telemetry
+  // (`down`/`up`) is invisible here by contract — a v2 log must analyze
+  // bit-identically to the same run captured as v1 (the stripping property).
+  // Filtering also keeps the trailing-`up`-after-finish case from reading as an
+  // aborted replay. On a v1 log this filter is the identity.
+  events = events.some(isTelemetryEvent) ? events.filter((e) => !isTelemetryEvent(e)) : events
 
   for (const event of sortEvents(events)) {
     state = settle(ctx, state, event.t)
@@ -474,6 +481,9 @@ export function afkBetween(
   const active = new Uint8Array(bucketCount + 1)
   let activeCount = 0
   for (const event of events) {
+    // Telemetry does not count as activity: AFK measures typing participation,
+    // and a v2 log must produce the same buckets as its stripped v1 twin.
+    if (isTelemetryEvent(event)) continue
     const offset = event.t - start
     if (offset < 0) continue
     const bucket = offset <= 0 ? 1 : Math.ceil(offset / AFK_BUCKET_MS)

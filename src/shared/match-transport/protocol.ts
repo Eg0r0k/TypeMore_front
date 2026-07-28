@@ -175,6 +175,12 @@ export type KickedFrame = v.InferOutput<typeof KickedSchema>
 export const PeerBatchSchema = v.object({
   type: v.literal('peer_batch'),
   playerId: v.string(),
+  /**
+   * The SENDER's event-log version (the relayed batch inherits it, §5): the
+   * grammar `parseEventBatch` must parse `events` under. Optional with a v1
+   * default for lenience toward older relays; the server always sends it.
+   */
+  version: v.optional(v.pipe(v.number(), v.integer()), 1),
   events: v.array(v.unknown())
 })
 export type PeerBatchFrame = v.InferOutput<typeof PeerBatchSchema>

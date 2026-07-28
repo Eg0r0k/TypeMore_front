@@ -22,8 +22,17 @@
 
 import { Result, err, ok } from 'neverthrow'
 
-import type { DeleteEvent, EventLog, GameEvent, ReplaceEvent } from './events'
-import { EVENT_LOG_VERSION, commitEvent, deleteEvent, insertEvent, replaceEvent } from './events'
+import type { DeleteEvent, EventLog, EventLogVersion, GameEvent, ReplaceEvent } from './events'
+import {
+  EVENT_LOG_VERSION,
+  EVENT_LOG_VERSION_TELEMETRY,
+  commitEvent,
+  deleteEvent,
+  insertEvent,
+  keyDownEvent,
+  keyUpEvent,
+  replaceEvent
+} from './events'
 
 export type ParseErrorCode = 'bad-shape' | 'bad-seq' | 'bad-t' | 'bad-kind' | 'bad-version'
 
@@ -51,6 +60,17 @@ const isDeleteUnit = (value: unknown): value is DeleteEvent['unit'] =>
 const isReplaceSource = (value: unknown): value is ReplaceEvent['source'] =>
   value === 'ime' || value === 'paste'
 
+/**
+ * Log v2 telemetry `code` shape: the `KeyboardEvent.code` charset — ASCII
+ * alphanumerics ("KeyF", "ShiftLeft", "Numpad0", "F12"), non-empty, ≤32 chars.
+ * Anything else (characters, layout leakage, junk) is rejected.
+ */
+const isKeyCode = (value: unknown): value is string =>
+  typeof value === 'string' && /^[A-Za-z0-9]{1,32}$/.test(value)
+
+const isLogVersion = (value: unknown): value is EventLogVersion =>
+  value === EVENT_LOG_VERSION || value === EVENT_LOG_VERSION_TELEMETRY
+
 /** Non-negative integer (replace range endpoints). Range-vs-buffer validity is `reduce`'s job. */
 const isIndex = (value: unknown): value is number =>
   typeof value === 'number' && Number.isInteger(value) && value >= 0
@@ -58,8 +78,15 @@ const isIndex = (value: unknown): value is number =>
 /**
  * Validate one unknown payload as a `GameEvent`. On success the returned event
  * is a fresh, canonical, branded object — safe to hand to `GameCore.dispatch`.
+ *
+ * `version` selects the grammar: the v1 union is unchanged, v2 additionally
+ * admits the `down`/`up` telemetry kinds. Under v1 a telemetry payload is an
+ * unknown kind, exactly as before this parameter existed.
  */
-export function parseGameEvent(input: unknown): Result<GameEvent, ParseError> {
+export function parseGameEvent(
+  input: unknown,
+  version: EventLogVersion = EVENT_LOG_VERSION
+): Result<GameEvent, ParseError> {
   if (!isRecord(input)) {
     return err({
       code: 'bad-shape',
@@ -119,6 +146,20 @@ export function parseGameEvent(input: unknown): Result<GameEvent, ParseError> {
       }
       return ok(replaceEvent(seq, t, from, to, text, source))
     }
+    case 'down':
+    case 'up': {
+      if (version !== EVENT_LOG_VERSION_TELEMETRY) {
+        return err({ code: 'bad-kind', message: `unknown event kind ${JSON.stringify(kind)}` })
+      }
+      const { code } = input
+      if (!isKeyCode(code)) {
+        return err({
+          code: 'bad-shape',
+          message: `${kind}.code must be 1-32 chars of the KeyboardEvent.code charset, got ${JSON.stringify(code)}`
+        })
+      }
+      return ok(kind === 'down' ? keyDownEvent(seq, t, code) : keyUpEvent(seq, t, code))
+    }
     default:
       return err({ code: 'bad-kind', message: `unknown event kind ${JSON.stringify(kind)}` })
   }
@@ -136,10 +177,10 @@ export function parseEventBatch(input: unknown): Result<EventLog, ParseError> {
       message: `batch must be an object, got ${input === null ? 'null' : typeof input}`
     })
   }
-  if (input.version !== EVENT_LOG_VERSION) {
+  if (!isLogVersion(input.version)) {
     return err({
       code: 'bad-version',
-      message: `unsupported log version ${JSON.stringify(input.version)}, expected ${EVENT_LOG_VERSION}`
+      message: `unsupported log version ${JSON.stringify(input.version)}, expected ${EVENT_LOG_VERSION} or ${EVENT_LOG_VERSION_TELEMETRY}`
     })
   }
   if (!Array.isArray(input.events)) {
@@ -148,11 +189,11 @@ export function parseEventBatch(input: unknown): Result<EventLog, ParseError> {
 
   const events: GameEvent[] = []
   for (let i = 0; i < input.events.length; i++) {
-    const parsed = parseGameEvent(input.events[i])
+    const parsed = parseGameEvent(input.events[i], input.version)
     if (parsed.isErr()) {
       return err({ ...parsed.error, index: i, message: `events[${i}]: ${parsed.error.message}` })
     }
     events.push(parsed.value)
   }
-  return ok({ version: EVENT_LOG_VERSION, events })
+  return ok({ version: input.version, events })
 }

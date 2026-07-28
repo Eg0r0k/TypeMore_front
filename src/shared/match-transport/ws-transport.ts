@@ -1,4 +1,4 @@
-import { EVENT_LOG_VERSION, parseEventBatch } from '@shared/core'
+import { parseEventBatch } from '@shared/core'
 import type { ClientCommand, HelloFrame, ServerFrame } from './protocol'
 import { PROTOCOL_VERSION, decodeServerFrame } from './protocol'
 import type {
@@ -275,7 +275,12 @@ export class WsTransport implements MatchTransport {
         return
       }
       case 'peer_batch': {
-        const parsed = parseEventBatch({ version: EVENT_LOG_VERSION, events: frame.events })
+        // Parse under the SENDER's log version (the frame carries it for
+        // exactly this): a v2 peer's batches interleave telemetry with the
+        // state events, and the ghost core folds the telemetry as no-ops. An
+        // unknown future version fails as bad-version → protocol-violation →
+        // that one ghost freezes desynced; nobody else is affected.
+        const parsed = parseEventBatch({ version: frame.version, events: frame.events })
         if (parsed.isErr()) {
           this.emit({
             type: 'protocol-violation',

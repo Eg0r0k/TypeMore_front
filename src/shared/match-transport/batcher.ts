@@ -1,4 +1,4 @@
-import type { GameEvent } from '@shared/core'
+import type { EventLogVersion, GameEvent } from '@shared/core'
 import { EVENT_LOG_VERSION } from '@shared/core'
 import type { EventBatchFrame } from './protocol'
 import type { MatchTransport, Unsubscribe } from './transport'
@@ -33,6 +33,7 @@ export class EventBatcher {
   private readonly unsubscribe: Unsubscribe
 
   private matchId: string | null = null
+  private version: EventLogVersion = EVENT_LOG_VERSION
   private seq = 0
   private buffer: GameEvent[] = []
   private outbox: EventBatchFrame[] = []
@@ -58,10 +59,16 @@ export class EventBatcher {
     return this.outbox.length
   }
 
-  /** Arm a new match: `batchSeq` restarts at 1, buffers are cleared. */
-  startMatch(matchId: string): void {
+  /**
+   * Arm a new match: `batchSeq` restarts at 1, buffers are cleared. `version`
+   * is THIS RUN's event-log version (the store's per-run capability decision):
+   * a v2 run's batches carry telemetry events and say so on the frame — the
+   * `event_batch.version` field exists for exactly this.
+   */
+  startMatch(matchId: string, version: EventLogVersion = EVENT_LOG_VERSION): void {
     this.clearTimer()
     this.matchId = matchId
+    this.version = version
     this.seq = 0
     this.buffer = []
     this.outbox = []
@@ -94,7 +101,7 @@ export class EventBatcher {
       matchId: this.matchId,
       playerId,
       batchSeq: ++this.seq,
-      version: EVENT_LOG_VERSION,
+      version: this.version,
       events: this.buffer
     }
     this.buffer = []

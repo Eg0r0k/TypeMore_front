@@ -122,7 +122,9 @@ describe('parseEventBatch', () => {
 
   it('rejects a missing or unsupported version', () => {
     expect(parseEventBatch({ events })._unsafeUnwrapErr().code).toBe('bad-version')
-    expect(parseEventBatch({ version: 2, events })._unsafeUnwrapErr().code).toBe('bad-version')
+    // 2 became legal with the telemetry log (the ONLY version bump so far);
+    // the next unknown version is the new "unsupported" specimen.
+    expect(parseEventBatch({ version: 3, events })._unsafeUnwrapErr().code).toBe('bad-version')
     expect(parseEventBatch({ version: '1', events })._unsafeUnwrapErr().code).toBe('bad-version')
   })
 

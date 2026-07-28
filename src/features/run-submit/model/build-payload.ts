@@ -24,6 +24,7 @@ import {
   quoteOf,
   type CoreConfig,
   type EventLog,
+  type EventLogVersion,
   type GameEvent,
   type GenerationConfig,
   type GenerationMode,
@@ -67,6 +68,12 @@ export interface RunSubmitContext {
   readonly metrics: Metrics
   readonly score: ScoreResult
   readonly log: readonly GameEvent[]
+  /**
+   * The run's event-log version (the store's per-run capability decision).
+   * Optional so older assemblers stay valid: omitted ⇒ v1, exactly what every
+   * pre-telemetry build submitted.
+   */
+  readonly logVersion?: EventLogVersion
 }
 
 /**
@@ -82,7 +89,7 @@ export type WireGenerationConfig = Omit<GenerationConfig, 'textSource'> & {
 
 /** Build the exact RUNS.md POST body. Assumes `ctx.mode` is ranked-eligible. */
 export function buildRunPayload(ctx: RunSubmitContext): RunSubmitInput {
-  const eventLog: EventLog = { version: EVENT_LOG_VERSION, events: ctx.log }
+  const eventLog: EventLog = { version: ctx.logVersion ?? EVENT_LOG_VERSION, events: ctx.log }
   const quote = quoteOf(ctx.generation)
   const generation: WireGenerationConfig = quote
     ? {

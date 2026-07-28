@@ -46,6 +46,9 @@ import {
   type ModsDeclaration,
   type ActiveMod,
   type Grade,
+  type EventLogVersion,
+  EVENT_LOG_VERSION,
+  EVENT_LOG_VERSION_TELEMETRY,
   GameCore,
   activeModsV1,
   commitEvent,
@@ -57,6 +60,8 @@ import {
   initialScoreState,
   initialState,
   insertEvent,
+  keyDownEvent,
+  keyUpEvent,
   metricsOf,
   modMultiplierV1,
   errorWordsOf,
@@ -65,6 +70,7 @@ import {
   replaceEvent
 } from '@shared/core'
 import { type GameTimer, type TimerWorkerLike, useGameTimer } from '@shared/lib/hooks/useGameTimer'
+import { detectLogVersion } from '@shared/lib/log-version'
 
 export interface GameSetup {
   readonly config: CoreConfig
@@ -73,6 +79,13 @@ export interface GameSetup {
   readonly generation?: GenerationConfig
   /** Declared view-only mods (blind/fading/flashlight) — trusted half. Optional; defaults to none. */
   readonly declaration?: ModsDeclaration
+  /**
+   * Event-log version for THIS run. Omitted ⇒ capability detection
+   * (`detectLogVersion`): v2 (keystroke telemetry) only on a confident
+   * physical-keyboard desktop, v1 everywhere else — including every test
+   * environment, which keeps existing fixtures on v1 unless they opt in.
+   */
+  readonly logVersion?: EventLogVersion
 }
 
 /**
@@ -143,6 +156,10 @@ function createGameStore(storeId: string) {
     // hands a replay the run's own setup instead of the viewer's live config.
     let setupGeneration: GenerationConfig = NO_GENERATION
     let setupDeclaration: ModsDeclaration = NO_DECLARATION
+
+    // Event-log version of the CURRENT run, decided at setup (never mid-run).
+    // Reactive so the run-submit / match layers read the live decision.
+    const logVersion = shallowRef<EventLogVersion>(EVENT_LOG_VERSION)
 
     // Reactive projections consumed by the view.
     const snapshot = shallowRef<GameState>(initialState())
@@ -254,6 +271,7 @@ function createGameStore(storeId: string) {
       snapshot.value = core.state
       anchorPerf = null
       seq = 0
+      logVersion.value = game.logVersion ?? detectLogVersion()
       liveNow.value = 0 as Ms
       timer?.reset()
       resetScore()
@@ -366,6 +384,35 @@ function createGameStore(storeId: string) {
       }
     }
 
+    /**
+     * Log v2 keystroke telemetry (`down`/`up`, physical `KeyboardEvent.code`).
+     * STATE NO-OPS by contract: no score step, no snapshot refresh, no timer
+     * interaction — the event is only stamped and appended to the log, so the
+     * render path does zero additional work per key. Silently dropped on a v1
+     * run (capability detection said no reliable physical keyboard), before
+     * setup, and once the run is finished — capture stops with the run, so the
+     * release of the key that typed the final grapheme stays out of the log.
+     */
+    function telemetry(kind: 'down' | 'up', code: string): void {
+      if (!core || logVersion.value !== EVENT_LOG_VERSION_TELEMETRY) return
+      if (core.state.phase === 'finished') return
+      const { seq: s, t } = stamp()
+      const event = kind === 'down' ? keyDownEvent(s, t, code) : keyUpEvent(s, t, code)
+      if (core.dispatch(event).isErr()) {
+        // Unreachable for telemetry (reduce accepts it in every phase), kept so
+        // the contiguity invariant survives even a future reducer change.
+        seq -= 1
+      }
+    }
+
+    function keyDown(code: string): void {
+      telemetry('down', code)
+    }
+
+    function keyUp(code: string): void {
+      telemetry('up', code)
+    }
+
     /** Render an externally-produced state (the replay scheduler drives this). */
     function setState(state: GameState): void {
       snapshot.value = state
@@ -435,6 +482,7 @@ function createGameStore(storeId: string) {
       modMultiplier,
       activeMods,
       afk,
+      logVersion,
       setup,
       setDeclaration,
       reset,
@@ -443,6 +491,8 @@ function createGameStore(storeId: string) {
       replace,
       deleteBackward,
       commit,
+      keyDown,
+      keyUp,
       setState,
       getReplayData,
       attachTimer,

@@ -65,14 +65,56 @@ export interface ReplaceEvent extends EventBase {
   readonly source: 'ime' | 'paste'
 }
 
-export type GameEvent = InsertEvent | DeleteEvent | CommitEvent | ReplaceEvent
+/**
+ * Log v2 keystroke telemetry: a physical key went down / came up. `code` is the
+ * PHYSICAL key (`KeyboardEvent.code`, e.g. `"KeyF"`, `"ShiftLeft"`) — never the
+ * produced character, so no layout or IME state can leak through it.
+ *
+ * Telemetry events are STATE NO-OPS: `reduce` returns the state unchanged (and
+ * unlike every other kind they are legal in any phase, including `finished` —
+ * the key that typed the last grapheme is still released after the run ends).
+ * They consume `seq` like every event, so the contiguity guard covers them:
+ * telemetry cannot be inserted, dropped, or reordered after the fact without
+ * breaking the log. They carry `t` on the same clock. Scoring, metrics and fold
+ * state are UNCHANGED by design — stripping every down/up from a v2 log folds
+ * to a bit-identical state (pinned by the stripping property test).
+ */
+export interface KeyDownEvent extends EventBase {
+  readonly kind: 'down'
+  readonly code: string
+}
+
+/** See {@link KeyDownEvent}. */
+export interface KeyUpEvent extends EventBase {
+  readonly kind: 'up'
+  readonly code: string
+}
+
+/** The state-affecting v1 union — what the reducer folds. */
+export type StateEvent = InsertEvent | DeleteEvent | CommitEvent | ReplaceEvent
+/** Log v2 telemetry union — folded as no-ops, validated structurally. */
+export type TelemetryEvent = KeyDownEvent | KeyUpEvent
+
+export type GameEvent = StateEvent | TelemetryEvent
 export type GameEventKind = GameEvent['kind']
 
-/** Wire-format log version. Bump on any breaking change to the union above. */
+/** Narrow to telemetry (`down` / `up`). The complement is a `StateEvent`. */
+export const isTelemetryEvent = (event: GameEvent): event is TelemetryEvent =>
+  event.kind === 'down' || event.kind === 'up'
+
+/**
+ * Wire-format log versions. v1 is the state-event grammar; v2 adds the optional
+ * `down`/`up` telemetry. The version is decided PER RUN at log start (capability
+ * detection: a client without a physical keyboard keeps emitting v1, and v1 is
+ * accepted forever), so both constants stay live — `EVENT_LOG_VERSION` remains
+ * the v1 base the stored-run world is pinned to.
+ */
 export const EVENT_LOG_VERSION = 1 as const
+export const EVENT_LOG_VERSION_TELEMETRY = 2 as const
+export type EventLogVersion = typeof EVENT_LOG_VERSION | typeof EVENT_LOG_VERSION_TELEMETRY
 
 export interface EventLog {
-  readonly version: typeof EVENT_LOG_VERSION
+  readonly version: EventLogVersion
   readonly events: readonly GameEvent[]
 }
 
@@ -119,6 +161,20 @@ export const replaceEvent = (
   to,
   text,
   source
+})
+
+export const keyDownEvent = (seq: number, t: number, code: string): KeyDownEvent => ({
+  kind: 'down',
+  seq: asSeq(seq),
+  t: asMs(t),
+  code
+})
+
+export const keyUpEvent = (seq: number, t: number, code: string): KeyUpEvent => ({
+  kind: 'up',
+  seq: asSeq(seq),
+  t: asMs(t),
+  code
 })
 
 /**

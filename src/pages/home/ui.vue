@@ -256,7 +256,8 @@
       dictHash: meta.dictHash,
       metrics: game.metrics,
       score,
-      log: replay.log
+      log: replay.log,
+      logVersion: game.logVersion
     }
   }
 

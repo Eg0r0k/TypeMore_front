@@ -442,7 +442,7 @@ export class LoopbackServer {
         this.chatSend(client, frame.text)
         return
       case 'event_batch':
-        this.eventBatch(client, frame.matchId, frame.batchSeq, frame.events)
+        this.eventBatch(client, frame.matchId, frame.batchSeq, frame.version, frame.events)
         return
       case 'leave':
         this.leave(client)
@@ -710,6 +710,7 @@ export class LoopbackServer {
     client: ClientRecord,
     matchId: string,
     batchSeq: number,
+    version: number,
     events: unknown[]
   ): void {
     const room = client.room
@@ -739,7 +740,12 @@ export class LoopbackServer {
     if (match.participants.get(client.playerId) === 'racing') {
       this.markAfkBucket(match, client.playerId)
     }
-    this.broadcast(room, { type: 'peer_batch', playerId: client.playerId, events }, client.playerId)
+    // The relayed batch inherits the SENDER's version — mirrors room.go.
+    this.broadcast(
+      room,
+      { type: 'peer_batch', playerId: client.playerId, version, events },
+      client.playerId
+    )
   }
 
   private leave(client: ClientRecord): void {

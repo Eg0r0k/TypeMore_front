@@ -957,7 +957,9 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     countdownMsLeft.value = null
     const lateBy = goLocalMs === null ? 0 : Math.max(0, Date.now() - goLocalMs)
     goAnchorPerf = performance.now() - lateBy
-    batcher.startMatch(matchId)
+    // The batch frames carry THIS run's event-log version (v2 ⇒ telemetry
+    // events ride along in the batches; the relay treats them as opaque).
+    batcher.startMatch(matchId, localRef.value?.logVersion)
     batcherArmed = true
     phase.value = 'running'
     localRef.value?.start(goAnchorPerf)

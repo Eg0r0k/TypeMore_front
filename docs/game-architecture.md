@@ -60,6 +60,28 @@ restart), never a live config mutation. `blind` applies on the fly.
 - `seq`: monotonic (loss/dup guard, deterministic tie-break). `t`: ms offset from
   **test start** (never raw `performance.now()` — clients have different timebases).
 - `EVENT_LOG_VERSION` is the wire version; bump on any breaking change.
+- **Log v2 — keystroke telemetry (`down` / `up`).** Two additional kinds:
+  `{ seq, t, code }` where `code` is the PHYSICAL key (`KeyboardEvent.code`,
+  `"KeyF"`, `"ShiftLeft"` — never the character; strict shape: 1–32 chars of
+  `[A-Za-z0-9]`). They consume `seq` like every event (contiguity is their
+  tamper-evidence) and carry `t` on the same clock. They are **state no-ops**:
+  `reduce` returns the state unchanged (and accepts them in ANY phase — the key
+  that typed the final grapheme is released after the run ends), and metrics,
+  score, AFK and the two-clock deadline all read the state-event view only, so
+  **stripping every `down`/`up` from a v2 log folds, measures, scores and
+  judges bit-identically** (the stripping property test pins this across
+  modes/mods/text sources). The version is decided PER RUN at log start by
+  conservative capability detection (`detectLogVersion`): v2 only on a
+  confident physical-keyboard desktop; IME/virtual-keyboard/touch clients keep
+  emitting v1, and v1 is accepted forever. The input adapter captures both
+  halves through the same stamping pipeline (a `down` precedes the `insert` it
+  produces, modifiers included — a Shift hold IS the signal), skips auto-repeat
+  `keydown`s, suppresses telemetry entirely during composition sessions, and
+  stops capturing at run finish. Ghosts/replay fold telemetry through the same
+  reducer no-op — no per-event render work. `event_batch.version` says which
+  grammar a peer's batches speak; the relay treats events as opaque either way.
+  Telemetry is anticheat/analytics INPUT — the keyboard-portrait projection and
+  hold/overlap plausibility heuristics are later phases consuming this data.
 - **One grapheme per `insert`.** The input layer emits exactly one grapheme per
   keystroke; any multi-character input goes through `replace` (autocomplete/IME =
   `ime`, paste = `paste`). A multi-grapheme `insert` in a log is a `validateLog`
@@ -302,7 +324,10 @@ committed, blind]`); a commit updates only the departing + new-active word.
 Words are regenerated from the seed; the log is replayed; metrics are recomputed
 (the client's numbers are not inputs).
 
-Layers: (1) structural (version, contiguous `seq`, monotonic `t`, `t ≤` deadline);
+Layers: (1) structural (version ∈ {1, 2}, telemetry ⇒ version 2, contiguous
+`seq` over ALL events, monotonic `t`, `t ≤` deadline for STATE events, v2
+down/up pairing sanity — an `up` without a preceding `down` is the scored
+`unpaired-keyup` flag, never invalid: the key could be held before start);
 (2) replay via `foldLog` (rejects events after finished, invalid ranges, locked
 backspace); (3) commit-consistency branched on `nospace`; (4) input rules
 (locked-backspace → invalid; multi-grapheme insert / paste → flag); (5) difficulty

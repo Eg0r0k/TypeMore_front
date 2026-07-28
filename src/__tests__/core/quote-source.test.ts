@@ -386,15 +386,16 @@ describe('a quote run folds and validates exactly like a seeded one', () => {
     expect(quoteReport).toEqual(seededReport)
   })
 
-  it('invalidates a quote log whose version is not the one the server accepts', () => {
+  it('invalidates a quote log whose version is not one the server accepts', () => {
+    // 2 became legal with the telemetry log; 3 is the unsupported specimen now.
     const report = validateLog({
       seed: 0,
       dictionary: otherDict,
       dictVersion: dictVersion([text]),
       configSnapshot: { config: coreCfg({ mode: 'quote' }), generation: quoteGeneration },
-      log: { version: 2, events: log.events }
+      log: { version: 3, events: log.events } as unknown as EventLog
     })._unsafeUnwrap()
     expect(report.verdict).toBe('invalid')
-    expect(report.reason).toMatch(/log version 2 != 1/)
+    expect(report.reason).toMatch(/log version 3 != 1/)
   })
 })
