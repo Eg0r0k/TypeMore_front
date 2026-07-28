@@ -1,5 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router'
-import { ROUTE_NAMES } from '@/shared/router'
+import { useRaceStore } from '@entities/race'
+import { ROUTE_NAMES, routeLocation } from '@/shared/router'
 
 /**
  * Leaderboards. Public on purpose — a board nobody can read without an account
@@ -26,13 +27,17 @@ export const boardsRoutes: RouteRecordRaw[] = [
     meta: { title: 'Replay' }
   },
   {
-    // Race a board run's ghost: the same public replay data, typed against
-    // live. Its own route for the same reason replay has one — Back returns
-    // to the board.
+    // THIN REDIRECT (the race-vs-run rework): a race lives on the HOME solo
+    // screen now — this route survives only so deep links from the boards
+    // keep working. A route-level redirect rather than a page on purpose:
+    // navigating out of a component's onMounted mid-transition wedges the
+    // layout's out-in Transition, and a redirect page has nothing to render
+    // anyway — the standalone race page's game surface is deleted.
     path: '/race/:runId',
     name: ROUTE_NAMES.RACE,
-    component: () => import('@/pages/race/ui.vue'),
-    props: true,
-    meta: { title: 'Race' }
+    redirect: (to) => {
+      useRaceStore().request(String(to.params.runId))
+      return routeLocation.home()
+    }
   }
 ]

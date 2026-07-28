@@ -17,6 +17,11 @@
       of mistyped words) and do not belong in the stage's fixed field row — the
       row exists precisely so nothing can resize it.
     -->
+    <!-- Racing a record: the banner, the opponent row, the countdown and the
+         verdict all live in the host; the FIELD below stays the one game
+         surface (the race-vs-run rework's whole point). -->
+    <RaceHost v-if="race.racing && race.requestedRunId" :run-id="race.requestedRunId" />
+
     <ReplayPlayer
       v-if="replaying && replayData"
       :replay="replayData"
@@ -39,7 +44,7 @@
       @retry="runSubmission.retry"
       @signin="onSignIn"
       @replay="onReplay"
-      @next="loadAndSetup"
+      @next="onNext"
     />
 
     <TestStage v-else>
@@ -59,7 +64,7 @@
       </template>
 
       <Transition name="fade" mode="out-in">
-        <div v-if="setupState !== 'ready'" key="setup" class="home__notice">
+        <div v-if="setupState !== 'ready' && !race.racing" key="setup" class="home__notice">
           <Typography v-if="setupState === 'loading'" size="m" color="sub">
             {{ t('game.setup.loading') }}
           </Typography>
@@ -91,7 +96,7 @@
           size="icon"
           :aria-label="t('game.restart')"
           data-testid="restart-test"
-          @click="loadAndSetup"
+          @click="onRestart"
         >
           <IconRestart class="size-6" />
         </Button>
@@ -113,6 +118,8 @@
   import { type ResultSummary, TestResults } from '@/features/test/results'
   import { ReplayPlayer } from '@/features/test/replay'
   import { type ReplayData, toCoreSetup, toGameSession, useGameStore } from '@entities/game'
+  import { useRaceStore } from '@entities/race'
+  import { RaceHost } from '@/features/test/race'
   import { useConfigStore } from '@/entities/config/model/store'
   import {
     isApiError,
@@ -145,6 +152,7 @@
    */
   const { t } = useI18n()
   const game = useGameStore('local')
+  const race = useRaceStore()
   const config = useConfigStore().config
   // The field reads only the GameView contract; `blind` flows in from app config
   // here — the widget layer never touches the config store.
@@ -239,7 +247,12 @@
   const runMeta = ref<{ seed: number; dictHash: string; lang: string } | null>(null)
 
   // Finished normally — not failed (expert/master/minSpeed) and not aborted.
-  const finishedOk = computed(() => game.phase === 'finished' && game.snapshot.failReason === null)
+  // A RACE run never counts as submittable: its text is pre-known (the whole
+  // record is on screen), so it must never reach POST /runs. The spy test on
+  // this guard travels with the race feature.
+  const finishedOk = computed(
+    () => game.phase === 'finished' && game.snapshot.failReason === null && !race.racing
+  )
 
   function buildRunContext(): RunSubmitContext | null {
     const meta = runMeta.value
@@ -287,6 +300,11 @@
    * A seeded run still treats a missing dictionary as fatal.
    */
   async function loadAndSetup(): Promise<void> {
+    // While racing, the race host owns the game setup (exact words, exact
+    // seed, 'go' clock). The config writes a race makes on entry would
+    // otherwise trigger this rebuild and replace the record's text with a
+    // fresh generation.
+    if (race.racing) return
     replaying.value = false
     setupState.value = 'loading'
     const quoteMode = config.mode === ConfigModes.Quote
@@ -410,8 +428,22 @@
     () => game.setDeclaration(declarationOf())
   )
 
-  // Esc exits the replay if open, otherwise restarts with fresh words (bringing the
-  // field and settings bar back).
+  /** Restart: in a race this re-races the SAME ghost from 3-2-1; solo, fresh words. */
+  function onRestart(): void {
+    if (race.racing) {
+      race.requestRestart()
+      return
+    }
+    void loadAndSetup()
+  }
+
+  /** The results screen's "next": same routing as the restart control. */
+  function onNext(): void {
+    onRestart()
+  }
+
+  // Esc exits the replay if open, otherwise restarts (same routing as the
+  // restart button: a race re-races its ghost, solo regenerates).
   useEventListener(window, 'keydown', (event: KeyboardEvent) => {
     if (event.key !== 'Escape') return
     event.preventDefault()
@@ -419,7 +451,7 @@
       replaying.value = false
       return
     }
-    void loadAndSetup()
+    onRestart()
   })
 </script>
 

@@ -56,6 +56,7 @@ export default {
     },
     /** Why a registry option is unavailable — rendered beside the disabled control. */
     constraint: {
+      racing: 'locked during a race — exit the race to change settings',
       fixedText: 'fixed text — this mod would change nothing'
     }
   },
@@ -522,7 +523,113 @@ export default {
     more: 'load more',
     moreAbove: 'load more above'
   },
+  profile: {
+    signin: {
+      hint: 'sign in to see your typing statistics — tests, records, charts and the keyboard heatmap.',
+      action: 'sign in'
+    },
+    sectionError: 'this section failed to load',
+    retry: 'retry',
+    joined: 'joined {date}',
+    testsStarted: 'tests started',
+    testsCompleted: 'tests completed',
+    restartsPerCompleted: 'restarts per test',
+    timeTyping: 'time typing',
+    wordsTyped: 'words typed (est.)',
+    metric: {
+      wpm: 'wpm',
+      raw: 'raw',
+      acc: 'accuracy',
+      consistency: 'consistency'
+    },
+    stat: {
+      highest: 'highest',
+      average: 'average',
+      averageLast10: 'last 10'
+    },
+    activity: {
+      title: 'activity',
+      empty: 'no tests yet — the calendar fills in as you play.',
+      aria: 'daily activity calendar for the last year',
+      tooltip: '{tests} test | {tests} tests',
+      streak: 'streak: {current} days (best {best})'
+    },
+    pbs: {
+      title: 'personal bests',
+      empty: 'no ranked results yet — finish a ranked-shape test to claim a board slot.',
+      score: 'score',
+      race: 'race',
+      watch: 'watch',
+      quote: 'quote'
+    },
+    charts: {
+      title: 'progress',
+      empty: 'nothing in this range yet.',
+      histogramTitle: 'tests per 10 wpm',
+      histogramAria: 'tests per 10 wpm bucket',
+      dailyAria: 'daily time typing and average speed',
+      tests: '{tests} test | {tests} tests',
+      time: 'time typing',
+      avgWpm: 'avg wpm',
+      avgAcc: 'avg accuracy',
+      trend: 'trend',
+      range: 'range',
+      metric: 'line metric',
+      smoothing: 'smoothing',
+      speed: 'speed',
+      accuracy: 'accuracy',
+      avgOf: 'avg of {n}',
+      perHour: 'speed change per hour of typing: {delta} wpm',
+      rangePreset: {
+        all: 'all time',
+        '3mo': '3 months',
+        month: 'month',
+        week: 'week',
+        day: 'day'
+      }
+    },
+    keyboard: {
+      title: 'keyboard',
+      layout: 'keyboard layout',
+      metric: 'keyboard metric',
+      accuracy: 'accuracy',
+      speed: 'speed',
+      aria: 'per-key heatmap',
+      presses: '{n} presses',
+      errors: '{p} errors',
+      interval: '{ms} ms between keys',
+      lowData: 'insufficient data',
+      empty: 'no key data yet — accepted tests fill the heatmap in.'
+    },
+    runs: {
+      title: 'tests',
+      empty: 'no tests submitted yet.',
+      when: 'when',
+      mode: 'mode',
+      lang: 'language',
+      consistency: 'cons.',
+      chars: 'chars',
+      charsTitle: 'correct / incorrect / extra / missed',
+      grade: 'grade',
+      mods: 'mods',
+      quote: 'quote',
+      replay: 'watch',
+      race: 'race',
+      more: 'load more',
+      loading: 'loading…',
+      status: {
+        pending: 'pending',
+        accepted: 'accepted',
+        flagged: 'in review',
+        rejected: 'rejected'
+      }
+    }
+  },
   race: {
+    banner: 'racing {player} — {score}',
+    exit: 'exit race',
+    unranked: 'unranked — nothing is submitted',
+    opponentFinished: 'finished',
     title: 'racing {player}',
     you: 'you',
     ghost: 'ghost',

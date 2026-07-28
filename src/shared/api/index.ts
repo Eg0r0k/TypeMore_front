@@ -20,6 +20,7 @@ export * from './themes'
 export * from './leaderboards'
 export * from './quotes'
 export * from './rooms'
+export * from './profile'
 
 export { queryClient } from './query-client'
 export { API_SCOPE } from './keys'

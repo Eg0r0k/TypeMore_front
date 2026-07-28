@@ -96,6 +96,13 @@ export interface ConstraintContext {
   readonly mode: Config['mode']
   /** The resolved source once a run exists. Absent while the player is still choosing. */
   readonly textSource?: GenerationTextSource
+  /**
+   * The solo screen is racing a recorded run: every option is locked with one
+   * reason, because the setup on screen is the RECORD's, not the player's —
+   * changing a setting IS exiting the race, and the exit control is the way
+   * to do that on purpose.
+   */
+  readonly racing?: boolean
 }
 
 /** An i18n key explaining why an option is unavailable, or `null` when it is available. */
@@ -525,6 +532,9 @@ export function isVisible(option: GameOption, ctx: ConstraintContext): boolean {
 
 /** The i18n key explaining why the option cannot be edited, or `null`. */
 export function disabledReason(option: GameOption, ctx: ConstraintContext): DisabledReason {
+  // The race lock outranks every per-option rule: while the solo screen races
+  // a record, the whole bar is the record's setup and none of it is editable.
+  if (ctx.racing === true) return 'game.constraint.racing'
   return option.disabledWhen?.(ctx) ?? null
 }
 

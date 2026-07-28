@@ -1,11 +1,11 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { stubDictionary, stubLeaderboards, stubReplay } from './fixtures/leaderboards'
 
 /**
- * `/race/:runId` — racing a board run's ghost. The same public replay pair the
- * replay page consumes (metadata + REAL gzipped log + the dictionary by hash)
- * builds the ghost; the local seat is the live game core. This drives the
- * whole wire: board row → race action → countdown → the ghost actually types.
+ * The race-vs-run rework (C10): a race action anywhere seats the ghost on the
+ * HOME solo screen — no dedicated game page. `/race/:runId` survives only as a
+ * thin redirect, the settings snapshot/restore round-trips, and a race run
+ * NEVER reaches POST /runs (the no-submission guard, asserted on the wire).
  */
 
 test.beforeEach(async ({ page }) => {
@@ -17,30 +17,113 @@ test.beforeEach(async ({ page }) => {
   await stubReplay(page)
 })
 
-test('the race action seats you against the run’s ghost', async ({ page }) => {
+/** Type through the field the way the input adapter hears it. */
+const typeRun = (page: Page) =>
+  page.evaluate(async () => {
+    const root = (document.querySelector('.game__host') as HTMLElement).shadowRoot as ShadowRoot
+    const input = document.querySelector('.game-input') as HTMLTextAreaElement
+    const ins = (ch: string) =>
+      input.dispatchEvent(
+        new InputEvent('beforeinput', {
+          inputType: 'insertText',
+          data: ch,
+          bubbles: true,
+          cancelable: true
+        })
+      )
+    const commit = () =>
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true, cancelable: true })
+      )
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+    for (let w = 0; w < 40; w++) {
+      const active = root.querySelector<HTMLElement>('.word.active')
+      if (!active) break
+      const text = (active.textContent ?? '').replace(/\s+/g, '')
+      for (const ch of text) {
+        ins(ch)
+        await sleep(30)
+      }
+      commit()
+      await sleep(30)
+    }
+  })
+
+const configSnapshot = (page: Page) =>
+  page.evaluate(() => {
+    const raw = JSON.parse(window.localStorage.getItem('config') ?? '{}').config ?? {}
+    const keys = ['mode', 'time', 'words', 'punctuation', 'numbers', 'difficulty', 'minWpm']
+    return Object.fromEntries(keys.map((key) => [key, raw[key]]))
+  })
+
+test('a board race action runs on HOME: banner, ghost, verdict, no submission, exit restores settings', async ({
+  page
+}) => {
+  // The wire spy: nothing on this path may POST a run.
+  const submissions: string[] = []
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && /\/api\/v1\/runs\/?(\?|$)/.test(request.url())) {
+      submissions.push(request.url())
+    }
+  })
+
+  await page.goto('/')
+  await page.waitForSelector('.settings-bar__btn')
+  // Make the player's OWN setup distinctive (words mode at its own count), so
+  // the restore has something real to prove against the fixture's words-10 run.
+  await page.evaluate(() => {
+    const button = Array.from(document.querySelectorAll<HTMLElement>('.settings-bar__btn')).find(
+      (el) => el.textContent?.trim() === 'words'
+    )
+    button?.click()
+  })
+  await expect.poll(async () => (await configSnapshot(page)).mode).toBe('words')
+  const before = await configSnapshot(page)
+
   await page.goto('/boards')
   const first = page.getByTestId('boards-row').first()
   await expect(first).toContainText('Ada')
-
-  // The actions float over the row on hover.
   await first.hover()
   await first.getByTestId('boards-action-race').click()
 
-  await expect(page).toHaveURL(/\/race\/run-ada/)
-  await expect(page.getByTestId('race-title')).toContainText('Ada')
+  // The redirect lands on HOME — there is no /race page any more. (The board's
+  // bucket query survives the redirect; only the path matters here.)
+  await expect(page).toHaveURL(/127\.0\.0\.1:5178\/(\?|$)/)
+  await expect(page.getByTestId('race-banner')).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByTestId('race-banner')).toContainText('Ada')
 
-  // Countdown first: nobody's clock starts before GO.
+  // 3-2-1 first: nobody's clock starts before GO.
   await expect(page.getByTestId('race-countdown')).toBeVisible()
   await expect(page.getByTestId('race-countdown')).toBeHidden({ timeout: 6_000 })
 
-  // After GO the ghost replays its stored log: its live wpm leaves zero, and
-  // the fixture's short clean run finishes, which ends the race. The player
-  // typed nothing, so the verdict is honest about who won.
-  await expect(page.getByTestId('race-ghost-wpm')).not.toHaveText('0 wpm', { timeout: 6_000 })
-  await expect(page.getByTestId('race-verdict')).toBeVisible({ timeout: 15_000 })
-  await expect(page.getByTestId('race-verdict')).toContainText('the ghost won')
+  // The ghost is typing in its compact row.
+  await expect(page.getByTestId('race-opponent-wpm')).not.toHaveText('0 wpm', { timeout: 6_000 })
 
-  // The way back leads to the board the row came from.
-  await page.getByTestId('race-back').click()
-  await expect(page).toHaveURL(/\/boards\?bucket=/)
+  // Type the run: same words, own hands.
+  await typeRun(page)
+
+  // Side-by-side result: the verdict names both numbers, over the results screen.
+  await expect(page.getByTestId('race-verdict')).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByTestId('race-verdict-score')).toContainText('wpm')
+
+  // UNRANKED stays absolute: not one submission crossed the wire.
+  expect(submissions).toEqual([])
+
+  // Exit: the banner leaves and the player's own settings come back exactly.
+  await page.getByTestId('race-exit').click()
+  await expect(page.getByTestId('race-banner')).toBeHidden()
+  await expect.poll(async () => await configSnapshot(page)).toEqual(before)
+})
+
+test('restart re-races the same ghost from 3-2-1, straight off the deep link', async ({ page }) => {
+  await page.goto('/race/run-ada')
+  await expect(page).toHaveURL(/127\.0\.0\.1:5178\/(\?|$)/)
+  await expect(page.getByTestId('race-countdown')).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByTestId('race-countdown')).toBeHidden({ timeout: 6_000 })
+
+  // Esc = restart: the SAME ghost, a fresh 3-2-1.
+  await page.keyboard.press('Escape')
+  await expect(page.getByTestId('race-countdown')).toBeVisible()
+  await expect(page.getByTestId('race-banner')).toContainText('Ada')
 })

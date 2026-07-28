@@ -60,6 +60,8 @@
             :key="value"
             :value="value"
             class="settings-bar__btn"
+            :disabled="raceLock !== null"
+            :title="raceLock ?? undefined"
           >
             {{ labelOf(dimension, value) }}
           </ToggleGroupItem>
@@ -75,7 +77,11 @@
     <div class="settings-bar__notice">
       <!-- Graded settings (difficulty, speed floor): the values in a small popover. -->
       <Popover v-for="option in gradedSettings" :key="option.key">
-        <PopoverTrigger :class="chipClass(isCustom(option))">
+        <PopoverTrigger
+          :class="chipClass(isCustom(option))"
+          :disabled="raceLock !== null"
+          :title="raceLock ?? undefined"
+        >
           <component :is="OPTION_ICONS[option.key]" aria-hidden="true" />
           {{ t(option.i18nKey) }}: {{ labelOf(option, String(config[option.key])) }}
         </PopoverTrigger>
@@ -104,6 +110,8 @@
         type="button"
         :class="chipClass(config[option.key] === true)"
         :aria-pressed="config[option.key] === true"
+        :disabled="raceLock !== null"
+        :title="raceLock ?? undefined"
         @click="onFlag(option)"
       >
         <component :is="OPTION_ICONS[option.key]" aria-hidden="true" />
@@ -116,6 +124,8 @@
       type="button"
       :class="chipClass(true)"
       data-testid="language-picker"
+      :disabled="raceLock !== null"
+      :title="raceLock ?? undefined"
       :aria-label="`${t('game.language')}: ${languageName(config.language)}`"
       @click="languageOpen = true"
     >
@@ -138,6 +148,7 @@
   import clsx from 'clsx'
 
   import { useConfigStore } from '@/entities/config'
+  import { useRaceStore } from '@entities/race'
   import { toast } from '@/shared/ui/sonner'
   import {
     OPTION_ICONS,
@@ -176,8 +187,21 @@
   const modeOption = optionOf('mode')
   const modeValues = computed(() => valuesFor(modeOption, 'solo'))
 
-  /** Constraint input: the run's intent. No quote is drawn yet at this point. */
-  const ctx = computed<ConstraintContext>(() => ({ mode: config.mode }))
+  /**
+   * Constraint input: the run's intent. No quote is drawn yet at this point.
+   * While the solo screen races a record the whole bar locks through the
+   * registry's own mechanics (`racing` short-circuits every disabledWhen):
+   * the setup on screen is the record's, and changing it IS exiting the race.
+   */
+  const race = useRaceStore()
+  const ctx = computed<ConstraintContext>(() => ({
+    mode: config.mode,
+    ...(race.racing ? { racing: true as const } : {})
+  }))
+  /** The one lock reason every non-registry control shares while racing. */
+  const raceLock = computed<string | null>(() =>
+    race.racing ? t('game.constraint.racing') : null
+  )
   const soloOptions = computed(() => visibleOptionsFor('solo', ctx.value))
 
   /** The keys the bar draws itself; everything else in `solo` is a notice chip. */
@@ -292,7 +316,9 @@
   )
 
   const modeReason = (value: string): string | null =>
-    value === ConfigModes.Quote && quotesAvailable.value === false
+    raceLock.value !== null
+      ? raceLock.value
+      : value === ConfigModes.Quote && quotesAvailable.value === false
       ? t('game.quote.none', { lang: languageName(config.language) })
       : null
 

@@ -22,8 +22,29 @@ export const RunSummarySchema = v.object({
   clientScore: v.unknown(),
   scoreVersion: v.number(),
   status: RunStatusSchema,
+  /** The worker's verdict payloads — absent until the run is judged. */
+  serverMetrics: v.nullish(v.unknown()),
+  serverScore: v.nullish(v.unknown()),
+  validatedAt: v.nullish(v.string()),
   logBytes: v.number(),
-  createdAt: v.string()
+  /** Client-reported restarts since the previous submission (0 for old rows). */
+  restartsSinceLastSubmit: v.optional(v.number(), 0),
+  createdAt: v.string(),
+  // The profile table's derived cells (docs/PROFILE.md): lifted in SQL so a
+  // row renders without parsing setup/serverMetrics. Absent until judged
+  // (grade/consistency/chars), absent on seeded runs (quoteId).
+  grade: v.nullish(v.string()),
+  consistency: v.nullish(v.number()),
+  chars: v.nullish(
+    v.object({
+      correct: v.number(),
+      incorrect: v.number(),
+      extra: v.number(),
+      missed: v.number()
+    })
+  ),
+  quoteId: v.nullish(v.string()),
+  mods: v.nullish(v.unknown())
 })
 export type RunSummary = v.InferOutput<typeof RunSummarySchema>
 
