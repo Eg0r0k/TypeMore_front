@@ -115,7 +115,8 @@ beforeEach(async () => {
     history: createMemoryHistory(),
     routes: [
       { path: '/boards', name: ROUTE_NAMES.BOARDS, component: { template: '<div />' } },
-      { path: '/replay/:runId', name: ROUTE_NAMES.REPLAY, component: { template: '<div />' } }
+      { path: '/replay/:runId', name: ROUTE_NAMES.REPLAY, component: { template: '<div />' } },
+      { path: '/race/:runId', name: ROUTE_NAMES.RACE, component: { template: '<div />' } }
     ]
   })
   await router.push('/boards')
@@ -126,7 +127,7 @@ describe('board table', () => {
   it('renders one row per entry with the server’s numbers formatted for display', async () => {
     h.page.mockResolvedValue(
       page([
-        entry({ rank: 1, score: 2864, wpm: 83.24464940286154, acc: 1 }),
+        entry({ rank: 1, score: 2864, wpm: 83.24464940286154, raw: 90.4, acc: 1 }),
         entry({
           rank: 2,
           userId: 'user-2',
@@ -134,7 +135,9 @@ describe('board table', () => {
           runId: 'run-2',
           score: 2401.6,
           wpm: 71.5,
-          acc: 0.9712
+          raw: 77.2,
+          acc: 0.9712,
+          grade: 'A'
         })
       ])
     )
@@ -144,7 +147,76 @@ describe('board table', () => {
     expect(wrapper.findAll('[data-testid="boards-row"]')).toHaveLength(2)
     expect(rowTexts(wrapper, 'boards-rank')).toEqual(['1', '2'])
     expect(rowTexts(wrapper, 'boards-player')).toEqual(['boardsmoke', 'runner-up'])
-    expect(rowTexts(wrapper, 'boards-score')).toEqual(['2864', '2402'])
+    // Score carries the grade BADGE beside the value — neither owns a column.
+    expect(rowTexts(wrapper, 'boards-score')).toEqual(['2864SS', '2402A'])
+    expect(rowTexts(wrapper, 'boards-grade')).toEqual(['SS', 'A'])
+    // raw renders as its own column, whole words like wpm.
+    expect(wrapper.text()).toContain('90')
+    expect(wrapper.text()).toContain('77')
+
+    wrapper.unmount()
+  })
+
+  it('crowns rank 1 and gives the podium muted medals — everyone else, numbers', async () => {
+    h.page.mockResolvedValue(
+      page([
+        entry({ rank: 1, userId: 'u1', runId: 'r1' }),
+        entry({ rank: 2, userId: 'u2', runId: 'r2' }),
+        entry({ rank: 3, userId: 'u3', runId: 'r3' }),
+        entry({ rank: 4, userId: 'u4', runId: 'r4' })
+      ])
+    )
+
+    const wrapper = await mountTable({ bucket: BUCKET })
+
+    const ranks = wrapper.findAll('[data-testid="boards-rank"]')
+    expect(ranks[0].find('.board__crown').exists()).toBe(true)
+    expect(ranks[1].find('.board__medal').exists()).toBe(true)
+    expect(ranks[2].find('.board__medal').exists()).toBe(true)
+    expect(ranks[3].find('.board__crown').exists()).toBe(false)
+    expect(ranks[3].find('.board__medal').exists()).toBe(false)
+    // 2 and 3 keep their number beside the medal — a medal alone cannot say
+    // which of the two it is.
+    expect(ranks[1].text()).toContain('2')
+    expect(ranks[3].text()).toContain('4')
+
+    wrapper.unmount()
+  })
+
+  it('shows the date relative, with the exact instant one hover away', async () => {
+    h.page.mockResolvedValue(page([entry()]))
+
+    const wrapper = await mountTable({ bucket: BUCKET })
+
+    // A 2026 timestamp against the real clock is far in the past: the column
+    // shows a DATE (short, locale), not a raw ISO string, and never the time
+    // alone. The exact instant lives in the tooltip on hover.
+    const when = wrapper.get('[data-testid="boards-when"]')
+    expect(when.text()).not.toContain('2026-07-25T')
+    expect(wrapper.findComponent({ name: 'TooltipRoot' }).exists()).toBe(true)
+
+    wrapper.unmount()
+  })
+
+  it('offers watch and race actions on the row, reaching their routes', async () => {
+    h.page.mockResolvedValue(page([entry({ runId: 'run-42' })]))
+
+    const wrapper = await mountTable({ bucket: BUCKET })
+    const push = vi.spyOn(router, 'push')
+
+    await wrapper.get('[data-testid="boards-action-watch"]').trigger('click')
+    expect(push).toHaveBeenLastCalledWith({
+      name: ROUTE_NAMES.REPLAY,
+      params: { runId: 'run-42' },
+      query: { bucket: BUCKET }
+    })
+
+    await wrapper.get('[data-testid="boards-action-race"]').trigger('click')
+    expect(push).toHaveBeenLastCalledWith({
+      name: ROUTE_NAMES.RACE,
+      params: { runId: 'run-42' },
+      query: { bucket: BUCKET }
+    })
 
     wrapper.unmount()
   })

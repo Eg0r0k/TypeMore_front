@@ -24,5 +24,15 @@ export const boardsRoutes: RouteRecordRaw[] = [
     component: () => import('@/pages/replay/ui.vue'),
     props: true,
     meta: { title: 'Replay' }
+  },
+  {
+    // Race a board run's ghost: the same public replay data, typed against
+    // live. Its own route for the same reason replay has one — Back returns
+    // to the board.
+    path: '/race/:runId',
+    name: ROUTE_NAMES.RACE,
+    component: () => import('@/pages/race/ui.vue'),
+    props: true,
+    meta: { title: 'Race' }
   }
 ]

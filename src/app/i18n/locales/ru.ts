@@ -457,12 +457,15 @@ export default {
     column: {
       rank: '#',
       player: 'игрок',
-      wpm: 'wpm',
-      acc: 'точн.',
       score: 'счёт',
+      wpm: 'wpm',
+      raw: 'raw',
+      acc: 'точн.',
       when: 'когда'
     },
     watch: 'посмотреть забег игрока {player}',
+    race: 'гонка с забегом игрока {player}',
+    actions: { watch: 'смотреть реплей', race: 'гонка' },
     you: 'вы',
     self: {
       top: 'топ {percent}%',
@@ -482,6 +485,20 @@ export default {
     retry: 'повторить',
     more: 'показать ещё',
     moreAbove: 'показать ещё выше'
+  },
+  race: {
+    title: 'гонка с {player}',
+    you: 'вы',
+    ghost: 'призрак',
+    loading: 'загрузка забега…',
+    notFound: 'этот забег недоступен',
+    error: 'не удалось собрать гонку',
+    retry: 'повторить',
+    back: 'назад к таблице',
+    won: 'вы победили',
+    lost: 'призрак победил',
+    score: '{you} wpm против {them} wpm',
+    again: 'ещё раз'
   },
   replay: {
     loading: 'загрузка забега…',

@@ -12,7 +12,8 @@ export const ROUTE_NAMES = {
   ERROR: 'error',
   MATCH: 'match',
   BOARDS: 'boards',
-  REPLAY: 'replay'
+  REPLAY: 'replay',
+  RACE: 'race'
 } as const
 
 export type AppRouteName = (typeof ROUTE_NAMES)[keyof typeof ROUTE_NAMES]

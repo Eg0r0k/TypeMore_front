@@ -3,20 +3,39 @@
  * numbers are the record and are never mutated, only rendered.
  */
 
+const MINUTE_MS = 60_000
+const HOUR_MS = 3_600_000
 const DAY_MS = 86_400_000
 
 /** `Intl` formatters are expensive to construct; one per (locale, kind) is plenty. */
 const formatters = new Map<string, Intl.DateTimeFormat>()
+const relativeFormatters = new Map<string, Intl.RelativeTimeFormat>()
 
-const formatterFor = (locale: string | undefined, kind: 'clock' | 'date'): Intl.DateTimeFormat => {
+const formatterFor = (
+  locale: string | undefined,
+  kind: 'clock' | 'date' | 'exact'
+): Intl.DateTimeFormat => {
   const key = `${locale ?? ''}:${kind}`
   const cached = formatters.get(key)
   if (cached !== undefined) return cached
   const made = new Intl.DateTimeFormat(
     locale,
-    kind === 'clock' ? { hour: '2-digit', minute: '2-digit' } : { dateStyle: 'short' }
+    kind === 'clock'
+      ? { hour: '2-digit', minute: '2-digit' }
+      : kind === 'date'
+        ? { dateStyle: 'short' }
+        : { dateStyle: 'medium', timeStyle: 'short' }
   )
   formatters.set(key, made)
+  return made
+}
+
+const relativeFor = (locale: string | undefined): Intl.RelativeTimeFormat => {
+  const key = locale ?? ''
+  const cached = relativeFormatters.get(key)
+  if (cached !== undefined) return cached
+  const made = new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'narrow' })
+  relativeFormatters.set(key, made)
   return made
 }
 
@@ -39,6 +58,36 @@ export const formatAchievedAt = (
   if (Number.isNaN(ms)) return '—'
   const age = now - ms
   return formatterFor(locale, age >= 0 && age < DAY_MS ? 'clock' : 'date').format(at)
+}
+
+/**
+ * The RELATIVE "when" the date column shows: "5m ago", "3d ago", "yesterday" —
+ * out of `Intl.RelativeTimeFormat`, so it costs no translated strings either.
+ * Under a minute is "now" territory (formatted as 0-minutes, which `numeric:
+ * 'auto'` renders idiomatically); beyond ~4 weeks the calendar date reads
+ * better than "37 days ago" and the exact tooltip carries the rest.
+ */
+export const formatRelativeAchievedAt = (
+  iso: string,
+  locale?: string,
+  now: number = Date.now()
+): string => {
+  const at = new Date(iso)
+  const ms = at.getTime()
+  if (Number.isNaN(ms)) return '—'
+  const age = now - ms
+  if (age < 0 || age >= 28 * DAY_MS) return formatterFor(locale, 'date').format(at)
+  const relative = relativeFor(locale)
+  if (age < HOUR_MS) return relative.format(-Math.round(age / MINUTE_MS), 'minute')
+  if (age < DAY_MS) return relative.format(-Math.round(age / HOUR_MS), 'hour')
+  return relative.format(-Math.round(age / DAY_MS), 'day')
+}
+
+/** The EXACT instant, for the tooltip over the relative label. */
+export const formatExactAchievedAt = (iso: string, locale?: string): string => {
+  const at = new Date(iso)
+  if (Number.isNaN(at.getTime())) return '—'
+  return formatterFor(locale, 'exact').format(at)
 }
 
 /**

@@ -486,9 +486,20 @@ export default {
       pickerEmpty: 'no quotes match this filter',
       pickerError: 'could not load the quotes'
     },
-    column: { rank: '#', player: 'player', wpm: 'wpm', acc: 'acc', score: 'score', when: 'when' },
+    column: {
+      rank: '#',
+      player: 'player',
+      score: 'score',
+      wpm: 'wpm',
+      raw: 'raw',
+      acc: 'acc',
+      when: 'when'
+    },
     /** Row affordance — the whole row is the control, this is its accessible name. */
     watch: 'watch {player}’s run',
+    race: 'race {player}’s run',
+    /** The hover actions' visible titles. */
+    actions: { watch: 'watch replay', race: 'race' },
     you: 'you',
     /** The pinned self row and its two hint states (204 / 401 from /me). */
     self: {
@@ -510,6 +521,22 @@ export default {
     retry: 'retry',
     more: 'load more',
     moreAbove: 'load more above'
+  },
+  race: {
+    title: 'racing {player}',
+    you: 'you',
+    ghost: 'ghost',
+    loading: 'loading the run…',
+    /** Same deliberate vagueness as the replay page: the server's 404 covers
+     * under-review, rejected, pending and banned-owner alike. */
+    notFound: 'that run is not available',
+    error: 'could not build this race',
+    retry: 'retry',
+    back: 'back to the board',
+    won: 'you won',
+    lost: 'the ghost won',
+    score: '{you} wpm against {them} wpm',
+    again: 'race again'
   },
   replay: {
     /** Stage 1 — the run's metadata. */

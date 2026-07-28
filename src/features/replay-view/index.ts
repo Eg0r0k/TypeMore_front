@@ -9,3 +9,5 @@ export type {
   ReplayFromApiErrorKind,
   ReplayTextSource
 } from './model/replay-from-api'
+export { useReplaySource } from './model/use-replay-source'
+export type { ReplaySource, ReplaySourceState } from './model/use-replay-source'

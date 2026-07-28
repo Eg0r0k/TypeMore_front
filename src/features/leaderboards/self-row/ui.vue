@@ -14,15 +14,17 @@
         <span v-if="percent !== null" class="board-self__top" data-testid="boards-self-top">
           {{ t('boards.self.top', { percent }) }}
         </span>
-      </span>
-      <span class="board-self__cell">
         <BoardModChips :mods="entry.mods" />
       </span>
-      <span class="board-self__cell board-self__num">{{ formatWpm(entry.wpm) }}</span>
-      <span class="board-self__cell board-self__num">{{ formatAccuracy(entry.acc) }}</span>
-      <span class="board-self__cell board-self__num" data-testid="boards-self-score">
-        {{ formatScore(entry.score) }}
+      <span class="board-self__cell board-self__metric">
+        <span class="board-self__score" data-testid="boards-self-score">
+          {{ formatScore(entry.score) }}
+        </span>
+        <span class="board-self__grade">{{ entry.grade }}</span>
       </span>
+      <span class="board-self__cell board-self__num">{{ formatWpm(entry.wpm) }}</span>
+      <span class="board-self__cell board-self__num">{{ formatWpm(entry.raw) }}</span>
+      <span class="board-self__cell board-self__num">{{ formatAccuracy(entry.acc) }}</span>
       <span class="board-self__cell board-self__when">{{ whenLabel(entry) }}</span>
     </div>
 
@@ -56,7 +58,7 @@
   import { routeLocation } from '@/shared/router'
   import { BoardModChips } from '../mod-chips'
   import { topPercent } from '../model/percentile'
-  import { formatAccuracy, formatAchievedAt, formatScore, formatWpm } from '../model/format'
+  import { formatAccuracy, formatRelativeAchievedAt, formatScore, formatWpm } from '../model/format'
   import type { OwnRankState } from '../model/use-own-rank'
 
   /**
@@ -78,7 +80,8 @@
     props.entry === null ? null : topPercent(props.entry.rank, props.entriesTotal)
   )
 
-  const whenLabel = (entry: BoardEntry): string => formatAchievedAt(entry.achievedAt, locale.value)
+  const whenLabel = (entry: BoardEntry): string =>
+    formatRelativeAchievedAt(entry.achievedAt, locale.value)
 </script>
 
 <style lang="scss" scoped>
@@ -123,6 +126,24 @@
       flex-shrink: 0;
       padding: 0.1rem 0.5rem;
       font-size: 0.7rem;
+      color: var(--bg-color);
+      background-color: var(--main-color);
+      border-radius: var(--border-radius);
+    }
+
+    &__metric {
+      display: inline-flex;
+      gap: 0.375rem;
+      align-items: baseline;
+    }
+
+    &__score {
+      font-weight: 700;
+    }
+
+    &__grade {
+      padding: 0 0.3rem;
+      font-size: 0.65rem;
       color: var(--bg-color);
       background-color: var(--main-color);
       border-radius: var(--border-radius);
