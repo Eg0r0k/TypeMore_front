@@ -6,6 +6,7 @@
 export * from './events'
 export * from './words'
 export * from './game-core'
+export * from './keyboard'
 export * from './stats'
 export * from './score'
 export * from './mods'
