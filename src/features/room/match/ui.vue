@@ -116,8 +116,8 @@
   const session = useMatchSessionStore()
   const config = useConfigStore().config
 
-  /** The meter surfaces at ~a third of the way to the kick (≈5 s of silence). */
-  const IDLE_METER_SHOW = 0.35
+  /** The meter surfaces halfway to the kick (≈6 s of silence). */
+  const IDLE_METER_SHOW = 0.5
 
   const countdownLabel = computed(() => {
     const msLeft = session.countdownMsLeft
