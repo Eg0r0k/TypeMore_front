@@ -51,6 +51,7 @@ function makeStore(outcome: OutcomeStub | null, racing = 2) {
     phase: 'eliminated',
     selfOutcome: outcome,
     selfView: null,
+    selfHud: { score: 0, combo: 0, multiplier: 1, modMultiplier: 1, wpm: 0, raw: 0 },
     room: null,
     countdownMsLeft: null,
     peers: Array.from({ length: racing }, (_, i) => ({

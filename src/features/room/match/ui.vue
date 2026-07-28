@@ -1,5 +1,5 @@
 <template>
-  <div class="room-match flex h-full items-center justify-center">
+  <div class="room-match flex h-full justify-center">
     <TestProgress
       :running="session.phase === 'running'"
       :duration-ms="timeDurationMs ?? undefined"
@@ -48,6 +48,20 @@
       </span>
     </div>
     <section class="room-match__field">
+      <!--
+        The same live scoring HUD the solo stage shows, fed by the local run
+        (which is a full game store under the match's scoring generation).
+        Absolute like the idle meter so its appearance on "go" never reflows
+        the words; hidden in blind mode by the same rule as solo — the combo
+        leaks per-keystroke correctness.
+      -->
+      <div
+        v-show="session.phase === 'running' && !config.blind"
+        class="room-match__hud"
+        aria-hidden="true"
+      >
+        <ScoreHud v-bind="session.selfHud" />
+      </div>
       <!--
         The idle meter (streak/mirror progress, session.judgeIdle) — top-left
         corner ABOVE the field, absolute so its appearance never reflows the
@@ -101,6 +115,7 @@
   import { useMatchSessionStore } from '@/entities/match'
   import { useConfigStore } from '@/entities/config/model/store'
   import { TestProgress } from '@/features/test/progress'
+  import { ScoreHud } from '@/features/test/score-hud'
   import { Test, type TestGhostCaret } from '@/widgets/test'
   import OpponentsRail from './opponents-rail.vue'
 
@@ -332,6 +347,17 @@
     &__field {
       position: relative;
       min-width: 0;
+    }
+
+    &__hud {
+      position: absolute;
+      right: 0;
+      bottom: calc(100% + 1rem);
+      left: 0;
+      z-index: 5;
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
     }
   }
 </style>

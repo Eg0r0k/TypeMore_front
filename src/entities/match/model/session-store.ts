@@ -1366,6 +1366,24 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
   }
 
   /**
+   * Live scoring HUD for the local seat — the very numbers the solo ScoreHud
+   * reads off the game store, shaped as its props. The local run in a match IS
+   * a `useGameStore` under the same scoring generation, so nothing is
+   * recomputed here; zeros before the core is mounted.
+   */
+  const selfHud = computed(() => {
+    const local = localRef.value
+    return {
+      score: local?.score ?? 0,
+      combo: local?.combo ?? 0,
+      multiplier: local?.comboMultiplier ?? 1,
+      modMultiplier: local?.modMultiplier ?? 1,
+      wpm: local?.metrics.wpm ?? 0,
+      raw: local?.metrics.raw ?? 0
+    }
+  })
+
+  /**
    * The local player's own numbers while the match runs on without them — the
    * elimination screen's "here's how you did, now watch the others" payload.
    */
@@ -1508,6 +1526,7 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     countdownMsLeft,
     matchError,
     selfView,
+    selfHud,
     selfOutcome,
     peers,
     standings,

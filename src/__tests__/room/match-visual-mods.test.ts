@@ -65,6 +65,7 @@ function mountMatch(config: Record<string, unknown>) {
   }
   h.store = reactive({
     selfView: selfView(),
+    selfHud: { score: 0, combo: 0, multiplier: 1, modMultiplier: 1, wpm: 0, raw: 0 },
     peers: [],
     phase: 'running',
     countdownMsLeft: null,
