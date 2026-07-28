@@ -35,7 +35,10 @@ export interface Metrics {
   readonly raw: number
   /** Fraction in [0, 1] of correct keypresses over all keypresses (typos included). */
   readonly accuracy: number
-  /** Consistency in [0, 100] via kogasa over per-word burst speeds. */
+  /**
+   * Fraction in [0, 1]: {@link kogasa} over the coefficient of variation of the
+   * per-second raw WPM series (monkeytype's consistency, on accuracy's scale).
+   */
   readonly consistency: number
   readonly chars: CharCounts
   /** Committed word separators (one per advanced word). */
@@ -203,37 +206,77 @@ function getChars(ctx: CoreContext, state: GameState): { chars: CharCounts; spac
   return { chars: { correct, incorrect, extra, missed }, spaces: separatorsOf(ctx, state) }
 }
 
-/** Per-word burst speeds (WPM) from first to last insert of each word. */
-function burstWpms(ctx: CoreContext, analysis: LogAnalysis): number[] {
-  const out: number[] = []
-  const input = analysis.finalState.input
-  for (let i = 0; i < analysis.wordFirstT.length; i++) {
-    const first = analysis.wordFirstT[i]
-    const last = analysis.wordLastT[i]
-    if (first === undefined || last === undefined) continue
-    const durationMs = last - first
-    const chars = (input[i] ?? '').length
-    if (durationMs <= 0 || chars === 0) continue
-    out.push(chars / 5 / (durationMs / 60000))
-  }
-  return out
+/**
+ * kogasa: monkeytype's consistency curve, on a [0, 1] scale. `cov` is the
+ * coefficient of variation of the per-second raw WPM series; the odd-power tanh
+ * argument (the first terms of artanh's series, so the curve hugs `1 − cov`
+ * near zero and saturates smoothly) maps [0, ∞) onto (0, 1] where lower
+ * variance ⇒ higher consistency. Monkeytype scales the same curve ×100
+ * (`packages/util/numbers.ts`); we keep the fraction so consistency and
+ * accuracy share one convention, formatted as % only at the display edge.
+ */
+export function kogasa(cov: number): number {
+  return 1 - Math.tanh(cov + cov ** 3 / 3 + cov ** 5 / 5)
 }
 
 /**
- * kogasa: monkeytype's consistency curve. `cov` is the coefficient of variation
- * of the burst speeds; the odd-power tanh argument maps [0, ∞) onto [0, 100]
- * where lower variance ⇒ higher consistency.
+ * Consistency of a per-second raw WPM series — monkeytype's definition
+ * (`test-logic.ts`: `kogasa(stdDev(rawPerSecond) / mean(rawPerSecond))`),
+ * mirrored behavior for behavior: population standard deviation over the mean
+ * (the coefficient of variation) through {@link kogasa}, with monkeytype's NaN
+ * guard as an explicit zero — an empty series or a zero mean (a run that
+ * produced no characters) reads 0, never NaN. A single bucket has zero
+ * variance and reads 1: a one-second run is perfectly consistent with itself.
  */
-export function kogasa(cov: number): number {
-  return 100 * (1 - Math.tanh(cov + cov ** 3 / 3 + cov ** 5 / 5))
+export function consistencyOf(rawPerSecond: readonly number[]): number {
+  if (rawPerSecond.length === 0) return 0
+  let sum = 0
+  for (const r of rawPerSecond) sum += r
+  const mean = sum / rawPerSecond.length
+  if (mean === 0) return 0
+  let sq = 0
+  for (const r of rawPerSecond) sq += (r - mean) ** 2
+  const value = kogasa(Math.sqrt(sq / rawPerSecond.length) / mean)
+  return Number.isNaN(value) ? 0 : value
 }
 
-function consistency(bursts: readonly number[]): number {
-  if (bursts.length === 0) return 0
-  const mean = bursts.reduce((sum, b) => sum + b, 0) / bursts.length
-  if (mean === 0) return 0
-  const variance = bursts.reduce((sum, b) => sum + (b - mean) ** 2, 0) / bursts.length
-  return kogasa(Math.sqrt(variance) / mean)
+/**
+ * The per-second raw WPM series consistency consumes — the SAME buckets the
+ * results chart plots as `TimelinePoint.raw`, computed expression-for-expression
+ * like the timeline builder so the two cannot disagree in the last bit
+ * (`stats.test.ts` pins the equality): whole one-second windows, and a trailing
+ * bucket whose rate window is the full second ending at the finish (clamped at
+ * the start), never the sliver the run actually ended inside.
+ */
+function rawPerSecondOf(analysis: LogAnalysis, endMs: Ms): number[] {
+  const startedAt = analysis.finalState.startedAt
+  if (startedAt === null) return []
+  const end = analysis.finalState.finishedAt ?? endMs
+  const seconds = Math.ceil(Math.max(0, (end - startedAt) / 1000))
+  if (seconds <= 0) return []
+  const { keyTimes } = analysis
+  const counts = new Float64Array(seconds + 1)
+  for (let k = 0; k < keyTimes.length; k++) {
+    const offset = keyTimes[k] - startedAt
+    if (offset < 0) continue
+    const bucket = Math.floor(offset / 1000) + 1
+    if (bucket <= seconds) counts[bucket]++
+  }
+  const out: number[] = []
+  const fullRateMin = 1000 / 60000
+  for (let s = 1; s < seconds; s++) out.push(counts[s] / 5 / fullRateMin)
+  const bucketEnd = startedAt + seconds * 1000
+  const checkpoint = Math.min(bucketEnd, end)
+  if (checkpoint < bucketEnd) {
+    const rateStart = Math.max(startedAt, checkpoint - 1000)
+    let rawInWindow = 0
+    for (let k = 0; k < keyTimes.length; k++) if (keyTimes[k] >= rateStart) rawInWindow++
+    const rateMin = (checkpoint - rateStart) / 60000
+    out.push(rateMin > 0 ? rawInWindow / 5 / rateMin : 0)
+  } else {
+    out.push(counts[seconds] / 5 / fullRateMin)
+  }
+  return out
 }
 
 /**
@@ -264,7 +307,7 @@ export function metricsFrom(ctx: CoreContext, analysis: LogAnalysis, endMs: Ms):
     wpm: minutes > 0 ? netChars / 5 / minutes : 0,
     raw: minutes > 0 ? rawChars / 5 / minutes : 0,
     accuracy: analysis.totalKeys === 0 ? 0 : analysis.correctKeys / analysis.totalKeys,
-    consistency: consistency(burstWpms(ctx, analysis)),
+    consistency: consistencyOf(rawPerSecondOf(analysis, endMs)),
     chars,
     spaces,
     durationSec

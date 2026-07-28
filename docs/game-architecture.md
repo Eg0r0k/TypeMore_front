@@ -146,6 +146,29 @@ Metrics are computed only from event timestamps and the completion instant
 (`finishedAt`, pinned to the deadline in timed mode). The **worker tick is
 cadence only** — no metric depends on the number of ticks.
 
+**Consistency** (`stats.ts`, `consistencyOf`) mirrors monkeytype's definition,
+behavior for behavior (their `test-logic.ts` finish path): the **coefficient of
+variation of the per-second raw WPM series** — population standard deviation
+over mean — mapped through the kogasa curve. The series is exactly the
+`TimelinePoint.raw` buckets the results chart plots (whole one-second windows;
+the trailing bucket's rate window is the full second ending at the finish),
+pinned equal by test so the metric and the chart cannot drift. The formula:
+
+```
+cov         = stddev(rawPerSecond) / mean(rawPerSecond)      (population stddev)
+consistency = 1 − tanh(cov + cov³/3 + cov⁵/5)                ∈ (0, 1]
+```
+
+Deviations from monkeytype, both deliberate: the result is a **[0, 1] fraction**
+(monkeytype scales ×100 — we keep accuracy's convention and format % at the
+display edge), and the buckets are consumed unrounded (monkeytype rounds each
+bucket to a whole WPM). Guards mirror theirs: an empty series or a zero mean is
+`0`, never `NaN`; a single bucket (one-second run) has zero variance and reads
+`1`. This REPLACED an earlier per-word-burst curve on [0, 100] — server metrics
+recomputed by a newer bundle carry the new number, which is why the value is
+deliberately absent from `clientMetrics` and never enters the verdict
+comparison.
+
 **Timer time-base contract** (`timer.worker.ts`): the worker and main thread have
 different `performance.timeOrigin`. The worker only ever sends **elapsed deltas**
 (`elapsedMs`), never absolute timestamps and never event `Ms`. Conversion to the

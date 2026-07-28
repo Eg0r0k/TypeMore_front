@@ -11,6 +11,7 @@ import {
   asMs,
   commitEvent,
   computeMetrics,
+  consistencyOf,
   errorWords,
   foldLog,
   insertEvent,
@@ -182,6 +183,124 @@ describe('replay invariance (pure functions of the log)', () => {
     expect(final.phase).toBe('finished')
     // errorWords must reflect exactly the committed buffers foldLog produced.
     expect(errorWords(ctx, log)).toEqual([{ expected: 'ef', typed: final.input[2] }])
+  })
+})
+
+describe('consistencyOf — kogasa over per-second raw WPM, on [0, 1]', () => {
+  it('is 0 for an empty series and for a series with zero mean', () => {
+    expect(consistencyOf([])).toBe(0)
+    expect(consistencyOf([0, 0, 0])).toBe(0)
+  })
+
+  it('is exactly 1 when every bucket runs at the same speed (cov = 0)', () => {
+    expect(consistencyOf([60])).toBe(1)
+    expect(consistencyOf([60, 60, 60])).toBe(1)
+  })
+
+  it('depends only on the coefficient of variation, not the absolute speed', () => {
+    // Doubling every bucket is exact in floats, so the cov — and the result —
+    // are bit-identical.
+    expect(consistencyOf([30, 90])).toBe(consistencyOf([60, 180]))
+  })
+
+  it('falls as variance grows around the same mean', () => {
+    expect(consistencyOf([50, 70])).toBeGreaterThan(consistencyOf([20, 100]))
+  })
+
+  it('maps a hand-computed cov through the kogasa curve', () => {
+    // [30, 90]: mean 60, population sd 30, cov 0.5.
+    const cov = 0.5
+    const expected = 1 - Math.tanh(cov + cov ** 3 / 3 + cov ** 5 / 5)
+    expect(consistencyOf([30, 90])).toBeCloseTo(expected, 15)
+  })
+})
+
+describe('metrics consistency — a pure function of the per-second buckets', () => {
+  it('hand vector: a run with known per-second variance has the known consistency', () => {
+    // One long word, never committed: 2 keys in second 1, 6 keys in second 2,
+    // measured to the grid-aligned instant 2000 — buckets of 24 and 72 raw WPM,
+    // mean 48, sd 24, cov exactly 0.5.
+    const handCtx = ctxOf(['aaaaaaaa'])
+    const handLog: GameEvent[] = [
+      insertEvent(1, 0, 'a'),
+      insertEvent(2, 100, 'a'),
+      insertEvent(3, 1000, 'a'),
+      insertEvent(4, 1100, 'a'),
+      insertEvent(5, 1200, 'a'),
+      insertEvent(6, 1300, 'a'),
+      insertEvent(7, 1400, 'a'),
+      insertEvent(8, 1500, 'a')
+    ]
+    const metrics = computeMetrics(handCtx, handLog, asMs(2000))
+    expect(wpmOverTime(handCtx, handLog, asMs(2000)).map((p) => p.raw)).toEqual([24, 72])
+    expect(metrics.consistency).toBe(consistencyOf([24, 72]))
+    const cov = 0.5
+    expect(metrics.consistency).toBeCloseTo(1 - Math.tanh(cov + cov ** 3 / 3 + cov ** 5 / 5), 15)
+  })
+
+  it('boundary: a one-second run is one bucket, and one bucket reads 1', () => {
+    const oneCtx = ctxOf(['abcdef'])
+    const oneLog: GameEvent[] = [
+      insertEvent(1, 0, 'a'),
+      insertEvent(2, 200, 'b'),
+      insertEvent(3, 400, 'c')
+    ]
+    expect(computeMetrics(oneCtx, oneLog, asMs(1000)).consistency).toBe(1)
+    // Sub-second runs collapse to the same single bucket.
+    expect(computeMetrics(oneCtx, oneLog, asMs(500)).consistency).toBe(1)
+  })
+
+  it('boundary: zero raw — a run window with no keystrokes at all — reads 0', () => {
+    // Only a 'go' run has a window without a single event.
+    const goCtx = ctxOf(['abcdef'], { startPolicy: 'go' })
+    const metrics = computeMetrics(goCtx, [], asMs(3000))
+    expect(metrics.raw).toBe(0)
+    expect(metrics.consistency).toBe(0)
+  })
+
+  it('consumes exactly the per-second buckets the results chart plots', () => {
+    // The shared fixture ends on the grid; the tail fixture ends inside a
+    // bucket, so this pins both the whole-second and the trailing-window rule.
+    expect(computeMetrics(ctx, log, endMs).consistency).toBe(
+      consistencyOf(wpmOverTime(ctx, log, endMs).map((p) => p.raw))
+    )
+    const tailCtx = ctxOf(['abcdef'])
+    const tailLog: GameEvent[] = [
+      insertEvent(1, 0, 'a'),
+      insertEvent(2, 100, 'b'),
+      insertEvent(3, 1000, 'c'),
+      insertEvent(4, 2000, 'd'),
+      insertEvent(5, 2005, 'e')
+    ]
+    expect(computeMetrics(tailCtx, tailLog, asMs(2010)).consistency).toBe(
+      consistencyOf(wpmOverTime(tailCtx, tailLog, asMs(2010)).map((p) => p.raw))
+    )
+  })
+})
+
+describe('chars breakdown — correct / incorrect / extra / missed', () => {
+  it('counts extra as inputs beyond the target and missed as tails skipped by commit', () => {
+    // word 0 'abcd' committed after 'ab'   → correct 2, missed 2 (skipped tail)
+    // word 1 'ab' typed 'axq' and committed → correct 1, incorrect 1, extra 1
+    // word 2 'ab' typed 'a', never committed → correct 1, and NO missed —
+    //   an in-flight word's untyped tail is not missed until commit skips it
+    const charsCtx = ctxOf(['abcd', 'ab', 'ab'])
+    const charsLog: GameEvent[] = [
+      insertEvent(1, 100, 'a'),
+      insertEvent(2, 200, 'b'),
+      commitEvent(3, 300),
+      insertEvent(4, 400, 'a'),
+      insertEvent(5, 500, 'x'),
+      insertEvent(6, 600, 'q'),
+      commitEvent(7, 700),
+      insertEvent(8, 800, 'a')
+    ]
+    const metrics = computeMetrics(charsCtx, charsLog, asMs(1000))
+    expect(metrics.chars).toEqual({ correct: 4, incorrect: 1, extra: 1, missed: 2 })
+    expect(metrics.spaces).toBe(2)
+    // The keystream view agrees: 6 inserts, of which the wrong 'x' and the
+    // beyond-target 'q' are the only incorrect keys.
+    expect(metrics.accuracy).toBeCloseTo(4 / 6, 15)
   })
 })
 

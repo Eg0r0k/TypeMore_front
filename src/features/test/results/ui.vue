@@ -88,7 +88,9 @@
       </div>
       <div class="results__stat">
         <dt class="text-xs text-sub">consistency</dt>
-        <dd class="m-0 text-2xl/tight tabular-nums">{{ Math.round(metrics.consistency) }}%</dd>
+        <dd class="m-0 text-2xl/tight tabular-nums">
+          {{ Math.round(metrics.consistency * 100) }}%
+        </dd>
       </div>
       <div class="results__stat">
         <dt class="text-xs text-sub">time</dt>

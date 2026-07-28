@@ -39,6 +39,7 @@ import {
   asMs,
   commitEvent,
   computeMetrics,
+  consistencyOf,
   deleteEvent,
   errorWords,
   foldLog,
@@ -295,8 +296,22 @@ describe('differential: the B2 reducer reproduces the pre-B2 reducer exactly', (
         }
 
         // (3) The metrics layer over the same log: full objects, not spot checks.
+        // `consistency` is the one deliberate delta: it was REDEFINED after the
+        // oracle froze (per-second raw WPM through kogasa on [0, 1], mirroring
+        // monkeytype, instead of per-word bursts on [0, 100]) — so it is compared
+        // not against the oracle but against its own definition: the timeline's
+        // raw series through `consistencyOf`, which also pins the bucket
+        // equality between the metric and the chart on every randomised log.
         const endMs = asMs(events.length > 0 ? events[events.length - 1].t : 0)
-        expect(computeMetrics(ctx, events, endMs)).toEqual(legacyComputeMetrics(ctx, events, endMs))
+        const metrics = computeMetrics(ctx, events, endMs)
+        const { consistency: _legacy, ...legacyRest } = legacyComputeMetrics(ctx, events, endMs)
+        const { consistency: mineConsistency, ...mineRest } = metrics
+        expect(mineRest).toEqual(legacyRest)
+        expect(mineConsistency).toBeGreaterThanOrEqual(0)
+        expect(mineConsistency).toBeLessThanOrEqual(1)
+        expect(mineConsistency).toBe(
+          consistencyOf(wpmOverTime(ctx, events, endMs).map((p) => p.raw))
+        )
         expect(wpmOverTime(ctx, events, endMs)).toEqual(legacyWpmOverTime(ctx, events, endMs))
         expect(errorWords(ctx, events)).toEqual(legacyErrorWords(ctx, events))
       })
