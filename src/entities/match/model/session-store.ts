@@ -203,7 +203,7 @@ export interface StandingRow {
  * Why the local run ended. `'reload'` is not a game rule: the page was
  * reloaded mid-match, so the run was forfeited (see `forfeitStaleSeat`).
  */
-export type OutcomeReason = FailReason | 'reload'
+export type OutcomeReason = FailReason | 'reload' | 'idle'
 
 /** The local player's own result while the match runs on without them (elimination screen). */
 export interface SelfOutcome {
@@ -222,6 +222,16 @@ export interface MatchSessionOptions {
   readonly createTimerWorker?: () => TimerWorkerLike
   /** Ghost jitter-buffer display delay. Default {@link DEFAULT_GHOST_DELAY_MS}. */
   readonly ghostDelayMs?: number
+  /**
+   * Client idle-kick tuning (tests scale the clocks down). Defaults to the
+   * exported AFK_KICK_* constants — the production numbers documented in
+   * MATCH.md next to the server's.
+   */
+  readonly afkKick?: {
+    readonly streakMs?: number
+    readonly shareThreshold?: number
+    readonly warmupMs?: number
+  }
 }
 
 interface PeerRecord {
@@ -239,11 +249,26 @@ interface PeerRecord {
 }
 
 /**
- * The core's AFK accounting granularity (`afkOf`, shared/core): idle time is
- * counted in whole one-second buckets, so before the first one there is nothing
- * to take a percentage of.
+ * The match's AFK accounting granularity (PROTOCOL.md §6, mirrored by the
+ * loopback server): idle time is counted in whole GO-anchored one-second
+ * buckets, and a bucket with at least one relayed event is active.
  */
 const AFK_BUCKET_MS = 1000
+
+/**
+ * Client idle-kick rule (docs/MATCH.md "AFK") — the client kick is a COURTESY,
+ * the server's sweep is the AUTHORITY. The server judges two rules
+ * (protocol.go / loopback mirror): TRAILING — 15 000 ms with no accepted
+ * batch, every mode; SHARE — idle ≥ 0.6 of the GO-anchored window after a
+ * 10 000 ms warmup, words mode. Every client number below sits strictly
+ * INSIDE its server counterpart, so an honest seat always leaves by its own
+ * rule, with its own screen, before the sweep; the margins also absorb the
+ * batcher's flush latency and the sweep's one-second cadence. The pairs are
+ * asserted against the loopback constants by `afk-kick.test.ts`.
+ */
+export const AFK_KICK_STREAK_MS = 12_000
+export const AFK_KICK_SHARE_CLIENT = 0.55
+export const AFK_KICK_WARMUP_MS = 8_000
 
 const NO_DECLARATION: ModsDeclaration = { blind: false, fading: false, flashlight: false }
 /** A peer with no ghost core yet has typed nothing — not "unknown", zero. */
@@ -334,6 +359,11 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
    * fill so the kick is never a surprise. Only meaningful while `running`.
    */
   const afkProgress = ref(0)
+  /** Match-clock instant of the last relayed local event; GO is activity zero. */
+  let lastActivityMs = 0
+  /** How many GO-anchored one-second buckets carried at least one local event. */
+  let activeBucketCount = 0
+  let lastActiveBucket = -1
 
   /**
    * Round-trip time to the server in ms, or `null` while it has never been
@@ -357,10 +387,16 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
   let deps: Required<Pick<MatchSessionOptions, 'loadDictionary'>> & {
     createTimerWorker: (() => TimerWorkerLike) | null
     ghostDelayMs: number
+    afkStreakMs: number
+    afkShareThreshold: number
+    afkWarmupMs: number
   } = {
     loadDictionary: loadMatchDictionary,
     createTimerWorker: null,
-    ghostDelayMs: DEFAULT_GHOST_DELAY_MS
+    ghostDelayMs: DEFAULT_GHOST_DELAY_MS,
+    afkStreakMs: AFK_KICK_STREAK_MS,
+    afkShareThreshold: AFK_KICK_SHARE_CLIENT,
+    afkWarmupMs: AFK_KICK_WARMUP_MS
   }
 
   const peerMap = new Map<string, PeerRecord>()
@@ -482,9 +518,23 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     if (local === null || batcher === null || !batcherArmed) return
     const data = local.getReplayData()
     if (data === null) return
+    const before = outCursor
     while (outCursor < data.log.length) {
       batcher.push(data.log[outCursor])
       outCursor += 1
+    }
+    // Idle accounting rides the SAME stream the server sees: anything that
+    // just went to the batcher is activity, stamped on the match clock. Drain
+    // lags the keystroke by at most one advance tick — noise against
+    // one-second buckets.
+    if (outCursor > before && goAnchorPerf !== null) {
+      const matchNow = performance.now() - goAnchorPerf
+      lastActivityMs = matchNow
+      const bucket = Math.floor(matchNow / AFK_BUCKET_MS)
+      if (bucket >= 0 && bucket !== lastActiveBucket) {
+        lastActiveBucket = bucket
+        activeBucketCount += 1
+      }
     }
   }
 
@@ -511,7 +561,10 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     deps = {
       loadDictionary: options?.loadDictionary ?? loadMatchDictionary,
       createTimerWorker: options?.createTimerWorker ?? null,
-      ghostDelayMs: options?.ghostDelayMs ?? DEFAULT_GHOST_DELAY_MS
+      ghostDelayMs: options?.ghostDelayMs ?? DEFAULT_GHOST_DELAY_MS,
+      afkStreakMs: options?.afkKick?.streakMs ?? AFK_KICK_STREAK_MS,
+      afkShareThreshold: options?.afkKick?.shareThreshold ?? AFK_KICK_SHARE_CLIENT,
+      afkWarmupMs: options?.afkKick?.warmupMs ?? AFK_KICK_WARMUP_MS
     }
     transport = injected ?? createMatchTransport()
     // Batcher first: its hello_ok listener must drain parked batches BEFORE the
@@ -616,6 +669,9 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     outCursor = 0
     afkForfeit.value = false
     afkProgress.value = 0
+    lastActivityMs = 0
+    activeBucketCount = 0
+    lastActiveBucket = -1
     goAnchorPerf = null
     goLocalMs = null
     countdownMsLeft.value = null
@@ -982,27 +1038,43 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
   }
 
   /**
-   * The AFK rule, judged on the client that can see it first — on the SHARE the
-   * app already measures, not on a stopwatch of its own.
+   * The idle kick, judged client-side first. The client's kick is a COURTESY,
+   * the server's sweep is the AUTHORITY: a modified client that ignores this
+   * simply sits out to the server's sweep and is dnf'd there — no honesty hole,
+   * the rule only improves the exit for honest players. That courtesy carries
+   * an obligation: BOTH client triggers sit strictly inside the server's rule
+   * (share margin AND warmup margin — docs/MATCH.md "AFK"), so an honest seat
+   * always leaves by its own rule, with its own screen, before the sweep.
    *
-   * `afk.afkMs` is the run's idle time by the core's own one-second bucket
-   * accounting (`afkOf`, shared/core): a bucket with no event in it is an idle
-   * second, and every event is a keystroke. Divided by the run window so far,
-   * that is the same percentage the results screen prints — so "kicked at 100%"
-   * means exactly what a player later reads as `afk 12s · 100%`, rather than a
-   * second, invisible rule with its own threshold.
+   * Two triggers, and the meter is the max of their progress — it reaches 1
+   * exactly when the kick fires, so the kick is never a surprise:
    *
-   * At 100% the seat gives itself up rather than making everyone else wait out
-   * the server's sweep or the hard deadline. It forfeits (`dnf`), never
-   * finishes: there is no result behind a run nobody was typing.
+   * - STREAK — continuous silence since the last relayed local event, with GO
+   *   as activity zero. This is the predictable, linear rule a player actually
+   *   experiences ("touch nothing for 15s and you are out"), and it covers the
+   *   canonical walked-away seat — including one that never typed at all.
+   * - SHARE MIRROR — the server's own accounting (idle share of the whole
+   *   GO-anchored one-second-bucket window) with a margin on both axes. A
+   *   streak alone cannot dominate a share rule (scattered sub-streak idling
+   *   still accumulates share), so the mirror is what makes the
+   *   client-before-server guarantee hold for EVERY idling pattern.
+   *
+   * The kick itself is the ordinary give-up path: `finish{forfeit:true}` (a
+   * frame the wire already has — recorded dnf, no phantom result) and the
+   * eliminated screen. No new wire entity.
    */
   function judgeIdle(matchNow: number): void {
     if (phase.value !== 'running' || matchId === null) return
-    const afkMs = localRef.value?.afk.afkMs ?? 0
-    // Below one bucket there is nothing measured yet — 0/0 is not 100%.
-    const share = matchNow >= AFK_BUCKET_MS ? afkMs / matchNow : 0
-    afkProgress.value = Math.min(1, Math.max(0, share))
-    if (share < 1) return
+    const streak = (matchNow - lastActivityMs) / deps.afkStreakMs
+    const elapsed = Math.floor(matchNow / AFK_BUCKET_MS)
+    const idle = Math.max(0, elapsed - activeBucketCount)
+    const share = elapsed > 0 ? idle / elapsed : 0
+    // Both share AND warmup must be met — min() gates the mirror the same way
+    // the server gates its sweep.
+    const mirror = Math.min(share / deps.afkShareThreshold, matchNow / deps.afkWarmupMs)
+    const progress = Math.min(1, Math.max(0, streak, mirror))
+    afkProgress.value = progress
+    if (progress < 1) return
     afkForfeit.value = true
     reloadForfeit.value = true // `finish{forfeit:true}` — recorded dnf, no phantom result
     /*
@@ -1298,7 +1370,23 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
    * elimination screen's "here's how you did, now watch the others" payload.
    */
   const selfOutcome = computed<SelfOutcome | null>(() => {
-    // The forfeit has no core to read: it IS the absence of one.
+    // The idle kick HAS a run behind it — real numbers under its own reason.
+    // Checked before the reload branch: the kick reuses the forfeit flag on
+    // the wire, but locally it is not a reload.
+    if (afkForfeit.value) {
+      const local = localRef.value
+      return {
+        reason: 'idle',
+        wpm: local?.metrics.wpm ?? 0,
+        acc: local?.metrics.accuracy ?? 0,
+        score: local?.scoreResult?.total ?? null,
+        progress:
+          local === null || selfConfig === null
+            ? 0
+            : progressOf({ config: selfConfig, words: matchWords }, local.snapshot)
+      }
+    }
+    // The reload forfeit has no core to read: it IS the absence of one.
     if (reloadForfeit.value) return RELOAD_FORFEIT
     const local = localRef.value
     const reason = local?.snapshot.failReason ?? null

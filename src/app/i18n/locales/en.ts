@@ -382,6 +382,14 @@ export default {
     match: {
       go: 'go',
       opponents: 'opponents',
+      /**
+       * The idle-kick meter. Deliberately NOT the word "afk": the results
+       * screen's `afkShare` is a different, post-hoc judging metric, and one
+       * label on two numbers would read as a bug.
+       */
+      idle: {
+        label: 'idle — kick at 100%'
+      },
       waiting: {
         title: 'waiting for opponents…',
         racing: '{count} still racing'
@@ -392,7 +400,8 @@ export default {
           master: 'a wrong keystroke ended your run',
           expert: 'an errored word ended your run',
           minSpeed: 'you dropped below the net wpm floor',
-          reload: 'your run ended when the page reloaded — the log did not survive it'
+          reload: 'your run ended when the page reloaded — the log did not survive it',
+          idle: 'you went idle, so the seat handed its run in'
         },
         progress: 'progress',
         waiting: 'waiting for the others to finish'

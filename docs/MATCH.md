@@ -39,16 +39,42 @@ graph LR
 - **Results.** A client sends `finish` when done; a finished player then
   **waits** while the others race. The match ends once every seat is
   finished/dnf/left, at the hard deadline (unfinished ⇒ `dnf`), or when the
-  words-mode finish window closes. **Words-mode AFK rules** (server-owned; time
-  mode untouched): a racing seat with no accepted batch for **30 s** is `dnf`'d
-  (idle rule), and the **first** finish opens a **120 s** window that `dnf`'s
-  the stragglers at close. The end is announced by a single `match_end` frame
+  words-mode finish window closes. **AFK rules** (server-owned, `protocol.go`):
+  a racing seat silent for **15 000 ms** (TRAILING, every mode) or — words mode
+  only, after a **10 000 ms** warmup — idle for **≥ 0.6** of the GO-anchored
+  bucket window (SHARE) is `dnf`'d by the sweep, and the **first** finish opens
+  a **120 s** window that `dnf`'s the stragglers at close. The end is announced
+  by a single `match_end` frame
   carrying the frozen roster's statuses — clients enter results only on
   `match_end` (a graced seat receives it via its backlog on resume, see
   PROTOCOL.md §4/§6). At end the server persists the authoritative capture —
   the match header plus, per player, the gzip'd stamped batch stream
   (`matches` / `match_runs`, no validation yet) — then resets ready flags. A
   **rematch** re-readies and gets a new `seed` and `matchId`.
+
+### AFK: the client kick is a courtesy, the server sweep is the authority
+
+The client kicks its own idle seat (`judgeIdle`, session store) before the
+server would: `finish{forfeit:true}` — a frame the wire already has — plus the
+eliminated screen, so an honest player leaves by an explained rule instead of
+dying to the sweep. A modified client that ignores the kick gains nothing: it
+sits out to the server's sweep and is `dnf`'d there — no honesty hole, the
+rule only improves the exit for honest players. That courtesy carries an
+obligation — **every client number sits strictly inside its server
+counterpart**, checked by `src/__tests__/match/afk-kick.test.ts`:
+
+| Rule | Client (courtesy) | Server (authority, `protocol.go`) |
+|---|---|---|
+| Continuous silence (every mode) | streak **12 000 ms** | TRAILING **15 000 ms** |
+| Idle share of the GO-anchored window (words) | **≥ 0.55** | **≥ 0.6** |
+| Share warmup | **8 000 ms** | **10 000 ms** |
+
+The client needs BOTH rules because a streak alone cannot dominate a share
+rule (scattered sub-streak idling still accumulates share). The in-match meter
+(`afkProgress`) is the max of the two progresses and reaches 100% exactly at
+the kick; it is labelled **idle**, never "afk" — the results screen's
+`afkShare` is a different, post-hoc judging metric, and one word on two
+numbers would read as a bug.
 
 ---
 

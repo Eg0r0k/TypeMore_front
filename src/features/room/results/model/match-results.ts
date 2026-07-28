@@ -118,18 +118,23 @@ export function useMatchResults() {
     }))
     const selfId = session.selfId
     if (selfId !== null) {
+      // Both forfeits — the reload and the idle kick — are a dnf server-side;
+      // a freemod rule is an elimination with a provable failReason.
+      const forfeited = outcome?.reason === 'reload' || outcome?.reason === 'idle'
       rows.push({
         rank: 0,
         playerId: selfId,
         nick: session.room?.players.find((seat) => seat.playerId === selfId)?.nick ?? '',
         isSelf: true,
-        // A forfeited seat is a dnf server-side; a freemod rule is an elimination.
-        status: outcome?.reason === 'reload' ? 'dnf' : 'eliminated',
+        status: forfeited ? 'dnf' : 'eliminated',
         wpm: run?.metrics.wpm,
         raw: run?.metrics.raw,
         acc: run?.metrics.accuracy,
         chars: run?.metrics.chars,
-        failReason: outcome !== null && outcome.reason !== 'reload' ? outcome.reason : null,
+        failReason:
+          outcome !== null && outcome.reason !== 'reload' && outcome.reason !== 'idle'
+            ? outcome.reason
+            : null,
         progress: outcome?.progress ?? 0,
         freemods: freemodsOf(selfId)
       })
