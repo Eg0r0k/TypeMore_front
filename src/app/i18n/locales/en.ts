@@ -383,12 +383,13 @@ export default {
       go: 'go',
       opponents: 'opponents',
       /**
-       * The idle-kick meter. Deliberately NOT the word "afk": the results
+       * The idle meter. Just the state, no kick threat — the filling bar is
+       * the whole message. Deliberately NOT the word "afk": the results
        * screen's `afkShare` is a different, post-hoc judging metric, and one
        * label on two numbers would read as a bug.
        */
       idle: {
-        label: 'idle — kick at 100%'
+        label: 'idle'
       },
       waiting: {
         title: 'waiting for opponents…',

@@ -13,29 +13,6 @@
     >
       <span class="room-match__countdown-number">{{ countdownLabel }}</span>
     </div>
-    <!--
-      The idle-kick meter (streak/mirror progress, session.judgeIdle). Absolute,
-      like the countdown: it must never reflow the field when it appears. Shown
-      only once the player is actually approaching the kick — a meter that sits
-      at 2% all match is noise. Deliberately NOT called "afk": the results
-      screen's afkShare is a different, post-hoc judging metric, and one word
-      for two numbers would read as a bug.
-    -->
-    <div
-      v-if="session.phase === 'running' && session.afkProgress >= IDLE_METER_SHOW"
-      class="room-match__idle"
-      role="status"
-      data-testid="idle-kick-meter"
-    >
-      <span class="room-match__idle-label">{{ t('room.match.idle.label') }}</span>
-      <span class="room-match__idle-bar" aria-hidden="true">
-        <span
-          class="room-match__idle-fill"
-          :style="{ width: `${Math.round(session.afkProgress * 100)}%` }"
-        ></span>
-      </span>
-      <span class="room-match__idle-percent">{{ Math.round(session.afkProgress * 100) }}%</span>
-    </div>
     <div
       v-if="session.phase === 'waiting'"
       class="room-match__waiting"
@@ -71,6 +48,28 @@
       </span>
     </div>
     <section class="room-match__field">
+      <!--
+        The idle meter (streak/mirror progress, session.judgeIdle) — top-left
+        corner ABOVE the field, absolute so its appearance never reflows the
+        words. The label says only "idle": no kick threat on screen, the bar
+        filling is the whole message. Deliberately NOT called "afk" — the
+        results screen's afkShare is a different, post-hoc judging metric, and
+        one word for two numbers would read as a bug.
+      -->
+      <div
+        v-if="session.phase === 'running' && session.afkProgress >= IDLE_METER_SHOW"
+        class="room-match__idle"
+        role="status"
+        data-testid="idle-kick-meter"
+      >
+        <span class="room-match__idle-label">{{ t('room.match.idle.label') }}</span>
+        <span class="room-match__idle-bar" aria-hidden="true">
+          <span
+            class="room-match__idle-fill"
+            :style="{ width: `${Math.round(session.afkProgress * 100)}%` }"
+          ></span>
+        </span>
+      </div>
       <!--
         The personal visual mods travel with the player, not with the room.
         PROTOCOL.md §5 keeps blind/fading/flashlight off the wire because they
@@ -245,14 +244,13 @@
 
     &__idle {
       position: absolute;
-      top: 0.5rem;
-      left: 50%;
+      top: -1.75rem;
+      left: 0;
       z-index: 10;
       display: flex;
       gap: 0.5rem;
       align-items: center;
       pointer-events: none;
-      transform: translateX(-50%);
     }
 
     &__idle-label {
@@ -262,7 +260,7 @@
 
     &__idle-bar {
       display: inline-block;
-      width: 8rem;
+      width: 6rem;
       height: 0.35rem;
       overflow: hidden;
       background: var(--sub-alt-color);
@@ -274,11 +272,6 @@
       height: 100%;
       background: var(--error-color);
       transition: width var(--transition-duration) linear;
-    }
-
-    &__idle-percent {
-      font-size: 0.85rem;
-      color: var(--error-color);
     }
 
     &__waiting {
@@ -337,6 +330,7 @@
     }
 
     &__field {
+      position: relative;
       min-width: 0;
     }
   }

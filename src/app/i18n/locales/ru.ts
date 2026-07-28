@@ -369,7 +369,7 @@ export default {
       go: 'старт',
       opponents: 'соперники',
       idle: {
-        label: 'простой — кик на 100%'
+        label: 'простой'
       },
       waiting: {
         title: 'ждём соперников…',
