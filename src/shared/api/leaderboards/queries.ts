@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/vue-query'
 import { queryClient } from '../query-client'
-import { getBoardMe, getBoardPage, listBuckets } from './endpoints'
+import { getBoardAround, getBoardMe, getBoardPage, listBuckets } from './endpoints'
 import { leaderboardKeys } from './keys'
 import type { BucketCatalogue } from './schemas'
 
@@ -27,6 +27,25 @@ export const boardPageQueryOptions = (bucket: string, cursor?: string) =>
   queryOptions({
     queryKey: leaderboardKeys.page(bucket, cursor),
     queryFn: () => getBoardPage({ bucket, cursor }),
+    staleTime: FRESH_FOR
+  })
+
+/** The upward continuation: the rows outranking the `before` position. */
+export const boardPageBeforeQueryOptions = (bucket: string, before: string) =>
+  queryOptions({
+    queryKey: leaderboardKeys.pageBefore(bucket, before),
+    queryFn: () => getBoardPage({ bucket, before }),
+    staleTime: FRESH_FOR
+  })
+
+/**
+ * The window centred on the caller's own row. `null` mirrors `/me`'s 204: no
+ * visible slot to centre on is a successful answer, not an error.
+ */
+export const boardAroundQueryOptions = (bucket: string) =>
+  queryOptions({
+    queryKey: leaderboardKeys.around(bucket),
+    queryFn: () => getBoardAround(bucket),
     staleTime: FRESH_FOR
   })
 

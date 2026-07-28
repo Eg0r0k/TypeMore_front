@@ -45,14 +45,13 @@
   }
 
   /**
-   * Jump to my row when it is among the loaded pages. (Fetching a window
-   * around an unloaded self is the `around=me` read — wired where the feed
-   * learns to hold disjoint segments.)
+   * Jump to my row: scroll when loaded, otherwise the table fetches the
+   * around=me window first and then scrolls into it.
    */
   const toSelf = (): void => {
     const id = selfUserId.value
     if (id === undefined) return
-    table.value?.scrollToUser(id)
+    void table.value?.jumpToUser(id)
   }
 </script>
 

@@ -4,6 +4,7 @@ import {
   TIME_15_DE,
   TIME_60_RU,
   WORDS_10_DE,
+  row,
   stubDictionary,
   stubLeaderboards
 } from './fixtures/leaderboards'
@@ -144,6 +145,48 @@ test('load more appends the next keyset page', async ({ page }) => {
   await expect(page.getByTestId('boards-player').last()).toHaveText(/Ken/)
   // The last page carries no cursor, so the affordance is gone.
   await expect(more).toBeHidden()
+})
+
+test('jump-to-me windows into the deep board, and the seams close by loading both ways', async ({
+  page
+}) => {
+  // Eight players over four pages; the caller sits at rank 7 — far below what
+  // the first page loads.
+  const DEEP = 'words:10:german:seeded'
+  const deepRows = [
+    [row(1, 'Ada', 'run-1', 9_800), row(2, 'Grace', 'run-2', 9_700)],
+    [row(3, 'Linus', 'run-3', 9_600), row(4, 'Ken', 'run-4', 9_500)],
+    [row(5, 'Edsger', 'run-5', 9_400), row(6, 'Barbara', 'run-6', 9_300)],
+    [row(7, 'Margaret', 'run-7', 9_200), row(8, 'Donald', 'run-8', 9_100)]
+  ]
+  await stubLeaderboards(page, {
+    boards: { [DEEP]: deepRows },
+    meStatus: 200,
+    meRank: 7
+  })
+
+  await page.goto('/boards')
+  await expect(page.getByTestId('boards-rank')).toHaveText(['1', '2'])
+  // The pinned self row already knows the caller's standing.
+  await expect(page.getByTestId('boards-self-rank')).toHaveText('#7')
+
+  // The person control fetches the around=me window and lands on the row.
+  await page.getByTestId('boards-to-me').click()
+  await expect(page.getByTestId('boards-rank')).toHaveText(['1', '2', '6', '7', '8'])
+  const selfRow = page.locator('[data-testid="boards-row"].board__row--self')
+  await expect(selfRow).toHaveCount(1)
+  await expect(selfRow).toContainText('Margaret')
+  await expect(selfRow).toBeInViewport()
+
+  // The gap between rank 2 and rank 6 closes from below (the upward keyset
+  // continuation), while the tail keeps loading downward as before.
+  await page.getByTestId('boards-more-above').click()
+  await expect(page.getByTestId('boards-rank')).toHaveText(['1', '2', '4', '5', '6', '7', '8'])
+  await page.getByTestId('boards-more-above').click()
+  await expect(page.getByTestId('boards-rank')).toHaveText(['1', '2', '3', '4', '5', '6', '7', '8'])
+  // Fully tiled: no seam left in either direction.
+  await expect(page.getByTestId('boards-more-above')).toHaveCount(0)
+  await expect(page.getByTestId('boards-more')).toHaveCount(0)
 })
 
 test('an empty catalogue is a state, not a failure', async ({ page }) => {

@@ -31,8 +31,39 @@ export const listBuckets = (): Promise<BucketCatalogue> =>
  */
 export const getBoardPage = (params: BoardPageParams): Promise<BoardPage> =>
   request(`/leaderboards/${encodeBucket(params.bucket)}`, BoardPageSchema, {
-    query: { cursor: params.cursor, limit: params.limit }
+    query: { cursor: params.cursor, before: params.before, limit: params.limit }
   })
+
+/**
+ * `GET /leaderboards/{bucket}?around=me` — the window centred on the caller's
+ * own row, with continuation tokens in both directions.
+ *
+ * Like `/me`, a `204` is a real answer (no visible slot to centre on) and
+ * collapses to `null` rather than an error; a signed-out caller gets the same
+ * `401` `/me` gives, which callers treat as "there is no window to fetch".
+ */
+export const getBoardAround = async (bucket: string, limit?: number): Promise<BoardPage | null> => {
+  let response: { status: number; _data?: unknown }
+  try {
+    response = await http.raw(`/leaderboards/${encodeBucket(bucket)}`, {
+      query: { around: 'me', limit }
+    })
+  } catch (err) {
+    throw normalizeError(err)
+  }
+
+  if (response.status === 204) return null
+
+  const parsed = v.safeParse(BoardPageSchema, response._data)
+  if (!parsed.success) {
+    throw new ApiError({
+      status: 0,
+      code: 'invalid_response',
+      message: 'Response body failed schema validation'
+    })
+  }
+  return parsed.output
+}
 
 /**
  * `GET /leaderboards/{bucket}/me` — the caller's own slot, or `null`.

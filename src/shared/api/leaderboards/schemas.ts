@@ -158,10 +158,15 @@ export const BoardEntrySchema = v.object({
 })
 export type BoardEntry = v.InferOutput<typeof BoardEntrySchema>
 
-/** One page of a ranking. `nextCursor` is absent on the last page. */
+/**
+ * One page of a ranking. `nextCursor` is absent on the last page;
+ * `prevCursor` (the upward continuation, via `?before=`) is present only on
+ * windowed/upward pages whose first row is not rank 1.
+ */
 export const BoardPageSchema = v.object({
   bucket: v.string(),
   entries: v.array(BoardEntrySchema),
+  prevCursor: v.optional(v.string()),
   nextCursor: v.optional(v.string())
 })
 export type BoardPage = v.InferOutput<typeof BoardPageSchema>

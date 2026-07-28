@@ -508,7 +508,8 @@ export default {
     error: 'could not load the leaderboards',
     pageError: 'could not load this board',
     retry: 'retry',
-    more: 'load more'
+    more: 'load more',
+    moreAbove: 'load more above'
   },
   replay: {
     /** Stage 1 — the run's metadata. */

@@ -88,6 +88,18 @@ vi.mock('@shared/api', () => {
   }
 })
 
+// The board feed reads through the app-wide client (`queryClient.fetchQuery`),
+// whose production defaults retry 5xx with backoff; tests want one fetch per
+// ask and no cache carried between them.
+vi.mock('@/shared/api/query-client', async () => {
+  const { QueryClient: TestClient } = await import('@tanstack/vue-query')
+  return {
+    queryClient: new TestClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: 0 } }
+    })
+  }
+})
+
 import { ApiError } from '@shared/api'
 import { BoardsPage } from '@/pages/boards'
 

@@ -10,5 +10,8 @@ export const leaderboardKeys = {
   board: (bucket: string) => [...leaderboardKeys.all, 'board', bucket] as const,
   page: (bucket: string, cursor?: string) =>
     [...leaderboardKeys.board(bucket), 'page', cursor ?? null] as const,
+  pageBefore: (bucket: string, before: string) =>
+    [...leaderboardKeys.board(bucket), 'page-before', before] as const,
+  around: (bucket: string) => [...leaderboardKeys.board(bucket), 'around-me'] as const,
   me: (bucket: string) => [...leaderboardKeys.board(bucket), 'me'] as const
 } as const

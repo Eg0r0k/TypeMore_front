@@ -246,6 +246,11 @@ export interface LeaderboardsStubOptions {
   readonly boardStatus?: number
   /** What `/{bucket}/me` answers. `401` (signed out) by default — a public page. */
   readonly meStatus?: number
+  /**
+   * With `meStatus: 200`, which flattened row (1-based rank across the pages)
+   * is the caller's own — for `/me` and the `?around=me` window alike.
+   */
+  readonly meRank?: number
 }
 
 export interface LeaderboardsStub {
@@ -286,6 +291,8 @@ export async function stubLeaderboards(
   // Registered before the page route below, so Playwright's reverse-order
   // matching is irrelevant: the two patterns are mutually exclusive on segment
   // count. Kept explicit anyway — `/me` is a different resource, not a page.
+  const meRank = options.meRank ?? 1
+
   await page.route(/\/api\/v1\/leaderboards\/[^/?]+\/me(\?|$)/, (route) => {
     if (meStatus === 204) return route.fulfill({ status: 204, body: '' })
     if (meStatus === 401) {
@@ -298,10 +305,11 @@ export async function stubLeaderboards(
     const bucket = decodeURIComponent(
       new URL(route.request().url()).pathname.split('/').at(-2) ?? ''
     )
+    const flat = (boards[bucket] ?? []).flat()
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ bucket, entry: (boards[bucket]?.[0] ?? [])[0] })
+      body: JSON.stringify({ bucket, entry: flat[meRank - 1] ?? flat[0] })
     })
   })
 
@@ -316,16 +324,63 @@ export async function stubLeaderboards(
     const url = new URL(route.request().url())
     const bucket = decodeURIComponent(url.pathname.split('/').pop() ?? '')
     const pages = boards[bucket] ?? []
-    // The cursor IS the index of the page it points at — opaque to the client,
-    // which is all the contract promises.
-    const index = Number(url.searchParams.get('cursor') ?? '0')
+    const flat = pages.flat()
+    const body = (payload: Record<string, unknown>) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ bucket, ...payload })
+      })
+
+    // The around=me window: a DELIBERATELY small window (me ± 1) whatever the
+    // limit, so a spec can see the gap and walk the seams. Flat tokens: `B<i>`
+    // continues upward above flat index i, `F<i>` downward below it.
+    if (url.searchParams.get('around') === 'me') {
+      if (meStatus === 401) {
+        return route.fulfill({
+          status: 401,
+          contentType: 'application/json',
+          body: '{"error":"unauthorized","message":"sign in first"}'
+        })
+      }
+      if (meStatus === 204 || flat.length === 0) return route.fulfill({ status: 204, body: '' })
+      const i = Math.min(meRank - 1, flat.length - 1)
+      const first = Math.max(0, i - 1)
+      const last = Math.min(flat.length - 1, i + 1)
+      return body({
+        entries: flat.slice(first, last + 1),
+        ...(first > 0 ? { prevCursor: `B${first}` } : {}),
+        ...(last < flat.length - 1 ? { nextCursor: `F${last}` } : {})
+      })
+    }
+
+    const before = url.searchParams.get('before')
+    if (before !== null) {
+      const at = Number(before.slice(1))
+      const first = Math.max(0, at - 2)
+      return body({
+        entries: flat.slice(first, at),
+        ...(first > 0 ? { prevCursor: `B${first}` } : {})
+      })
+    }
+
+    const cursor = url.searchParams.get('cursor')
+    if (cursor !== null && cursor.startsWith('F')) {
+      const at = Number(cursor.slice(1))
+      const entries = flat.slice(at + 1, at + 3)
+      const lastIndex = at + entries.length
+      return body({
+        entries,
+        ...(lastIndex < flat.length - 1 ? { nextCursor: `F${lastIndex}` } : {})
+      })
+    }
+
+    // The plain walk: the cursor IS the index of the page it points at —
+    // opaque to the client, which is all the contract promises.
+    const index = Number(cursor ?? '0')
     const entries = pages[index] ?? []
     const nextCursor = index + 1 < pages.length ? String(index + 1) : undefined
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ bucket, entries, ...(nextCursor === undefined ? {} : { nextCursor }) })
-    })
+    return body({ entries, ...(nextCursor === undefined ? {} : { nextCursor }) })
   })
 
   const busiestBucket = [...buckets].sort(

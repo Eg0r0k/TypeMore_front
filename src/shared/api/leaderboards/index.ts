@@ -3,6 +3,8 @@ export { leaderboardKeys } from './keys'
 export {
   bucketCatalogueQueryOptions,
   boardPageQueryOptions,
+  boardPageBeforeQueryOptions,
+  boardAroundQueryOptions,
   boardMeQueryOptions,
   loadBuckets
 } from './queries'

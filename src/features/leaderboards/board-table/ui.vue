@@ -16,48 +16,66 @@
       </div>
 
       <ul v-if="entries.length > 0" ref="rows" class="board__rows">
-        <li
-          v-for="entry in entries"
-          :key="entry.runId"
-          class="board__row"
-          :class="{
-            'board__row--self': entry.userId === selfUserId,
-            'board__row--flash': entry.userId === flashUserId
-          }"
-          :data-user-id="entry.userId"
-          data-testid="boards-row"
-        >
+        <template v-for="segment in segments" :key="segment.id">
           <!--
+            A segment that does not start at rank 1 sits under a gap; this is
+            the upward continuation of the keyset walk (?before=), the mirror
+            of the "load more" at the bottom.
+          -->
+          <li v-if="segment.prevCursor !== undefined" class="board__gap">
+            <Button
+              data-testid="boards-more-above"
+              color="gray"
+              size="s"
+              :disabled="isLoadingMore"
+              @click="loadBefore(segment.id)"
+            >
+              {{ isLoadingMore ? t('boards.loading') : t('boards.moreAbove') }}
+            </Button>
+          </li>
+          <li
+            v-for="entry in segment.entries"
+            :key="entry.runId"
+            class="board__row"
+            :class="{
+              'board__row--self': entry.userId === selfUserId,
+              'board__row--flash': entry.userId === flashUserId
+            }"
+            :data-user-id="entry.userId"
+            data-testid="boards-row"
+          >
+            <!--
             The whole row is the affordance, so the whole row is one real
             button: keyboard reachable, named after whose run it plays back.
           -->
-          <button
-            type="button"
-            class="board__watch"
-            data-testid="boards-watch"
-            :aria-label="t('boards.watch', { player: entry.displayName })"
-            @click="watchRun(entry)"
-          >
-            <span class="board__cell board__cell--rank" data-testid="boards-rank">
-              {{ entry.rank }}
-            </span>
-            <span class="board__cell board__cell--player" data-testid="boards-player">
-              {{ entry.displayName }}
-              <span v-if="entry.userId === selfUserId" class="board__you">
-                {{ t('boards.you') }}
+            <button
+              type="button"
+              class="board__watch"
+              data-testid="boards-watch"
+              :aria-label="t('boards.watch', { player: entry.displayName })"
+              @click="watchRun(entry)"
+            >
+              <span class="board__cell board__cell--rank" data-testid="boards-rank">
+                {{ entry.rank }}
               </span>
-            </span>
-            <span class="board__cell board__cell--mods">
-              <BoardModChips :mods="entry.mods" />
-            </span>
-            <span class="board__cell board__cell--num">{{ formatWpm(entry.wpm) }}</span>
-            <span class="board__cell board__cell--num">{{ formatAccuracy(entry.acc) }}</span>
-            <span class="board__cell board__cell--num" data-testid="boards-score">
-              {{ formatScore(entry.score) }}
-            </span>
-            <span class="board__cell board__cell--when">{{ whenLabel(entry) }}</span>
-          </button>
-        </li>
+              <span class="board__cell board__cell--player" data-testid="boards-player">
+                {{ entry.displayName }}
+                <span v-if="entry.userId === selfUserId" class="board__you">
+                  {{ t('boards.you') }}
+                </span>
+              </span>
+              <span class="board__cell board__cell--mods">
+                <BoardModChips :mods="entry.mods" />
+              </span>
+              <span class="board__cell board__cell--num">{{ formatWpm(entry.wpm) }}</span>
+              <span class="board__cell board__cell--num">{{ formatAccuracy(entry.acc) }}</span>
+              <span class="board__cell board__cell--num" data-testid="boards-score">
+                {{ formatScore(entry.score) }}
+              </span>
+              <span class="board__cell board__cell--when">{{ whenLabel(entry) }}</span>
+            </button>
+          </li>
+        </template>
       </ul>
 
       <Typography
@@ -95,7 +113,7 @@
 </template>
 
 <script setup lang="ts">
-  import { onUnmounted, ref, toRef, useTemplateRef } from 'vue'
+  import { nextTick, onUnmounted, ref, toRef, useTemplateRef } from 'vue'
   import { useRouter } from 'vue-router'
   import { useI18n } from 'vue-i18n'
   import type { BoardEntry } from '@shared/api'
@@ -119,9 +137,18 @@
   const { t, locale } = useI18n()
   const router = useRouter()
 
-  const { entries, isLoading, isLoadingMore, isError, hasMore, loadMore, retry } = useBoardFeed(
-    toRef(props, 'bucket')
-  )
+  const {
+    segments,
+    entries,
+    isLoading,
+    isLoadingMore,
+    isError,
+    hasMore,
+    loadMore,
+    loadBefore,
+    ensureSelf,
+    retry
+  } = useBoardFeed(toRef(props, 'bucket'))
 
   const whenLabel = (entry: BoardEntry): string => formatAchievedAt(entry.achievedAt, locale.value)
 
@@ -141,7 +168,11 @@
    * was not (today: nothing; the around=me window is the missing half).
    */
   const scrollToUser = (userId: string): boolean => {
-    const row = rows.value?.querySelector(`[data-user-id="${CSS.escape(userId)}"]`)
+    // Attribute compare rather than a selector: a user id needs no escaping
+    // rules this way, and happy-dom needs no CSS.escape.
+    const row = Array.from(rows.value?.querySelectorAll('[data-user-id]') ?? []).find(
+      (el) => el.getAttribute('data-user-id') === userId
+    )
     if (!(row instanceof HTMLElement)) return false
     row.scrollIntoView({ behavior: 'smooth', block: 'center' })
     flashUserId.value = userId
@@ -154,9 +185,20 @@
 
   const FLASH_MS = 1600
 
+  /**
+   * Jump to a player's row, fetching the around=me window first when the row
+   * is not loaded. Resolves to whether the jump landed.
+   */
+  const jumpToUser = async (userId: string): Promise<boolean> => {
+    if (scrollToUser(userId)) return true
+    if (!(await ensureSelf(userId))) return false
+    await nextTick()
+    return scrollToUser(userId)
+  }
+
   onUnmounted(() => clearTimeout(flashTimer))
 
-  defineExpose({ scrollToTop, scrollToUser })
+  defineExpose({ scrollToTop, scrollToUser, jumpToUser })
 
   /** The bucket rides along so the replay page can offer a link back to it. */
   const watchRun = (entry: BoardEntry): void => {
@@ -202,6 +244,13 @@
 
     &__row {
       border-top: 1px solid var(--sub-alt-color);
+    }
+
+    &__gap {
+      display: flex;
+      justify-content: center;
+      padding: 0.25rem 0;
+      border-top: 1px dashed var(--sub-alt-color);
     }
 
     &__row--self .board__watch {

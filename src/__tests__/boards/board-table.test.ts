@@ -15,15 +15,34 @@ import type { BoardEntry, BoardMods, BoardPage } from '@shared/api'
 import { i18n } from '@app/i18n'
 import { ROUTE_NAMES } from '@/app/router/route-names'
 
-const h = vi.hoisted(() => ({ page: vi.fn() }))
+const h = vi.hoisted(() => ({ page: vi.fn(), before: vi.fn(), around: vi.fn() }))
 
 vi.mock('@shared/api', () => ({
-  // One cache entry per (bucket, cursor) — exactly what the real factory does.
+  // One cache entry per (bucket, cursor) — exactly what the real factories do.
   boardPageQueryOptions: (bucket: string, cursor?: string) => ({
     queryKey: ['board', bucket, cursor ?? ''],
     queryFn: () => h.page(bucket, cursor)
+  }),
+  boardPageBeforeQueryOptions: (bucket: string, before: string) => ({
+    queryKey: ['board', bucket, 'before', before],
+    queryFn: () => h.before(bucket, before)
+  }),
+  boardAroundQueryOptions: (bucket: string) => ({
+    queryKey: ['board', bucket, 'around'],
+    queryFn: () => h.around(bucket)
   })
 }))
+
+// The feed reads through the app-wide client (`queryClient.fetchQuery`), whose
+// production defaults retry 5xx with backoff; tests want one fetch per ask.
+vi.mock('@/shared/api/query-client', async () => {
+  const { QueryClient: TestClient } = await import('@tanstack/vue-query')
+  return {
+    queryClient: new TestClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: 0 } }
+    })
+  }
+})
 
 import { BoardTable } from '@/features/leaderboards'
 
@@ -86,6 +105,8 @@ const rowTexts = (wrapper: VueWrapper, testid: string): string[] =>
 
 beforeEach(async () => {
   h.page.mockReset()
+  h.before.mockReset()
+  h.around.mockReset()
   i18n.global.locale.value = 'en'
   queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: 0 } }
@@ -257,6 +278,104 @@ describe('board table', () => {
     wrapper.unmount()
   })
 
+  it('jumps to a loaded row without touching the network', async () => {
+    h.page.mockResolvedValue(page([entry({ userId: 'me', runId: 'r1' })]))
+
+    const wrapper = await mountTable({ bucket: BUCKET, selfUserId: 'me' })
+
+    const landed = await (
+      wrapper.vm as unknown as { jumpToUser: (id: string) => Promise<boolean> }
+    ).jumpToUser('me')
+
+    expect(landed).toBe(true)
+    expect(h.around).not.toHaveBeenCalled()
+
+    wrapper.unmount()
+  })
+
+  it('fetches the around=me window for an unloaded self, and renders the gap above it', async () => {
+    h.page.mockResolvedValue(
+      page([entry({ rank: 1, userId: 'a', runId: 'r1', displayName: 'top' })], 'CURSOR-2')
+    )
+    h.around.mockResolvedValue({
+      bucket: BUCKET,
+      entries: [
+        entry({ rank: 41, userId: 'x', runId: 'r41', displayName: 'above-me' }),
+        entry({ rank: 42, userId: 'me', runId: 'r42', displayName: 'myself' }),
+        entry({ rank: 43, userId: 'y', runId: 'r43', displayName: 'below-me' })
+      ],
+      prevCursor: 'PREV-41',
+      nextCursor: 'NEXT-43'
+    })
+
+    const wrapper = await mountTable({ bucket: BUCKET, selfUserId: 'me' })
+    expect(rowTexts(wrapper, 'boards-player')).toEqual(['top'])
+
+    const landed = await (
+      wrapper.vm as unknown as { jumpToUser: (id: string) => Promise<boolean> }
+    ).jumpToUser('me')
+    await settle()
+
+    expect(landed).toBe(true)
+    expect(h.around).toHaveBeenCalledWith(BUCKET)
+    // Two segments now: [1] and [41..43], with the gap's upward affordance
+    // between them and the tail's downward one under the window.
+    expect(rowTexts(wrapper, 'boards-rank')).toEqual(['1', '41', '42', '43'])
+    expect(wrapper.find('[data-testid="boards-more-above"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="boards-more"]').exists()).toBe(true)
+
+    wrapper.unmount()
+  })
+
+  it('reports an un-jumpable self honestly — a 204 window is not an error', async () => {
+    h.page.mockResolvedValue(page([entry({ userId: 'a', runId: 'r1' })]))
+    h.around.mockResolvedValue(null)
+
+    const wrapper = await mountTable({ bucket: BUCKET, selfUserId: 'me' })
+
+    const landed = await (
+      wrapper.vm as unknown as { jumpToUser: (id: string) => Promise<boolean> }
+    ).jumpToUser('me')
+
+    expect(landed).toBe(false)
+    expect(wrapper.find('[data-testid="boards-error"]').exists()).toBe(false)
+
+    wrapper.unmount()
+  })
+
+  it('grows a window upward through the gap until the segments merge', async () => {
+    h.page.mockResolvedValue(
+      page([entry({ rank: 1, userId: 'a', runId: 'r1', displayName: 'top' })], 'CURSOR-2')
+    )
+    h.around.mockResolvedValue({
+      bucket: BUCKET,
+      entries: [entry({ rank: 3, userId: 'me', runId: 'r3', displayName: 'myself' })],
+      prevCursor: 'PREV-3'
+    })
+    h.before.mockResolvedValue({
+      bucket: BUCKET,
+      entries: [entry({ rank: 2, userId: 'b', runId: 'r2', displayName: 'between' })]
+      // No prevCursor: rank 2 is directly under rank 1.
+    })
+
+    const wrapper = await mountTable({ bucket: BUCKET, selfUserId: 'me' })
+    await (wrapper.vm as unknown as { jumpToUser: (id: string) => Promise<boolean> }).jumpToUser(
+      'me'
+    )
+    await settle()
+    expect(rowTexts(wrapper, 'boards-rank')).toEqual(['1', '3'])
+
+    await wrapper.get('[data-testid="boards-more-above"]').trigger('click')
+    await settle()
+
+    expect(h.before).toHaveBeenCalledWith(BUCKET, 'PREV-3')
+    // 1 + 2 + 3 are contiguous now: one segment, no gap affordance left.
+    expect(rowTexts(wrapper, 'boards-rank')).toEqual(['1', '2', '3'])
+    expect(wrapper.find('[data-testid="boards-more-above"]').exists()).toBe(false)
+
+    wrapper.unmount()
+  })
+
   it('drops the accumulation when the bucket changes', async () => {
     const OTHER = 'words:25:en:seeded'
     h.page.mockImplementation((bucket: string, cursor?: string) =>
@@ -264,10 +383,16 @@ describe('board table', () => {
         bucket === BUCKET
           ? {
               bucket: BUCKET,
-              entries: [entry({ displayName: 'old-board', runId: 'r1' })],
+              entries:
+                cursor === undefined
+                  ? [entry({ rank: 1, userId: 'u1', displayName: 'old-board', runId: 'r1' })]
+                  : [entry({ rank: 2, userId: 'u2', displayName: 'old-board-2', runId: 'r2' })],
               ...(cursor === undefined ? { nextCursor: 'CURSOR-2' } : {})
             }
-          : { bucket: OTHER, entries: [entry({ displayName: 'new-board', runId: 'r9' })] }
+          : {
+              bucket: OTHER,
+              entries: [entry({ rank: 1, userId: 'u9', displayName: 'new-board', runId: 'r9' })]
+            }
       )
     )
 
