@@ -45,6 +45,7 @@ import {
   initialState,
   makeSeedContext,
   minSpeedFailInstant,
+  modMultiplierV1,
   progressOf,
   scoreV2OfLog,
   settle
@@ -158,6 +159,15 @@ export interface PeerView {
   readonly nick: string
   readonly view: GameView
   readonly metrics: PeerMetrics
+  /**
+   * Live race points: the ghost fold's combo base × this peer's frozen mod
+   * multiplier — the same pair the final standings' scoreV2 total is built
+   * from, minus the finalize-only factors (acc², time bonus). Comparable
+   * across seats because every seat is measured the same way.
+   */
+  readonly points: number
+  /** Current scoring streak of the ghost fold (0 right after a break). */
+  readonly combo: number
   readonly status: PeerViewStatus
   /** Why this peer is out, replayed from ITS log under ITS frozen freemods; `null` while racing/finished. */
   readonly failReason: FailReason | null
@@ -428,6 +438,7 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     void peersRev.value
     return peerRecords.value.map((rec) => {
       const metrics = rec.driver?.metrics.value ?? null
+      const live = rec.driver?.liveScore.value ?? null
       return {
         playerId: rec.playerId,
         nick: rec.nick,
@@ -442,12 +453,25 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
           chars: metrics?.chars ?? EMPTY_CHARS,
           progress: peerProgress(rec)
         },
+        points: (live?.base ?? 0) * peerModMultiplier(rec),
+        combo: live?.streak ?? 0,
         status: statusOf(rec),
         failReason: rec.driver?.view.snapshot.failReason ?? null,
         caret: caretOf(rec)
       }
     })
   })
+
+  /**
+   * The peer's frozen mod multiplier — exactly the one `scoreV2OfLog` will
+   * apply to this seat at match end (own freemods, no visual-mod declaration:
+   * those never travel the wire). Pure arithmetic over two small configs, so
+   * recomputing per `peers` evaluation costs nothing worth caching.
+   */
+  function peerModMultiplier(rec: PeerRecord): number {
+    if (scoreGen === null) return 1
+    return modMultiplierV1({ generation: scoreGen, config: rec.config }, NO_DECLARATION)
+  }
 
   function statusOf(rec: PeerRecord): PeerViewStatus {
     if (rec.wireStatus === 'dnf' || rec.wireStatus === 'left') return rec.wireStatus

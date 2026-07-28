@@ -34,10 +34,13 @@ import {
   type Metrics,
   type Ms,
   type ScoreResult,
+  type ScoreState,
   GameCore,
   asMs,
+  initialScoreState,
   metricsOf,
   scoreOfLog,
+  scoreStep,
   sortEvents
 } from '@shared/core'
 import type { GameSetup, GameView } from '@entities/game'
@@ -58,6 +61,12 @@ export class GhostDriver {
   private _virtualNow = 0
   private readonly snapshotRef: ShallowRef<GameState>
   private readonly displayNowRef = shallowRef<Ms>(asMs(0))
+  /** Incremental scoreV1 fold of the dispatched prefix — O(1) per event, unlike `score`'s full refold. */
+  private scoreState: ScoreState = initialScoreState()
+  private readonly liveScoreRef = shallowRef<{ readonly base: number; readonly streak: number }>({
+    base: 0,
+    streak: 0
+  })
 
   /** Readonly view-model for the game field. Ghosts never render blind. */
   readonly view: GameView
@@ -65,6 +74,8 @@ export class GhostDriver {
   readonly metrics: ComputedRef<Metrics>
   /** Live scoreV1 result from the ghost's own fold — opponents' scores come free (no ghost UI yet). */
   readonly score: ComputedRef<ScoreResult>
+  /** Live combo points + current streak, advanced with the display clock (the race rail reads this). */
+  readonly liveScore: ComputedRef<{ readonly base: number; readonly streak: number }>
 
   constructor(setup: GameSetup, options: GhostDriverOptions = {}) {
     this.core = new GameCore({ config: setup.config, words: setup.words })
@@ -97,6 +108,8 @@ export class GhostDriver {
       void this.snapshotRef.value
       return scoreOfLog(this.core.events, { config: this.core.config, words: this.core.words })
     })
+
+    this.liveScore = computed(() => this.liveScoreRef.value)
   }
 
   /** The shared match clock as last advanced (NOT the delayed display clock). */
@@ -142,11 +155,19 @@ export class GhostDriver {
     const displayNow = this._virtualNow - this.delayMs
     if (displayNow < 0) return
 
+    const dispatchedFrom = this.cursor
     while (this.cursor < this.pending.length && this.pending[this.cursor].t <= displayNow) {
       // Rejected events (e.g. a cheat the reducer refuses) are display no-ops;
       // the authoritative judgement happens in validateLog on the full log.
-      this.core.dispatch(this.pending[this.cursor])
+      const event = this.pending[this.cursor]
+      this.core.dispatch(event)
+      // Same unconditional fold as `scoreOfLog`: rejected events are no-ops
+      // inside `scoreStep` too (a finished state ignores everything).
+      scoreStep(this.scoreState, event, { config: this.core.config, words: this.core.words })
       this.cursor += 1
+    }
+    if (this.cursor > dispatchedFrom) {
+      this.liveScoreRef.value = { base: this.scoreState.base, streak: this.scoreState.streak }
     }
     // Deadline settle for an idle ghost — only once the queue is drained (see
     // the equivalence contract in the header).
@@ -161,6 +182,8 @@ export class GhostDriver {
     this.core.reset()
     this.cursor = 0
     this._virtualNow = 0
+    this.scoreState = initialScoreState()
+    this.liveScoreRef.value = { base: 0, streak: 0 }
     this.snapshotRef.value = this.core.state
     this.displayNowRef.value = asMs(0)
   }

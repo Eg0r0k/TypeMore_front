@@ -103,21 +103,29 @@
         :caret-style="config.caretStyle"
         :smooth-caret="config.smoothCaret"
       />
+      <!--
+        Live standings (self included), ranked by points, under the field's
+        right edge — the ghost carets already tell the story INSIDE the field,
+        this rail says what it is worth. Absolute like the HUD so appearing or
+        reordering never reflows the words.
+      -->
+      <RaceRail
+        v-show="session.phase === 'running' || session.phase === 'waiting'"
+        class="room-match__rail"
+      />
     </section>
-    <!-- <OpponentsRail :peers="railPeers" class="room-match__rail" /> -->
   </div>
 </template>
 
 <script setup lang="ts">
   import { computed } from 'vue'
   import { useI18n } from 'vue-i18n'
-  import type { PeerRailEntry } from '@/entities/lobby'
   import { useMatchSessionStore } from '@/entities/match'
   import { useConfigStore } from '@/entities/config/model/store'
   import { TestProgress } from '@/features/test/progress'
   import { ScoreHud } from '@/features/test/score-hud'
   import { Test, type TestGhostCaret } from '@/widgets/test'
-  import OpponentsRail from './opponents-rail.vue'
+  import RaceRail from './race-rail.vue'
 
   /**
    * The live match surface, laid out like the solo test: the time-mode drain
@@ -154,16 +162,6 @@
     const total = view?.words.length ?? 0
     return total > 0 ? Math.min(1, view.wordIndex / total) : 0
   })
-
-  const railPeers = computed<PeerRailEntry[]>(() =>
-    session.peers.map((peer: PeerRailEntry) => ({
-      playerId: peer.playerId,
-      nick: peer.nick,
-      metrics: peer.metrics,
-      status: peer.status,
-      failReason: peer.failReason
-    }))
-  )
 
   /**
    * Ghost carets for peers still racing — a finished/dropped peer's story is told
@@ -357,6 +355,15 @@
       z-index: 5;
       display: flex;
       justify-content: center;
+      pointer-events: none;
+    }
+
+    &__rail {
+      position: absolute;
+      top: calc(100% + 1.5rem);
+      right: 0;
+      z-index: 5;
+      width: 14rem;
       pointer-events: none;
     }
   }

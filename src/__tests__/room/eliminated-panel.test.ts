@@ -58,6 +58,8 @@ function makeStore(outcome: OutcomeStub | null, racing = 2) {
       playerId: `p${i}`,
       nick: `peer-${i}`,
       metrics: { wpm: 0, acc: 0, progress: 0 },
+      points: 0,
+      combo: 0,
       status: 'racing' as const,
       failReason: null,
       caret: { wordIndex: 0, charIndex: 0 }

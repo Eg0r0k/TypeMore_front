@@ -342,6 +342,7 @@ export default {
     }
   },
   room: {
+    leaveFirst: "you're still in a room — leave it before going elsewhere",
     code: 'room code',
     copy: 'copy room code',
     copied: 'copied!',
