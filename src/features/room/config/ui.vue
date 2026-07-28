@@ -249,7 +249,33 @@
       void drawQuote(quoteGroup.value)
       return
     }
+    // Leaving quote mode has to bring a dictionary back: entering it blanked
+    // `dictHash` (a quote has nothing to fingerprint), and the server rejects
+    // seeded settings without one — a bare mode patch would be silently
+    // dropped and the room would stay in quote mode for good.
+    if (settings.value.mode === 'quote') {
+      void leaveQuote(value as RoomSettings['mode'])
+      return
+    }
     apply({ mode: value as RoomSettings['mode'] })
+  }
+
+  const leaveQuote = async (mode: RoomSettings['mode']): Promise<void> => {
+    quoteError.value = ''
+    try {
+      const dictionary = await loadDictionaryBody(settings.value.lang)
+      apply({ mode, dictHash: dictVersion(dictionary.words) })
+    } catch {
+      // The advertised lang has no word list (a quote-only corpus) — fall back
+      // to the player's own language, the same way the host bootstrap does.
+      try {
+        const lang = configStore.config.language
+        const dictionary = await loadDictionaryBody(lang)
+        apply({ mode, lang, dictHash: dictVersion(dictionary.words) })
+      } catch {
+        quoteError.value = t('game.setup.dictionaryError', { lang: settings.value.lang })
+      }
+    }
   }
 
   // ── Quote mode ────────────────────────────────────────────────────────────
