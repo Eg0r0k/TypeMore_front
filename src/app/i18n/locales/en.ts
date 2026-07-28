@@ -464,17 +464,26 @@ export default {
   },
   boards: {
     title: 'leaderboards',
-    /** Bucket picker. The dimension is rendered under the name its mode gives it. */
-    bucket: {
-      label: 'board',
-      time: '{seconds}s · {lang}',
-      words: '{count} words · {lang}',
-      entries: '{count} entries'
+    /** The rail: language / text source / variations, one active per group. */
+    rail: {
+      label: 'board filters',
+      search: 'search languages…',
+      source: 'text source',
+      random: 'random',
+      quotes: 'quotes',
+      variations: 'board',
+      /** The dimension is rendered under the name its mode gives it. */
+      time: '{seconds}s',
+      words: '{count} words',
+      noLanguages: 'no language matches this search',
+      noVariations: 'no boards have any entries yet',
+      languageEmpty: 'no one has put a run on a board in this language yet'
     },
-    /** A quote board: not in the picker (one per quote), reached from the quote. */
+    /** A quote board: one per quote, reached through the picker or a link. */
     quote: {
       back: '← all boards',
-      unknown: 'this quote could not be loaded'
+      unknown: 'this quote could not be loaded',
+      pickerHint: 'quotes rank per quote — pick one to see its board'
     },
     column: { rank: '#', player: 'player', wpm: 'wpm', acc: 'acc', score: 'score', when: 'when' },
     /** Row affordance — the whole row is the control, this is its accessible name. */

@@ -435,15 +435,23 @@ export default {
   },
   boards: {
     title: 'таблицы лидеров',
-    bucket: {
-      label: 'таблица',
-      time: '{seconds}с · {lang}',
-      words: '{count} слов · {lang}',
-      entries: 'записей: {count}'
+    rail: {
+      label: 'фильтры таблиц',
+      search: 'поиск языка…',
+      source: 'источник текста',
+      random: 'случайный',
+      quotes: 'цитаты',
+      variations: 'таблица',
+      time: '{seconds}с',
+      words: '{count} слов',
+      noLanguages: 'по этому запросу нет языков',
+      noVariations: 'ни в одной таблице пока нет записей',
+      languageEmpty: 'на этом языке пока никто не попал в таблицу'
     },
     quote: {
       back: '← все таблицы',
-      unknown: 'не удалось загрузить эту цитату'
+      unknown: 'не удалось загрузить эту цитату',
+      pickerHint: 'цитаты ранжируются по одной — выберите цитату, чтобы увидеть её таблицу'
     },
     column: {
       rank: '#',

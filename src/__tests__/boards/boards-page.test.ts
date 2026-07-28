@@ -34,17 +34,24 @@ vi.mock('@shared/api', () => {
     ApiError,
     isApiError: (value: unknown) => value instanceof ApiError,
     // Pure predicate, so the mock carries the real rule rather than a stub: the
-    // picker calls it for every row and a missing export throws inside render.
+    // rail's derivations call it for every row and a missing export throws
+    // inside render.
     isQuoteBucket: (bucket: object) => 'quoteId' in bucket,
+    // The length-filter guard reads the real schema's options.
+    QuoteLengthGroupSchema: { options: ['short', 'medium', 'long', 'thicc'] },
     // The real factory `select`s `.buckets` out of the envelope; the view only
     // ever sees the array, so that is what the mock resolves.
     bucketCatalogueQueryOptions: () => ({
       queryKey: ['catalogue'],
       queryFn: () => h.catalogue()
     }),
-    // The picker asks the dictionary catalogue what a bucket's language is
+    // The rail asks the dictionary catalogue what a bucket's language is
     // CALLED. This harness publishes none, so every board falls back to its key
     // — which is what the label assertions below read.
+    dictionaryCatalogueQueryOptions: () => ({
+      queryKey: ['dictionaries'],
+      queryFn: () => []
+    }),
     languageNamesQueryOptions: () => ({
       queryKey: ['language-names'],
       queryFn: () => ({})
@@ -152,7 +159,7 @@ describe('boards page', () => {
     )
     expect(wrapper.find('[data-testid="boards-error"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="boards-retry"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="boards-bucket-picker"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="rail-languages"]').exists()).toBe(false)
     expect(wrapper.text()).not.toContain(i18n.global.t('boards.loading'))
 
     wrapper.unmount()
@@ -164,31 +171,34 @@ describe('boards page', () => {
     const wrapper = await mountPage()
 
     expect(wrapper.get('[data-testid="boards-error"]').text()).toBe(i18n.global.t('boards.error'))
-    expect(wrapper.find('[data-testid="boards-bucket-picker"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="rail-languages"]').exists()).toBe(false)
 
     h.catalogue.mockResolvedValue([TIME_15, WORDS_25])
     await wrapper.get('[data-testid="boards-retry"]').trigger('click')
     await settle()
 
     expect(wrapper.find('[data-testid="boards-error"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="boards-bucket-picker"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="rail-languages"]').exists()).toBe(true)
 
     wrapper.unmount()
   })
 
-  it('lands on the busiest board and names it by the dimension its mode gives it', async () => {
+  it('lands on the busiest board, and the rail marks its language and variation', async () => {
     h.catalogue.mockResolvedValue([TIME_15, WORDS_25])
 
     const wrapper = await mountPage()
 
     // WORDS_25 has 11 entries against TIME_15's 3.
-    expect(wrapper.get('[data-testid="boards-bucket-picker"]').text()).toContain('25 words')
     expect(h.page).toHaveBeenCalledWith(WORDS_25.bucket, undefined)
+    const activeLanguage = wrapper.get('[data-testid="rail-language"].board-rail__item--active')
+    expect(activeLanguage.text()).toContain('ru-RU')
+    const activeVariation = wrapper.get('[data-testid="rail-variation"].board-rail__item--active')
+    expect(activeVariation.text()).toContain('25 words')
 
     wrapper.unmount()
   })
 
-  it('keeps the picker when the board fails, so another board is one click away', async () => {
+  it('keeps the rail when the board fails, so another board is one click away', async () => {
     h.catalogue.mockResolvedValue([TIME_15, WORDS_25])
     h.page.mockRejectedValue(new Error('board is down'))
 
@@ -198,7 +208,7 @@ describe('boards page', () => {
       i18n.global.t('boards.pageError')
     )
     // The whole point: a dead board is not a dead page.
-    expect(wrapper.find('[data-testid="boards-bucket-picker"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="rail-languages"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="boards-retry"]').exists()).toBe(true)
 
     wrapper.unmount()
@@ -234,8 +244,7 @@ describe('boards page', () => {
     // QUOTE_BOARD has 99 entries against WORDS_25's 11 and would win on count
     // alone. It is skipped for being a quote board.
     expect(h.page).toHaveBeenCalledWith(WORDS_25.bucket, undefined)
-    const picker = wrapper.get('[data-testid="boards-bucket-picker"]')
-    expect(picker.text()).not.toContain(QUOTE_ID)
+    expect(wrapper.text()).not.toContain(QUOTE_ID)
     expect(wrapper.find('[data-testid="quote-board-header"]').exists()).toBe(false)
 
     wrapper.unmount()
@@ -256,9 +265,8 @@ describe('boards page', () => {
     expect(header.text()).toContain('Собачье сердце')
     expect(header.text()).not.toContain(QUOTE_ID)
 
-    // No picker: a list of a few hundred language boards is not the way back
-    // from here, the link in the heading is.
-    expect(wrapper.find('[data-testid="boards-bucket-picker"]').exists()).toBe(false)
+    // The rail stays: it is how every other board is reached from here.
+    expect(wrapper.find('[data-testid="rail-languages"]').exists()).toBe(true)
 
     wrapper.unmount()
   })
@@ -269,8 +277,28 @@ describe('boards page', () => {
 
     const wrapper = await mountPage()
 
-    expect(wrapper.get('[data-testid="boards-bucket-picker"]').text()).toContain('15s')
+    const activeVariation = wrapper.get('[data-testid="rail-variation"].board-rail__item--active')
+    expect(activeVariation.text()).toContain('15s')
     expect(h.page).toHaveBeenCalledWith(TIME_15.bucket, undefined)
+
+    wrapper.unmount()
+  })
+
+  it('lists only real presets, muting the ones this language has no board for', async () => {
+    h.catalogue.mockResolvedValue([TIME_15, WORDS_25])
+
+    const wrapper = await mountPage()
+
+    // The catalogue holds exactly two shapes across all languages — time:15
+    // and words:25 — so exactly two chips render: no invented 30s/60s/50/100.
+    const chips = wrapper.findAll('[data-testid="rail-variation"]')
+    expect(chips.map((chip) => chip.text())).toEqual(['15s0', '25 words11'])
+
+    // The busiest board is ru-RU words:25; ru-RU has no 15s board, so that
+    // chip is muted, disabled, and shows its zero count.
+    const muted = chips[0]
+    expect(muted.classes()).toContain('board-rail__item--muted')
+    expect(muted.attributes('disabled')).toBeDefined()
 
     wrapper.unmount()
   })

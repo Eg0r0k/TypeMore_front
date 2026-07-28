@@ -25,7 +25,7 @@ import {
   type DictionaryCatalogue
 } from '@shared/api'
 import { LanguageModal } from '@/features/modal/language'
-import { BoardBucketPicker, browsableBuckets } from '@/features/leaderboards'
+import { BoardRail, railLanguages } from '@/features/leaderboards'
 import { stubElementSize } from './helpers/element-size'
 
 // Both pickers render through the virtualized console list, which needs a
@@ -166,7 +166,7 @@ describe('the language picker', () => {
   })
 })
 
-// ── The bucket picker ────────────────────────────────────────────────────────
+// ── The boards rail ──────────────────────────────────────────────────────────
 
 const LANGUAGE_BOARD: BucketInfo = {
   bucket: 'time:15000:code_css:seeded',
@@ -183,52 +183,51 @@ const QUOTE_BOARD: BucketInfo = {
   entries: 2
 }
 
-const mountBuckets = async (
-  selected: string,
-  catalogue: DictionaryCatalogue | null = CATALOGUE
-) => {
-  seedCatalogue(catalogue)
-  const wrapper = mount(BoardBucketPicker, {
-    // Through the same filter the page applies, so what the picker is handed
-    // here is what it is handed in the app.
-    props: { buckets: browsableBuckets([LANGUAGE_BOARD, QUOTE_BOARD]), selected },
-    global: { plugins: [i18n, [VueQueryPlugin, { queryClient }]] }
+const mountRail = async (catalogue: DictionaryCatalogue | null = CATALOGUE) => {
+  // Through the same derivation the page applies, so what the rail is handed
+  // here is what it is handed in the app.
+  const wrapper = mount(BoardRail, {
+    props: {
+      languages: railLanguages([LANGUAGE_BOARD, QUOTE_BOARD], catalogue ?? undefined),
+      variations: [],
+      language: LANGUAGE_BOARD.lang,
+      source: 'random' as const,
+      group: 'all' as const,
+      selectedBucket: LANGUAGE_BOARD.bucket
+    },
+    global: { plugins: [i18n] }
   })
   mounted.push(wrapper)
   await settle()
   return wrapper
 }
 
-const triggerText = (wrapper: { get: (s: string) => { text: () => string } }): string =>
-  wrapper.get('[data-testid="boards-bucket-picker"]').text()
+const railLanguageTexts = (wrapper: { findAll: (s: string) => { text: () => string }[] }) =>
+  wrapper.findAll('[data-testid="rail-language"]').map((node) => node.text())
 
-describe('the leaderboard bucket picker', () => {
-  it('names a language board the way the catalogue names the language', async () => {
-    const wrapper = await mountBuckets(LANGUAGE_BOARD.bucket)
+describe('the boards rail language group', () => {
+  it('names a language the way the catalogue names it, never by the key', async () => {
+    const wrapper = await mountRail()
 
-    expect(triggerText(wrapper)).toContain('15s · CSS (code)')
-    expect(triggerText(wrapper)).not.toContain('code_css')
+    const rows = railLanguageTexts(wrapper)
+    expect(rows.some((text) => text.includes('CSS (code)'))).toBe(true)
+    expect(rows.some((text) => text.includes('code_css'))).toBe(false)
   })
 
   it('falls back to the key when the catalogue has not loaded', async () => {
-    const wrapper = await mountBuckets(LANGUAGE_BOARD.bucket, null)
+    const wrapper = await mountRail(null)
 
-    expect(triggerText(wrapper)).toContain('15s · code_css')
+    expect(railLanguageTexts(wrapper)).toEqual(['code_css4'])
   })
 
   /**
-   * A quote board has no language to be named by, and naming it by a stem of
-   * its uuid was the version nobody could read. It is no longer offered here at
-   * all: there is one per quote, the corpus is ~15 800, and the board is
-   * reached from the quote instead. This asserts the filter, not the label.
+   * A quote board has no language to be named by. It must not surface a
+   * language row of its own, and its uuid must not appear anywhere in the rail.
    */
-  it('never offers a quote board — it has no language, and there are thousands', async () => {
-    const wrapper = await mountBuckets(LANGUAGE_BOARD.bucket)
-    await wrapper.get('[data-testid="boards-bucket-picker"]').trigger('click')
-    await settle()
+  it('derives no language from a quote board', async () => {
+    const wrapper = await mountRail()
 
-    expect(optionTexts()).toEqual(['15s · CSS (code)4 entries'])
-    expect(document.body.textContent).not.toContain(QUOTE_BOARD.quoteId.slice(0, 8))
+    expect(wrapper.text()).not.toContain(QUOTE_BOARD.quoteId.slice(0, 8))
   })
 })
 

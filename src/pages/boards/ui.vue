@@ -23,7 +23,7 @@
       Not a failure, and not something a spinner will fix.
     -->
     <Typography
-      v-else-if="selected === undefined"
+      v-else-if="selected === undefined && view === 'no-language-boards' && !hasAnyBoard"
       class="boards-page__state"
       data-testid="boards-no-boards"
       size="s"
@@ -32,21 +32,56 @@
       {{ t('boards.noBoards') }}
     </Typography>
 
-    <template v-else>
+    <div v-else class="boards-page__layout">
       <!--
-        The heading sits OUTSIDE the ranking on purpose: a board that fails to
-        load must still leave the user a way to pick another one.
-
-        Which heading depends on what KIND of board this is. A language board is
-        one of a few hundred and is chosen from the picker. A quote board is one
-        of ~15 800, so it is not in the picker at all — it is arrived at from
-        the quote (the results screen, or a link), and what it needs is not a
-        chooser but a statement of which text this ranks.
+        The rail stays up whatever happens to the board on its right: a board
+        that fails to load must still leave the user a way to pick another one.
       -->
-      <QuoteBoardHeader v-if="quoteId !== null" :quote-id="quoteId" />
-      <BoardBucketPicker v-else :buckets="browsable" :selected="selected" @select="select" />
-      <BoardView :bucket="selected" />
-    </template>
+      <BoardRail
+        :languages="languages"
+        :variations="variations"
+        :language="language"
+        :source="source"
+        :group="group"
+        :selected-bucket="selected"
+        @select-language="selectLanguage"
+        @select-source="selectSource"
+        @select-variation="select"
+        @select-group="selectGroup"
+      />
+
+      <div class="boards-page__main">
+        <template v-if="view === 'board' && selected !== undefined">
+          <!--
+            A quote board's heading is not a chooser but a statement of which
+            text this ranks — the attribution is the headline of the page.
+          -->
+          <QuoteBoardHeader v-if="quoteId !== null" :quote-id="quoteId" />
+          <BoardView :bucket="selected" />
+        </template>
+
+        <Typography
+          v-else-if="view === 'quote-picker'"
+          class="boards-page__state"
+          data-testid="boards-quote-picker"
+          size="s"
+          color="sub"
+        >
+          {{ t('boards.quote.pickerHint') }}
+        </Typography>
+
+        <!-- A language with no boards yet: the muted chips say which shapes exist. -->
+        <Typography
+          v-else
+          class="boards-page__state"
+          data-testid="boards-language-empty"
+          size="s"
+          color="sub"
+        >
+          {{ t('boards.rail.languageEmpty') }}
+        </Typography>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -54,13 +89,18 @@
   import { computed } from 'vue'
   import { useQuery } from '@tanstack/vue-query'
   import { useI18n } from 'vue-i18n'
-  import { bucketCatalogueQueryOptions, isQuoteBucket } from '@shared/api'
   import {
-    BoardBucketPicker,
+    bucketCatalogueQueryOptions,
+    dictionaryCatalogueQueryOptions,
+    isQuoteBucket
+  } from '@shared/api'
+  import {
+    BoardRail,
     BoardView,
     QuoteBoardHeader,
-    browsableBuckets,
-    useBucketSelection
+    railLanguages,
+    railVariations,
+    useBoardsSelection
   } from '@/features/leaderboards'
   import { Button } from '@/shared/ui/button'
   import { Typography } from '@/shared/ui/typography'
@@ -69,21 +109,39 @@
    * Leaderboards. Public, because a board nobody can read without an account is
    * a board nobody links to.
    *
-   * The page owns exactly one thing the three features share: which bucket is
-   * on screen. That lives in `?bucket=`, so a board is a link.
+   * The page owns what crosses its features: which board is on screen, which
+   * language/source/filter the rail highlights. All of it lives in the URL
+   * (`useBoardsSelection`), so every state of this page is a link.
    */
   const { t } = useI18n()
 
   const catalogue = useQuery(bucketCatalogueQueryOptions())
   const buckets = computed(() => catalogue.data.value ?? [])
 
-  /** What the picker offers: the language boards. */
-  const browsable = computed(() => browsableBuckets(buckets.value))
+  // The rail names languages with the dictionary catalogue's display names —
+  // the only place a key like `code_css` is named. Boards for a language the
+  // catalogue no longer serves keep their key as a fallback name.
+  const dictionaries = useQuery(dictionaryCatalogueQueryOptions())
 
-  // Validated against the FULL catalogue, not against `browsable`: a quote
-  // board is unlisted, not unreachable, and `?bucket=quote:<id>` has to keep
-  // resolving or every link ever shared to one silently redirects.
-  const { selected, select } = useBucketSelection(catalogue.data)
+  // Validated against the FULL catalogue, not only the language boards: a
+  // quote board is unlisted, not unreachable, and `?bucket=quote:<id>` has to
+  // keep resolving or every link ever shared to one silently redirects.
+  const {
+    selected,
+    view,
+    language,
+    source,
+    group,
+    select,
+    selectLanguage,
+    selectSource,
+    selectGroup
+  } = useBoardsSelection(catalogue.data)
+
+  const hasAnyBoard = computed(() => buckets.value.some((bucket) => !isQuoteBucket(bucket)))
+
+  const languages = computed(() => railLanguages(buckets.value, dictionaries.data.value))
+  const variations = computed(() => railVariations(buckets.value, language.value))
 
   /** The quote this board ranks, or `null` for a language board. */
   const quoteId = computed<string | null>(() => {
@@ -105,6 +163,24 @@
 
     &__title {
       margin-bottom: 0;
+    }
+
+    &__layout {
+      display: grid;
+      grid-template-columns: 15rem minmax(0, 1fr);
+      gap: 1rem;
+      align-items: start;
+
+      @media (width <= 800px) {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    &__main {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      min-width: 0;
     }
 
     &__state {

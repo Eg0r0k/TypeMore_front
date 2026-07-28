@@ -29,6 +29,10 @@ test.beforeEach(async ({ page }) => {
   await stubDictionary(page)
 })
 
+/** The rail's active item in one of its groups. */
+const activeRailItem = (page: import('@playwright/test').Page, testid: string) =>
+  page.locator(`[data-testid="${testid}"].board-rail__item--active`)
+
 test('with no ?bucket= the busiest board wins', async ({ page }) => {
   const boards = await stubLeaderboards(page)
   // Guard the fixture itself: the assertion below is only meaningful while the
@@ -38,16 +42,17 @@ test('with no ?bucket= the busiest board wins', async ({ page }) => {
 
   await page.goto('/boards')
 
-  // "German", not "german": the bucket carries the KEY, the picker renders the
+  // "German", not "german": the bucket carries the KEY, the rail renders the
   // name the dictionary catalogue publishes for it.
-  await expect(page.getByTestId('boards-bucket-picker')).toHaveText(/10 words · German/)
+  await expect(activeRailItem(page, 'rail-language')).toHaveText(/German/)
+  await expect(activeRailItem(page, 'rail-variation')).toHaveText(/10 words/)
   await expect(page.getByTestId('boards-row')).toHaveCount(2)
   await expect(page.getByTestId('boards-player').first()).toHaveText(/Ada/)
 
-  // And the address is left alone: `useBucketSelection` rewrites a URL that
-  // names the WRONG board, never one that names none — an address with no
-  // `?bucket=` is not claiming anything false, and replacing it would put a
-  // history entry between the visitor and wherever they came from.
+  // And the address is left alone: the selection rewrites a URL that names the
+  // WRONG board, never one that names none — an address with no `?bucket=` is
+  // not claiming anything false, and replacing it would put a history entry
+  // between the visitor and wherever they came from.
   await expect(page.getByTestId('boards-row').first()).toBeVisible()
   expect(new URL(page.url()).searchParams.get('bucket')).toBeNull()
 })
@@ -59,7 +64,7 @@ test('an unknown ?bucket= falls back to the busiest board and the URL is correct
 
   await page.goto('/boards?bucket=words:99:klingon:seeded')
 
-  await expect(page.getByTestId('boards-bucket-picker')).toHaveText(/10 words · German/)
+  await expect(activeRailItem(page, 'rail-variation')).toHaveText(/10 words/)
   await expect(page.getByTestId('boards-player').first()).toHaveText(/Ada/)
   // A URL that named one board while showing another would lie to whoever
   // copies it next, so it is rewritten to the board actually on screen.
@@ -71,9 +76,11 @@ test('a known ?bucket= beats the busiest board', async ({ page }) => {
 
   await page.goto(`/boards?bucket=${encodeURIComponent(TIME_60_RU)}`)
 
-  // The stub catalogue publishes german only, so a russian board has no name to
-  // render and falls back to its key — the one case a key is allowed on screen.
-  await expect(page.getByTestId('boards-bucket-picker')).toHaveText(/60s · russian/)
+  // The stub dictionary catalogue publishes german only, so a russian board has
+  // no name to render and its rail row falls back to the key — the one case a
+  // key is allowed on screen.
+  await expect(activeRailItem(page, 'rail-language')).toHaveText(/russian/)
+  await expect(activeRailItem(page, 'rail-variation')).toHaveText(/60s/)
   const rows = page.getByTestId('boards-row')
   await expect(rows).toHaveCount(1)
   await expect(rows.getByTestId('boards-player')).toHaveText(/Ivan/)
@@ -81,19 +88,43 @@ test('a known ?bucket= beats the busiest board', async ({ page }) => {
   expect(boards.rowsOf(TIME_60_RU)[0].displayName).toBe('Ivan')
 })
 
-test('picking another bucket loads that board', async ({ page }) => {
+test('picking another variation loads that board', async ({ page }) => {
   await stubLeaderboards(page)
   await page.goto('/boards')
   await expect(page.getByTestId('boards-player').first()).toHaveText(/Ada/)
 
-  await page.getByTestId('boards-bucket-picker').click()
-  await page.getByRole('option', { name: /15s · German/ }).click()
+  await page.locator('[data-testid="rail-variation"][data-variation="time:15000"]').click()
 
   await expect.poll(() => new URL(page.url()).searchParams.get('bucket')).toBe(TIME_15_DE)
   const rows = page.getByTestId('boards-row')
   await expect(rows).toHaveCount(2)
   await expect(rows.getByTestId('boards-player').first()).toHaveText(/Barbara/)
   await expect(rows.getByTestId('boards-player').nth(1)).toHaveText(/Margaret/)
+})
+
+test('a preset this language has no board for is listed muted, not hidden', async ({ page }) => {
+  await stubLeaderboards(page)
+  await page.goto(`/boards?bucket=${encodeURIComponent(TIME_60_RU)}`)
+
+  // The catalogue's shapes are words:10, time:15 and time:60; russian holds
+  // only the 60s board. The other two chips render muted with a zero count —
+  // real shapes, no board here yet — and nothing else is invented.
+  const chips = page.getByTestId('rail-variation')
+  await expect(chips).toHaveCount(3)
+  const muted = page.locator('[data-testid="rail-variation"].board-rail__item--muted')
+  await expect(muted).toHaveCount(2)
+  await expect(muted.first()).toBeDisabled()
+  await expect(muted.first()).toHaveText(/0/)
+})
+
+test('the language search filters by display name', async ({ page }) => {
+  await stubLeaderboards(page)
+  await page.goto('/boards')
+
+  await page.getByTestId('rail-language-search').fill('germ')
+  const rows = page.getByTestId('rail-language')
+  await expect(rows).toHaveCount(1)
+  await expect(rows.first()).toHaveText(/German/)
 })
 
 test('load more appends the next keyset page', async ({ page }) => {
@@ -122,10 +153,10 @@ test('an empty catalogue is a state, not a failure', async ({ page }) => {
 
   await expect(page.getByTestId('boards-no-boards')).toHaveText('no boards have any entries yet')
   await expect(page.getByTestId('boards-error')).toHaveCount(0)
-  await expect(page.getByTestId('boards-bucket-picker')).toHaveCount(0)
+  await expect(page.getByTestId('rail-languages')).toHaveCount(0)
 })
 
-test('a failed board keeps the picker and recovers on retry', async ({ page }) => {
+test('a failed board keeps the rail and recovers on retry', async ({ page }) => {
   const boards = await stubLeaderboards(page, { boardStatus: 500 })
 
   await page.goto('/boards')
@@ -134,7 +165,7 @@ test('a failed board keeps the picker and recovers on retry', async ({ page }) =
   // (A 5xx is retried twice with backoff before the query gives up.)
   const error = page.getByTestId('boards-error')
   await expect(error).toHaveText('could not load this board', { timeout: 20_000 })
-  await expect(page.getByTestId('boards-bucket-picker')).toBeVisible()
+  await expect(page.getByTestId('rail-languages')).toBeVisible()
   await expect(page.getByTestId('boards-row')).toHaveCount(0)
 
   boards.recoverBoards()
