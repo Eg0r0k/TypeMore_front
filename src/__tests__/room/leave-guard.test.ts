@@ -11,15 +11,15 @@ import { ROUTE_NAMES } from '@/shared/router'
 
 const h = vi.hoisted(() => ({
   session: { room: null as unknown, resumeAttempted: false, init: async () => {} },
-  addAlert: vi.fn()
+  toastWarning: vi.fn()
 }))
 
 vi.mock('@/entities/match', () => ({
   useMatchSessionStore: () => h.session
 }))
-vi.mock('@/entities/alert', () => ({
-  AlertType: { Warning: 'warn' },
-  useAlertStore: () => ({ addAlert: h.addAlert })
+// Sonner is the app's one live toast system — the warning must land there.
+vi.mock('@/shared/ui/sonner', () => ({
+  toast: { warning: h.toastWarning }
 }))
 
 import { lobbyMiddleware } from '@/app/router/middleware/lobby.middleware'
@@ -28,19 +28,19 @@ const to = (name: string) => ({ name }) as unknown as RouteLocationNormalized
 
 beforeEach(() => {
   h.session.room = null
-  h.addAlert.mockClear()
+  h.toastWarning.mockClear()
 })
 
 describe('leaving a held seat', () => {
   it('refuses internal navigation while the session holds a room, with a warning', async () => {
     h.session.room = { code: 'ABCD' }
     await expect(lobbyMiddleware(to(ROUTE_NAMES.HOME))).resolves.toBe(false)
-    expect(h.addAlert).toHaveBeenCalledOnce()
+    expect(h.toastWarning).toHaveBeenCalledOnce()
   })
 
   it('lets the post-leave redirect through — the room is already gone', async () => {
     await expect(lobbyMiddleware(to(ROUTE_NAMES.SERVERS))).resolves.toBeUndefined()
-    expect(h.addAlert).not.toHaveBeenCalled()
+    expect(h.toastWarning).not.toHaveBeenCalled()
   })
 
   it('still gates direct /room entry without a room', async () => {

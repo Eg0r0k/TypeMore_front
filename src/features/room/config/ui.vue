@@ -174,7 +174,6 @@
   import { computed, onMounted, ref, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
   import type { Freemods, RoomPlayer, RoomSettings } from '@/entities/lobby'
-  import { AlertType, useAlertStore } from '@/entities/alert'
   import { useConfigStore } from '@/entities/config/model/store'
   import { ModGroup, optionOf, optionsFor, valuesFor } from '@/entities/game'
   import { isApiError, loadDictionaryBody, loadRandomQuote, quoteCorpusLang } from '@shared/api'
@@ -182,6 +181,7 @@
   import { useLanguageNames } from '@/shared/lib/hooks/useLanguageNames'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
   import { LanguageModal } from '@/features/modal/language'
+  import { toast } from '@/shared/ui/sonner'
   import { Typography } from '@/shared/ui/typography'
   import { dictVersion } from '@shared/core'
   import IconLoader from '~icons/tabler/loader-2'
@@ -281,10 +281,7 @@
         const dictionary = await loadDictionaryBody(lang)
         apply({ mode, lang, dictHash: dictVersion(dictionary.words) })
       } catch {
-        alerts.addAlert({
-          type: AlertType.Error,
-          msg: t('game.setup.dictionaryError', { lang: settings.value.lang })
-        })
+        toast.error(t('game.setup.dictionaryError', { lang: settings.value.lang }))
       }
     } finally {
       quoteBusy.value = false
@@ -309,7 +306,6 @@
    * second draw). The spinner renders it; the handlers early-return on it.
    */
   const quoteBusy = ref(false)
-  const alerts = useAlertStore()
 
   const drawQuote = async (group: QuoteGroup): Promise<void> => {
     quoteBusy.value = true
@@ -330,20 +326,19 @@
         textSource: { kind: 'quote', quoteId: quote.id }
       })
     } catch (error) {
-      // A toast, not an inline note: the draw is triggered from OUTSIDE quote
-      // mode too (the mode toggle), where the quote panel — and any inline
-      // error in it — is not rendered at all. Failing there looked like a
-      // dead button.
-      alerts.addAlert({
-        type: AlertType.Warning,
-        msg:
-          isApiError(error) && error.status === 404
-            ? t('game.setup.quoteEmpty', {
-                lang: quoteCorpusLang(settings.value.lang),
-                group: t(`game.quote.group.${group}`)
-              })
-            : t('game.setup.quoteError')
-      })
+      // A toast (sonner — the ONE live toast system; the entities/alert store
+      // renders nowhere), not an inline note: the draw is triggered from
+      // OUTSIDE quote mode too (the mode toggle), where the quote panel — and
+      // any inline error in it — is not rendered at all. Failing there looked
+      // like a dead button.
+      toast.warning(
+        isApiError(error) && error.status === 404
+          ? t('game.setup.quoteEmpty', {
+              lang: quoteCorpusLang(settings.value.lang),
+              group: t(`game.quote.group.${group}`)
+            })
+          : t('game.setup.quoteError')
+      )
     } finally {
       quoteBusy.value = false
     }

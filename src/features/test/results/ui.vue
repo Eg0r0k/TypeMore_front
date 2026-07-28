@@ -16,7 +16,7 @@
              grade's baseline rather than starting a line of its own. -->
         <div class="results__mark">
           <span
-            class="text-7xl relative leading-none font-bold"
+            class="text-9xl relative leading-none font-bold"
             :class="isTopGrade ? 'text-main' : 'text-text'"
           >
             {{ grade }}
@@ -207,10 +207,9 @@
   import IconBoard from '~icons/tabler/trophy'
   import { quoteBucketKey } from '@shared/api'
   import { routeLocation } from '@/app/router/route-locations'
-  import { AlertType } from '@/entities/alert/types/alertData'
-  import { useAlertStore } from '@/entities/alert'
   import { Button } from '@/shared/ui/button'
   import { Link } from '@/shared/ui/link'
+  import { toast } from '@/shared/ui/sonner'
   import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
   import { useScreenshot } from '@/shared/lib/hooks/useScreenshot'
 
@@ -298,7 +297,6 @@
   }>()
 
   const { t } = useI18n()
-  const alerts = useAlertStore()
 
   const rootRef = ref<HTMLElement | null>(null)
   const { copy: copyScreenshot } = useScreenshot(rootRef)
@@ -310,10 +308,10 @@
    */
   const onScreenshot = async (): Promise<void> => {
     const ok = await copyScreenshot()
-    alerts.addAlert({
-      type: ok ? AlertType.Success : AlertType.Error,
-      msg: ok ? t('results.screenshotCopied') : t('results.screenshotFailed')
-    })
+    // Sonner, not the entities/alert store: that store's renderer is mounted
+    // nowhere, so its "always reported" was a report into the void.
+    if (ok) toast.success(t('results.screenshotCopied'))
+    else toast.error(t('results.screenshotFailed'))
   }
 
   // Filtering the catalogue, rather than mapping the prop, keeps the buttons in
@@ -465,7 +463,7 @@
     &__mark {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
+      align-items: center;
     }
 
     // A score has no bound worth designing around, so it is the one number given

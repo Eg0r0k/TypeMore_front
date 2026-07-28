@@ -1,7 +1,7 @@
 import type { RouteLocationNormalized, RouteLocationRaw } from 'vue-router'
 import { ROUTE_NAMES } from '@/shared/router'
 import { useMatchSessionStore } from '@/entities/match'
-import { AlertType, useAlertStore } from '@/entities/alert'
+import { toast } from '@/shared/ui/sonner'
 import { i18n } from '@app/i18n'
 
 // Global guard: `/room` is only reachable while the match session actually has
@@ -21,10 +21,7 @@ export async function lobbyMiddleware(
   if (to.name !== ROUTE_NAMES.ROOM) {
     const session = useMatchSessionStore()
     if (!session.room) return undefined
-    useAlertStore().addAlert({
-      type: AlertType.Warning,
-      msg: i18n.global.t('room.leaveFirst')
-    })
+    toast.warning(i18n.global.t('room.leaveFirst'))
     return false
   }
   const session = useMatchSessionStore()

@@ -16,22 +16,23 @@ import { i18n } from '@app/i18n'
 const h = vi.hoisted(() => ({
   session: {} as Record<string, unknown>,
   updateSettings: vi.fn(),
-  addAlert: vi.fn(),
+  toastWarning: vi.fn(),
+  toastError: vi.fn(),
   loadRandomQuote: vi.fn()
 }))
 
 vi.mock('@/entities/match', () => ({
   useMatchSessionStore: () => h.session
 }))
-vi.mock('@/entities/alert', () => ({
-  AlertType: { Error: 'error', Warning: 'warn' },
-  useAlertStore: () => ({ addAlert: h.addAlert })
+// Sonner is the app's ONE live toast system (the entities/alert store renders
+// nowhere) — the failure paths must land here to be seen at all.
+vi.mock('@/shared/ui/sonner', () => ({
+  toast: { warning: h.toastWarning, error: h.toastError }
 }))
 vi.mock('@shared/api', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   loadRandomQuote: (...args: unknown[]) => h.loadRandomQuote(...args),
-  isApiError: (error: unknown) =>
-    typeof error === 'object' && error !== null && 'status' in error
+  isApiError: (error: unknown) => typeof error === 'object' && error !== null && 'status' in error
 }))
 
 import { RoomConfig } from '@/features/room/config'
@@ -83,7 +84,8 @@ const mountConfig = () =>
 
 beforeEach(() => {
   h.updateSettings.mockReset()
-  h.addAlert.mockReset()
+  h.toastWarning.mockReset()
+  h.toastError.mockReset()
   h.loadRandomQuote.mockReset()
 })
 
@@ -119,8 +121,7 @@ describe('quote mode in the room config', () => {
     await flushPromises()
 
     expect(h.updateSettings).not.toHaveBeenCalled()
-    expect(h.addAlert).toHaveBeenCalledOnce()
-    expect(h.addAlert.mock.calls[0][0].type).toBe('warn')
+    expect(h.toastWarning).toHaveBeenCalledOnce()
     // The loader is gone — the failure ended the flight.
     expect(wrapper.find('[data-testid="quote-loader"]').exists()).toBe(false)
   })
