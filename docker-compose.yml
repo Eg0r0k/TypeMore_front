@@ -1,0 +1,16 @@
+include:
+  - ../TypeMore_back/docker-compose.yml
+
+services:
+  frontend:
+    build:
+      context: .
+      args:
+        VITE_API_URL: ""
+        VITE_WS_URL: ""
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    depends_on:
+      app:
+        condition: service_started
+    restart: unless-stopped
