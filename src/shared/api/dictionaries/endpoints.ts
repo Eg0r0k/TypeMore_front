@@ -13,7 +13,7 @@ import {
 
 /** `GET /dictionaries` — the public catalogue of word lists the server publishes. */
 export const listDictionaries = (): Promise<DictionaryCatalogue> =>
-  request('/dictionaries', DictionaryCatalogueSchema)
+  request('api/v1/dictionaries', DictionaryCatalogueSchema)
 
 /**
  * Absolute URL of a dictionary body. Bodies are addressed by content hash and
@@ -21,7 +21,7 @@ export const listDictionaries = (): Promise<DictionaryCatalogue> =>
  * under `/api/v1` — hence a URL built from the API base rather than a path.
  */
 export const dictionaryBodyUrl = (dictHash: string): string =>
-  new URL(`/static/dictionaries/${dictHash}.json`, apiBase()).toString()
+  new URL(`api/v1/static/dictionaries/${dictHash}.json`, apiBase()).toString()
 
 /** Fetches one hash-addressed body. Immutable: a new word list is a new hash. */
 export const getDictionaryBody = (dictHash: string): Promise<DictionaryBody> =>
