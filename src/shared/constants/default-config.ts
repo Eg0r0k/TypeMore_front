@@ -35,5 +35,7 @@ export default {
   stopOnError: 'off',
   quickEnd: false,
   smoothCaret: 'medium',
-  caretStyle: 'default'
+  caretStyle: 'default',
+  paceCaret: 'off',
+  paceCaretWpm: 100
 } as const as Config

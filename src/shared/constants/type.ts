@@ -10,6 +10,13 @@ export type CaretStyle = 'off' | 'default' | 'block' | 'outline' | 'underline'
 /** Custom background: how the image is fitted to the viewport. */
 export type BackgroundSize = 'cover' | 'contain' | 'max'
 /**
+ * Pace caret: the bot the ghost caret paces the run against. `pb`/`last`/`avg`
+ * resolve against the SERVER profile (signed-in only); `custom` runs at
+ * `paceCaretWpm`. A record race (entities/race) overrides whatever is here for
+ * the duration of the race.
+ */
+export type PaceCaretMode = 'off' | 'pb' | 'last' | 'avg' | 'custom'
+/**
  * Quote mode: which length band to draw from. `all` is the absence of a filter
  * — it OMITS the `group` query parameter rather than sending a sixth value the
  * server would reject with a 400 (see the backend's `docs/QUOTES.md`).
@@ -68,6 +75,10 @@ export interface Config {
   // Caret (view-only).
   smoothCaret: SmoothCaret
   caretStyle: CaretStyle
+  // Pace caret (view-only: a ghost caret racing the field, never in core/log).
+  paceCaret: PaceCaretMode
+  /** Custom pace speed in wpm; read only when `paceCaret` is `custom`. */
+  paceCaretWpm: number
 }
 
 export enum ConfigModes {

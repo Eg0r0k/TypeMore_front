@@ -1,4 +1,5 @@
 import { useConfigStore } from '@/entities/config'
+import { useRootClass } from '@/shared/lib/hooks/useRootClass'
 import { useThemes } from '@/shared/lib/hooks/useThemes'
 import { useUiLanguage } from '@/shared/lib/hooks/useUiLanguage'
 import { useFavicon } from '@vueuse/core'
@@ -7,6 +8,10 @@ import { onBeforeMount, onMounted, provide, ref } from 'vue'
 import logger from '@/shared/lib/helpers/logger'
 
 export const useAppSetup = () => {
+  // Environment classes on <html> (scroll mode, browser, OS) — the scrollable
+  // styles are inert until these are stamped.
+  useRootClass()
+
   const configStore = useConfigStore()
   // The themes hook disconnects its own observer on scope dispose.
   const { applyTheme, themesList, favicon } = useThemes()

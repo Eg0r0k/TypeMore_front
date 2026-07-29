@@ -20,11 +20,14 @@ import {
 import en from '@/app/i18n/locales/en'
 
 /**
- * The race host's setup-application fidelity (C10): when the run's data
+ * The RENDERLESS race engine (C10, pace-caret era): when the run's data
  * arrives, the HOME game store is set up with the record's EXACT words (the
  * seed's regeneration — including a quote's fixed text), the config bar shows
- * the record's settings over a snapshot of the player's own, and a restart
- * re-races the same ghost from a fresh 3-2-1.
+ * the record's settings over a snapshot of the player's own, and everything
+ * visible is published through the race store — the ghost's caret and name,
+ * and (after the line) only a DEFEAT. There is no countdown and no chrome:
+ * the player's first keystroke is the starting gun, and the pace selector's
+ * `race.exit()` is the way out.
  */
 
 const sourceState = ref<'loading' | 'not-found' | 'error' | 'ready'>('loading')
@@ -104,12 +107,10 @@ afterEach(() => {
 })
 
 describe('RaceHost — setup application fidelity', () => {
-  it('sets the HOME game up with the record’s exact words, quote included, and shows the banner', async () => {
+  it('sets the HOME game up with the record’s exact words and publishes the ghost through the store', async () => {
     const race = useRaceStore()
     race.request('run-ada')
     const wrapper = mountHost()
-
-    expect(wrapper.find('[data-testid="race-loading"]').exists()).toBe(true)
 
     sourceReplay.value = replayData
     sourceState.value = 'ready'
@@ -130,14 +131,18 @@ describe('RaceHost — setup application fidelity', () => {
     expect(race.snapshot?.mode).toBe('time')
     expect(race.snapshot?.time).toBe(30)
 
-    expect(wrapper.find('[data-testid="race-banner"]').text()).toContain('Ada')
-    expect(wrapper.find('[data-testid="race-banner"]').text()).toContain('123')
-    expect(wrapper.find('[data-testid="race-countdown"]').exists()).toBe(true)
+    // Everything visible is store state: the ghost seated on the start line,
+    // named for the pace selector, no defeat yet — and the game waits, idle,
+    // for the player's first keystroke (no countdown exists).
+    expect(race.ghostCaret).toEqual({ label: 'Ada', wordIndex: 0, charIndex: 0 })
+    expect(race.ghostName).toBe('Ada')
+    expect(race.defeat).toBeNull()
+    expect(game.phase).toBe('idle')
 
     wrapper.unmount()
   })
 
-  it('re-races the SAME ghost from 3-2-1 on a restart request', async () => {
+  it('the first keystroke is the starting gun — no countdown gates the run', async () => {
     const race = useRaceStore()
     race.request('run-ada')
     const wrapper = mountHost()
@@ -145,20 +150,32 @@ describe('RaceHost — setup application fidelity', () => {
     sourceState.value = 'ready'
     await flushPromises()
 
-    // Let the countdown finish: the overlay leaves.
-    await vi.advanceTimersByTimeAsync(3200)
-    expect(wrapper.find('[data-testid="race-countdown"]').exists()).toBe(false)
+    const game = useGameStore('local')
+    expect(game.phase).toBe('idle')
+    game.insert('a')
+    expect(game.phase).toBe('running')
 
-    // A restart brings the countdown back over the same record.
+    wrapper.unmount()
+  })
+
+  it('re-seats the SAME ghost on the start line on a restart request', async () => {
+    const race = useRaceStore()
+    race.request('run-ada')
+    const wrapper = mountHost()
+    sourceReplay.value = replayData
+    sourceState.value = 'ready'
+    await flushPromises()
+
     race.requestRestart()
     await flushPromises()
-    expect(wrapper.find('[data-testid="race-countdown"]').exists()).toBe(true)
+    expect(race.ghostCaret).toEqual({ label: 'Ada', wordIndex: 0, charIndex: 0 })
     expect([...useGameStore('local').words]).toEqual(['ab', 'cd'])
+    expect(useGameStore('local').phase).toBe('idle')
 
     wrapper.unmount()
   })
 
-  it('exit restores the player’s settings through the store round-trip', async () => {
+  it('exit (the pace selector’s job) restores the player’s settings through the store round-trip', async () => {
     const race = useRaceStore()
     race.request('run-ada')
     const wrapper = mountHost()
@@ -166,11 +183,28 @@ describe('RaceHost — setup application fidelity', () => {
     sourceState.value = 'ready'
     await flushPromises()
 
-    await wrapper.find('[data-testid="race-exit"]').trigger('click')
+    race.exit()
     expect(race.racing).toBe(false)
+    // The ghost leaves the field and the selector with the race.
+    expect(race.ghostCaret).toBeNull()
+    expect(race.ghostName).toBeNull()
     expect(configState.mode).toBe('time')
     expect(configState.time).toBe(30)
     expect(configState.punctuation).toBe(false)
+
+    wrapper.unmount()
+  })
+
+  it('a failed fetch exits the race instead of stranding a locked bar', async () => {
+    const race = useRaceStore()
+    race.request('run-ada')
+    const wrapper = mountHost()
+
+    sourceState.value = 'not-found'
+    await flushPromises()
+
+    expect(race.racing).toBe(false)
+    expect(race.ghostCaret).toBeNull()
 
     wrapper.unmount()
   })

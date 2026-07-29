@@ -107,6 +107,19 @@ describe('useGhostCarets — label placement inside the clipped viewport', () =>
     expect(positions.value.map((p) => p.labelLeft)).toEqual([false, true])
   })
 
+  it('clamps a negative charIndex to the word start instead of reading letters[-1]', () => {
+    // Producers clamp, but charIndex also rides in from clocks and the network;
+    // -1 slips past the `idx < letters.length` guard and used to crash update().
+    const container = ref<HTMLElement | null>(containerWith([{ left: 10, top: LINE_HEIGHT }]))
+    const ghosts = ref<readonly TestGhostCaret[]>([{ ...ghost(0), charIndex: -1 }])
+    const { positions, update } = useGhostCarets(container, ghosts, ref(0))
+
+    update()
+
+    expect(positions.value).toHaveLength(1)
+    expect(positions.value[0].x).toBe(10) // the first letter's left edge
+  })
+
   it('keeps the flags on the cached path (no re-measure, same answer)', () => {
     const container = ref<HTMLElement | null>(containerWith([{ left: 10, top: 0 }]))
     const ghosts = ref<readonly TestGhostCaret[]>([ghost(0)])

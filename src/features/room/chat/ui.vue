@@ -1,22 +1,30 @@
 <template>
   <div class="chat">
-    <div ref="messagesContainer" class="chat__messages">
-      <div v-for="entry in session.chatLog" :key="entry.id" :class="messageClass(entry)">
-        <template v-if="entry.from === 'system'">
-          <div class="message__text message__text--system">{{ entry.text }}</div>
-        </template>
-        <template v-else>
-          <div
-            class="message__author"
-            :class="{ 'message__author--me': entry.from === session.selfId }"
-          >
-            {{ nickOf(entry) }}:
-          </div>
-          <!-- eslint-disable-next-line vue/no-v-html -- parseEmojis HTML-escapes its input first -->
-          <div class="message__text" v-html="parseEmojis(entry.text)"></div>
-        </template>
-      </div>
-    </div>
+    <VirtualScrollable
+      ref="messagesContainer"
+      class="chat__messages"
+      :items="session.chatLog"
+      :estimate-size="MESSAGE_HEIGHT"
+      :get-item-key="keyAt"
+    >
+      <template #default="{ item: entry }">
+        <div :class="messageClass(entry)">
+          <template v-if="entry.from === 'system'">
+            <div class="message__text message__text--system">{{ entry.text }}</div>
+          </template>
+          <template v-else>
+            <div
+              class="message__author"
+              :class="{ 'message__author--me': entry.from === session.selfId }"
+            >
+              {{ nickOf(entry) }}:
+            </div>
+            <!-- eslint-disable-next-line vue/no-v-html -- parseEmojis HTML-escapes its input first -->
+            <div class="message__text" v-html="parseEmojis(entry.text)"></div>
+          </template>
+        </div>
+      </template>
+    </VirtualScrollable>
     <div class="chat__input">
       <div v-if="showSuggestion" class="chat__emoji-suggestion">
         <div
@@ -55,6 +63,7 @@
   import { emojis, parseEmojis } from '@/shared/lib/helpers/emoji'
   import { TextInput } from '@/shared/ui/input'
   import { Typography } from '@/shared/ui/typography'
+  import { VirtualScrollable } from '@/shared/ui/virtualScrollable'
   import { watchThrottled } from '@vueuse/core'
   import { useI18n } from 'vue-i18n'
   import clsx from 'clsx'
@@ -75,8 +84,22 @@
   const inputValue = ref('')
   const searchPattern = /:(\w*)$/
 
-  const messagesContainer = ref<HTMLElement | null>(null)
+  /** Row height estimate; single-line rows, the virtualizer measures wrapped ones. */
+  const MESSAGE_HEIGHT = 28
+
+  /**
+   * Structural, not `InstanceType<typeof VirtualScrollable>`: the component is
+   * generic, so naming its instance type here would pin `T` to whatever this
+   * file happens to infer. Only the one method is used.
+   */
+  interface VirtualList {
+    scrollToEnd: (behavior?: ScrollBehavior) => void
+  }
+
+  const messagesContainer = ref<VirtualList | null>(null)
   const chatInput = ref<TextInputComponent | null>(null)
+
+  const keyAt = (index: number) => session.chatLog[index]?.id ?? index
 
   const messageClass = (entry: ChatEntry) =>
     clsx('message', {
@@ -155,9 +178,7 @@
   }
   const scrollToBottom = () => {
     nextTick(() => {
-      if (messagesContainer.value) {
-        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-      }
+      messagesContainer.value?.scrollToEnd()
     })
   }
 
@@ -173,7 +194,9 @@
   }
 
   .message {
-    margin-top: 0.25rem;
+    // Padding, not margin: the virtualizer sizes rows by their border box,
+    // and a margin would fall outside the measured height.
+    padding-top: 0.25rem;
     display: flex;
     align-items: baseline;
     gap: 0.5rem;
@@ -261,11 +284,11 @@
       flex-direction: column;
     }
 
-    &__messages {
+    // Compound with the component's own class to outweigh its
+    // `.scrollable-direction-y { height: 100% }` rule.
+    &__messages.scrollable-wrapper {
       height: 20rem;
       margin-bottom: 0.25rem;
-      scroll-behavior: smooth;
-      overflow-y: scroll;
     }
   }
 </style>

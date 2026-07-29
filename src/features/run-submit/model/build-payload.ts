@@ -8,7 +8,9 @@
  *   durationMs    → config.durationMs           (time mode only)
  *   wordCount     → generation.length           (words mode only; exactly one of the two)
  *                                               (a QUOTE run carries NEITHER — see below)
- *   lang          → dictionary bcp47 tag captured at generation
+ *   lang          → the CANONICAL dictionary key ('russian') captured at
+ *                   generation — the same identifier bucket keys are minted
+ *                   from, never the bcp47 display tag ('ru-RU')
  *   seed          → the 32-bit seed the client generated the words from
  *   dictHash      → SeedContext.dictVersion (fnv1a of the dictionary; of the
  *                                            TEXT for a quote run)

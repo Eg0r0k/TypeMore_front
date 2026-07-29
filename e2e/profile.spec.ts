@@ -207,10 +207,12 @@ test('a PB card’s race action seats the race on the HOME solo screen', async (
   await expect(page.getByTestId('profile-pb-time:15000:german:seeded')).toBeVisible()
   await page.getByTestId('profile-pb-race-time:15000:german:seeded').click()
 
-  // The race lives on home: banner + countdown, no dedicated page.
+  // The race lives on home with no chrome of its own: the repeated mark and
+  // the ghost-mode pace chip are the whole announcement, and no countdown
+  // exists — the ghost waits for the first keystroke.
   await expect(page).toHaveURL(/127\.0\.0\.1:5178\/(\?|$)/)
-  await expect(page.getByTestId('race-banner')).toBeVisible({ timeout: 10_000 })
-  await expect(page.getByTestId('race-countdown')).toBeVisible()
+  await expect(page.getByTestId('race-repeated')).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByTestId('pace-picker')).toContainText('Ada')
 })
 
 test('an anonymous visitor gets a sign-in hint, not a redirect', async ({ page }) => {

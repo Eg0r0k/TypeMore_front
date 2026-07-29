@@ -6,7 +6,7 @@
       read as two more rows of the same list rather than a different widget.
     -->
     <template v-if="session.isHost">
-      <div class="identity__field">
+      <div class="identity__field flex gap-2 capitalize">
         <Typography color="sub">{{ t('room.name') }}</Typography>
         <TextInput
           v-model="localName"
@@ -24,7 +24,7 @@
         pills for a boolean spends a row saying what one glyph says, and the
         lock is the picture everyone already reads as "who can get in".
       -->
-      <div class="identity__field">
+      <div class="identity__field flex gap-2 capitalize">
         <Typography color="sub">{{ t('room.visibility') }}</Typography>
         <Tooltip>
           <TooltipTrigger as-child>
@@ -47,13 +47,12 @@
       </div>
     </template>
 
-    <!-- A guest reads the same two facts; only the host can change them. -->
     <template v-else>
-      <div class="identity__field">
+      <div class="identity__field capitalize">
         <Typography color="sub">{{ t('room.name') }}</Typography>
         <Typography size="l">{{ settings.name }}</Typography>
       </div>
-      <div class="identity__field">
+      <div class="identity__field capitalize">
         <Typography color="sub">{{ t('room.visibility') }}</Typography>
         <span class="text-sub flex items-center gap-2 text-sm [&_svg]:size-4">
           <component :is="isPrivate ? IconLock : IconLockOpen" aria-hidden="true" />

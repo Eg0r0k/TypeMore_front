@@ -85,7 +85,13 @@ const validators: Record<keyof Config, ValidatorFn> = {
   caretStyle: (value) =>
     (typeof value === 'string' &&
       ['off', 'default', 'block', 'outline', 'underline'].includes(value)) ||
-    'Invalid caret style'
+    'Invalid caret style',
+  paceCaret: (value) =>
+    (typeof value === 'string' && ['off', 'pb', 'last', 'avg', 'custom'].includes(value)) ||
+    'Invalid pace caret mode',
+  paceCaretWpm: (value) =>
+    (typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 1000) ||
+    'Pace caret speed must be an integer between 1 and 1000 wpm'
 }
 export const validateConfig = (key: keyof Config, value: unknown): boolean | string => {
   const validator = validators[key]

@@ -229,6 +229,116 @@ describe('view-as-the-player switch', () => {
   })
 })
 
+describe('seeking', () => {
+  /** The bar reports a fixed 100px-wide box, so clientX maps 1:1 onto percent. */
+  const seekBarOf = (wrapper: VueWrapper) => {
+    const seek = wrapper.find('[data-testid="replay-seek"]')
+    vi.spyOn(seek.element, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      width: 100,
+      top: 0,
+      right: 100,
+      bottom: 4,
+      height: 4,
+      x: 0,
+      y: 0,
+      toJSON: () => ({})
+    } as DOMRect)
+    return seek
+  }
+
+  it('scrubs forward and backward along the run', async () => {
+    const wrapper = mountReplay(replayOf(NONE))
+    await nextTick()
+
+    const seek = seekBarOf(wrapper)
+
+    // Forward to the end of the 100ms log: both keystrokes on screen.
+    await seek.trigger('pointerdown', { clientX: 100, pointerId: 1 })
+    await seek.trigger('pointerup', { pointerId: 1 })
+    expect(viewOf(wrapper).snapshot.input[0]).toBe('hx')
+
+    // Backward to the middle: the driver re-folds from zero, one keystroke.
+    await seek.trigger('pointerdown', { clientX: 50, pointerId: 1 })
+    await seek.trigger('pointerup', { pointerId: 1 })
+    expect(viewOf(wrapper).snapshot.input[0]).toBe('h')
+
+    wrapper.unmount()
+  })
+
+  it('a drag scrubs continuously while the pointer is down, one fold per frame', async () => {
+    const wrapper = mountReplay(replayOf(NONE))
+    await nextTick()
+
+    const seek = seekBarOf(wrapper)
+
+    await seek.trigger('pointerdown', { clientX: 100, pointerId: 1 })
+    expect(viewOf(wrapper).snapshot.input[0]).toBe('hx')
+
+    // Moves only RECORD the target; the fold lands on the next frame — a
+    // pointer stream outpaces the display, and a backward seek re-folds the
+    // log prefix each time.
+    await seek.trigger('pointermove', { clientX: 10, pointerId: 1 })
+    expect(viewOf(wrapper).snapshot.input[0]).toBe('hx')
+    await play(0)
+    expect(viewOf(wrapper).snapshot.input[0]).toBe('h')
+
+    await seek.trigger('pointerup', { pointerId: 1 })
+
+    // Released: further moves no longer seek, even across frames.
+    await seek.trigger('pointermove', { clientX: 100, pointerId: 1 })
+    await play(0)
+    expect(viewOf(wrapper).snapshot.input[0]).toBe('h')
+
+    wrapper.unmount()
+  })
+
+  it('releasing mid-drag applies the last pointer position immediately', async () => {
+    const wrapper = mountReplay(replayOf(NONE))
+    await nextTick()
+
+    const seek = seekBarOf(wrapper)
+
+    await seek.trigger('pointerdown', { clientX: 100, pointerId: 1 })
+    await seek.trigger('pointermove', { clientX: 10, pointerId: 1 })
+    // No frame between the move and the release: pointerup must not lose it.
+    await seek.trigger('pointerup', { pointerId: 1 })
+    expect(viewOf(wrapper).snapshot.input[0]).toBe('h')
+
+    wrapper.unmount()
+  })
+
+  it('marks mistyped keystrokes along the seek bar', async () => {
+    const wrapper = mountReplay(replayOf(NONE))
+    await nextTick()
+
+    // The log is 'h' (correct) then 'x' against 'hello' (incorrect, at t=100
+    // of a 100ms run): exactly one tick, parked at the very end of the bar,
+    // carrying the word the mistake landed in as its hover tooltip.
+    const marks = wrapper.findAll('.replay__error-mark')
+    expect(marks).toHaveLength(1)
+    expect(marks[0].attributes('style')).toContain('left: 100%')
+    expect(marks[0].find('.replay__error-word').text()).toBe('hello')
+
+    wrapper.unmount()
+  })
+
+  it('arrow keys nudge the position from the keyboard', async () => {
+    const wrapper = mountReplay(replayOf(NONE))
+    await nextTick()
+
+    const seek = wrapper.find('[data-testid="replay-seek"]')
+    // The whole 100ms run fits inside one 5s nudge.
+    await seek.trigger('keydown', { key: 'ArrowRight' })
+    expect(viewOf(wrapper).snapshot.input[0]).toBe('hx')
+    // Back to t=0 — which still dispatches the t=0 keystroke, and only it.
+    await seek.trigger('keydown', { key: 'ArrowLeft' })
+    expect(viewOf(wrapper).snapshot.input[0]).toBe('h')
+
+    wrapper.unmount()
+  })
+})
+
 describe('replay header', () => {
   it('reports the stored score, grade, mod multiplier and score version', async () => {
     const wrapper = mountReplay(replayOf({ blind: false, fading: true, flashlight: false }))

@@ -9,6 +9,7 @@
 import { defineComponent, h, nextTick } from 'vue'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
+import { createPinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // No network, no router, no real player: the page's own state machine is the
@@ -54,6 +55,7 @@ vi.mock('@/features/test/replay', () => ({
 
 import { dictVersion, insertEvent, type CoreConfig, type GenerationConfig } from '@shared/core'
 import { i18n } from '@app/i18n'
+import { TooltipProvider } from '@/shared/ui/tooltip'
 import ReplayPage from '@/pages/replay/ui.vue'
 
 const WORDS = ['alpha', 'bravo', 'charlie', 'delta']
@@ -106,9 +108,11 @@ const mountPage = (): VueWrapper => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } }
   })
-  return mount(ReplayPage, {
-    props: { runId: 'run-1' },
-    global: { plugins: [i18n, [VueQueryPlugin, { queryClient }]] }
+  // Under a TooltipProvider + pinia: the ready state renders the REAL results
+  // screen (tooltipped icon actions, screenshot side effect), not a stub.
+  return mount(TooltipProvider, {
+    global: { plugins: [i18n, createPinia(), [VueQueryPlugin, { queryClient }]] },
+    slots: { default: () => h(ReplayPage, { runId: 'run-1' }) }
   })
 }
 
@@ -208,7 +212,7 @@ describe('/replay/:runId — failures stay apart', () => {
     expect(seen(wrapper, 'replay-dict-mismatch')).toBe(false)
   })
 
-  it('all three landing renders the player and nothing else', async () => {
+  it('all three landing renders the run RESULTS, with playback one action away', async () => {
     metaFn.mockResolvedValue(META)
     logFn.mockResolvedValue(LOG)
     dictFn.mockResolvedValue(DICT)
@@ -216,10 +220,25 @@ describe('/replay/:runId — failures stay apart', () => {
     const wrapper = mountPage()
     await settle(wrapper)
 
-    expect(seen(wrapper, 'replay-player')).toBe(true)
+    // The landing state is the results screen, not the player.
+    expect(seen(wrapper, 'replay-results')).toBe(true)
+    expect(seen(wrapper, 'replay-player')).toBe(false)
     expect(seen(wrapper, 'replay-loading')).toBe(false)
     expect(seen(wrapper, 'replay-log-loading')).toBe(false)
     expect(seen(wrapper, 'replay-build-error')).toBe(false)
+    // Whose run it is, on screen.
+    expect(wrapper.find('[data-testid="replay-results"]').text()).toContain('boardsmoke')
+
+    // The results screen's replay action opens the player; its exit returns.
+    await wrapper.find('[data-testid="results-replay"]').trigger('click')
+    await nextTick()
+    expect(seen(wrapper, 'replay-player')).toBe(true)
+    expect(seen(wrapper, 'replay-results')).toBe(false)
+
+    wrapper.findComponent({ name: 'ReplayPlayer' }).vm.$emit('exit')
+    await nextTick()
+    expect(seen(wrapper, 'replay-results')).toBe(true)
+    expect(seen(wrapper, 'replay-player')).toBe(false)
   })
 })
 
@@ -238,7 +257,7 @@ describe('/replay/:runId — recovery is scoped to the query that failed', () =>
     await wrapper.find('[data-testid="replay-log-retry"]').trigger('click')
     await settle(wrapper)
 
-    expect(seen(wrapper, 'replay-player')).toBe(true)
+    expect(seen(wrapper, 'replay-results')).toBe(true)
     expect(metaFn.mock.calls.length).toBe(metaCalls)
     expect(dictFn.mock.calls.length).toBe(dictCalls)
   })

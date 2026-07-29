@@ -39,6 +39,8 @@ const APP_ONLY_KEYS = [
   'devTools',
   'fontFamily',
   'fontSize',
+  'paceCaret',
+  'paceCaretWpm',
   'playSound',
   'showFps',
   'showKeyboard',

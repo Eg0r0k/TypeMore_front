@@ -119,19 +119,33 @@
       </button>
     </div>
 
-    <!-- Last above the field: the language names what is in it. -->
-    <button
-      type="button"
-      :class="chipClass(true)"
-      data-testid="language-picker"
-      :disabled="raceLock !== null"
-      :title="raceLock ?? undefined"
-      :aria-label="`${t('game.language')}: ${languageName(config.language)}`"
-      @click="languageOpen = true"
-    >
-      <component :is="OPTION_ICONS.language" aria-hidden="true" />
-      {{ languageName(config.language) }}
-    </button>
+    <!-- Last above the field: the language names what is in it. Flanked by the
+         "repeated" mark on the left (a seeded record's text — or a solo run
+         restarted from the results screen — is pre-known: the run is a repeat
+         and never ranks) and the pace selector on the right — the one control
+         a live race does NOT lock, because choosing another pace IS the exit. -->
+    <div class="settings-bar__lang-row">
+      <span
+        v-if="repeated || (race.racing && config.mode !== ConfigModes.Quote)"
+        class="settings-bar__repeated"
+        data-testid="race-repeated"
+      >
+        {{ t('game.repeated') }}
+      </span>
+      <button
+        type="button"
+        :class="chipClass(true)"
+        data-testid="language-picker"
+        :disabled="raceLock !== null"
+        :title="raceLock ?? undefined"
+        :aria-label="`${t('game.language')}: ${languageName(config.language)}`"
+        @click="languageOpen = true"
+      >
+        <component :is="OPTION_ICONS.language" aria-hidden="true" />
+        {{ languageName(config.language) }}
+      </button>
+      <PacePicker />
+    </div>
 
     <LanguageModal
       v-model:open="languageOpen"
@@ -167,6 +181,7 @@
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
   import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
   import { LanguageModal } from '@/features/modal/language'
+  import { PacePicker } from '@/features/test/pace'
   import { useLanguageNames } from '@/shared/lib/hooks/useLanguageNames'
 
   /**
@@ -184,6 +199,14 @@
   const config = configStore.config
   const { languageName } = useLanguageNames()
 
+  /**
+   * The page's word: the CURRENT solo run replays a text the player has
+   * already seen in full (the results screen's "restart"). Drives the same
+   * red "repeated" mark a race shows — either way the text is pre-known and
+   * the run never ranks.
+   */
+  defineProps<{ repeated?: boolean }>()
+
   const modeOption = optionOf('mode')
   const modeValues = computed(() => valuesFor(modeOption, 'solo'))
 
@@ -199,9 +222,7 @@
     ...(race.racing ? { racing: true as const } : {})
   }))
   /** The one lock reason every non-registry control shares while racing. */
-  const raceLock = computed<string | null>(() =>
-    race.racing ? t('game.constraint.racing') : null
-  )
+  const raceLock = computed<string | null>(() => (race.racing ? t('game.constraint.racing') : null))
   const soloOptions = computed(() => visibleOptionsFor('solo', ctx.value))
 
   /** The keys the bar draws itself; everything else in `solo` is a notice chip. */
@@ -319,8 +340,8 @@
     raceLock.value !== null
       ? raceLock.value
       : value === ConfigModes.Quote && quotesAvailable.value === false
-      ? t('game.quote.none', { lang: languageName(config.language) })
-      : null
+        ? t('game.quote.none', { lang: languageName(config.language) })
+        : null
 
   /**
    * Only 86 of the catalogue's 430 languages have a quote corpus (QUOTES.md), so
@@ -366,6 +387,21 @@
       gap: 0.25rem 0.75rem;
       align-items: center;
       justify-content: center;
+    }
+
+    &__lang-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      justify-content: center;
+    }
+
+    // The race's warning colour on purpose: a repeated text never ranks.
+    &__repeated {
+      font-size: 0.75rem;
+      color: var(--error-color);
+      text-transform: lowercase;
+      user-select: none;
     }
 
     // Reserved whether it has anything to say or not — see the template.

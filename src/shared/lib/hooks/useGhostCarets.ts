@@ -135,9 +135,11 @@ export function useGhostCarets(
       }
 
       // Same insertion-point math as useCaret: letter left edge, or the last
-      // letter's right edge when the caret sits past the typed word.
+      // letter's right edge when the caret sits past the typed word. charIndex
+      // arrives from clocks and the network — clamp it, because a negative
+      // index would slip past the `idx < letters.length` guard into letters[-1].
       const letters = word.querySelectorAll<HTMLElement>('.letter')
-      const idx = ghost.charIndex
+      const idx = Math.max(0, ghost.charIndex)
       let x: number
       let y: number
       let height: number

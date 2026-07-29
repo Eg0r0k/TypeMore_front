@@ -47,8 +47,9 @@ const keyboard: KeyboardData = {
 const keyTone = (wrapper: ReturnType<typeof mount>, id: string): string | undefined =>
   wrapper.find(`[data-testid="profile-kbd-key-${id}"]`).attributes('data-tone')
 
+// The metric colour is painted straight on the keycap element.
 const keyFill = (wrapper: ReturnType<typeof mount>, id: string): string =>
-  wrapper.find(`[data-testid="profile-kbd-key-${id}"] rect`).attributes('style') ?? ''
+  wrapper.find(`[data-testid="profile-kbd-key-${id}"]`).attributes('style') ?? ''
 
 describe('profile keyboard heatmap', () => {
   it('maps the fixture onto expected colours: best key main-most, worst key error-most', () => {
@@ -83,9 +84,9 @@ describe('profile keyboard heatmap', () => {
   it('defaults to the profile’s dominant-language layout and toggles to the other', async () => {
     const wrapper = mount(ProfileKeyboard, { props: { keyboard, layouts }, global })
     // qwerty default (the response's layout): the KeyA cap reads 'a'.
-    expect(wrapper.find('[data-testid="profile-kbd-key-KeyA"] text').text()).toBe('a')
+    expect(wrapper.find('[data-testid="profile-kbd-key-KeyA"]').text()).toBe('a')
     await wrapper.find('[data-testid="profile-kbd-layout-jcuken"]').trigger('click')
-    expect(wrapper.find('[data-testid="profile-kbd-key-KeyA"] text').text()).toBe('ф')
+    expect(wrapper.find('[data-testid="profile-kbd-key-KeyA"]').text()).toBe('ф')
   })
 
   it('renders the honest empty note for a fresh account', () => {

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, ref, shallowRef } from 'vue'
 
 import { configState, setConfig } from '@/shared/lib/helpers/config'
 import type { Config } from '@/shared/constants/type'
@@ -47,6 +47,19 @@ export const RACE_SNAPSHOT_KEYS = [
 export type RaceSnapshotKey = (typeof RACE_SNAPSHOT_KEYS)[number]
 export type RaceConfigSnapshot = Pick<Config, RaceSnapshotKey>
 
+/**
+ * The ghost's live caret inside the HOME field — the race's one "ghost car",
+ * shaped like a multiplayer peer's caret anchor (target positions, never the
+ * raw typed string). Runtime-only: the host publishes it each dispatched ghost
+ * event, the home page maps it onto the field's `ghosts` prop, and persistence
+ * never sees it.
+ */
+export interface RaceGhostCaret {
+  label: string
+  wordIndex: number
+  charIndex: number
+}
+
 const pickSnapshot = (): RaceConfigSnapshot => {
   const out = {} as Record<RaceSnapshotKey, Config[RaceSnapshotKey]>
   for (const key of RACE_SNAPSHOT_KEYS) out[key] = configState[key]
@@ -58,8 +71,17 @@ export const useRaceStore = defineStore(
   () => {
     const requestedRunId = ref<string | null>(null)
     const snapshot = ref<RaceConfigSnapshot | null>(null)
-    /** Bumped to ask the live race to re-run the same ghost from 3-2-1. */
+    /** Bumped to ask the live race to re-seat the same ghost from the start line. */
     const restartTick = ref(0)
+    /** The ghost's caret in the home field; null while no ghost is on track. */
+    const ghostCaret = shallowRef<RaceGhostCaret | null>(null)
+    /** The record owner's nick — what the pace selector names the ghost mode after. */
+    const ghostName = ref<string | null>(null)
+    /**
+     * Set ONLY when the player crossed the line SLOWER than the record —
+     * the results screen's "lost to the bot" line. A win renders nothing.
+     */
+    const defeat = shallowRef<{ you: number; them: number } | null>(null)
 
     const racing = computed(() => requestedRunId.value !== null)
 
@@ -85,6 +107,19 @@ export const useRaceStore = defineStore(
       restartTick.value += 1
     }
 
+    /** Publish (or hide, with null) the ghost's caret for the home field. */
+    function setGhostCaret(caret: RaceGhostCaret | null): void {
+      ghostCaret.value = caret
+    }
+
+    function setGhostName(name: string | null): void {
+      ghostName.value = name
+    }
+
+    function setDefeat(value: { you: number; them: number } | null): void {
+      defeat.value = value
+    }
+
     /** Restore the snapshot verbatim; the exit path and the reload heal share it. */
     function restoreSnapshot(): void {
       const snap = snapshot.value
@@ -96,6 +131,9 @@ export const useRaceStore = defineStore(
     /** Leave the race: the player's own settings come back exactly. */
     function exit(): void {
       requestedRunId.value = null
+      ghostCaret.value = null
+      ghostName.value = null
+      defeat.value = null
       restoreSnapshot()
     }
 
@@ -103,10 +141,16 @@ export const useRaceStore = defineStore(
       requestedRunId,
       snapshot,
       restartTick,
+      ghostCaret,
+      ghostName,
+      defeat,
       racing,
       request,
       applySettings,
       requestRestart,
+      setGhostCaret,
+      setGhostName,
+      setDefeat,
       restoreSnapshot,
       exit
     }

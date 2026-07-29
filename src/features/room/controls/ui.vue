@@ -6,12 +6,13 @@
       press that answers is one gesture, and the answer lands where every other
       answer in this app lands.
     -->
-    <Button v-if="session.isHost" data-testid="start-button" @click="onStart">
+    <Button v-if="session.isHost" size="l" data-testid="start-button" @click="onStart">
       <IconPlayerPlay />
       {{ t('room.start') }}
     </Button>
     <Button
       v-if="!session.isHost"
+      size="l"
       data-testid="ready-button"
       :color="isReady ? 'gray' : undefined"
       @click="session.setReady(!isReady)"
@@ -37,7 +38,7 @@
   import IconCheck from '~icons/tabler/check'
   import IconX from '~icons/tabler/x'
   import IconLogout from '~icons/tabler/logout'
-  import IconPlayerPlay from '~icons/tabler/player-play'
+  import IconPlayerPlay from '~icons/tabler/player-play-filled'
 
   /**
    * Lobby actions. `start_match` gating mirrors §3: at least two seats and

@@ -80,6 +80,7 @@
     user-select: none;
 
     &__score {
+      font-weight: 700;
       font-size: 32px;
     }
 
@@ -91,11 +92,10 @@
 
     &__mod {
       align-self: center;
-      padding: 1px 8px;
+      padding: 4px 8px;
       font-size: 14px;
       color: var(--main-color);
       background: var(--sub-alt-color);
-      border: 1px solid var(--sub-color);
       border-radius: var(--border-radius, 6px);
     }
 

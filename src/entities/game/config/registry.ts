@@ -575,8 +575,9 @@ export type GameOptionKey =
   | 'flashlight'
 
 /**
- * `Config` fields that are NOT game options: appearance, sound, and the
- * interface locale. They are edited in the settings modal and never reach a run.
+ * `Config` fields that are NOT game options: appearance, sound, the interface
+ * locale, and the pace caret (a view-only bot with its own selector beside the
+ * language picker). None of them ever reach a run.
  */
 export type AppOnlyConfigKey =
   | 'devTools'
@@ -594,6 +595,8 @@ export type AppOnlyConfigKey =
   | 'fontFamily'
   | 'smoothCaret'
   | 'caretStyle'
+  | 'paceCaret'
+  | 'paceCaretWpm'
 
 type Assert<T extends true> = T
 type Equals<A, B> =

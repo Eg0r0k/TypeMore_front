@@ -1,5 +1,5 @@
 <template>
-  <div class="pf-summary" data-testid="profile-summary">
+  <div class="pf-summary p-4" data-testid="profile-summary">
     <!-- C1 — identity + the counters row. -->
     <header class="pf-summary__header">
       <div>
@@ -74,12 +74,13 @@
 
   import type { ProfileMetricStats, ProfileSummary } from '@shared/api'
   import { Typography } from '@/shared/ui/typography'
+  import { formatShortDate } from '@/shared/lib/helpers/datetime'
   import { formatDuration, grouped, percent, speed } from '../model/format'
 
   const props = defineProps<{ summary: ProfileSummary }>()
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
 
-  const joinedDate = computed(() => new Date(props.summary.joined).toLocaleDateString())
+  const joinedDate = computed(() => formatShortDate(props.summary.joined, locale.value))
 
   /** wpm/raw render at one decimal; acc/consistency are [0, 1] → percent. */
   const cellsOf = (stats: ProfileMetricStats, asPercent: boolean) =>
@@ -101,7 +102,6 @@
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
-    padding: 1.5rem;
     background-color: var(--sub-alt-color);
     border-radius: var(--border-radius);
 

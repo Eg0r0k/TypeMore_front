@@ -1,12 +1,12 @@
 <template>
   <div v-if="room" class="players">
-    <div class="players__code">
+    <div class="players__code flex flex-col gap-2 capitalize">
       <Typography color="sub" class="players__label">{{ t('room.code') }}</Typography>
       <Tooltip>
         <TooltipTrigger as-child>
           <button
             type="button"
-            class="players__code-value"
+            class="players__code-value w-fit"
             :class="{ 'players__code-value--masked': isPrivate }"
             :aria-label="t('room.copy')"
             data-testid="room-code"
@@ -31,7 +31,7 @@
       </Tooltip>
     </div>
     <div class="players__seats">
-      <Typography color="sub" class="players__label">
+      <Typography color="sub" class="players__label capitalize">
         {{ t('room.players') }} {{ room.players.length }}/5
       </Typography>
       <ul class="players__list">

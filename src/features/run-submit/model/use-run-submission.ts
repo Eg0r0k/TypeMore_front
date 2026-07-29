@@ -23,6 +23,7 @@ import { isApiError, useSubmitRunMutation } from '@shared/api'
 import { useAuthStore } from '@/entities/auth'
 
 import { buildRunPayload, isRankedMode, type RunSubmitContext } from './build-payload'
+import { clearRestarts, peekRestarts } from './restart-counter'
 import { runSubmissionFlow, type SubmitState } from './submit-flow'
 
 export interface UseRunSubmissionOptions {
@@ -51,12 +52,21 @@ export function useRunSubmission(opts: UseRunSubmissionOptions): RunSubmission {
   async function run(): Promise<void> {
     const ctx = opts.buildContext()
     const eligible = ctx !== null && isRankedMode(ctx.mode)
-    await runSubmissionFlow(
+    const result = await runSubmissionFlow(
       { finished: toValue(opts.finished), authed: isAuthed.value, eligible },
       {
         submit: (payload) => mutation.mutateAsync(payload),
-        // Only reached after the gate passes, so `ctx` is present.
-        buildPayload: () => buildRunPayload(ctx as RunSubmitContext),
+        // Only reached after the gate passes, so `ctx` is present. The payload
+        // additionally carries the abandoned-run count (RUNS.md
+        // `restartsSinceLastSubmit`) — omitted at zero, exactly what a client
+        // that predates the field submits.
+        buildPayload: () => {
+          const restarts = peekRestarts()
+          return {
+            ...buildRunPayload(ctx as RunSubmitContext),
+            ...(restarts > 0 ? { restartsSinceLastSubmit: restarts } : {})
+          }
+        },
         isNetworkError: (error) => isApiError(error) && error.status === 0,
         isAuthError: (error) => isApiError(error) && error.status === 401,
         // Matched on the CODE, not on the bare 403: a 403 is also what an
@@ -69,6 +79,9 @@ export function useRunSubmission(opts: UseRunSubmissionOptions): RunSubmission {
         }
       }
     )
+    // Accepted (as pending) — the reported window closed; start counting the
+    // next one. Any non-saved terminal keeps the count for a later attempt.
+    if (result === 'saved') clearRestarts()
   }
 
   // Auto-submit on the rising edge of `finished`; reset to idle when a fresh run

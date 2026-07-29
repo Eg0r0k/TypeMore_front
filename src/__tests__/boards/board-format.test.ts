@@ -1,8 +1,9 @@
 /**
  * The date column's two halves: the relative label the cell shows, and the
- * exact instant its tooltip carries. Both come out of `Intl`, so no locale
- * string is asserted verbatim — the tests pin the UNIT boundaries and the
- * fallbacks, which is what the code owns.
+ * exact instant its tooltip carries. Both come out of dayjs (the shared
+ * datetime boundary) — the tests pin the UNIT boundaries, the fallbacks, and
+ * the regression that motivated the switch: Russian relatives must spell the
+ * direction out («назад»), never a signed number («-3 дн.»).
  */
 import { describe, expect, it } from 'vitest'
 
@@ -23,9 +24,11 @@ describe('formatRelativeAchievedAt', () => {
     expect(at('2026-07-25T12:00:00.000Z')).toMatch(/3\s?d/)
   })
 
-  it('renders the idiomatic words where the locale has them', () => {
-    // numeric: 'auto' — "yesterday", not "1 day ago".
-    expect(at('2026-07-27T12:00:00.000Z')).toBe('yesterday')
+  it('spells the direction out, in Russian too — the «-3 дн.» regression', () => {
+    expect(at('2026-07-27T12:00:00.000Z')).toBe('a day ago')
+    const ru = formatRelativeAchievedAt('2026-07-25T12:00:00.000Z', 'ru', NOW)
+    expect(ru).toContain('назад')
+    expect(ru).not.toContain('-3')
   })
 
   it('falls back to the calendar date beyond four weeks — "37 days ago" reads worse', () => {

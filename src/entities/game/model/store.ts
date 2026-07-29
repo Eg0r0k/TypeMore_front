@@ -67,7 +67,9 @@ import {
   errorWordsOf,
   scoreStep,
   timelineOf,
-  replaceEvent
+  replaceEvent,
+  type WordHistoryEntry,
+  wordHistoryOf
 } from '@shared/core'
 import { type GameTimer, type TimerWorkerLike, useGameTimer } from '@shared/lib/hooks/useGameTimer'
 import { detectLogVersion } from '@shared/lib/log-version'
@@ -192,6 +194,11 @@ function createGameStore(storeId: string) {
     const errorWords = computed<ErrorWord[]>(() => {
       if (snapshot.value.phase !== 'finished') return []
       return core ? errorWordsOf(core) : []
+    })
+    /** Per-word input history for the results screen — finished runs only, like `errorWords`. */
+    const wordHistory = computed<WordHistoryEntry[]>(() => {
+      if (snapshot.value.phase !== 'finished') return []
+      return core ? wordHistoryOf(core) : []
     })
     /** AFK time of the run so far — log-derived, measured to the same instant as `metrics`. */
     const afk = computed<AfkStats>(() => {
@@ -474,6 +481,7 @@ function createGameStore(storeId: string) {
       metrics,
       timeline,
       errorWords,
+      wordHistory,
       score: scoreBase,
       combo,
       comboMultiplier: comboMultiplierValue,

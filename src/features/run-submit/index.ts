@@ -7,3 +7,4 @@ export type { UseRunSubmissionOptions, RunSubmission } from './model/use-run-sub
 export type { SubmitState } from './model/submit-flow'
 export { buildRunPayload, isRankedMode, RANKED_MODES, SCORE_VERSION } from './model/build-payload'
 export type { RunSubmitContext, RankedMode } from './model/build-payload'
+export { bumpRestarts, clearRestarts, peekRestarts, MAX_RESTARTS } from './model/restart-counter'

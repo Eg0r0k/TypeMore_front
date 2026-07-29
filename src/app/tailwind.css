@@ -163,3 +163,26 @@
   transition-duration: 0.2s, var(--transition-duration);
   transition-timing-function: var(--ease-standard), linear;
 }
+
+/*
+ * Grid-rows collapse — the reusable expand/collapse primitive. No measured
+ * heights, no max-height guesswork: the wrapper animates 0fr -> 1fr and the
+ * content keeps living in the DOM (pair the hidden state with `inert` so it
+ * leaves the tab order). Wrapper takes `grid-collapse` plus
+ * `grid-collapse-open` when expanded; its DIRECT child takes
+ * `grid-collapse-content`. Motion rides the shared easing token.
+ */
+@utility grid-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s var(--ease-standard);
+}
+
+@utility grid-collapse-open {
+  grid-template-rows: 1fr;
+}
+
+@utility grid-collapse-content {
+  min-height: 0;
+  overflow: hidden;
+}

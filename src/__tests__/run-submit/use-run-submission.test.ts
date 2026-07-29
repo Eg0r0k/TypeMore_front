@@ -48,6 +48,11 @@ vi.mock('@shared/api', () => {
 
 import { ApiError } from '@shared/api'
 import { useRunSubmission } from '@/features/run-submit/model/use-run-submission'
+import {
+  bumpRestarts,
+  clearRestarts,
+  peekRestarts
+} from '@/features/run-submit/model/restart-counter'
 
 const config: CoreConfig = {
   mode: 'time',
@@ -115,6 +120,7 @@ function mountSubmission(finished: Ref<boolean>, buildContext: () => RunSubmitCo
 beforeEach(() => {
   h.submit.mockReset().mockResolvedValue({ id: 'r1', status: 'pending' })
   h.authed.value = false
+  clearRestarts()
 })
 
 describe('useRunSubmission — auto-submits only for an authed, finished, eligible run', () => {
@@ -173,6 +179,53 @@ describe('useRunSubmission — auto-submits only for an authed, finished, eligib
     finished.value = false
     await nextTick()
     expect(wrapper.vm.sub.state.value).toBe('idle')
+  })
+})
+
+describe('useRunSubmission — abandoned-run count rides the payload (RUNS.md restartsSinceLastSubmit)', () => {
+  it('reports the accumulated count and clears it once the run is saved', async () => {
+    h.authed.value = true
+    bumpRestarts()
+    bumpRestarts()
+    bumpRestarts()
+
+    const finished = ref(false)
+    mountSubmission(finished, () => ctxWithMode('time'))
+    finished.value = true
+    await nextTick()
+    await flushPromises()
+
+    expect(h.submit.mock.calls[0][0]).toMatchObject({ restartsSinceLastSubmit: 3 })
+    // Accepted → the reported window closed.
+    expect(peekRestarts()).toBe(0)
+  })
+
+  it('omits the field at zero — exactly what a pre-field client submits', async () => {
+    h.authed.value = true
+    const finished = ref(false)
+    mountSubmission(finished, () => ctxWithMode('time'))
+    finished.value = true
+    await nextTick()
+    await flushPromises()
+
+    expect('restartsSinceLastSubmit' in h.submit.mock.calls[0][0]).toBe(false)
+  })
+
+  it('keeps the count when the submission fails — a later attempt still reports it', async () => {
+    h.authed.value = true
+    h.submit
+      .mockReset()
+      .mockRejectedValue(new ApiError({ status: 0, code: 'network_error' }))
+    bumpRestarts()
+
+    const finished = ref(false)
+    const wrapper = mountSubmission(finished, () => ctxWithMode('time'))
+    finished.value = true
+    await nextTick()
+    await flushPromises()
+
+    expect(wrapper.vm.sub.state.value).toBe('error')
+    expect(peekRestarts()).toBe(1)
   })
 })
 

@@ -25,8 +25,6 @@
       </div>
     </div>
     <SettingsModal v-model:open="settingsOpen" />
-
-    <ThemesModal v-model:open="themesOpen" />
   </footer>
 </template>
 
@@ -34,12 +32,10 @@
   import { Button } from '@/shared/ui/button'
   import { FooterLinks } from '@/features/footer/links'
   import { FOOTER_LINKS } from '../footer/model/const/values'
-  import { ThemesModal } from '@/features/modal/themes'
   import { ref } from 'vue'
   import IconSettings from '~icons/tabler/settings'
   import { SettingsModal } from '@/features/modal/settings'
   const navLinks = FOOTER_LINKS
-  const themesOpen = ref(false)
   const settingsOpen = ref(false)
 </script>
 

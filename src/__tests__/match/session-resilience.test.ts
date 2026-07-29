@@ -225,10 +225,13 @@ describe('match session resilience (loopback)', () => {
 
     const peer = (): PeerView => session.peers[0]
     // Applied exactly once, in order: commit advanced to word 1, buffer 'c'.
-    await until(() => peer().view.wordIndex === 1, 'post-duplicate events applied')
+    // Wait for the LAST event's effect, not the commit's: the ghost's display
+    // clock dispatches t=20 and t=30 ten display-ms apart, so asserting 'c'
+    // right after wordIndex flips races the jitter buffer.
+    await until(() => peer().view.snapshot.input[1] === 'c', 'post-duplicate events applied')
     expect(peer().status).not.toBe('desynced')
+    expect(peer().view.wordIndex).toBe(1)
     expect(peer().view.snapshot.input[0]).toBe('ab')
-    expect(peer().view.snapshot.input[1]).toBe('c')
   })
 
   it('survives a mid-match drop + resume: own batchSeq continuity, backlog applied once', async () => {

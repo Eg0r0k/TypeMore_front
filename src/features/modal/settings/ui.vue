@@ -38,7 +38,7 @@
           </nav>
         </aside>
 
-        <section class="settings-dialog__pane">
+        <section class="settings-dialog__pane bg-background">
           <template v-if="visibleCategories.length">
             <div
               v-for="category in visibleCategories"

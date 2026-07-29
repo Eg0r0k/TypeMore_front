@@ -56,8 +56,23 @@ export default {
     },
     /** Why a registry option is unavailable — rendered beside the disabled control. */
     constraint: {
-      racing: 'locked during a race — exit the race to change settings',
+      racing: 'locked during a race — pick another pace to exit',
       fixedText: 'fixed text — this mod would change nothing'
+    },
+    /** The red mark beside the language while racing a seeded record: the
+     * text is pre-known, so the run is a repeat and never ranks. */
+    repeated: 'repeated',
+    pace: {
+      title: 'pace caret mode',
+      off: 'off',
+      pb: 'pb',
+      last: 'last',
+      avg: 'avg',
+      custom: 'custom',
+      ghost: 'ghost',
+      customTitle: 'pace caret speed',
+      customPlaceholder: 'wpm',
+      customApply: 'apply'
     }
   },
   /** The desktop build's own titlebar — never rendered in a browser. */
@@ -286,16 +301,31 @@ export default {
     afk: 'afk {seconds}s',
     /** Same line with the share of the run window that was idle (afkMs / duration). */
     afkWithShare: 'afk {seconds}s · {percent}%',
+    /** Only ever a LOSS — beating the bot says nothing here. */
+    botLoss: 'lost to the bot — {you} vs {them} wpm',
     quoteBoard: 'this quote’s board',
     /** Hung under the grade and above it: the run's peak streak and its mods. */
     combo: '{combo}x combo',
     mods: 'mods ×{multiplier}',
     /** Icon-only actions: each label is both the tooltip and the accessible name. */
     nextTest: 'next test',
+    /** Same seed again — a repeated text never submits. */
+    repeatTest: 'repeat test',
     watchReplay: 'watch replay',
     copyScreenshot: 'copy screenshot',
     screenshotCopied: 'screenshot copied to the clipboard',
-    screenshotFailed: 'could not copy the screenshot'
+    screenshotFailed: 'could not copy the screenshot',
+    /** The input-history block: the run's words as typed, per-word speeds. */
+    history: {
+      toggle: 'input history',
+      copyWords: 'copy word list',
+      copyMissed: 'copy missed words',
+      heatmap: 'burst heatmap',
+      copied: 'copied to the clipboard',
+      /** Clipboard refused; the same text left as a downloaded file instead. */
+      savedFile: 'clipboard unavailable — saved as {filename}',
+      copyFailed: 'could not copy or save the list'
+    }
   },
   servers: {
     title: { lead: 'Welcome to', name: 'Servers' },
@@ -594,6 +624,10 @@ export default {
       metric: 'keyboard metric',
       accuracy: 'accuracy',
       speed: 'speed',
+      accuracyHint:
+        'key colour = share of errors on that key: main colour → your cleanest keys, error colour → the most error-prone.',
+      speedHint:
+        'key colour = mean time before that key is pressed: main colour → your fastest keys, error colour → the slowest.',
       aria: 'per-key heatmap',
       presses: '{n} presses',
       errors: '{p} errors',
@@ -626,23 +660,11 @@ export default {
     }
   },
   race: {
-    banner: 'racing {player} — {score}',
-    exit: 'exit race',
-    unranked: 'unranked — nothing is submitted',
-    opponentFinished: 'finished',
-    title: 'racing {player}',
-    you: 'you',
     ghost: 'ghost',
-    loading: 'loading the run…',
     /** Same deliberate vagueness as the replay page: the server's 404 covers
      * under-review, rejected, pending and banned-owner alike. */
     notFound: 'that run is not available',
     error: 'could not build this race',
-    retry: 'retry',
-    back: 'back to the board',
-    won: 'you won',
-    lost: 'the ghost won',
-    score: '{you} wpm against {them} wpm',
     again: 'race again'
   },
   replay: {

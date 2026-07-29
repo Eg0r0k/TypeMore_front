@@ -14,7 +14,7 @@
     <div v-if="showFocusHint" class="game__focus-hint" aria-hidden="true">
       press any key to type
     </div>
-    <div ref="viewportRef" class="game__viewport">
+    <div ref="viewportRef" class="game__viewport w-full">
       <div ref="hostRef" class="game__host"></div>
     </div>
 
@@ -44,7 +44,9 @@
             height: `${ghost.height}px`
           }"
         >
-          <span class="game__ghost-caret-label">{{ ghost.label }}</span>
+          <!-- No label for a nameless ghost: a pace bot is nobody — not even
+               the player themselves — so only real opponents carry a nick. -->
+          <span v-if="ghost.label" class="game__ghost-caret-label">{{ ghost.label }}</span>
         </div>
         <!-- A word plus its optional line breaker are ONE loop item, so the
              breaker is dropped together with its word when the window scrolls.

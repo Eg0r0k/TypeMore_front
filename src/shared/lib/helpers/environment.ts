@@ -5,6 +5,12 @@ export const USER_AGENT = navigator ? navigator.userAgent : null
 
 export const IS_CHROMIUM = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor)
 
+export const IS_APPLE = navigator.userAgent.search(/OS X|iPhone|iPad|iOS/i) !== -1
+
+export const IS_ANDROID = navigator.userAgent.toLowerCase().includes('android')
+
+export const IS_FIREFOX = navigator.userAgent.toLowerCase().includes('firefox')
+
 // https://stackoverflow.com/a/58065241
 export const IS_APPLE_MOBILE =
   (/iPad|iPhone|iPod/.test(navigator.platform) ||
@@ -34,3 +40,7 @@ export const IS_TOUCH_SUPPORTED =
 
 export const IS_OVERLAY_SCROLL_SUPPORTED =
   IS_MOBILE || (!IS_CHROMIUM && (!IS_SAFARI || IS_MOBILE_SAFARI))
+
+export const USE_NATIVE_SCROLL = IS_MOBILE
+
+export const USE_CUSTOM_SCROLL = !USE_NATIVE_SCROLL && !IS_OVERLAY_SCROLL_SUPPORTED

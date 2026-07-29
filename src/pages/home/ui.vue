@@ -17,9 +17,10 @@
       of mistyped words) and do not belong in the stage's fixed field row — the
       row exists precisely so nothing can resize it.
     -->
-    <!-- Racing a record: the banner, the opponent row, the countdown and the
-         verdict all live in the host; the FIELD below stays the one game
-         surface (the race-vs-run rework's whole point). -->
+    <!-- Racing a record: the RENDERLESS race engine. Everything visible goes
+         through the standard solo surfaces — the record's settings in the
+         locked bar, the red "repeated" mark, the pace selector reading
+         "ghost", the caret inside the field, the defeat line on results. -->
     <RaceHost v-if="race.racing && race.requestedRunId" :run-id="race.requestedRunId" />
 
     <ReplayPlayer
@@ -41,17 +42,23 @@
       :afk-ms="game.afk.afkMs"
       :quote-id="activeQuote?.id ?? null"
       :quote-source="activeQuote?.source ?? null"
+      :history="game.wordHistory"
+      :bot-defeat="botDefeat"
+      :repeated="repeatedRun"
+      :actions="resultActions"
       @retry="runSubmission.retry"
       @signin="onSignIn"
       @replay="onReplay"
       @next="onNext"
+      @restart="onRepeat"
+      @race-again="onRestart"
     />
 
     <TestStage v-else>
       <!-- Settings, then the language, then the words: the language is the last
            thing above the field because it is the one that names what is in it. -->
       <template #above>
-        <SettingsBar v-show="!isRunning" />
+        <SettingsBar v-show="!isRunning" :repeated="repeatedRun" />
         <ScoreHud
           v-show="isRunning && !config.blind"
           :score="game.score"
@@ -83,6 +90,7 @@
           key="field"
           :store="localSession"
           :is-right-to-left="isRightToLeft"
+          :ghosts="fieldGhosts"
           :fading="config.fading"
           :flashlight="config.flashlight"
           :caret-style="config.caretStyle"
@@ -106,18 +114,25 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, onMounted, ref, watch } from 'vue'
+  import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
   import { useEventListener } from '@vueuse/core'
   import { useI18n } from 'vue-i18n'
 
-  import { Test } from '@/widgets/test'
+  import { Test, type TestGhostCaret } from '@/widgets/test'
   import { TestStage } from '@/features/layouts/test-stage'
   import { SettingsBar } from '@/features/test/settings-bar'
   import { ScoreHud } from '@/features/test/score-hud'
   import { TestProgress } from '@/features/test/progress'
-  import { type ResultSummary, TestResults } from '@/features/test/results'
+  import { type ResultsAction, type ResultSummary, TestResults } from '@/features/test/results'
+  import { usePaceCaret } from '@/features/test/pace'
   import { ReplayPlayer } from '@/features/test/replay'
-  import { type ReplayData, toCoreSetup, toGameSession, useGameStore } from '@entities/game'
+  import {
+    type GameSetup,
+    type ReplayData,
+    toCoreSetup,
+    toGameSession,
+    useGameStore
+  } from '@entities/game'
   import { useRaceStore } from '@entities/race'
   import { RaceHost } from '@/features/test/race'
   import { useConfigStore } from '@/entities/config/model/store'
@@ -139,7 +154,7 @@
     makeSeedContext
   } from '@shared/core'
   import { useRouter } from 'vue-router'
-  import { type RunSubmitContext, useRunSubmission } from '@/features/run-submit'
+  import { bumpRestarts, type RunSubmitContext, useRunSubmission } from '@/features/run-submit'
   import { Button } from '@shared/ui/button'
   import { Typography } from '@shared/ui/typography'
   import IconRestart from '~icons/tabler/refresh'
@@ -161,6 +176,62 @@
   const isRightToLeft = ref(false)
   const isRunning = computed(() => game.phase === 'running')
   const isFinished = computed(() => game.phase === 'finished')
+
+  /**
+   * The pace caret bot — active whenever a pace mode is configured and no
+   * record race owns the ghost channel.
+   */
+  const pace = usePaceCaret({ game, suspended: () => race.racing })
+
+  /**
+   * The field's ghost carets: the record ghost while racing (labelled with the
+   * record owner's nick), the pace bot otherwise (nameless by design — a pace
+   * bot is nobody, not even the player). An empty list keeps the plain solo
+   * path untouched.
+   */
+  const fieldGhosts = computed<TestGhostCaret[]>(() => {
+    if (race.racing) {
+      const caret = race.ghostCaret
+      if (caret === null) return []
+      return [
+        {
+          id: 'race-ghost',
+          label: caret.label,
+          wordIndex: caret.wordIndex,
+          charIndex: caret.charIndex
+        }
+      ]
+    }
+    const bot = pace.caret.value
+    if (bot === null) return []
+    return [{ id: 'pace-caret', label: '', wordIndex: bot.wordIndex, charIndex: bot.charIndex }]
+  })
+
+  /**
+   * The results screen's "lost to the bot" line: the race ghost's verdict while
+   * racing (the host computes it from the drained log), the pace comparison
+   * otherwise. Only ever a LOSS — a win renders nothing.
+   */
+  const botDefeat = computed<{ you: number; them: number } | null>(() => {
+    if (race.racing) return race.defeat
+    if (game.phase !== 'finished') return null
+    const target = pace.targetWpm.value
+    if (target === null) return null
+    const you = Math.round(game.metrics.wpm)
+    const them = Math.round(target)
+    return you < them ? { you, them } : null
+  })
+
+  /**
+   * In a race the "next test" slot becomes "race again" — same ghost, fresh
+   * seats — and `restart` is absent: re-racing IS the same-text repeat. Solo
+   * offers both: `next` regenerates, `restart` replays the very same seed.
+   */
+  const resultActions = computed<readonly ResultsAction[]>(() =>
+    race.racing
+      ? (['race-again', 'replay', 'screenshot'] as const)
+      : (['next', 'restart', 'replay', 'screenshot'] as const)
+  )
 
   /**
    * Share of the words committed — what the progress bar fills to in a counted
@@ -246,12 +317,26 @@
   // snapshot (`getReplayData`), so payload and replay can never disagree.
   const runMeta = ref<{ seed: number; dictHash: string; lang: string } | null>(null)
 
+  // The last solo setup (config + words + generation), kept so the results
+  // screen's "restart" can replay the very same text. Declaration is NOT kept:
+  // the view-only mods are re-read at repeat time, like on any other rebuild.
+  const lastSetup = ref<Omit<GameSetup, 'declaration'> | null>(null)
+
+  // The current run replays a text the player has already seen in full (the
+  // results screen shows it). Same standing as a race: it never submits.
+  const repeatedRun = ref(false)
+
   // Finished normally — not failed (expert/master/minSpeed) and not aborted.
   // A RACE run never counts as submittable: its text is pre-known (the whole
-  // record is on screen), so it must never reach POST /runs. The spy test on
-  // this guard travels with the race feature.
+  // record is on screen), so it must never reach POST /runs — and a REPEATED
+  // solo run is pre-known the same way. The spy test on the race guard travels
+  // with the race feature.
   const finishedOk = computed(
-    () => game.phase === 'finished' && game.snapshot.failReason === null && !race.racing
+    () =>
+      game.phase === 'finished' &&
+      game.snapshot.failReason === null &&
+      !race.racing &&
+      !repeatedRun.value
   )
 
   function buildRunContext(): RunSubmitContext | null {
@@ -277,6 +362,58 @@
   const router = useRouter()
   const runSubmission = useRunSubmission({ finished: finishedOk, buildContext: buildRunContext })
   const saveState = runSubmission.state
+
+  /**
+   * Abandoned-run accounting (RUNS.md `restartsSinceLastSubmit`): a SOLO run
+   * that took its first keystroke and will never reach POST /runs is counted
+   * locally and reported with the next submission.
+   *
+   * `soloSession` marks that the 'local' store currently holds home's OWN run —
+   * it goes false the moment a race arms (the ghost's run must never be
+   * charged, including the rebuild that fires when the race exits and the
+   * settings snapshot is restored) and comes back with the next solo setup.
+   */
+  const soloSession = ref(false)
+  watch(
+    () => race.racing,
+    (racing) => {
+      if (!racing) return
+      soloSession.value = false
+      // The armed race replaces whatever solo run was up — including a repeat.
+      // The race draws its own "repeated" mark; this flag must not leak into it
+      // (a QUOTE race deliberately shows none).
+      repeatedRun.value = false
+    }
+  )
+
+  /**
+   * Count the live solo run as abandoned, at most once: every abandonment path
+   * funnels here — a rebuild over a running run (restart button, Esc, any
+   * core-bound settings change), leaving the page mid-run (unmount), and the
+   * page dying mid-run (`pagehide`: reload/close — localStorage is written
+   * synchronously, the one chance that path gives).
+   */
+  const abandonIfRunning = (): void => {
+    if (!soloSession.value || game.phase !== 'running') return
+    soloSession.value = false
+    bumpRestarts()
+  }
+
+  // A run that FINISHED but failed its own rules (expert/master, minWpm) also
+  // never submits: started, no row — same accounting as an abandon.
+  watch(
+    () => game.phase,
+    (phase) => {
+      if (phase !== 'finished' || !soloSession.value) return
+      if (game.snapshot.failReason !== null) {
+        soloSession.value = false
+        bumpRestarts()
+      }
+    }
+  )
+
+  useEventListener(window, 'pagehide', abandonIfRunning)
+  onUnmounted(abandonIfRunning)
 
   function onSignIn(): void {
     void router.push('/login')
@@ -305,6 +442,9 @@
     // otherwise trigger this rebuild and replace the record's text with a
     // fresh generation.
     if (race.racing) return
+    // Rebuilding over a still-running run IS the abandonment (restart, Esc,
+    // a settings change) — record it before the session is replaced.
+    abandonIfRunning()
     replaying.value = false
     setupState.value = 'loading'
     const quoteMode = config.mode === ConfigModes.Quote
@@ -379,15 +519,21 @@
     runMeta.value = {
       seed,
       dictHash: generated.value.context.dictVersion,
-      lang: dictionary.bcp47
+      // The CANONICAL dictionary key ('russian', 'code_css') — the identifier
+      // that names the word list in configs, bucket keys and the catalogue.
+      // NOT `dictionary.bcp47`: that is display chrome ('ru-RU'), and a run
+      // submitted under it mints a bucket the language rail cannot name.
+      lang: config.language
     }
-    game.setup({
+    lastSetup.value = {
       config: coreConfig,
       words: generated.value.words,
-      generation,
-      declaration: declarationOf()
-    })
+      generation
+    }
+    repeatedRun.value = false
+    game.setup({ ...lastSetup.value, declaration: declarationOf() })
     setupState.value = 'ready'
+    soloSession.value = true
   }
 
   onMounted(async () => {
@@ -440,6 +586,22 @@
   /** The results screen's "next": same routing as the restart control. */
   function onNext(): void {
     onRestart()
+  }
+
+  /**
+   * The results screen's "restart": the SAME text again — no draw, no
+   * generation, just a fresh run over the retained setup. The player has read
+   * the full text on the results screen, so the run is marked repeated and is
+   * never submitted (same standing as a race); it is not charged to the
+   * abandoned-run count either, exactly like a race run.
+   */
+  function onRepeat(): void {
+    const setup = lastSetup.value
+    if (race.racing || setup === null) return
+    replaying.value = false
+    repeatedRun.value = true
+    soloSession.value = false
+    game.setup({ ...setup, declaration: declarationOf() })
   }
 
   // Esc exits the replay if open, otherwise restarts (same routing as the

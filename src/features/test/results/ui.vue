@@ -122,17 +122,25 @@
       </div>
     </dl>
 
-    <!-- Anything unusual about the run, and nothing else. -->
-    <div v-if="failReason || afkLabel" class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-sub">
+    <!-- Anything unusual about the run, and nothing else. The bot line only
+         ever reports a LOSS — a win over the pace bot or the record ghost says
+         nothing here. -->
+    <div
+      v-if="failReason || afkLabel || botDefeat"
+      class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-sub"
+    >
       <span v-if="failReason">{{ reason }}</span>
       <span v-if="afkLabel" data-testid="results-afk">{{ afkLabel }}</span>
+      <span v-if="botDefeat" class="text-error" data-testid="results-bot-loss">
+        {{ t('results.botLoss', { you: botDefeat.you, them: botDefeat.them }) }}
+      </span>
     </div>
 
     <!--
       Icon-only actions. Each carries its label twice: `aria-label` for a screen
       reader, a tooltip for a pointer — an icon alone names nothing.
     -->
-    <div v-if="actions.length" class="flex w-full justify-center gap-5 items-center">
+    <div v-if="actions.length || hasHistory" class="flex w-full justify-center gap-5 items-center">
       <Tooltip v-for="action in actions" :key="action.key">
         <TooltipTrigger as-child>
           <Button
@@ -147,6 +155,38 @@
         </TooltipTrigger>
         <TooltipContent>{{ action.label }}</TooltipContent>
       </Tooltip>
+
+      <Tooltip v-if="hasHistory">
+        <TooltipTrigger as-child>
+          <Button
+            color="shadow"
+            size="icon"
+            :aria-label="t('results.history.toggle')"
+            :class="{ 'text-main': showHistory }"
+            data-testid="results-history"
+            @click="toggleHistory"
+          >
+            <IconHistory class="size-6" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{{ t('results.history.toggle') }}</TooltipContent>
+      </Tooltip>
+    </div>
+
+    <!-- Grid-rows collapse (see tailwind.css): the block stays mounted, so the
+         expand animates without height measurement; `inert` pulls the hidden
+         content out of the tab order. -->
+    <div
+      v-if="hasHistory"
+      class="grid-collapse w-full"
+      :class="{ 'grid-collapse-open': showHistory }"
+    >
+      <div class="grid-collapse-content" :inert="!showHistory">
+        <!-- Mounted on FIRST expand, never before: a long run is hundreds of
+             word components, and most results screens never open the block.
+             It stays mounted after, so the close animation has content. -->
+        <InputHistory v-if="historyEverOpened" :history="history ?? []" />
+      </div>
     </div>
 
     <div
@@ -200,11 +240,16 @@
     type Metrics,
     type ScoreResult,
     type TimelinePoint,
+    type WordHistoryEntry,
     gradeOf
   } from '@shared/core'
   import WpmChart from './wpm-chart.vue'
+  import InputHistory from './input-history.vue'
+  import IconHistory from '~icons/tabler/history'
   import IconPlayerPlay from '~icons/tabler/player-track-prev-filled'
   import IconNext from '~icons/tabler/player-play-filled'
+  import IconRepeat from '~icons/tabler/repeat'
+  import IconRestart from '~icons/tabler/refresh'
   import IconCamera from '~icons/tabler/camera-filled'
   import IconBoard from '~icons/tabler/trophy'
   import { quoteBucketKey } from '@shared/api'
@@ -247,11 +292,14 @@
 
   /**
    * The icon-only actions, in the order they render. Not every surface can offer
-   * all three: a MATCH result has no next test to load and no replay screen to
+   * all of them: a MATCH result has no next test to load and no replay screen to
    * open, so it asks for the screenshot alone rather than showing buttons that
-   * lead nowhere.
+   * lead nowhere. `race-again` replaces `next` while a record race is live —
+   * the "one more" that re-seats the SAME ghost. `restart` is the solo repeat:
+   * the same seed played again (the surface decides what that implies — on the
+   * home page a repeated text never submits).
    */
-  export type ResultsAction = 'next' | 'replay' | 'screenshot'
+  export type ResultsAction = 'next' | 'restart' | 'race-again' | 'replay' | 'screenshot'
 
   const props = withDefaults(
     defineProps<{
@@ -277,14 +325,35 @@
       quoteId?: string | null
       /** Upstream's attribution for that quote, shown under the run's summary. */
       quoteSource?: string | null
-      /** Which of the icon actions to offer. Defaults to all three (the solo run). */
+      /**
+       * The player finished SLOWER than the active bot (pace caret or record
+       * ghost): `{ you, them }` in wpm. Null (a win, or no bot) renders nothing.
+       */
+      botDefeat?: { you: number; them: number } | null
+      /**
+       * The run replayed an already-seen text (the results screen's own
+       * "restart"). Adds a `repeated` line to the test-type cell — sub-coloured
+       * like the rest of the summary, not red: the warning already burned on
+       * the settings bar while the run was typed; here it is a fact on record.
+       */
+      repeated?: boolean
+      /** Which of the icon actions to offer. Defaults to next/replay/screenshot (the solo run). */
       actions?: readonly ResultsAction[]
+      /**
+       * Per-word history of the run (`wordHistory`, shared/core). Present ⇒ an
+       * extra toggle in the actions row expands the input-history block: the
+       * words as typed, hover burst speeds, the heatmap, and the copy actions.
+       */
+      history?: readonly WordHistoryEntry[] | null
     }>(),
     {
       saveState: 'idle',
       afkMs: 0,
       quoteId: null,
       quoteSource: null,
+      history: null,
+      botDefeat: null,
+      repeated: false,
       // Inline rather than a shared const: `withDefaults` is hoisted out of
       // setup(), so it cannot reference anything declared in this block.
       actions: () => ['next', 'replay', 'screenshot'] as const
@@ -296,12 +365,25 @@
     (event: 'retry'): void
     (event: 'signin'): void
     (event: 'next'): void
+    (event: 'restart'): void
+    (event: 'raceAgain'): void
   }>()
 
   const { t } = useI18n()
 
   const rootRef = ref<HTMLElement | null>(null)
   const { copy: copyScreenshot } = useScreenshot(rootRef)
+
+  // Input-history expansion is view state of THIS screen, not a surface concern.
+  const showHistory = ref(false)
+  // Latches on the first expand — the mount gate for the word list.
+  const historyEverOpened = ref(false)
+  const hasHistory = computed(() => (props.history?.length ?? 0) > 0)
+
+  const toggleHistory = (): void => {
+    showHistory.value = !showHistory.value
+    if (showHistory.value) historyEverOpened.value = true
+  }
 
   /**
    * Copying an image can fail for reasons that are not this app's doing (an
@@ -325,6 +407,18 @@
         icon: IconNext,
         label: t('results.nextTest'),
         run: () => emit('next')
+      },
+      {
+        key: 'restart' as const,
+        icon: IconRepeat,
+        label: t('results.repeatTest'),
+        run: () => emit('restart')
+      },
+      {
+        key: 'race-again' as const,
+        icon: IconRestart,
+        label: t('race.again'),
+        run: () => emit('raceAgain')
       },
       {
         key: 'replay' as const,
@@ -397,7 +491,9 @@
   /**
    * The "test type" cell, one fact per line: what was typed, in what language,
    * and under which mods. A quote run says `quote` and the word count it turned
-   * out to be — a quote has no configured length to report.
+   * out to be — a quote has no configured length to report. A repeat says so
+   * on its own last line — the reader comparing two result screens should see
+   * why this one saved nothing.
    */
   const testType = computed(() => {
     const s = props.summary
@@ -411,6 +507,7 @@
     ].filter(Boolean)
     const lines = [shape, s.language, s.difficulty]
     if (mods.length) lines.push(mods.join(' '))
+    if (props.repeated) lines.push(t('game.repeated'))
     return lines
   })
 

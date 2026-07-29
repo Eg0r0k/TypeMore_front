@@ -98,7 +98,8 @@
                 <template v-if="row.wpm !== undefined">
                   {{ Math.round(row.wpm) }}
                   <span v-if="row.raw !== undefined" class="text-sub">
-                    /{{ Math.round(row.raw) }}
+                    /
+                    {{ Math.round(row.raw) }}
                   </span>
                 </template>
                 <template v-else>—</template>

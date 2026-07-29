@@ -13,8 +13,9 @@
  *   against loss/duplication and is the deterministic tie-break when two events
  *   share the same `t`. The canonical order of a log is ascending `seq`.
  * - Events are immutable. Character normalization (visual equivalence, unicode
- *   spaces, per-language sets) happens *before* an event exists, so the stored
- *   text is final; correctness is derivable from (text, target, position).
+ *   spaces, per-language sets — see ./normalize.ts, applied by the input
+ *   adapter) happens *before* an event exists, so the stored text is final;
+ *   correctness is derivable from (text, target, position).
  */
 
 // Branded primitives: forbid mixing a raw number with a sequence / timestamp.

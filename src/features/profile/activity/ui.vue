@@ -136,7 +136,7 @@
     &__cell {
       width: 11px;
       height: 11px;
-      background-color: var(--bg-color);
+      background-color: var(--sub-alt-color);
       border-radius: 2px;
 
       &--void {

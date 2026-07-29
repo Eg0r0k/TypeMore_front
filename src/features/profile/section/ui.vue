@@ -5,7 +5,6 @@
       <slot name="head" />
     </header>
 
-    <!-- Loading: a quiet skeleton the section's own height class shapes. -->
     <div
       v-if="loading"
       class="pf-section__skeleton"
@@ -13,8 +12,6 @@
       aria-hidden="true"
     />
 
-    <!-- Error: this section retries ALONE — one failed aggregate must not
-         blank the page (the /profile states contract). -->
     <div v-else-if="error" class="pf-section__error" :data-testid="`profile-error-${name}`">
       <Typography size="s" color="error">{{ t('profile.sectionError') }}</Typography>
       <Button

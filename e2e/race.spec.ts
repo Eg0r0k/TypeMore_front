@@ -57,7 +57,7 @@ const configSnapshot = (page: Page) =>
     return Object.fromEntries(keys.map((key) => [key, raw[key]]))
   })
 
-test('a board race action runs on HOME: banner, ghost, verdict, no submission, exit restores settings', async ({
+test('a board race action runs on HOME: repeated mark, ghost pace, no submission, pace-exit restores settings', async ({
   page
 }) => {
   // The wire spy: nothing on this path may POST a run.
@@ -88,42 +88,51 @@ test('a board race action runs on HOME: banner, ghost, verdict, no submission, e
   await first.getByTestId('boards-action-race').click()
 
   // The redirect lands on HOME — there is no /race page any more. (The board's
-  // bucket query survives the redirect; only the path matters here.)
+  // bucket query survives the redirect; only the path matters here.) The
+  // race's whole chrome is the standard solo bar: the red "repeated" mark (a
+  // seeded record's text is pre-known) and the pace selector reading "ghost".
   await expect(page).toHaveURL(/127\.0\.0\.1:5178\/(\?|$)/)
-  await expect(page.getByTestId('race-banner')).toBeVisible({ timeout: 10_000 })
-  await expect(page.getByTestId('race-banner')).toContainText('Ada')
+  await expect(page.getByTestId('race-repeated')).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByTestId('pace-picker')).toContainText('Ada')
 
-  // 3-2-1 first: nobody's clock starts before GO.
-  await expect(page.getByTestId('race-countdown')).toBeVisible()
-  await expect(page.getByTestId('race-countdown')).toBeHidden({ timeout: 6_000 })
-
-  // The ghost is typing in its compact row.
-  await expect(page.getByTestId('race-opponent-wpm')).not.toHaveText('0 wpm', { timeout: 6_000 })
-
-  // Type the run: same words, own hands.
+  // Type the run: same words, own hands. There is no countdown — the first
+  // keystroke is the starting gun for both clocks.
   await typeRun(page)
 
-  // Side-by-side result: the verdict names both numbers, over the results screen.
-  await expect(page.getByTestId('race-verdict')).toBeVisible({ timeout: 10_000 })
-  await expect(page.getByTestId('race-verdict-score')).toContainText('wpm')
+  // The results screen carries the race's "one more": race-again in the
+  // bottom actions row (replacing "next test").
+  await expect(page.getByTestId('results-race-again')).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByTestId('results-next')).toHaveCount(0)
 
   // UNRANKED stays absolute: not one submission crossed the wire.
   expect(submissions).toEqual([])
 
-  // Exit: the banner leaves and the player's own settings come back exactly.
-  await page.getByTestId('race-exit').click()
-  await expect(page.getByTestId('race-banner')).toBeHidden()
+  // "One more" re-seats the SAME ghost and returns to the stage, where the
+  // settings bar (and so the pace selector) lives.
+  await page.getByTestId('results-race-again').click()
+  await expect(page.getByTestId('race-repeated')).toBeVisible()
+
+  // Exit IS the pace selector: pick another pace mode, the ghost leaves and
+  // the player's own settings come back exactly.
+  await page.getByTestId('pace-picker').click()
+  await page.getByRole('option', { name: 'off', exact: true }).click()
+  await expect(page.getByTestId('race-repeated')).toBeHidden()
   await expect.poll(async () => await configSnapshot(page)).toEqual(before)
 })
 
-test('restart re-races the same ghost from 3-2-1, straight off the deep link', async ({ page }) => {
+test('the deep link seats the race on HOME, and Esc re-seats the same ghost', async ({ page }) => {
   await page.goto('/race/run-ada')
   await expect(page).toHaveURL(/127\.0\.0\.1:5178\/(\?|$)/)
-  await expect(page.getByTestId('race-countdown')).toBeVisible({ timeout: 10_000 })
-  await expect(page.getByTestId('race-countdown')).toBeHidden({ timeout: 6_000 })
+  // The race's only chrome: the repeated mark and the ghost-mode pace chip.
+  await expect(page.getByTestId('race-repeated')).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByTestId('pace-picker')).toContainText('Ada')
 
-  // Esc = restart: the SAME ghost, a fresh 3-2-1.
+  // A few keystrokes start the race (no countdown gates it)…
+  await page.locator('.game-input').focus()
+  await page.keyboard.type('aaaa', { delay: 40 })
+
+  // …and Esc re-seats the SAME ghost: still racing, same record.
   await page.keyboard.press('Escape')
-  await expect(page.getByTestId('race-countdown')).toBeVisible()
-  await expect(page.getByTestId('race-banner')).toContainText('Ada')
+  await expect(page.getByTestId('race-repeated')).toBeVisible()
+  await expect(page.getByTestId('pace-picker')).toContainText('Ada')
 })

@@ -88,6 +88,8 @@ export interface LogAnalysis {
    */
   readonly keyTimes: readonly number[]
   readonly keyCorrect: readonly boolean[]
+  /** Third parallel array: the word index each keystroke landed in. */
+  readonly keyWordIndex: readonly number[]
   /** Timestamp of each committed word separator (one per word advance). */
   readonly commitTimes: readonly number[]
 }
@@ -106,6 +108,7 @@ export function analyzeLog(ctx: CoreContext, events: readonly GameEvent[]): LogA
   const wordLastT: (number | undefined)[] = []
   const keyTimes: number[] = []
   const keyCorrect: boolean[] = []
+  const keyWordIndex: number[] = []
   const commitTimes: number[] = []
 
   // Metrics and score are functions of the STATE events alone: log-v2 telemetry
@@ -133,6 +136,7 @@ export function analyzeLog(ctx: CoreContext, events: readonly GameEvent[]): LogA
         if (correct) correctKeys++
         keyTimes.push(event.t)
         keyCorrect.push(correct)
+        keyWordIndex.push(wordIndex)
       }
       if (wordFirstT[wordIndex] === undefined) wordFirstT[wordIndex] = event.t
       wordLastT[wordIndex] = event.t
@@ -157,6 +161,7 @@ export function analyzeLog(ctx: CoreContext, events: readonly GameEvent[]): LogA
     wordLastT,
     keyTimes,
     keyCorrect,
+    keyWordIndex,
     commitTimes
   }
 }
@@ -332,7 +337,16 @@ export function wpmOverTime(
   events: readonly GameEvent[],
   endMs: Ms
 ): TimelinePoint[] {
-  const analysis = analyzeLog(ctx, events)
+  return timelineFrom(ctx, analyzeLog(ctx, events), endMs)
+}
+
+/**
+ * {@link wpmOverTime} over a replay pass that has already been made — the
+ * timeline needs nothing but the analysis. A results surface derives four
+ * things from one log (metrics, timeline, AFK, word history); sharing the pass
+ * is what keeps that one fold instead of four (~4× on a long log).
+ */
+export function timelineFrom(ctx: CoreContext, analysis: LogAnalysis, endMs: Ms): TimelinePoint[] {
   const startedAt = analysis.finalState.startedAt
   if (startedAt === null) return []
   const end = analysis.finalState.finishedAt ?? endMs
@@ -454,6 +468,58 @@ export function errorWords(ctx: CoreContext, events: readonly GameEvent[]): Erro
     if (typed !== expected) out.push({ expected, typed })
   }
   return out
+}
+
+/** One reached word of a run, for the results input-history view. */
+export interface WordHistoryEntry {
+  /** The target word. */
+  readonly target: string
+  /** What the player left in the word's buffer. */
+  readonly typed: string
+  /** The word was committed (its untyped tail counts as missed). */
+  readonly committed: boolean
+  /**
+   * Burst WPM of the word — first to last insert, the same window the
+   * consistency metric uses. `Infinity` for a word whose window is zero (a
+   * single keystroke has no duration); `undefined` when nothing was typed.
+   */
+  readonly burst: number | undefined
+}
+
+/**
+ * Per-word history of a run: target, typed text, and burst speed for every
+ * REACHED word (committed words plus the in-flight one if it has input).
+ * Pure function of the log — the results screen renders it, a replay could.
+ */
+export function wordHistory(ctx: CoreContext, events: readonly GameEvent[]): WordHistoryEntry[] {
+  return wordHistoryFrom(ctx, analyzeLog(ctx, events))
+}
+
+/** {@link wordHistory} over an existing analysis — see {@link timelineFrom} for why. */
+export function wordHistoryFrom(ctx: CoreContext, analysis: LogAnalysis): WordHistoryEntry[] {
+  const state = analysis.finalState
+  const input = state.input
+  const committed = Math.min(state.wordIndex, ctx.words.length)
+  const inFlight =
+    state.wordIndex < ctx.words.length && (input[state.wordIndex] ?? '') !== '' ? 1 : 0
+  const out: WordHistoryEntry[] = []
+  for (let i = 0; i < committed + inFlight; i++) {
+    const typed = input[i] ?? ''
+    const first = analysis.wordFirstT[i]
+    const last = analysis.wordLastT[i]
+    let burst: number | undefined
+    if (first !== undefined && last !== undefined && typed.length > 0) {
+      const durationMs = last - first
+      burst = durationMs > 0 ? typed.length / 5 / (durationMs / 60000) : Infinity
+    }
+    out.push({ target: ctx.words[i], typed, committed: i < committed, burst })
+  }
+  return out
+}
+
+/** Convenience: {@link wordHistory} for a finished/live core. */
+export function wordHistoryOf(core: GameCore): WordHistoryEntry[] {
+  return wordHistory({ config: core.config, words: core.words }, core.events)
 }
 
 /** Convenience: WPM timeline for a live core (measures to finish, else `nowMs`). */

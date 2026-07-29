@@ -1,11 +1,44 @@
 <template>
   <main class="replay-page">
     <ReplayPlayer
-      v-if="state === 'ready' && replay"
+      v-if="state === 'ready' && replay && watching"
       :replay="replay"
       :is-right-to-left="isRightToLeft"
-      @exit="goBack"
+      @exit="watching = false"
     />
+
+    <!-- The landing state of a run link: the run's RESULTS, exactly the solo
+         end-of-run screen (chart, stats, input history), rendered from the
+         reconstructed log. Playback is the screen's replay action. -->
+    <div
+      v-else-if="state === 'ready' && replay && results"
+      class="replay-page__results"
+      data-testid="replay-results"
+    >
+      <div class="replay-page__byline">
+        <Button color="main-outline" size="s" data-testid="replay-back" @click="goBack">
+          {{ t('replay.back') }}
+        </Button>
+        <Typography v-if="byLine" size="s" color="sub">
+          {{ byLine }} · {{ achievedDate }}
+        </Typography>
+      </div>
+
+      <TestResults
+        :metrics="results.metrics"
+        :timeline="results.timeline"
+        :fail-reason="null"
+        :summary="summary"
+        :score="replay.score"
+        :active-mods="activeMods"
+        :afk-ms="results.afk.afkMs"
+        :quote-id="quoteRef?.quoteId ?? null"
+        :quote-source="quoteSourceText"
+        :history="results.history"
+        :actions="RESULTS_ACTIONS"
+        @replay="watching = true"
+      />
+    </div>
 
     <div v-else-if="state === 'loading'" class="replay-page__notice" data-testid="replay-loading">
       <Typography size="m" color="sub">{{ t('replay.loading') }}</Typography>
@@ -83,13 +116,20 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue'
+  import { computed, ref } from 'vue'
   import { useI18n } from 'vue-i18n'
   import { useRoute, useRouter } from 'vue-router'
   import { useQuery } from '@tanstack/vue-query'
 
   import { ReplayPlayer } from '@/features/test/replay'
-  import { quoteRefOf, replayFromApi, type ReplayTextSource } from '@/features/replay-view'
+  import { type ResultSummary, type ResultsAction, TestResults } from '@/features/test/results'
+  import {
+    quoteRefOf,
+    replayFromApi,
+    replayResults,
+    type ReplayTextSource
+  } from '@/features/replay-view'
+  import { activeModsV1 } from '@shared/core'
   import {
     dictionaryBodyByHashQueryOptions,
     quoteByIdQueryOptions,
@@ -99,6 +139,7 @@
   import { ROUTE_NAMES } from '@app/router/route-names'
   import { Button } from '@shared/ui/button'
   import { Typography } from '@shared/ui/typography'
+  import { formatShortDate } from '@/shared/lib/helpers/datetime'
 
   /**
    * Public replay at `/replay/:runId` — anyone with the link, no session.
@@ -121,7 +162,7 @@
    */
   const props = defineProps<{ runId: string }>()
 
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const route = useRoute()
   const router = useRouter()
 
@@ -240,6 +281,59 @@
     return result?.isOk() === true ? result.value : null
   })
 
+  // ── The results screen over the reconstructed run ──────────────────────────
+
+  /** Playback on demand; the page lands on the results. */
+  const watching = ref(false)
+
+  const RESULTS_ACTIONS: readonly ResultsAction[] = ['replay', 'screenshot']
+
+  const results = computed(() => (replay.value ? replayResults(replay.value) : null))
+
+  const summary = computed<ResultSummary>(() => {
+    const r = replay.value
+    if (!r) {
+      return {
+        mode: '',
+        language: '',
+        difficulty: '',
+        amount: 0,
+        punctuation: false,
+        numbers: false,
+        randomCase: false,
+        nospace: false
+      }
+    }
+    return {
+      mode: r.config.mode,
+      language: meta.data.value?.lang ?? '',
+      difficulty: r.config.difficulty,
+      amount:
+        r.config.mode === 'time' ? Math.round(r.config.durationMs / 1000) : r.generation.length,
+      punctuation: r.generation.punctuation,
+      numbers: r.generation.numbers,
+      randomCase: r.generation.randomCase,
+      nospace: r.config.nospace
+    }
+  })
+
+  /** Mod chips from the run's own stored setup — the replay header shows the same. */
+  const activeMods = computed(() => {
+    const r = replay.value
+    if (!r) return []
+    return activeModsV1({ generation: r.generation, config: r.config }, r.declaration)
+  })
+
+  const quoteSourceText = computed(() => quote.data.value?.source ?? null)
+
+  /** When the run was achieved, in the viewer's locale — chrome beside the byline. */
+  const achievedDate = computed(() => {
+    const at = meta.data.value?.achievedAt
+    if (at === undefined) return ''
+    const formatted = formatShortDate(at, locale.value)
+    return formatted === '—' ? '' : formatted
+  })
+
   // Only a word list carries direction; a quote is rendered in the page's own.
   const isRightToLeft = computed(() => dict.data.value?.rightToleft ?? false)
 
@@ -290,6 +384,19 @@
     justify-content: center;
     min-height: 60vh;
     padding: 2rem 0;
+  }
+
+  .replay-page__results {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+  }
+
+  .replay-page__byline {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
   }
 
   .replay-page__notice {

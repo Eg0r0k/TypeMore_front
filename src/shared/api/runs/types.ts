@@ -19,6 +19,13 @@ export interface RunSubmitInput {
   seed: number
   dictHash: string
   scoreVersion: number
+  /**
+   * Tests started and abandoned since the previous submission (RUNS.md §
+   * restartsSinceLastSubmit). Optional — omitted means 0; server-clamped to
+   * [0, 10 000]. Client-counted and unverifiable by design; feeds profile
+   * statistics only.
+   */
+  restartsSinceLastSubmit?: number
   setup: unknown
   clientMetrics: unknown
   clientScore: unknown

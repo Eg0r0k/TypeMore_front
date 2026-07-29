@@ -110,9 +110,7 @@ describe('race rail', () => {
   })
 
   it('dims a seat that is out but keeps its points on the board', () => {
-    h.store = makeStore([
-      racing({ playerId: 'p1', nick: 'alice', points: 250, status: 'left' })
-    ])
+    h.store = makeStore([racing({ playerId: 'p1', nick: 'alice', points: 250, status: 'left' })])
     const wrapper = mount(RaceRail)
     const row = wrapper.find('[data-testid="race-row-p1"]')
     expect(row.classes()).toContain('race-rail__row--out')

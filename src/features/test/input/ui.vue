@@ -21,6 +21,7 @@
   import { computed, ref } from 'vue'
 
   import { wordsHaveTab, type GameSession } from '@entities/game'
+  import { isSpaceGrapheme, normalizeGrapheme } from '@shared/core'
   import { useSounds } from '@/shared/lib/hooks/useSounds'
   import { useConfigStore } from '@/entities/config'
   import { getSoundPack } from '@/shared/constants/sound-packs'
@@ -92,6 +93,42 @@
   }
 
   /**
+   * A space keystroke SEPARATES — unless the target expects a space variant at
+   * the caret, in which case that space IS the next character and is typed.
+   *
+   * Same shape as `separateWord` above, and for the same reason: a target is one
+   * box, so a space inside one is an ordinary character the reducer already
+   * compares like any other. Both target sources produce such words.
+   * `generateWords` splits a quote on U+0020 alone, so every OTHER space variant
+   * stays inside its token — 12 of the 15 817 vendored quotes carry a U+00A0 or
+   * U+202F (russian #1199 is `Молодость!<NBSP>-`). A dictionary token may hold a
+   * plain U+0020 outright: 11 858 words across 68 published dictionaries are
+   * multi-word (`else if`, `vor allem`, `use strict`).
+   *
+   * Routing those to `commit()` unconditionally made them untypeable, and under
+   * `nospace` that is not merely a missed character. There `commit` is REFUSED
+   * (`NospaceCommit`, game-core.ts), so the caret stayed on the space while the
+   * following keystrokes filled the target's LENGTH and auto-committed the word
+   * with the wrong content — every later word then ran out of phase, which is
+   * the "nospace did nothing on this quote" report.
+   *
+   * `normalizeGrapheme` stores the EXPECTED variant, so the log carries the
+   * target's own byte (the U+00A0, not the U+0020 that was pressed) and core,
+   * replay and `validateLog` keep comparing with plain `===`.
+   */
+  const separateOrTypeSpace = (typed: string): void => {
+    const target = store.words[store.wordIndex] ?? ''
+    const expected = target[caretPos()]
+    if (expected !== undefined && isSpaceGrapheme(expected)) {
+      const grapheme = normalizeGrapheme(typed, expected, config.language)
+      playKeyFeedback(grapheme)
+      store.insert(grapheme)
+      return
+    }
+    store.commit()
+  }
+
+  /**
    * Log v2 keystroke telemetry: the PHYSICAL key stream (`KeyboardEvent.code`),
    * captured alongside the text path through the same stamping pipeline, so a
    * `down` is stamped before the `insert` it produces (DOM order: keydown →
@@ -119,7 +156,7 @@
     if (event.isComposing) return // composition unsupported: ignore
     if (event.key === ' ' || event.code === 'Space') {
       event.preventDefault()
-      store.commit()
+      separateOrTypeSpace(' ')
       return
     }
     if (event.key === 'Enter') {
@@ -148,9 +185,24 @@
       const data = event.data ?? ''
       const graphemes = [...data]
       if (graphemes.length === 1) {
+        // Any typable space variant (soft keyboards and IMEs emit them as
+        // insertText with no keydown — U+3000 and friends) separates the word
+        // exactly like the space key above, and types itself on the same rule
+        // when the target expects a space there.
+        if (isSpaceGrapheme(data)) {
+          separateOrTypeSpace(data)
+          return
+        }
+        // Visual equivalence (shared/core/normalize): a typed grapheme that IS
+        // the expected character in another skin — '-' for '—', 'е' for 'ё' —
+        // is stored AS the expected one. This is the pre-event normalization
+        // the log contract (events.ts) requires: the stored text is final, so
+        // reducer, metrics and the server all keep comparing with plain `===`.
+        const expected = [...(store.words[store.wordIndex] ?? '')][caretPos()]
+        const grapheme = normalizeGrapheme(data, expected, config.language)
         // Feedback first: caretPos() must read the pre-insert position.
-        playKeyFeedback(data)
-        store.insert(data)
+        playKeyFeedback(grapheme)
+        store.insert(grapheme)
       }
       // Multi-character text insertion is never emitted as a multi-grapheme insert.
       else if (graphemes.length > 1) store.replace(caretPos(), caretPos(), data, 'ime')

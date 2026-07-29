@@ -46,26 +46,6 @@
 </script>
 
 <style lang="scss" scoped>
-  .tag {
-    &--h1 {
-      margin-bottom: 50px;
-    }
-
-    &--h2 {
-      margin-bottom: 45px;
-    }
-
-    &--h3 {
-      margin-bottom: 30px;
-    }
-
-    &--h4,
-    &--h5,
-    &--h6 {
-      margin-bottom: 20px;
-    }
-  }
-
   .typography {
     --typography-size-xxxl: 49px;
     --typography-size-xxl: 39px;

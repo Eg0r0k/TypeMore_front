@@ -30,7 +30,7 @@
         </div>
         <div>
           <dt>{{ pb.grade }}</dt>
-          <dd class="pf-pbs__date">{{ new Date(pb.achievedAt).toLocaleDateString() }}</dd>
+          <dd class="pf-pbs__date">{{ formatShortDate(pb.achievedAt, locale) }}</dd>
         </div>
       </dl>
 
@@ -58,12 +58,13 @@
   import type { ProfilePB } from '@shared/api'
   import { Button } from '@/shared/ui/button'
   import { Typography } from '@/shared/ui/typography'
+  import { formatShortDate } from '@/shared/lib/helpers/datetime'
   import { grouped, percent, speed } from '../model/format'
 
   /** PB cards from /profile/pbs — the leaderboard entries, decorated. */
   defineProps<{ pbs: readonly ProfilePB[] }>()
   defineEmits<{ race: [runId: string]; watch: [runId: string] }>()
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
 
   /** `time:15000` → `time 15s`, `words:50` → `50 words`, quotes by their source. */
   const bucketLabel = (pb: ProfilePB): string => {
@@ -76,8 +77,8 @@
 
 <style lang="scss" scoped>
   .pf-pbs {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 0.75rem;
     margin: 0;
     padding: 0;

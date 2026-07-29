@@ -33,7 +33,7 @@
         </thead>
         <tbody>
           <tr v-for="run in rows" :key="run.id" class="pf-runs__row" data-testid="profile-run-row">
-            <td>{{ new Date(run.createdAt).toLocaleString() }}</td>
+            <td>{{ formatExactInstant(run.createdAt, locale) }}</td>
             <td>
               <!-- Mode detail incl. the quote link: the run's quote board is
                    the one page that owns that text. -->
@@ -117,6 +117,7 @@
   import { useI18n } from 'vue-i18n'
 
   import { queryClient, runsQueryOptions, type RunSummary } from '@shared/api'
+  import { formatExactInstant } from '@/shared/lib/helpers/datetime'
   import { routeLocation } from '@/shared/router'
   import { Button } from '@/shared/ui/button'
   import { Typography } from '@/shared/ui/typography'
@@ -129,7 +130,7 @@
    * the documents, so the table never parses a setup snapshot.
    */
   defineEmits<{ race: [runId: string]; watch: [runId: string] }>()
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
 
   const rows = ref<RunSummary[]>([])
   const nextCursor = ref<string | undefined>(undefined)

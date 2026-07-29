@@ -4,6 +4,7 @@
  * and the Pinia wrapper depend on.
  */
 export * from './events'
+export * from './normalize'
 export * from './words'
 export * from './game-core'
 export * from './keyboard'
