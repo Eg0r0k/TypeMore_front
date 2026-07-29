@@ -1,52 +1,68 @@
 <template>
-  <div v-if="pbs.length === 0" class="pf-pbs__empty" data-testid="profile-pbs-empty">
+  <div
+    v-if="pbs.length === 0"
+    class="rounded-lg bg-sub-alt px-4 py-3"
+    data-testid="profile-pbs-empty"
+  >
     <Typography size="s" color="sub">{{ t('profile.pbs.empty') }}</Typography>
   </div>
 
-  <ul v-else class="pf-pbs" data-testid="profile-pbs">
+  <ul
+    v-else
+    class="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-2 p-0"
+    data-testid="profile-pbs"
+  >
     <li
       v-for="pb in pbs"
       :key="pb.bucket"
-      class="pf-pbs__card"
+      class="flex flex-col gap-1 rounded-md bg-sub-alt px-2.5 py-2"
       :data-testid="`profile-pb-${pb.bucket}`"
     >
-      <div class="pf-pbs__label">
-        <Typography size="s" color="primary">{{ bucketLabel(pb) }}</Typography>
-        <Typography v-if="pb.source" size="xs" color="sub">{{ pb.source }}</Typography>
+      <div class="flex items-baseline justify-between gap-1.5">
+        <span class="truncate text-[11px] text-sub" :title="bucketLabel(pb)">
+          {{ bucketLabel(pb) }}
+        </span>
+        <span class="shrink-0 text-xl font-semibold leading-none text-main">{{ pb.grade }}</span>
       </div>
 
-      <dl class="pf-pbs__stats">
-        <div>
-          <dt>{{ t('profile.pbs.score') }}</dt>
-          <dd>{{ grouped(pb.score) }}</dd>
-        </div>
-        <div>
-          <dt>wpm</dt>
-          <dd>{{ speed(pb.wpm) }}</dd>
-        </div>
-        <div>
-          <dt>acc</dt>
-          <dd>{{ percent(pb.acc) }}</dd>
-        </div>
-        <div>
-          <dt>{{ pb.grade }}</dt>
-          <dd class="pf-pbs__date">{{ formatShortDate(pb.achievedAt, locale) }}</dd>
-        </div>
-      </dl>
+      <div class="flex items-baseline gap-1">
+        <span class="text-xl leading-none tabular-nums text-text">{{ speed(pb.wpm) }}</span>
+        <span class="text-[10px] text-sub">wpm</span>
+        <span class="ml-auto text-[11px] tabular-nums text-sub">{{ percent(pb.acc) }}</span>
+      </div>
 
-      <div class="pf-pbs__actions">
-        <!-- "race your PB" — the profile's killer button (C10 item 10). -->
-        <Button
-          color="main-outline"
-          size="s"
-          :data-testid="`profile-pb-race-${pb.bucket}`"
-          @click="$emit('race', pb.runId)"
+      <div class="flex items-center justify-between gap-1">
+        <span
+          class="truncate text-[10px] tabular-nums text-sub"
+          :title="`${t('profile.pbs.score')} ${grouped(pb.score)} · ${formatShortDate(pb.achievedAt, locale)}`"
         >
-          {{ t('profile.pbs.race') }}
-        </Button>
-        <Button color="shadow" size="s" @click="$emit('watch', pb.runId)">
-          {{ t('profile.pbs.watch') }}
-        </Button>
+          {{ grouped(pb.score) }} · {{ formatShortDate(pb.achievedAt, locale) }}
+        </span>
+
+        <!-- The app's one action pair, in the app's one icon-button size —
+               the words live in title/aria-label, so the card stays small. -->
+        <div class="flex shrink-0 gap-0.5">
+          <Button
+            color="shadow"
+            size="icon-sm"
+            :title="t('profile.pbs.race')"
+            :aria-label="t('profile.pbs.race')"
+            :data-testid="`profile-pb-race-${pb.bucket}`"
+            @click="$emit('race', pb.runId)"
+          >
+            <IconRace />
+          </Button>
+          <Button
+            color="shadow"
+            size="icon-sm"
+            :title="t('profile.pbs.watch')"
+            :aria-label="t('profile.pbs.watch')"
+            :data-testid="`profile-pb-watch-${pb.bucket}`"
+            @click="$emit('watch', pb.runId)"
+          >
+            <IconWatch />
+          </Button>
+        </div>
       </div>
     </li>
   </ul>
@@ -59,9 +75,15 @@
   import { Button } from '@/shared/ui/button'
   import { Typography } from '@/shared/ui/typography'
   import { formatShortDate } from '@/shared/lib/helpers/datetime'
+  import IconRace from '~icons/tabler/swords'
+  import IconWatch from '~icons/tabler/player-play-filled'
   import { grouped, percent, speed } from '../model/format'
 
-  /** PB cards from /profile/pbs — the leaderboard entries, decorated. */
+  /**
+   * PB cards from /profile/pbs — the leaderboard entries, decorated. Deliberately
+   * SMALL: a personal best is a glance ("time 15s · 103 wpm, SS"), not a report,
+   * so a full board of buckets fits one screen instead of a column of banners.
+   */
   defineProps<{ pbs: readonly ProfilePB[] }>()
   defineEmits<{ race: [runId: string]; watch: [runId: string] }>()
   const { t, locale } = useI18n()
@@ -74,64 +96,3 @@
     return pb.bucket
   }
 </script>
-
-<style lang="scss" scoped>
-  .pf-pbs {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-
-    &__card {
-      display: flex;
-      flex-direction: column;
-      gap: 0.625rem;
-      padding: 0.875rem 1rem;
-      background-color: var(--sub-alt-color);
-      border-radius: var(--border-radius);
-    }
-
-    &__label {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 0.5rem;
-    }
-
-    &__stats {
-      display: flex;
-      gap: 1.25rem;
-      margin: 0;
-
-      dt {
-        font-size: 0.6875rem;
-        color: var(--sub-color);
-      }
-
-      dd {
-        margin: 0;
-        font-size: 1.0625rem;
-        font-variant-numeric: tabular-nums;
-        color: var(--text-color);
-      }
-    }
-
-    &__date {
-      font-size: 0.75rem !important;
-      color: var(--sub-color) !important;
-    }
-
-    &__actions {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    &__empty {
-      padding: 1rem;
-      background-color: var(--sub-alt-color);
-      border-radius: var(--border-radius);
-    }
-  }
-</style>

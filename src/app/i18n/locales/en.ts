@@ -288,6 +288,7 @@ export default {
       login: 'Login',
       restricted: 'account restricted',
       account: 'Account',
+      profile: 'My profile',
       logout: 'Log out'
     }
   },
@@ -560,6 +561,7 @@ export default {
     },
     sectionError: 'this section failed to load',
     retry: 'retry',
+    loading: 'loading…',
     joined: 'joined {date}',
     testsStarted: 'tests started',
     testsCompleted: 'tests completed',
@@ -572,16 +574,23 @@ export default {
       acc: 'accuracy',
       consistency: 'consistency'
     },
-    stat: {
-      highest: 'highest',
-      average: 'average',
-      averageLast10: 'last 10'
+    /**
+     * The stats block composes one label per figure out of the metric's name
+     * and the aggregate's, so a new metric costs no new copy.
+     */
+    statOf: {
+      highest: 'highest {metric}',
+      average: 'average {metric}',
+      averageLast10: 'average {metric} (last 10 tests)'
     },
     activity: {
       title: 'activity',
       empty: 'no tests yet — the calendar fills in as you play.',
       aria: 'daily activity calendar for the last year',
       tooltip: '{tests} test | {tests} tests',
+      total: '{tests} test in the last year | {tests} tests in the last year',
+      less: 'less',
+      more: 'more',
       streak: 'streak: {current} days (best {best})'
     },
     pbs: {
@@ -633,6 +642,13 @@ export default {
       errors: '{p} errors',
       interval: '{ms} ms between keys',
       lowData: 'insufficient data',
+      unused: 'never pressed',
+      legend: {
+        accuracyBest: 'fewest errors',
+        accuracyWorst: 'most errors',
+        speedBest: 'fastest',
+        speedWorst: 'slowest'
+      },
       empty: 'no key data yet — accepted tests fill the heatmap in.'
     },
     runs: {
@@ -647,6 +663,10 @@ export default {
       grade: 'grade',
       mods: 'mods',
       quote: 'quote',
+      /** A run whose text came from another run: stored and shown, ranked nowhere. */
+      notCounted: 'not counted',
+      notCountedTitle:
+        'this run replayed another run’s text, so it does not take a board slot, a personal best or rating points',
       replay: 'watch',
       race: 'race',
       more: 'load more',

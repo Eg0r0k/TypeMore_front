@@ -16,6 +16,7 @@
             <div
               class="message__author"
               :class="{ 'message__author--me': entry.from === session.selfId }"
+              :title="nickOf(entry)"
             >
               {{ nickOf(entry) }}:
             </div>
@@ -200,22 +201,33 @@
     display: flex;
     align-items: baseline;
     gap: 0.5rem;
-    overflow-wrap: break-word;
 
     &__author {
-      word-break: normal;
-      height: 100%;
+      // The name never wraps and never squeezes the message; a very long one
+      // gives up its own tail instead (the full text stays in the title).
+      flex-shrink: 0;
+      max-width: 45%;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
 
       &--me {
         color: var(--main-color);
       }
     }
 
+    /*
+     * NOT a flex row. As a flex item this had `min-width: auto`, so it could
+     * not shrink below its longest word: one long message widened the row, the
+     * row widened the chat, and the chat widened its grid column instead of
+     * wrapping. As a plain block with `min-width: 0` it takes the width it is
+     * given and breaks the text — including an unbroken 200-character string,
+     * which is what `anywhere` is for.
+     */
     &__text {
-      display: flex;
-      gap: 0.5rem;
-      align-items: baseline;
-      flex-wrap: wrap;
+      flex: 1;
+      min-width: 0;
+      overflow-wrap: anywhere;
 
       &--system {
         font-style: italic;
@@ -261,6 +273,10 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
+    // The chat is a grid item in the lobby; without this it may not shrink
+    // below its own min-content and would push its column wider (the same
+    // reason each message has to be able to break).
+    min-width: 0;
 
     &__input {
       position: relative;

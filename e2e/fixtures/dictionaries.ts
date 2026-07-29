@@ -174,6 +174,45 @@ function fillerRows(): { lang: string; name: string; words: string[] }[] {
 }
 
 /**
+ * A FIXED-WIDTH corpus, for specs whose subject is layout rather than text.
+ *
+ * Every word is exactly ten characters, so a run of N words wraps onto the same
+ * lines no matter which seed the client draws — which is the difference between
+ * a render assertion and a coin flip. (The perf spec's replay probe asserts a
+ * line jump happened; on a natural word list a short draw sometimes fits in two
+ * lines and never jumps, and the test failed for reasons that had nothing to do
+ * with rendering.)
+ *
+ * Opt-in via `extra`, so the catalogue every other spec sees is unchanged.
+ */
+export const FIXED_WIDTH_DICTIONARY = {
+  lang: 'e2e_fixed_width',
+  name: 'Fixed Width (e2e)',
+  dictHash: 'e2e0f1x0',
+  words: [
+    'alphabetic',
+    'buttercups',
+    'cornflower',
+    'dandelions',
+    'elderberry',
+    'fieldstone',
+    'grapevines',
+    'hailstorms',
+    'immersions',
+    'jackhammer',
+    'kilometers',
+    'lighthouse'
+  ]
+} as const
+
+export interface ExtraDictionary {
+  readonly lang: string
+  readonly name: string
+  readonly dictHash: string
+  readonly words: readonly string[]
+}
+
+/**
  * Installs the catalogue + body routes on `page`. Call before the first `goto`.
  *
  * Every call builds its OWN corpus from the constants above and never writes
@@ -183,10 +222,19 @@ function fillerRows(): { lang: string; name: string; words: string[] }[] {
  * the first one's and the third a catalogue three times the size — which is
  * exactly what it did, and it read as a search filter that had stopped working.
  */
-export async function stubDictionaries(page: Page, opts: { full?: boolean } = {}): Promise<void> {
+export async function stubDictionaries(
+  page: Page,
+  opts: { full?: boolean; extra?: readonly ExtraDictionary[] } = {}
+): Promise<void> {
   const words: Record<string, string[]> = { ...WORDS }
   const hashes: Record<string, string> = { ...HASHES }
   const names: Record<string, string> = { ...NAMES }
+
+  for (const row of opts.extra ?? []) {
+    words[row.lang] = [...row.words]
+    hashes[row.lang] = row.dictHash
+    names[row.lang] = row.name
+  }
 
   if (opts.full === true) {
     fillerRows().forEach((row, i) => {

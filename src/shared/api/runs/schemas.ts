@@ -44,6 +44,14 @@ export const RunSummarySchema = v.object({
     })
   ),
   quoteId: v.nullish(v.string()),
+  /**
+   * The run this run's TEXT was taken from — present only on a SEEDED REPEAT
+   * (today: a record race, which seats the target run's exact words and seed).
+   * Such a run is saved, judged and listed, and ranked nowhere: no board slot,
+   * no PB, no TP (RUNS.md, "Text provenance"). Presence is the whole signal, so
+   * a row renders "saved, not counted" without re-deriving eligibility.
+   */
+  adoptedFromRunId: v.nullish(v.string()),
   mods: v.nullish(v.unknown())
 })
 export type RunSummary = v.InferOutput<typeof RunSummarySchema>

@@ -30,6 +30,13 @@
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{{ displayName }}</DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <!-- The way to one's own statistics. A menu item, not a nav icon:
+               /profile is about the account, and the account menu is where a
+               reader goes looking for it. -->
+          <DropdownMenuItem data-testid="header-profile-link" @select="onProfile">
+            <IconChartBar class="size-4" aria-hidden="true" />
+            {{ t('auth.header.profile') }}
+          </DropdownMenuItem>
           <DropdownMenuItem @select="onLogout">{{ t('auth.header.logout') }}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -55,6 +62,7 @@
   } from '@/shared/ui/dropdown-menu'
   import type { HeaderLink } from './types/links'
   import IconBell from '~icons/tabler/bell'
+  import IconChartBar from '~icons/tabler/chart-bar'
   import IconUser from '~icons/tabler/user'
 
   import { computed, ref } from 'vue'
@@ -79,6 +87,8 @@
   const displayName = computed(() => user.value?.displayName ?? '')
 
   const { mutate: logout } = useLogoutMutation()
+
+  const onProfile = (): void => void router.push(routeLocation.profile())
 
   const onLogout = (): void => {
     logout(undefined, {

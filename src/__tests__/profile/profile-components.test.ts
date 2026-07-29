@@ -45,8 +45,10 @@ describe('profile summary — counters and the stats grid from a fixture', () =>
     const completed = wrapper.find('[data-testid="profile-tests-completed"]').text()
     expect(completed).toContain('100')
     expect(completed).toContain('83%')
-    expect(wrapper.find('[data-testid="profile-time-typing"]').text()).toContain('1h 2m')
+    // Time typing is a clock, not prose — a total that only grows reads as one.
+    expect(wrapper.find('[data-testid="profile-time-typing"]').text()).toBe('01:02:05')
     expect(wrapper.find('[data-testid="profile-words-typed"]').text()).toContain(grouped(12_345))
+    expect(wrapper.find('[data-testid="profile-restarts"]').text()).toContain('0.2')
 
     // The grid: speeds at one decimal, fractions as %.
     expect(wrapper.find('[data-testid="profile-wpm-highest"]').text()).toBe('113.1')
@@ -54,30 +56,56 @@ describe('profile summary — counters and the stats grid from a fixture', () =>
     expect(wrapper.find('[data-testid="profile-consistency-averageLast10"]').text()).toBe('76%')
     expect(wrapper.find('[data-testid="profile-languages"]').text()).toContain('german · 60')
   })
+
+  // The streak lives with the join date: both answer "how long has this person
+  // been around", and the calendar underneath stays a pure calendar.
+  it('carries the streak line under the join date', () => {
+    const wrapper = mount(ProfileSummaryCard, { props: { summary }, global })
+    const streak = wrapper.find('[data-testid="profile-streak"]')
+    expect(streak.text()).toContain('3')
+    expect(streak.text()).toContain('9')
+  })
 })
 
-describe('profile activity — the calendar and the streak line', () => {
-  it('renders played days as levelled cells and the streak sentence', () => {
+describe('profile activity — the calendar', () => {
+  it('renders played days as levelled cells, with the total and the scale', () => {
     const today = isoDay(new Date())
     const activity: ActivityData = {
       days: [{ date: today, tests: 5, timeMs: 300_000 }]
     }
-    const wrapper = mount(ProfileActivity, {
-      props: { activity, streak: { current: 3, best: 9 } },
-      global
-    })
+    const wrapper = mount(ProfileActivity, { props: { activity }, global })
     const played = wrapper.findAll('[data-testid="profile-activity-day"]')
     expect(played).toHaveLength(1)
-    expect(played[0].classes().join(' ')).toContain('pf-activity__cell--l')
-    expect(wrapper.find('[data-testid="profile-streak"]').text()).toContain('3')
-    expect(wrapper.find('[data-testid="profile-streak"]').text()).toContain('9')
+    // A played day is painted from the accent; an unplayed one is not.
+    expect(played[0].attributes('style')).toContain('--main-color')
+    expect(wrapper.find('[data-testid="profile-activity-total"]').text()).toContain('5')
+    expect(wrapper.find('[data-testid="profile-activity-legend"]').exists()).toBe(true)
+    // Seven weekday labels on the left rail, Monday first.
+    expect(wrapper.text().toLowerCase()).toContain('mon')
+  })
+
+  /**
+   * Today is marked with a ring (box-shadow), never a border: a border would
+   * add a pixel of width and push its whole column off the grid the other 365
+   * cells share.
+   */
+  it('marks today with a ring that costs no layout width', () => {
+    const today = isoDay(new Date())
+    const wrapper = mount(ProfileActivity, {
+      props: { activity: { days: [{ date: today, tests: 5, timeMs: 300_000 }] } },
+      global
+    })
+    const marked = wrapper.findAll('[data-today]')
+    expect(marked).toHaveLength(1)
+    expect(marked[0].attributes('data-date')).toBe(today)
+    const classes = marked[0].classes().join(' ')
+    expect(classes).toContain('ring-2')
+    expect(classes).toContain('ring-text')
+    expect(classes).not.toContain('border')
   })
 
   it('renders the honest empty state for a fresh account', () => {
-    const wrapper = mount(ProfileActivity, {
-      props: { activity: { days: [] }, streak: { current: 0, best: 0 } },
-      global
-    })
+    const wrapper = mount(ProfileActivity, { props: { activity: { days: [] } }, global })
     expect(wrapper.find('[data-testid="profile-activity-empty"]').exists()).toBe(true)
   })
 })
@@ -155,16 +183,16 @@ describe('profile charts — fixtures and empty states', () => {
       global
     })
     expect(wrapper.findAll('rect')).toHaveLength(2)
-    const speedLine = wrapper.find('.pf-daily__line').attributes('d')
+    const speedLine = wrapper.find('[data-testid="profile-daily-line"]').attributes('d')
     expect(speedLine).toBeTruthy()
 
     await wrapper.setProps({ metric: 'accuracy' })
-    const accLine = wrapper.find('.pf-daily__line').attributes('d')
+    const accLine = wrapper.find('[data-testid="profile-daily-line"]').attributes('d')
     expect(accLine).toBeTruthy()
     expect(accLine).not.toBe(speedLine)
 
     // The dotted trend exists in both.
-    expect(wrapper.find('.pf-daily__trend').attributes('d')).toBeTruthy()
+    expect(wrapper.find('[data-testid="profile-daily-trend"]').attributes('d')).toBeTruthy()
   })
 
   it('daily chart shows the empty state for an empty range', () => {
@@ -190,5 +218,25 @@ describe('profile section — one failed aggregate retries alone', () => {
   it('renders the skeleton while loading', () => {
     const wrapper = mount(ProfileSection, { props: { name: 'pbs', loading: true }, global })
     expect(wrapper.find('[data-testid="profile-loading-pbs"]').exists()).toBe(true)
+  })
+
+  /**
+   * The anti-flicker contract: a refetch over data that is already on screen
+   * must NOT swap the content for a skeleton — the slot stays mounted (same
+   * DOM node, same chart geometry) and only gets a spinner on top.
+   */
+  it('keeps the content mounted during a refetch and floats a spinner instead', async () => {
+    const wrapper = mount(ProfileSection, {
+      props: { name: 'charts', busy: false },
+      slots: { default: '<b data-testid="chart">chart</b>' },
+      global
+    })
+    const before = wrapper.find('[data-testid="chart"]').element
+    expect(wrapper.find('[data-testid="profile-busy-charts"]').exists()).toBe(false)
+
+    await wrapper.setProps({ busy: true })
+    expect(wrapper.find('[data-testid="profile-busy-charts"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="profile-loading-charts"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="chart"]').element).toBe(before)
   })
 })

@@ -154,7 +154,14 @@
     makeSeedContext
   } from '@shared/core'
   import { useRouter } from 'vue-router'
-  import { bumpRestarts, type RunSubmitContext, useRunSubmission } from '@/features/run-submit'
+  import {
+    adoptedFromOf,
+    bumpRestarts,
+    isUnnameableRepeat,
+    type RunSubmitContext,
+    type TextOrigin,
+    useRunSubmission
+  } from '@/features/run-submit'
   import { Button } from '@shared/ui/button'
   import { Typography } from '@shared/ui/typography'
   import IconRestart from '~icons/tabler/refresh'
@@ -204,7 +211,18 @@
     }
     const bot = pace.caret.value
     if (bot === null) return []
-    return [{ id: 'pace-caret', label: '', wordIndex: bot.wordIndex, charIndex: bot.charIndex }]
+    // `glideMs` is what separates the pace bot from a relayed opponent: its next
+    // character is due at a known instant, so the caret travels the whole way
+    // there instead of jumping a cell and waiting.
+    return [
+      {
+        id: 'pace-caret',
+        label: '',
+        wordIndex: bot.wordIndex,
+        charIndex: bot.charIndex,
+        glideMs: bot.glideMs
+      }
+    ]
   })
 
   /**
@@ -322,21 +340,34 @@
   // the view-only mods are re-read at repeat time, like on any other rebuild.
   const lastSetup = ref<Omit<GameSetup, 'declaration'> | null>(null)
 
-  // The current run replays a text the player has already seen in full (the
-  // results screen shows it). Same standing as a race: it never submits.
+  // The current run replays the very same text again, straight off the results
+  // screen where the player just read it in full.
   const repeatedRun = ref(false)
 
+  /**
+   * Where this run's text came from. The judgement over it lives in the
+   * run-submit feature (`text-origin.ts`) rather than in this computed, so the
+   * rule has ONE home and its test cannot restate it.
+   */
+  const textOrigin = computed<TextOrigin>(() => ({
+    racedRunId: race.racing ? race.requestedRunId : null,
+    repeated: repeatedRun.value,
+    fixedText: activeQuote.value !== null
+  }))
+
   // Finished normally — not failed (expert/master/minSpeed) and not aborted.
-  // A RACE run never counts as submittable: its text is pre-known (the whole
-  // record is on screen), so it must never reach POST /runs — and a REPEATED
-  // solo run is pre-known the same way. The spy test on the race guard travels
-  // with the race feature.
+  //
+  // Note what is NO LONGER here: `!race.racing`. A race run IS submitted now,
+  // carrying `adoptedFromRunId`; the server saves it, shows it in history and
+  // ranks it nowhere (RUNS.md, "Text provenance"). Blocking the POST was the
+  // same verdict with the run thrown away, and it gated on the wrong thing — the
+  // rule is about where the TEXT came from, not about whether a second caret was
+  // on screen.
   const finishedOk = computed(
     () =>
       game.phase === 'finished' &&
       game.snapshot.failReason === null &&
-      !race.racing &&
-      !repeatedRun.value
+      !isUnnameableRepeat(textOrigin.value)
   )
 
   function buildRunContext(): RunSubmitContext | null {
@@ -344,6 +375,7 @@
     const replay = game.getReplayData()
     const score = game.scoreResult
     if (!meta || !replay || !score) return null
+    const adopted = adoptedFromOf(textOrigin.value)
     return {
       mode: replay.config.mode,
       config: replay.config,
@@ -355,7 +387,8 @@
       metrics: game.metrics,
       score,
       log: replay.log,
-      logVersion: game.logVersion
+      logVersion: game.logVersion,
+      ...(adopted !== undefined ? { adoptedFromRunId: adopted } : {})
     }
   }
 

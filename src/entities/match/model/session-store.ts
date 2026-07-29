@@ -93,6 +93,7 @@ import {
   matchGeneration,
   scoringGeneration
 } from './match-setup'
+import { rankStandings } from './standings'
 
 /**
  * Stand-in for the word list a quote match never reads: the core takes a
@@ -1357,36 +1358,8 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
       return row
     })
 
-    // MATCH.md §1 tiers: everyone who actually finished, then everyone knocked
-    // out by a freemod rule (they sent `finish` too, so the wire calls them
-    // `finished`), then dnf/left. Eliminated players order by how far into the
-    // TEXT they got — the canonical progress, not their caret.
-    const tierOf = (row: StandingRow): number => {
-      if (row.status !== 'finished') return 2
-      return row.failReason === undefined ? 0 : 1
-    }
-
-    rows.sort((a, b) => {
-      const tierA = tierOf(a)
-      const tierB = tierOf(b)
-      if (tierA !== tierB) return tierA - tierB
-      if (tierA === 0) {
-        // Counted modes (words, quote): first to complete the map, by log time.
-        // Time mode: scoreV2.
-        if (settings.mode !== 'time') {
-          return (
-            (countedRankKey.get(a.playerId) ?? Number.POSITIVE_INFINITY) -
-            (countedRankKey.get(b.playerId) ?? Number.POSITIVE_INFINITY)
-          )
-        }
-        return (b.score ?? 0) - (a.score ?? 0)
-      }
-      if (tierA === 1) return b.progress - a.progress
-      // dnf/left rank last, ordered by partial-log wpm.
-      return (b.wpm ?? 0) - (a.wpm ?? 0)
-    })
-    rows.forEach((row, index) => (row.rank = index + 1))
-    return rows
+    // MATCH.md §1 tiers, and the tie-breaks inside each — see `rankStandings`.
+    return rankStandings(rows, { mode: settings.mode, countedRankKey })
   }
 
   /**

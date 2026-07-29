@@ -7,10 +7,26 @@
  * not even the player themselves.
  *
  * Movement model: wpm is defined as 5 characters (space included) per word per
- * minute, so the bot advances through the TARGET text at `wpm * 5 / 60000`
- * chars per ms, anchored to the instant the run leaves `idle` — the same
+ * minute, so the bot spends `60000 / (wpm * 5)` ms on each character of the
+ * TARGET text, anchored to the instant the run leaves `idle` — the same
  * starting gun the record ghost uses. Target positions only (a word costs
  * `length + 1` chars); the raw typed string is never measured.
+ *
+ * The bot STEPS, it does not sample. It emits one position per character, and
+ * with it the time it has to get there, so the caret animates the whole way and
+ * arrives exactly on the beat — monkeytype's pace-caret loop
+ * (`frontend/src/ts/test/pace-caret.ts`: `duration = absoluteStepEnd - now`,
+ * `easing: "linear"`, re-armed by a timer for the character after that).
+ *
+ * A per-frame sampler is what this replaces, and it is worth being explicit
+ * about why, because it looks like the more precise of the two: a clock read
+ * every frame still lands on a WHOLE character index, so the caret jumped a
+ * full cell at a time and then stood still until the next one was due — the
+ * per-character hopping the pace caret is supposed not to do. It also woke the
+ * page every frame for a value that changes a handful of times a second. The
+ * schedule below is both smoother and cheaper: no rAF at all, one write per
+ * character, and the travel between two characters is the browser's to
+ * interpolate.
  *
  * Placement rationale (FSD): reads the game entity, the auth entity and the
  * profile API at once — cross-entity orchestration, hence a feature.
@@ -29,9 +45,19 @@ export interface PaceCaretPosition {
   readonly charIndex: number
 }
 
+/** A position plus the time the caret has to travel there. */
+export interface PaceCaretStep extends PaceCaretPosition {
+  /**
+   * Milliseconds until this character is due — the caret's animation duration.
+   * `0` is a snap (the starting line), which is the only place the bot is ever
+   * placed rather than sent.
+   */
+  readonly glideMs: number
+}
+
 export interface PaceCaret {
   /** The bot's caret while it is on track; null renders nothing. */
-  readonly caret: Ref<PaceCaretPosition | null>
+  readonly caret: Ref<PaceCaretStep | null>
   /** The speed the CURRENT mode resolves to, or null (off / no data yet). */
   readonly targetWpm: ComputedRef<number | null>
 }
@@ -92,7 +118,9 @@ export function usePaceCaret(opts: {
     computed(() => gatedBy(profilePBsQueryOptions(), wantsProfile.value && mode.value === 'pb'))
   )
   const summary = useQuery(
-    computed(() => gatedBy(profileSummaryQueryOptions(), wantsProfile.value && mode.value === 'avg'))
+    computed(() =>
+      gatedBy(profileSummaryQueryOptions(), wantsProfile.value && mode.value === 'avg')
+    )
   )
   const lastRuns = useQuery(
     computed(() => gatedBy(runsQueryOptions(), wantsProfile.value && mode.value === 'last'))
@@ -144,25 +172,45 @@ export function usePaceCaret(opts: {
     }
   })
 
-  const caret = shallowRef<PaceCaretPosition | null>(null)
-  let rafId = 0
+  const caret = shallowRef<PaceCaretStep | null>(null)
+  let timer: ReturnType<typeof setTimeout> | null = null
   let startAt = 0
-  /** Speed is captured at the starting gun — a mid-run config change never warps the bot. */
-  let runWpm = 0
+  /** Milliseconds per character at the captured speed. */
+  let msPerChar = 0
+  /** How many characters the bot has been SENT to (not how many it has reached). */
+  let chars = 0
 
-  const frame = (now: number): void => {
-    // The rAF timestamp is the frame's vsync instant and can PREDATE the
-    // performance.now() taken at the starting gun — an unclamped first frame
-    // floors to chars = -1 and walks the bot to charIndex -1.
-    const chars = Math.floor((Math.max(0, now - startAt) * runWpm * CHARS_PER_WORD) / MINUTE_MS)
+  /**
+   * Send the bot to the NEXT character, giving it the whole time that is left
+   * before that character is due, and re-arm for the one after it.
+   *
+   * The timer therefore fires when the caret ARRIVES, not when the next
+   * character comes due — that one step of difference is what keeps the caret
+   * permanently in motion instead of permanently a character behind.
+   *
+   * `dueAt` is measured off the starting gun rather than accumulated from the
+   * previous step, so a late callback shortens the next glide instead of
+   * pushing the whole schedule back — over a 60-second run a setTimeout that is
+   * a few ms late on every character would otherwise cost the bot whole words.
+   */
+  const step = (): void => {
+    chars += 1
     const position = pacePositionAt(game.words, chars)
-    caret.value = position
-    if (position === null) return // The bot finished; nothing left to draw.
-    rafId = requestAnimationFrame(frame)
+    if (position === null) {
+      // Out of text: the bot finished and leaves the track.
+      caret.value = null
+      timer = null
+      return
+    }
+    const dueAt = startAt + chars * msPerChar
+    const remaining = Math.max(0, dueAt - performance.now())
+    caret.value = { ...position, glideMs: remaining }
+    timer = setTimeout(step, remaining)
   }
 
   const stop = (): void => {
-    cancelAnimationFrame(rafId)
+    if (timer !== null) clearTimeout(timer)
+    timer = null
     caret.value = null
   }
 
@@ -172,11 +220,18 @@ export function usePaceCaret(opts: {
       if (phase === 'running') {
         const wpm = targetWpm.value
         if (wpm === null || opts.suspended()) return
-        runWpm = wpm
+        // Speed is captured at the starting gun — a mid-run config change never
+        // warps the bot.
+        msPerChar = MINUTE_MS / (wpm * CHARS_PER_WORD)
         startAt = performance.now()
-        caret.value = { wordIndex: 0, charIndex: 0 }
-        cancelAnimationFrame(rafId)
-        rafId = requestAnimationFrame(frame)
+        chars = 0
+        if (timer !== null) clearTimeout(timer)
+        // On the start line instantly; everything after this is travelled. The
+        // first aim waits a macrotask so the caret is RENDERED at the start line
+        // before it is sent anywhere — a brand-new element has no previous
+        // transform to animate from, and would simply appear one character in.
+        caret.value = { wordIndex: 0, charIndex: 0, glideMs: 0 }
+        timer = setTimeout(step, 0)
         return
       }
       // idle (fresh setup) or finished — either way the bot leaves the track.

@@ -392,8 +392,9 @@
    */
   const onScreenshot = async (): Promise<void> => {
     const ok = await copyScreenshot()
-    // Sonner, not the entities/alert store: that store's renderer is mounted
-    // nowhere, so its "always reported" was a report into the void.
+    // Sonner — the app's ONE toast system. The old alert store this used to
+    // call had no renderer mounted anywhere, so its "always reported" was a
+    // report into the void; the store and its widget are gone.
     if (ok) toast.success(t('results.screenshotCopied'))
     else toast.error(t('results.screenshotFailed'))
   }

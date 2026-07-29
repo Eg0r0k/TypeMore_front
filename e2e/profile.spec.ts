@@ -118,24 +118,8 @@ async function stubProfile(
       })
     )
   )
-  await page.route(/\/api\/v1\/layouts(\?|$)/, (route) =>
-    route.fulfill(
-      json({
-        layouts: [
-          {
-            name: 'qwerty',
-            label: 'QWERTY',
-            keys: [{ id: 'KeyF', row: 0, col: 0, finger: 'index', hand: 'left', chars: ['f', 'F'] }]
-          },
-          {
-            name: 'jcuken',
-            label: 'ЙЦУКЕН',
-            keys: [{ id: 'KeyF', row: 0, col: 0, finger: 'index', hand: 'left', chars: ['а', 'А'] }]
-          }
-        ]
-      })
-    )
-  )
+  // No /layouts stub: the heatmap draws from the LOCAL layout presets
+  // (features/profile/model/layouts.ts), so the page makes no such request.
   await page.route(/\/api\/v1\/runs(\?|$)/, (route) => {
     const url = route.request().url()
     runsCalls.push(url)
@@ -184,8 +168,11 @@ test('the profile loads with seeded data, filters refetch, load-more appends, wa
   await page.getByTestId('profile-range-week').click()
   await expect.poll(() => timeseriesCalls.some((url) => url.includes('from='))).toBe(true)
 
-  // C9 — the keyboard heatmap drew its key.
+  // C9 — the keyboard heatmap drew its key, and the layout strip offers latin
+  // presets only (no ЙЦУКЕН).
   await expect(page.getByTestId('profile-kbd-key-KeyF')).toBeVisible()
+  await expect(page.getByTestId('profile-kbd-layout-colemak')).toBeVisible()
+  await expect(page.getByTestId('profile-kbd-layout-jcuken')).toHaveCount(0)
 
   // The runs table: derived cells, then keyset load-more appends the next page.
   await expect(page.getByTestId('profile-run-row')).toHaveCount(1)

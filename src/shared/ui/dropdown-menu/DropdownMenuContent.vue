@@ -29,7 +29,7 @@
       v-bind="{ ...$attrs, ...forwarded }"
       :class="
         cn(
-          'bg-sub-alt text-text border border-sub transition-tm data-[state=open]:opacity-100 data-[state=closed]:opacity-0 data-[state=open]:scale-100 data-[state=closed]:scale-95 z-[var(--popup-z)] max-h-(--reka-dropdown-menu-content-available-height) min-w-[8rem] origin-(--reka-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md p-1.5',
+          'bg-sub-alt text-text border border-sub popup-motion data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 z-[var(--popup-z)] max-h-(--reka-dropdown-menu-content-available-height) min-w-[8rem] origin-(--reka-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md p-1.5',
           props.class
         )
       "

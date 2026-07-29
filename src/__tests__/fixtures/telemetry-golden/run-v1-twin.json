@@ -1,0 +1,547 @@
+{
+  "provenance": {
+    "derivedFrom": "ea2bfd6d-169f-41dc-bf7d-0cac74ee7423",
+    "derivation": "Every `down`/`up` removed from run-v2.json, `seq` renumbered contiguously from 1. Nothing else touched: `t` and payloads are the bytes the real client wrote.",
+    "note": "FROZEN EXPECTATION. Regenerating this file from the v2 log at test time would make the golden pair circular — the test compares against these stored bytes."
+  },
+  "log": {
+    "version": 1,
+    "events": [
+      {
+        "kind": "insert",
+        "seq": 1,
+        "t": 796,
+        "text": "х"
+      },
+      {
+        "kind": "insert",
+        "seq": 2,
+        "t": 1102,
+        "text": "о"
+      },
+      {
+        "kind": "insert",
+        "seq": 3,
+        "t": 1319,
+        "text": "р"
+      },
+      {
+        "kind": "insert",
+        "seq": 4,
+        "t": 1377,
+        "text": "о"
+      },
+      {
+        "kind": "insert",
+        "seq": 5,
+        "t": 1576,
+        "text": "ш"
+      },
+      {
+        "kind": "insert",
+        "seq": 6,
+        "t": 1765,
+        "text": "т"
+      },
+      {
+        "kind": "commit",
+        "seq": 7,
+        "t": 1882
+      },
+      {
+        "kind": "delete",
+        "seq": 8,
+        "t": 2190,
+        "unit": "char"
+      },
+      {
+        "kind": "delete",
+        "seq": 9,
+        "t": 2320,
+        "unit": "char"
+      },
+      {
+        "kind": "insert",
+        "seq": 10,
+        "t": 2486,
+        "text": "о"
+      },
+      {
+        "kind": "commit",
+        "seq": 11,
+        "t": 2622
+      },
+      {
+        "kind": "insert",
+        "seq": 12,
+        "t": 2791,
+        "text": "т"
+      },
+      {
+        "kind": "insert",
+        "seq": 13,
+        "t": 2959,
+        "text": "р"
+      },
+      {
+        "kind": "insert",
+        "seq": 14,
+        "t": 3023,
+        "text": "а"
+      },
+      {
+        "kind": "insert",
+        "seq": 15,
+        "t": 3194,
+        "text": "в"
+      },
+      {
+        "kind": "insert",
+        "seq": 16,
+        "t": 3351,
+        "text": "а"
+      },
+      {
+        "kind": "commit",
+        "seq": 17,
+        "t": 3465
+      },
+      {
+        "kind": "insert",
+        "seq": 18,
+        "t": 3681,
+        "text": "з"
+      },
+      {
+        "kind": "insert",
+        "seq": 19,
+        "t": 3949,
+        "text": "а"
+      },
+      {
+        "kind": "insert",
+        "seq": 20,
+        "t": 4183,
+        "text": "п"
+      },
+      {
+        "kind": "insert",
+        "seq": 21,
+        "t": 4578,
+        "text": "а"
+      },
+      {
+        "kind": "insert",
+        "seq": 22,
+        "t": 4769,
+        "text": "х"
+      },
+      {
+        "kind": "commit",
+        "seq": 23,
+        "t": 4902
+      },
+      {
+        "kind": "insert",
+        "seq": 24,
+        "t": 5203,
+        "text": "у"
+      },
+      {
+        "kind": "insert",
+        "seq": 25,
+        "t": 5405,
+        "text": "м"
+      },
+      {
+        "kind": "insert",
+        "seq": 26,
+        "t": 5434,
+        "text": "м"
+      },
+      {
+        "kind": "commit",
+        "seq": 27,
+        "t": 5508
+      },
+      {
+        "kind": "delete",
+        "seq": 28,
+        "t": 5954,
+        "unit": "char"
+      },
+      {
+        "kind": "delete",
+        "seq": 29,
+        "t": 6088,
+        "unit": "char"
+      },
+      {
+        "kind": "commit",
+        "seq": 30,
+        "t": 6229
+      },
+      {
+        "kind": "insert",
+        "seq": 31,
+        "t": 6592,
+        "text": "с"
+      },
+      {
+        "kind": "insert",
+        "seq": 32,
+        "t": 6620,
+        "text": "с"
+      },
+      {
+        "kind": "insert",
+        "seq": 33,
+        "t": 6713,
+        "text": "л"
+      },
+      {
+        "kind": "insert",
+        "seq": 34,
+        "t": 6841,
+        "text": "а"
+      },
+      {
+        "kind": "delete",
+        "seq": 35,
+        "t": 7052,
+        "unit": "char"
+      },
+      {
+        "kind": "delete",
+        "seq": 36,
+        "t": 7207,
+        "unit": "char"
+      },
+      {
+        "kind": "delete",
+        "seq": 37,
+        "t": 7354,
+        "unit": "char"
+      },
+      {
+        "kind": "insert",
+        "seq": 38,
+        "t": 7552,
+        "text": "л"
+      },
+      {
+        "kind": "insert",
+        "seq": 39,
+        "t": 7674,
+        "text": "у"
+      },
+      {
+        "kind": "insert",
+        "seq": 40,
+        "t": 8059,
+        "text": "ж"
+      },
+      {
+        "kind": "insert",
+        "seq": 41,
+        "t": 8441,
+        "text": "и"
+      },
+      {
+        "kind": "insert",
+        "seq": 42,
+        "t": 8652,
+        "text": "т"
+      },
+      {
+        "kind": "insert",
+        "seq": 43,
+        "t": 8712,
+        "text": "ь"
+      },
+      {
+        "kind": "commit",
+        "seq": 44,
+        "t": 8856
+      },
+      {
+        "kind": "insert",
+        "seq": 45,
+        "t": 9491,
+        "text": "п"
+      },
+      {
+        "kind": "insert",
+        "seq": 46,
+        "t": 9584,
+        "text": "о"
+      },
+      {
+        "kind": "insert",
+        "seq": 47,
+        "t": 10401,
+        "text": "в"
+      },
+      {
+        "kind": "insert",
+        "seq": 48,
+        "t": 10608,
+        "text": "е"
+      },
+      {
+        "kind": "insert",
+        "seq": 49,
+        "t": 10723,
+        "text": "р"
+      },
+      {
+        "kind": "insert",
+        "seq": 50,
+        "t": 10874,
+        "text": "и"
+      },
+      {
+        "kind": "insert",
+        "seq": 51,
+        "t": 11125,
+        "text": "т"
+      },
+      {
+        "kind": "insert",
+        "seq": 52,
+        "t": 11158,
+        "text": "ь"
+      },
+      {
+        "kind": "commit",
+        "seq": 53,
+        "t": 11389
+      },
+      {
+        "kind": "insert",
+        "seq": 54,
+        "t": 11730,
+        "text": "к"
+      },
+      {
+        "kind": "insert",
+        "seq": 55,
+        "t": 12189,
+        "text": "о"
+      },
+      {
+        "kind": "insert",
+        "seq": 56,
+        "t": 12416,
+        "text": "н"
+      },
+      {
+        "kind": "insert",
+        "seq": 57,
+        "t": 12501,
+        "text": "е"
+      },
+      {
+        "kind": "insert",
+        "seq": 58,
+        "t": 12725,
+        "text": "ч"
+      },
+      {
+        "kind": "insert",
+        "seq": 59,
+        "t": 12796,
+        "text": "н"
+      },
+      {
+        "kind": "insert",
+        "seq": 60,
+        "t": 12938,
+        "text": "ы"
+      },
+      {
+        "kind": "insert",
+        "seq": 61,
+        "t": 13015,
+        "text": "й"
+      },
+      {
+        "kind": "commit",
+        "seq": 62,
+        "t": 13095
+      },
+      {
+        "kind": "insert",
+        "seq": 63,
+        "t": 13428,
+        "text": "н"
+      },
+      {
+        "kind": "insert",
+        "seq": 64,
+        "t": 13570,
+        "text": "е"
+      },
+      {
+        "kind": "insert",
+        "seq": 65,
+        "t": 13736,
+        "text": "б"
+      },
+      {
+        "kind": "insert",
+        "seq": 66,
+        "t": 13932,
+        "text": "о"
+      },
+      {
+        "kind": "insert",
+        "seq": 67,
+        "t": 14024,
+        "text": "л"
+      },
+      {
+        "kind": "insert",
+        "seq": 68,
+        "t": 14103,
+        "text": "ь"
+      },
+      {
+        "kind": "insert",
+        "seq": 69,
+        "t": 14332,
+        "text": "ш"
+      },
+      {
+        "kind": "insert",
+        "seq": 70,
+        "t": 14685,
+        "text": "р"
+      },
+      {
+        "kind": "delete",
+        "seq": 71,
+        "t": 15121,
+        "unit": "char"
+      },
+      {
+        "kind": "insert",
+        "seq": 72,
+        "t": 15285,
+        "text": "о"
+      },
+      {
+        "kind": "insert",
+        "seq": 73,
+        "t": 15341,
+        "text": "й"
+      },
+      {
+        "kind": "commit",
+        "seq": 74,
+        "t": 15438
+      },
+      {
+        "kind": "insert",
+        "seq": 75,
+        "t": 15678,
+        "text": "с"
+      },
+      {
+        "kind": "insert",
+        "seq": 76,
+        "t": 15899,
+        "text": "м"
+      },
+      {
+        "kind": "insert",
+        "seq": 77,
+        "t": 16097,
+        "text": "е"
+      },
+      {
+        "kind": "insert",
+        "seq": 78,
+        "t": 16403,
+        "text": "я"
+      },
+      {
+        "kind": "insert",
+        "seq": 79,
+        "t": 16857,
+        "text": "т"
+      },
+      {
+        "kind": "insert",
+        "seq": 80,
+        "t": 17049,
+        "text": "ь"
+      },
+      {
+        "kind": "insert",
+        "seq": 81,
+        "t": 17218,
+        "text": "с"
+      },
+      {
+        "kind": "insert",
+        "seq": 82,
+        "t": 17365,
+        "text": "я"
+      },
+      {
+        "kind": "commit",
+        "seq": 83,
+        "t": 17493
+      },
+      {
+        "kind": "insert",
+        "seq": 84,
+        "t": 17722,
+        "text": "ж"
+      },
+      {
+        "kind": "insert",
+        "seq": 85,
+        "t": 17823,
+        "text": "и"
+      },
+      {
+        "kind": "insert",
+        "seq": 86,
+        "t": 18157,
+        "text": "в"
+      },
+      {
+        "kind": "insert",
+        "seq": 87,
+        "t": 18243,
+        "text": "о"
+      },
+      {
+        "kind": "insert",
+        "seq": 88,
+        "t": 18399,
+        "text": "т"
+      },
+      {
+        "kind": "insert",
+        "seq": 89,
+        "t": 18583,
+        "text": "н"
+      },
+      {
+        "kind": "insert",
+        "seq": 90,
+        "t": 18660,
+        "text": "ы"
+      },
+      {
+        "kind": "insert",
+        "seq": 91,
+        "t": 18712,
+        "text": "й"
+      }
+    ]
+  }
+}

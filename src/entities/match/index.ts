@@ -26,6 +26,8 @@ export type {
   SelfOutcome,
   StandingRow
 } from './model/session-store'
+export { TIER, rankStandings, tierOf } from './model/standings'
+export type { RankOptions } from './model/standings'
 export { createMatchTransport, resolveWsUrl } from './model/create-transport'
 export type { LoopbackHarness } from './model/create-transport'
 export { addLoopbackBot } from './model/loopback-bot'

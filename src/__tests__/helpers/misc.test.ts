@@ -1,47 +1,50 @@
-import { logRandomIndex } from '@/shared/lib/helpers/misc'
+import { describe, it, expect, afterEach } from 'vitest'
 
-import { describe, it, expect } from 'vitest'
+import { uuid } from '@/shared/lib/helpers/misc'
 
-describe('logRandomIndex', () => {
-  it('should return an index within array bounds', () => {
-    const arrayLengths = [5, 10, 100, 1000]
+/** RFC 4122 v4: version nibble `4`, variant nibble one of 8/9/a/b. */
+const V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 
-    arrayLengths.forEach((len) => {
-      const result = logRandomIndex(len)
-      expect(result).toBeGreaterThanOrEqual(0)
-      expect(result).toBeLessThan(len)
-      expect(Number.isInteger(result)).toBe(true)
-    })
+const originalRandomUUID = Object.getOwnPropertyDescriptor(crypto, 'randomUUID')
+const originalGetRandomValues = Object.getOwnPropertyDescriptor(crypto, 'getRandomValues')
+
+/** `randomUUID` can be a read-only accessor — redefine it, never assign. */
+const define = (key: 'randomUUID' | 'getRandomValues', value: unknown): void => {
+  Object.defineProperty(crypto, key, { value, configurable: true, writable: true })
+}
+
+const restore = (key: 'randomUUID' | 'getRandomValues', from?: PropertyDescriptor): void => {
+  if (from) Object.defineProperty(crypto, key, from)
+  else define(key, undefined)
+}
+
+afterEach(() => {
+  restore('randomUUID', originalRandomUUID)
+  restore('getRandomValues', originalGetRandomValues)
+})
+
+describe('uuid', () => {
+  it('delegates to crypto.randomUUID when the secure-context API exists', () => {
+    define('randomUUID', () => '11111111-2222-4333-8444-555555555555')
+    expect(uuid()).toBe('11111111-2222-4333-8444-555555555555')
   })
 
-  it('should handle small arrays', () => {
-    expect(logRandomIndex(1)).toBe(0)
-    const result = logRandomIndex(2)
-    expect(result).toBeGreaterThanOrEqual(0)
-    expect(result).toBeLessThan(2)
+  it('falls back to getRandomValues when randomUUID is missing (plain-http dev server)', () => {
+    define('randomUUID', undefined)
+    expect(uuid()).toMatch(V4)
   })
 
-  it('should have reasonable distribution', () => {
-    const len = 10
-    const iterations = 1000
-    const counts = new Array(len).fill(0)
-
-    for (let i = 0; i < iterations; i++) {
-      const index = logRandomIndex(len)
-      counts[index]++
-    }
-
-    counts.forEach((count) => {
-      expect(count).toBeGreaterThan(0)
-    })
+  it('forces the version and variant bits itself on the fallback path', () => {
+    define('randomUUID', undefined)
+    // All-zero entropy: the only non-zero nibbles left must be the ones the
+    // fallback stamps in — version `4` and variant `8`.
+    define('getRandomValues', (buffer: Uint8Array) => buffer.fill(0))
+    expect(uuid()).toBe('00000000-0000-4000-8000-000000000000')
   })
 
-  it('should handle edge cases', () => {
-    expect(logRandomIndex(1)).toBe(0)
-
-    const result = logRandomIndex(1000000)
-    expect(result).toBeGreaterThanOrEqual(0)
-    expect(result).toBeLessThan(1000000)
-    expect(Number.isInteger(result)).toBe(true)
+  it('does not repeat across calls on the fallback path', () => {
+    define('randomUUID', undefined)
+    const seen = new Set(Array.from({ length: 100 }, () => uuid()))
+    expect(seen.size).toBe(100)
   })
 })

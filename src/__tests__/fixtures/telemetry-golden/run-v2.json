@@ -1,0 +1,1701 @@
+{
+  "provenance": {
+    "database": "TypeMore_back dev postgres (docker compose service `postgres`)",
+    "table": "runs",
+    "runId": "ea2bfd6d-169f-41dc-bf7d-0cac74ee7423",
+    "createdAt": "2026-07-29T13:11:03.347321+00:00",
+    "status": "accepted",
+    "exportedAt": "2026-07-29",
+    "note": "Pulled verbatim: the log below is the gunzipped `runs.log` blob of this row, event for event."
+  },
+  "seed": 1770502889,
+  "lang": "russian",
+  "dictHash": "f5aacfd2",
+  "mode": "words",
+  "wordCount": 10,
+  "durationMs": null,
+  "setup": {
+    "config": {
+      "mode": "words",
+      "minWpm": 0,
+      "nospace": false,
+      "quickEnd": true,
+      "difficulty": "normal",
+      "durationMs": 15000,
+      "freedomMode": false,
+      "stopOnError": "off",
+      "maxExtraChars": 20
+    },
+    "generation": {
+      "mode": "words",
+      "length": 10,
+      "numbers": false,
+      "reverse": false,
+      "randomCase": false,
+      "punctuation": false
+    },
+    "declaration": {
+      "blind": false,
+      "fading": false,
+      "flashlight": false
+    }
+  },
+  "serverValidation": {
+    "flags": [],
+    "policy": {
+      "version": 1,
+      "suspicion": 0,
+      "threshold": 1
+    },
+    "verdict": "valid"
+  },
+  "serverScore": {
+    "base": 615,
+    "total": 324,
+    "version": 2,
+    "comboPeak": 26,
+    "timeBonus": 0.6279303415941058,
+    "accMultiplier": 0.8402777777777777,
+    "modMultiplier": 1
+  },
+  "serverMetrics": {
+    "raw": 50.23442732752846,
+    "wpm": 50.23442732752846,
+    "chars": {
+      "extra": 0,
+      "missed": 0,
+      "correct": 66,
+      "incorrect": 0
+    },
+    "spaces": 9,
+    "accuracy": 0.9166666666666666,
+    "consistency": 0.6282488981945955,
+    "durationSec": 17.916
+  },
+  "log": {
+    "version": 2,
+    "events": [
+      {
+        "kind": "down",
+        "seq": 1,
+        "t": 0,
+        "code": "MetaLeft"
+      },
+      {
+        "kind": "down",
+        "seq": 2,
+        "t": 795,
+        "code": "BracketLeft"
+      },
+      {
+        "kind": "insert",
+        "seq": 3,
+        "t": 796,
+        "text": "х"
+      },
+      {
+        "kind": "up",
+        "seq": 4,
+        "t": 900,
+        "code": "BracketLeft"
+      },
+      {
+        "kind": "down",
+        "seq": 5,
+        "t": 1102,
+        "code": "KeyJ"
+      },
+      {
+        "kind": "insert",
+        "seq": 6,
+        "t": 1102,
+        "text": "о"
+      },
+      {
+        "kind": "up",
+        "seq": 7,
+        "t": 1172,
+        "code": "KeyJ"
+      },
+      {
+        "kind": "down",
+        "seq": 8,
+        "t": 1319,
+        "code": "KeyH"
+      },
+      {
+        "kind": "insert",
+        "seq": 9,
+        "t": 1319,
+        "text": "р"
+      },
+      {
+        "kind": "down",
+        "seq": 10,
+        "t": 1377,
+        "code": "KeyJ"
+      },
+      {
+        "kind": "insert",
+        "seq": 11,
+        "t": 1377,
+        "text": "о"
+      },
+      {
+        "kind": "up",
+        "seq": 12,
+        "t": 1418,
+        "code": "KeyH"
+      },
+      {
+        "kind": "up",
+        "seq": 13,
+        "t": 1455,
+        "code": "KeyJ"
+      },
+      {
+        "kind": "down",
+        "seq": 14,
+        "t": 1575,
+        "code": "KeyI"
+      },
+      {
+        "kind": "insert",
+        "seq": 15,
+        "t": 1576,
+        "text": "ш"
+      },
+      {
+        "kind": "up",
+        "seq": 16,
+        "t": 1664,
+        "code": "KeyI"
+      },
+      {
+        "kind": "down",
+        "seq": 17,
+        "t": 1765,
+        "code": "KeyN"
+      },
+      {
+        "kind": "insert",
+        "seq": 18,
+        "t": 1765,
+        "text": "т"
+      },
+      {
+        "kind": "up",
+        "seq": 19,
+        "t": 1827,
+        "code": "KeyN"
+      },
+      {
+        "kind": "down",
+        "seq": 20,
+        "t": 1882,
+        "code": "Space"
+      },
+      {
+        "kind": "commit",
+        "seq": 21,
+        "t": 1882
+      },
+      {
+        "kind": "up",
+        "seq": 22,
+        "t": 1982,
+        "code": "Space"
+      },
+      {
+        "kind": "down",
+        "seq": 23,
+        "t": 2190,
+        "code": "Backspace"
+      },
+      {
+        "kind": "delete",
+        "seq": 24,
+        "t": 2190,
+        "unit": "char"
+      },
+      {
+        "kind": "up",
+        "seq": 25,
+        "t": 2264,
+        "code": "Backspace"
+      },
+      {
+        "kind": "down",
+        "seq": 26,
+        "t": 2320,
+        "code": "Backspace"
+      },
+      {
+        "kind": "delete",
+        "seq": 27,
+        "t": 2320,
+        "unit": "char"
+      },
+      {
+        "kind": "up",
+        "seq": 28,
+        "t": 2422,
+        "code": "Backspace"
+      },
+      {
+        "kind": "down",
+        "seq": 29,
+        "t": 2485,
+        "code": "KeyJ"
+      },
+      {
+        "kind": "insert",
+        "seq": 30,
+        "t": 2486,
+        "text": "о"
+      },
+      {
+        "kind": "up",
+        "seq": 31,
+        "t": 2576,
+        "code": "KeyJ"
+      },
+      {
+        "kind": "down",
+        "seq": 32,
+        "t": 2622,
+        "code": "Space"
+      },
+      {
+        "kind": "commit",
+        "seq": 33,
+        "t": 2622
+      },
+      {
+        "kind": "up",
+        "seq": 34,
+        "t": 2737,
+        "code": "Space"
+      },
+      {
+        "kind": "down",
+        "seq": 35,
+        "t": 2791,
+        "code": "KeyN"
+      },
+      {
+        "kind": "insert",
+        "seq": 36,
+        "t": 2791,
+        "text": "т"
+      },
+      {
+        "kind": "up",
+        "seq": 37,
+        "t": 2859,
+        "code": "KeyN"
+      },
+      {
+        "kind": "down",
+        "seq": 38,
+        "t": 2958,
+        "code": "KeyH"
+      },
+      {
+        "kind": "insert",
+        "seq": 39,
+        "t": 2959,
+        "text": "р"
+      },
+      {
+        "kind": "down",
+        "seq": 40,
+        "t": 3022,
+        "code": "KeyF"
+      },
+      {
+        "kind": "insert",
+        "seq": 41,
+        "t": 3023,
+        "text": "а"
+      },
+      {
+        "kind": "up",
+        "seq": 42,
+        "t": 3045,
+        "code": "KeyH"
+      },
+      {
+        "kind": "up",
+        "seq": 43,
+        "t": 3086,
+        "code": "KeyF"
+      },
+      {
+        "kind": "down",
+        "seq": 44,
+        "t": 3193,
+        "code": "KeyD"
+      },
+      {
+        "kind": "insert",
+        "seq": 45,
+        "t": 3194,
+        "text": "в"
+      },
+      {
+        "kind": "up",
+        "seq": 46,
+        "t": 3276,
+        "code": "KeyD"
+      },
+      {
+        "kind": "down",
+        "seq": 47,
+        "t": 3350,
+        "code": "KeyF"
+      },
+      {
+        "kind": "insert",
+        "seq": 48,
+        "t": 3351,
+        "text": "а"
+      },
+      {
+        "kind": "up",
+        "seq": 49,
+        "t": 3464,
+        "code": "KeyF"
+      },
+      {
+        "kind": "down",
+        "seq": 50,
+        "t": 3465,
+        "code": "Space"
+      },
+      {
+        "kind": "commit",
+        "seq": 51,
+        "t": 3465
+      },
+      {
+        "kind": "up",
+        "seq": 52,
+        "t": 3565,
+        "code": "Space"
+      },
+      {
+        "kind": "down",
+        "seq": 53,
+        "t": 3680,
+        "code": "KeyP"
+      },
+      {
+        "kind": "insert",
+        "seq": 54,
+        "t": 3681,
+        "text": "з"
+      },
+      {
+        "kind": "up",
+        "seq": 55,
+        "t": 3770,
+        "code": "KeyP"
+      },
+      {
+        "kind": "down",
+        "seq": 56,
+        "t": 3948,
+        "code": "KeyF"
+      },
+      {
+        "kind": "insert",
+        "seq": 57,
+        "t": 3949,
+        "text": "а"
+      },
+      {
+        "kind": "up",
+        "seq": 58,
+        "t": 4064,
+        "code": "KeyF"
+      },
+      {
+        "kind": "down",
+        "seq": 59,
+        "t": 4182,
+        "code": "KeyG"
+      },
+      {
+        "kind": "insert",
+        "seq": 60,
+        "t": 4183,
+        "text": "п"
+      },
+      {
+        "kind": "up",
+        "seq": 61,
+        "t": 4300,
+        "code": "KeyG"
+      },
+      {
+        "kind": "down",
+        "seq": 62,
+        "t": 4577,
+        "code": "KeyF"
+      },
+      {
+        "kind": "insert",
+        "seq": 63,
+        "t": 4578,
+        "text": "а"
+      },
+      {
+        "kind": "up",
+        "seq": 64,
+        "t": 4692,
+        "code": "KeyF"
+      },
+      {
+        "kind": "down",
+        "seq": 65,
+        "t": 4768,
+        "code": "BracketLeft"
+      },
+      {
+        "kind": "insert",
+        "seq": 66,
+        "t": 4769,
+        "text": "х"
+      },
+      {
+        "kind": "up",
+        "seq": 67,
+        "t": 4860,
+        "code": "BracketLeft"
+      },
+      {
+        "kind": "down",
+        "seq": 68,
+        "t": 4902,
+        "code": "Space"
+      },
+      {
+        "kind": "commit",
+        "seq": 69,
+        "t": 4902
+      },
+      {
+        "kind": "up",
+        "seq": 70,
+        "t": 5000,
+        "code": "Space"
+      },
+      {
+        "kind": "down",
+        "seq": 71,
+        "t": 5203,
+        "code": "KeyE"
+      },
+      {
+        "kind": "insert",
+        "seq": 72,
+        "t": 5203,
+        "text": "у"
+      },
+      {
+        "kind": "up",
+        "seq": 73,
+        "t": 5298,
+        "code": "KeyE"
+      },
+      {
+        "kind": "down",
+        "seq": 74,
+        "t": 5405,
+        "code": "KeyV"
+      },
+      {
+        "kind": "insert",
+        "seq": 75,
+        "t": 5405,
+        "text": "м"
+      },
+      {
+        "kind": "up",
+        "seq": 76,
+        "t": 5416,
+        "code": "KeyV"
+      },
+      {
+        "kind": "down",
+        "seq": 77,
+        "t": 5433,
+        "code": "KeyV"
+      },
+      {
+        "kind": "insert",
+        "seq": 78,
+        "t": 5434,
+        "text": "м"
+      },
+      {
+        "kind": "down",
+        "seq": 79,
+        "t": 5508,
+        "code": "Space"
+      },
+      {
+        "kind": "commit",
+        "seq": 80,
+        "t": 5508
+      },
+      {
+        "kind": "up",
+        "seq": 81,
+        "t": 5542,
+        "code": "KeyV"
+      },
+      {
+        "kind": "up",
+        "seq": 82,
+        "t": 5604,
+        "code": "Space"
+      },
+      {
+        "kind": "down",
+        "seq": 83,
+        "t": 5954,
+        "code": "Backspace"
+      },
+      {
+        "kind": "delete",
+        "seq": 84,
+        "t": 5954,
+        "unit": "char"
+      },
+      {
+        "kind": "up",
+        "seq": 85,
+        "t": 6019,
+        "code": "Backspace"
+      },
+      {
+        "kind": "down",
+        "seq": 86,
+        "t": 6088,
+        "code": "Backspace"
+      },
+      {
+        "kind": "delete",
+        "seq": 87,
+        "t": 6088,
+        "unit": "char"
+      },
+      {
+        "kind": "up",
+        "seq": 88,
+        "t": 6180,
+        "code": "Backspace"
+      },
+      {
+        "kind": "down",
+        "seq": 89,
+        "t": 6229,
+        "code": "Space"
+      },
+      {
+        "kind": "commit",
+        "seq": 90,
+        "t": 6229
+      },
+      {
+        "kind": "up",
+        "seq": 91,
+        "t": 6335,
+        "code": "Space"
+      },
+      {
+        "kind": "down",
+        "seq": 92,
+        "t": 6592,
+        "code": "KeyC"
+      },
+      {
+        "kind": "insert",
+        "seq": 93,
+        "t": 6592,
+        "text": "с"
+      },
+      {
+        "kind": "up",
+        "seq": 94,
+        "t": 6613,
+        "code": "KeyC"
+      },
+      {
+        "kind": "down",
+        "seq": 95,
+        "t": 6620,
+        "code": "KeyC"
+      },
+      {
+        "kind": "insert",
+        "seq": 96,
+        "t": 6620,
+        "text": "с"
+      },
+      {
+        "kind": "up",
+        "seq": 97,
+        "t": 6686,
+        "code": "KeyC"
+      },
+      {
+        "kind": "down",
+        "seq": 98,
+        "t": 6713,
+        "code": "KeyK"
+      },
+      {
+        "kind": "insert",
+        "seq": 99,
+        "t": 6713,
+        "text": "л"
+      },
+      {
+        "kind": "up",
+        "seq": 100,
+        "t": 6811,
+        "code": "KeyK"
+      },
+      {
+        "kind": "down",
+        "seq": 101,
+        "t": 6841,
+        "code": "KeyF"
+      },
+      {
+        "kind": "insert",
+        "seq": 102,
+        "t": 6841,
+        "text": "а"
+      },
+      {
+        "kind": "up",
+        "seq": 103,
+        "t": 6922,
+        "code": "KeyF"
+      },
+      {
+        "kind": "down",
+        "seq": 104,
+        "t": 7052,
+        "code": "Backspace"
+      },
+      {
+        "kind": "delete",
+        "seq": 105,
+        "t": 7052,
+        "unit": "char"
+      },
+      {
+        "kind": "up",
+        "seq": 106,
+        "t": 7131,
+        "code": "Backspace"
+      },
+      {
+        "kind": "down",
+        "seq": 107,
+        "t": 7207,
+        "code": "Backspace"
+      },
+      {
+        "kind": "delete",
+        "seq": 108,
+        "t": 7207,
+        "unit": "char"
+      },
+      {
+        "kind": "up",
+        "seq": 109,
+        "t": 7287,
+        "code": "Backspace"
+      },
+      {
+        "kind": "down",
+        "seq": 110,
+        "t": 7354,
+        "code": "Backspace"
+      },
+      {
+        "kind": "delete",
+        "seq": 111,
+        "t": 7354,
+        "unit": "char"
+      },
+      {
+        "kind": "up",
+        "seq": 112,
+        "t": 7434,
+        "code": "Backspace"
+      },
+      {
+        "kind": "down",
+        "seq": 113,
+        "t": 7552,
+        "code": "KeyK"
+      },
+      {
+        "kind": "insert",
+        "seq": 114,
+        "t": 7552,
+        "text": "л"
+      },
+      {
+        "kind": "up",
+        "seq": 115,
+        "t": 7632,
+        "code": "KeyK"
+      },
+      {
+        "kind": "down",
+        "seq": 116,
+        "t": 7674,
+        "code": "KeyE"
+      },
+      {
+        "kind": "insert",
+        "seq": 117,
+        "t": 7674,
+        "text": "у"
+      },
+      {
+        "kind": "up",
+        "seq": 118,
+        "t": 7759,
+        "code": "KeyE"
+      },
+      {
+        "kind": "down",
+        "seq": 119,
+        "t": 8059,
+        "code": "Semicolon"
+      },
+      {
+        "kind": "insert",
+        "seq": 120,
+        "t": 8059,
+        "text": "ж"
+      },
+      {
+        "kind": "up",
+        "seq": 121,
+        "t": 8169,
+        "code": "Semicolon"
+      },
+      {
+        "kind": "down",
+        "seq": 122,
+        "t": 8441,
+        "code": "KeyB"
+      },
+      {
+        "kind": "insert",
+        "seq": 123,
+        "t": 8441,
+        "text": "и"
+      },
+      {
+        "kind": "up",
+        "seq": 124,
+        "t": 8536,
+        "code": "KeyB"
+      },
+      {
+        "kind": "down",
+        "seq": 125,
+        "t": 8652,
+        "code": "KeyN"
+      },
+      {
+        "kind": "insert",
+        "seq": 126,
+        "t": 8652,
+        "text": "т"
+      },
+      {
+        "kind": "down",
+        "seq": 127,
+        "t": 8712,
+        "code": "KeyM"
+      },
+      {
+        "kind": "insert",
+        "seq": 128,
+        "t": 8712,
+        "text": "ь"
+      },
+      {
+        "kind": "up",
+        "seq": 129,
+        "t": 8759,
+        "code": "KeyN"
+      },
+      {
+        "kind": "up",
+        "seq": 130,
+        "t": 8799,
+        "code": "KeyM"
+      },
+      {
+        "kind": "down",
+        "seq": 131,
+        "t": 8856,
+        "code": "Space"
+      },
+      {
+        "kind": "commit",
+        "seq": 132,
+        "t": 8856
+      },
+      {
+        "kind": "up",
+        "seq": 133,
+        "t": 8957,
+        "code": "Space"
+      },
+      {
+        "kind": "down",
+        "seq": 134,
+        "t": 9491,
+        "code": "KeyG"
+      },
+      {
+        "kind": "insert",
+        "seq": 135,
+        "t": 9491,
+        "text": "п"
+      },
+      {
+        "kind": "down",
+        "seq": 136,
+        "t": 9584,
+        "code": "KeyJ"
+      },
+      {
+        "kind": "insert",
+        "seq": 137,
+        "t": 9584,
+        "text": "о"
+      },
+      {
+        "kind": "up",
+        "seq": 138,
+        "t": 9623,
+        "code": "KeyG"
+      },
+      {
+        "kind": "up",
+        "seq": 139,
+        "t": 9676,
+        "code": "KeyJ"
+      },
+      {
+        "kind": "down",
+        "seq": 140,
+        "t": 10400,
+        "code": "KeyD"
+      },
+      {
+        "kind": "insert",
+        "seq": 141,
+        "t": 10401,
+        "text": "в"
+      },
+      {
+        "kind": "up",
+        "seq": 142,
+        "t": 10501,
+        "code": "KeyD"
+      },
+      {
+        "kind": "down",
+        "seq": 143,
+        "t": 10608,
+        "code": "KeyT"
+      },
+      {
+        "kind": "insert",
+        "seq": 144,
+        "t": 10608,
+        "text": "е"
+      },
+      {
+        "kind": "up",
+        "seq": 145,
+        "t": 10683,
+        "code": "KeyT"
+      },
+      {
+        "kind": "down",
+        "seq": 146,
+        "t": 10722,
+        "code": "KeyH"
+      },
+      {
+        "kind": "insert",
+        "seq": 147,
+        "t": 10723,
+        "text": "р"
+      },
+      {
+        "kind": "up",
+        "seq": 148,
+        "t": 10809,
+        "code": "KeyH"
+      },
+      {
+        "kind": "down",
+        "seq": 149,
+        "t": 10873,
+        "code": "KeyB"
+      },
+      {
+        "kind": "insert",
+        "seq": 150,
+        "t": 10874,
+        "text": "и"
+      },
+      {
+        "kind": "up",
+        "seq": 151,
+        "t": 10976,
+        "code": "KeyB"
+      },
+      {
+        "kind": "down",
+        "seq": 152,
+        "t": 11124,
+        "code": "KeyN"
+      },
+      {
+        "kind": "insert",
+        "seq": 153,
+        "t": 11125,
+        "text": "т"
+      },
+      {
+        "kind": "down",
+        "seq": 154,
+        "t": 11158,
+        "code": "KeyM"
+      },
+      {
+        "kind": "insert",
+        "seq": 155,
+        "t": 11158,
+        "text": "ь"
+      },
+      {
+        "kind": "up",
+        "seq": 156,
+        "t": 11211,
+        "code": "KeyN"
+      },
+      {
+        "kind": "up",
+        "seq": 157,
+        "t": 11238,
+        "code": "KeyM"
+      },
+      {
+        "kind": "down",
+        "seq": 158,
+        "t": 11389,
+        "code": "Space"
+      },
+      {
+        "kind": "commit",
+        "seq": 159,
+        "t": 11389
+      },
+      {
+        "kind": "up",
+        "seq": 160,
+        "t": 11531,
+        "code": "Space"
+      },
+      {
+        "kind": "down",
+        "seq": 161,
+        "t": 11729,
+        "code": "KeyR"
+      },
+      {
+        "kind": "insert",
+        "seq": 162,
+        "t": 11730,
+        "text": "к"
+      },
+      {
+        "kind": "up",
+        "seq": 163,
+        "t": 11951,
+        "code": "KeyR"
+      },
+      {
+        "kind": "down",
+        "seq": 164,
+        "t": 12188,
+        "code": "KeyJ"
+      },
+      {
+        "kind": "insert",
+        "seq": 165,
+        "t": 12189,
+        "text": "о"
+      },
+      {
+        "kind": "up",
+        "seq": 166,
+        "t": 12297,
+        "code": "KeyJ"
+      },
+      {
+        "kind": "down",
+        "seq": 167,
+        "t": 12416,
+        "code": "KeyY"
+      },
+      {
+        "kind": "insert",
+        "seq": 168,
+        "t": 12416,
+        "text": "н"
+      },
+      {
+        "kind": "up",
+        "seq": 169,
+        "t": 12501,
+        "code": "KeyY"
+      },
+      {
+        "kind": "down",
+        "seq": 170,
+        "t": 12501,
+        "code": "KeyT"
+      },
+      {
+        "kind": "insert",
+        "seq": 171,
+        "t": 12501,
+        "text": "е"
+      },
+      {
+        "kind": "up",
+        "seq": 172,
+        "t": 12576,
+        "code": "KeyT"
+      },
+      {
+        "kind": "down",
+        "seq": 173,
+        "t": 12725,
+        "code": "KeyX"
+      },
+      {
+        "kind": "insert",
+        "seq": 174,
+        "t": 12725,
+        "text": "ч"
+      },
+      {
+        "kind": "down",
+        "seq": 175,
+        "t": 12795,
+        "code": "KeyY"
+      },
+      {
+        "kind": "insert",
+        "seq": 176,
+        "t": 12796,
+        "text": "н"
+      },
+      {
+        "kind": "up",
+        "seq": 177,
+        "t": 12813,
+        "code": "KeyX"
+      },
+      {
+        "kind": "up",
+        "seq": 178,
+        "t": 12887,
+        "code": "KeyY"
+      },
+      {
+        "kind": "down",
+        "seq": 179,
+        "t": 12937,
+        "code": "KeyS"
+      },
+      {
+        "kind": "insert",
+        "seq": 180,
+        "t": 12938,
+        "text": "ы"
+      },
+      {
+        "kind": "down",
+        "seq": 181,
+        "t": 13014,
+        "code": "KeyQ"
+      },
+      {
+        "kind": "insert",
+        "seq": 182,
+        "t": 13015,
+        "text": "й"
+      },
+      {
+        "kind": "down",
+        "seq": 183,
+        "t": 13094,
+        "code": "Space"
+      },
+      {
+        "kind": "commit",
+        "seq": 184,
+        "t": 13095
+      },
+      {
+        "kind": "up",
+        "seq": 185,
+        "t": 13110,
+        "code": "KeyQ"
+      },
+      {
+        "kind": "up",
+        "seq": 186,
+        "t": 13110,
+        "code": "KeyS"
+      },
+      {
+        "kind": "up",
+        "seq": 187,
+        "t": 13188,
+        "code": "Space"
+      },
+      {
+        "kind": "down",
+        "seq": 188,
+        "t": 13428,
+        "code": "KeyY"
+      },
+      {
+        "kind": "insert",
+        "seq": 189,
+        "t": 13428,
+        "text": "н"
+      },
+      {
+        "kind": "up",
+        "seq": 190,
+        "t": 13520,
+        "code": "KeyY"
+      },
+      {
+        "kind": "down",
+        "seq": 191,
+        "t": 13570,
+        "code": "KeyT"
+      },
+      {
+        "kind": "insert",
+        "seq": 192,
+        "t": 13570,
+        "text": "е"
+      },
+      {
+        "kind": "up",
+        "seq": 193,
+        "t": 13668,
+        "code": "KeyT"
+      },
+      {
+        "kind": "down",
+        "seq": 194,
+        "t": 13736,
+        "code": "Comma"
+      },
+      {
+        "kind": "insert",
+        "seq": 195,
+        "t": 13736,
+        "text": "б"
+      },
+      {
+        "kind": "up",
+        "seq": 196,
+        "t": 13813,
+        "code": "Comma"
+      },
+      {
+        "kind": "down",
+        "seq": 197,
+        "t": 13932,
+        "code": "KeyJ"
+      },
+      {
+        "kind": "insert",
+        "seq": 198,
+        "t": 13932,
+        "text": "о"
+      },
+      {
+        "kind": "up",
+        "seq": 199,
+        "t": 14023,
+        "code": "KeyJ"
+      },
+      {
+        "kind": "down",
+        "seq": 200,
+        "t": 14023,
+        "code": "KeyK"
+      },
+      {
+        "kind": "insert",
+        "seq": 201,
+        "t": 14024,
+        "text": "л"
+      },
+      {
+        "kind": "down",
+        "seq": 202,
+        "t": 14103,
+        "code": "KeyM"
+      },
+      {
+        "kind": "insert",
+        "seq": 203,
+        "t": 14103,
+        "text": "ь"
+      },
+      {
+        "kind": "up",
+        "seq": 204,
+        "t": 14138,
+        "code": "KeyK"
+      },
+      {
+        "kind": "up",
+        "seq": 205,
+        "t": 14203,
+        "code": "KeyM"
+      },
+      {
+        "kind": "down",
+        "seq": 206,
+        "t": 14332,
+        "code": "KeyI"
+      },
+      {
+        "kind": "insert",
+        "seq": 207,
+        "t": 14332,
+        "text": "ш"
+      },
+      {
+        "kind": "up",
+        "seq": 208,
+        "t": 14430,
+        "code": "KeyI"
+      },
+      {
+        "kind": "down",
+        "seq": 209,
+        "t": 14685,
+        "code": "KeyH"
+      },
+      {
+        "kind": "insert",
+        "seq": 210,
+        "t": 14685,
+        "text": "р"
+      },
+      {
+        "kind": "up",
+        "seq": 211,
+        "t": 14755,
+        "code": "KeyH"
+      },
+      {
+        "kind": "down",
+        "seq": 212,
+        "t": 15121,
+        "code": "Backspace"
+      },
+      {
+        "kind": "delete",
+        "seq": 213,
+        "t": 15121,
+        "unit": "char"
+      },
+      {
+        "kind": "up",
+        "seq": 214,
+        "t": 15221,
+        "code": "Backspace"
+      },
+      {
+        "kind": "down",
+        "seq": 215,
+        "t": 15285,
+        "code": "KeyJ"
+      },
+      {
+        "kind": "insert",
+        "seq": 216,
+        "t": 15285,
+        "text": "о"
+      },
+      {
+        "kind": "down",
+        "seq": 217,
+        "t": 15341,
+        "code": "KeyQ"
+      },
+      {
+        "kind": "insert",
+        "seq": 218,
+        "t": 15341,
+        "text": "й"
+      },
+      {
+        "kind": "up",
+        "seq": 219,
+        "t": 15375,
+        "code": "KeyJ"
+      },
+      {
+        "kind": "down",
+        "seq": 220,
+        "t": 15438,
+        "code": "Space"
+      },
+      {
+        "kind": "commit",
+        "seq": 221,
+        "t": 15438
+      },
+      {
+        "kind": "up",
+        "seq": 222,
+        "t": 15446,
+        "code": "KeyQ"
+      },
+      {
+        "kind": "up",
+        "seq": 223,
+        "t": 15533,
+        "code": "Space"
+      },
+      {
+        "kind": "down",
+        "seq": 224,
+        "t": 15678,
+        "code": "KeyC"
+      },
+      {
+        "kind": "insert",
+        "seq": 225,
+        "t": 15678,
+        "text": "с"
+      },
+      {
+        "kind": "up",
+        "seq": 226,
+        "t": 15784,
+        "code": "KeyC"
+      },
+      {
+        "kind": "down",
+        "seq": 227,
+        "t": 15899,
+        "code": "KeyV"
+      },
+      {
+        "kind": "insert",
+        "seq": 228,
+        "t": 15899,
+        "text": "м"
+      },
+      {
+        "kind": "up",
+        "seq": 229,
+        "t": 15990,
+        "code": "KeyV"
+      },
+      {
+        "kind": "down",
+        "seq": 230,
+        "t": 16097,
+        "code": "KeyT"
+      },
+      {
+        "kind": "insert",
+        "seq": 231,
+        "t": 16097,
+        "text": "е"
+      },
+      {
+        "kind": "up",
+        "seq": 232,
+        "t": 16191,
+        "code": "KeyT"
+      },
+      {
+        "kind": "down",
+        "seq": 233,
+        "t": 16403,
+        "code": "KeyZ"
+      },
+      {
+        "kind": "insert",
+        "seq": 234,
+        "t": 16403,
+        "text": "я"
+      },
+      {
+        "kind": "up",
+        "seq": 235,
+        "t": 16529,
+        "code": "KeyZ"
+      },
+      {
+        "kind": "down",
+        "seq": 236,
+        "t": 16857,
+        "code": "KeyN"
+      },
+      {
+        "kind": "insert",
+        "seq": 237,
+        "t": 16857,
+        "text": "т"
+      },
+      {
+        "kind": "up",
+        "seq": 238,
+        "t": 16958,
+        "code": "KeyN"
+      },
+      {
+        "kind": "down",
+        "seq": 239,
+        "t": 17049,
+        "code": "KeyM"
+      },
+      {
+        "kind": "insert",
+        "seq": 240,
+        "t": 17049,
+        "text": "ь"
+      },
+      {
+        "kind": "up",
+        "seq": 241,
+        "t": 17146,
+        "code": "KeyM"
+      },
+      {
+        "kind": "down",
+        "seq": 242,
+        "t": 17218,
+        "code": "KeyC"
+      },
+      {
+        "kind": "insert",
+        "seq": 243,
+        "t": 17218,
+        "text": "с"
+      },
+      {
+        "kind": "up",
+        "seq": 244,
+        "t": 17299,
+        "code": "KeyC"
+      },
+      {
+        "kind": "down",
+        "seq": 245,
+        "t": 17365,
+        "code": "KeyZ"
+      },
+      {
+        "kind": "insert",
+        "seq": 246,
+        "t": 17365,
+        "text": "я"
+      },
+      {
+        "kind": "down",
+        "seq": 247,
+        "t": 17493,
+        "code": "Space"
+      },
+      {
+        "kind": "commit",
+        "seq": 248,
+        "t": 17493
+      },
+      {
+        "kind": "up",
+        "seq": 249,
+        "t": 17518,
+        "code": "KeyZ"
+      },
+      {
+        "kind": "up",
+        "seq": 250,
+        "t": 17617,
+        "code": "Space"
+      },
+      {
+        "kind": "down",
+        "seq": 251,
+        "t": 17722,
+        "code": "Semicolon"
+      },
+      {
+        "kind": "insert",
+        "seq": 252,
+        "t": 17722,
+        "text": "ж"
+      },
+      {
+        "kind": "up",
+        "seq": 253,
+        "t": 17815,
+        "code": "Semicolon"
+      },
+      {
+        "kind": "down",
+        "seq": 254,
+        "t": 17823,
+        "code": "KeyB"
+      },
+      {
+        "kind": "insert",
+        "seq": 255,
+        "t": 17823,
+        "text": "и"
+      },
+      {
+        "kind": "up",
+        "seq": 256,
+        "t": 17919,
+        "code": "KeyB"
+      },
+      {
+        "kind": "down",
+        "seq": 257,
+        "t": 18156,
+        "code": "KeyD"
+      },
+      {
+        "kind": "insert",
+        "seq": 258,
+        "t": 18157,
+        "text": "в"
+      },
+      {
+        "kind": "down",
+        "seq": 259,
+        "t": 18242,
+        "code": "KeyJ"
+      },
+      {
+        "kind": "insert",
+        "seq": 260,
+        "t": 18243,
+        "text": "о"
+      },
+      {
+        "kind": "up",
+        "seq": 261,
+        "t": 18263,
+        "code": "KeyD"
+      },
+      {
+        "kind": "up",
+        "seq": 262,
+        "t": 18319,
+        "code": "KeyJ"
+      },
+      {
+        "kind": "down",
+        "seq": 263,
+        "t": 18399,
+        "code": "KeyN"
+      },
+      {
+        "kind": "insert",
+        "seq": 264,
+        "t": 18399,
+        "text": "т"
+      },
+      {
+        "kind": "up",
+        "seq": 265,
+        "t": 18480,
+        "code": "KeyN"
+      },
+      {
+        "kind": "down",
+        "seq": 266,
+        "t": 18583,
+        "code": "KeyY"
+      },
+      {
+        "kind": "insert",
+        "seq": 267,
+        "t": 18583,
+        "text": "н"
+      },
+      {
+        "kind": "up",
+        "seq": 268,
+        "t": 18659,
+        "code": "KeyY"
+      },
+      {
+        "kind": "down",
+        "seq": 269,
+        "t": 18660,
+        "code": "KeyS"
+      },
+      {
+        "kind": "insert",
+        "seq": 270,
+        "t": 18660,
+        "text": "ы"
+      },
+      {
+        "kind": "down",
+        "seq": 271,
+        "t": 18711,
+        "code": "KeyQ"
+      },
+      {
+        "kind": "insert",
+        "seq": 272,
+        "t": 18712,
+        "text": "й"
+      }
+    ]
+  }
+}

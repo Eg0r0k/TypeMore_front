@@ -326,8 +326,8 @@
         textSource: { kind: 'quote', quoteId: quote.id }
       })
     } catch (error) {
-      // A toast (sonner — the ONE live toast system; the entities/alert store
-      // renders nowhere), not an inline note: the draw is triggered from
+      // A toast (sonner — the app's ONE toast system), not an inline note:
+      // the draw is triggered from
       // OUTSIDE quote mode too (the mode toggle), where the quote panel — and
       // any inline error in it — is not rendered at all. Failing there looked
       // like a dead button.

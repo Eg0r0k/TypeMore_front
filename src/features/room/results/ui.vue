@@ -1,5 +1,5 @@
 <template>
-  <div class="results">
+  <div class="flex w-full flex-col gap-10">
     <!--
       The local player's own run, drawn by the SOLO results view — the same
       grade, score, chart and stats row they get outside a room. A match cannot
@@ -22,8 +22,8 @@
       />
     </div>
 
-    <section class="standings">
-      <Typography class="standings__title" size="l" tag-name="h2" color="primary">
+    <section class="flex w-full flex-col gap-4">
+      <Typography size="l" tag-name="h2" color="primary">
         {{ live ? t('room.match.eliminated.title') : t('room.results.title') }}
       </Typography>
 
@@ -37,7 +37,7 @@
       <Typography
         v-if="connectionLost"
         data-testid="results-connection-lost"
-        class="standings__banner"
+        class="block"
         size="s"
         color="error"
       >
@@ -46,7 +46,7 @@
       <Typography
         v-if="reason === 'deadline' || reason === 'finish_window'"
         data-testid="results-reason"
-        class="standings__banner"
+        class="block"
         size="s"
         color="sub"
       >
@@ -60,12 +60,11 @@
       </Typography>
 
       <!-- Eight narrow columns outgrow a phone long before they outgrow the
-           layout, so the table scrolls inside its own box instead of the page. -->
-      <div class="standings__scroll">
-        <table class="standings__table">
-          <!-- Typography is set once per section and inherits down: eight header
-               cells and eight body cells do not each need their own utilities. -->
-          <thead class="text-xs">
+           layout, so the table scrolls inside its own box instead of the page.
+           The paint is the app's shared table recipe (shared/ui/table). -->
+      <div :class="TABLE_SCROLL">
+        <table class="standings__table" :class="TABLE">
+          <thead :class="TABLE_HEAD">
             <tr>
               <th class="standings__rank">#</th>
               <th>{{ t('room.results.player') }}</th>
@@ -77,7 +76,7 @@
               <th>{{ t('room.results.statusLabel') }}</th>
             </tr>
           </thead>
-          <tbody class="text-sm tabular-nums">
+          <tbody :class="[TABLE_BODY, 'tabular-nums']">
             <tr
               v-for="row in standings"
               :key="row.playerId"
@@ -85,7 +84,7 @@
               :data-testid="row.isSelf ? 'standings-self' : undefined"
             >
               <td class="standings__rank">{{ row.rank }}</td>
-              <td class="standings__nick">
+              <td class="whitespace-nowrap">
                 {{ row.nick }}
                 <span v-if="row.isSelf" class="ml-1.5 text-xs text-main">
                   {{ t('room.results.you') }}
@@ -107,7 +106,9 @@
               <td>{{ formatAcc(row.acc) }}</td>
               <td data-testid="standings-chars">{{ formatChars(row.chars) }}</td>
               <td data-testid="standings-amount">{{ formatAmount(row) }}</td>
-              <td class="standings__status" data-testid="standings-status">
+              <!-- The status is a LABEL, and a label stays label-coloured even
+                   on the accented self row — hence the deliberate `!`. -->
+              <td class="standings__status text-sub!" data-testid="standings-status">
                 {{ statusLabel(row) }}
               </td>
             </tr>
@@ -115,7 +116,7 @@
         </table>
       </div>
 
-      <div class="standings__actions">
+      <div class="flex flex-wrap gap-3">
         <!-- A rematch is only on offer once the match has actually ended. -->
         <Button
           v-if="!live"
@@ -151,6 +152,14 @@
   import type { OutcomeReason } from '@/entities/match'
   import { type ResultsAction, TestResults } from '@/features/test/results'
   import { Button } from '@/shared/ui/button'
+  import {
+    TABLE,
+    TABLE_BODY,
+    TABLE_HEAD,
+    TABLE_ROW_MUTED,
+    TABLE_ROW_SELF,
+    TABLE_SCROLL
+  } from '@/shared/ui/table'
   import { Typography } from '@/shared/ui/typography'
 
   import type { MatchSelfRun } from './model/match-results'
@@ -196,15 +205,22 @@
   /** A match has no next test to load and no replay screen to open. */
   const MATCH_ACTIONS: readonly ResultsAction[] = ['screenshot']
 
-  const rowClass = (row: StandingRow) =>
-    clsx('standings__row', {
-      'standings__row--self': row.isSelf,
-      'standings__row--out':
-        row.status === 'dnf' ||
-        row.status === 'left' ||
-        row.status === 'desynced' ||
-        (row.failReason ?? null) !== null
+  /**
+   * The BEM names stay as state markers (the row states are what the specs
+   * assert on); the paint comes from the shared table recipe — the accent for
+   * the row the reader is looking for, quiet for a row that did not finish.
+   */
+  const rowClass = (row: StandingRow) => {
+    const isOut =
+      row.status === 'dnf' ||
+      row.status === 'left' ||
+      row.status === 'desynced' ||
+      (row.failReason ?? null) !== null
+    return clsx('standings__row', {
+      [`standings__row--self ${TABLE_ROW_SELF}`]: row.isSelf,
+      [`standings__row--out ${TABLE_ROW_MUTED}`]: isOut
     })
+  }
 
   /** The live screen's one line: why this seat is out, and what is left to wait for. */
   const liveNote = computed(() => {
@@ -282,74 +298,3 @@
     return row.score !== undefined ? String(Math.round(row.score)) : '—'
   }
 </script>
-
-<style lang="scss" scoped>
-  .results {
-    display: flex;
-    flex-direction: column;
-    gap: 2.5rem;
-    width: 100%;
-  }
-
-  .standings {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    width: 100%;
-
-    &__banner {
-      display: block;
-    }
-
-    &__scroll {
-      width: 100%;
-      overflow-x: auto;
-    }
-
-    &__table {
-      width: 100%;
-      border-collapse: collapse;
-
-      th {
-        padding: 0.5rem;
-        font-weight: normal;
-        color: var(--sub-color);
-        white-space: nowrap;
-        text-align: start;
-        text-transform: uppercase;
-      }
-
-      td {
-        padding: 0.5rem;
-        color: var(--text-color);
-        white-space: nowrap;
-        border-top: 1px solid var(--sub-alt-color);
-      }
-
-      // Deliberately out-specific of the self/out row rules below: the status is
-      // a label, and a label stays in the label colour even on the accented row.
-      td.standings__status {
-        color: var(--sub-color);
-      }
-    }
-
-    &__rank {
-      width: 2.5rem;
-    }
-
-    // The one row the reader is looking for gets the accent; every other number
-    // on this screen stays in the text colour.
-    &__row--self td {
-      color: var(--main-color);
-    }
-
-    &__row--out td {
-      color: var(--sub-color);
-    }
-
-    &__actions {
-      display: flex;
-      gap: 0.75rem;
-    }
-  }
-</style>

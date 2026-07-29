@@ -4,8 +4,15 @@ import { stubDictionary, stubLeaderboards, stubReplay } from './fixtures/leaderb
 /**
  * The race-vs-run rework (C10): a race action anywhere seats the ghost on the
  * HOME solo screen — no dedicated game page. `/race/:runId` survives only as a
- * thin redirect, the settings snapshot/restore round-trips, and a race run
- * NEVER reaches POST /runs (the no-submission guard, asserted on the wire).
+ * thin redirect, and the settings snapshot/restore round-trips.
+ *
+ * NOTE on submission. A race run is no longer withheld from POST /runs: it is
+ * submitted carrying `setup.adoptedFromRunId`, and the SERVER is what refuses it
+ * a board slot, a PB and TP (TypeMore_back/docs/RUNS.md, "Text provenance").
+ * The rule itself is unit-tested where it lives — `features/run-submit`'s
+ * `text-origin.ts`, guarded by `src/__tests__/race/race-submission.test.ts`.
+ * What this spec still asserts on the wire is the GUEST path: these runs are
+ * anonymous, and an anonymous player never submits anything at all.
  */
 
 test.beforeEach(async ({ page }) => {
@@ -57,10 +64,12 @@ const configSnapshot = (page: Page) =>
     return Object.fromEntries(keys.map((key) => [key, raw[key]]))
   })
 
-test('a board race action runs on HOME: repeated mark, ghost pace, no submission, pace-exit restores settings', async ({
+test('a board race action runs on HOME: repeated mark, ghost pace, guest never submits, pace-exit restores settings', async ({
   page
 }) => {
-  // The wire spy: nothing on this path may POST a run.
+  // The wire spy. A signed-out player never submits — the run-submit gate turns
+  // "not authed" into the sign-in hint before any payload is built — so this
+  // stays empty for a reason that has nothing to do with racing.
   const submissions: string[] = []
   page.on('request', (request) => {
     if (request.method() === 'POST' && /\/api\/v1\/runs\/?(\?|$)/.test(request.url())) {
@@ -104,7 +113,7 @@ test('a board race action runs on HOME: repeated mark, ghost pace, no submission
   await expect(page.getByTestId('results-race-again')).toBeVisible({ timeout: 10_000 })
   await expect(page.getByTestId('results-next')).toHaveCount(0)
 
-  // UNRANKED stays absolute: not one submission crossed the wire.
+  // Signed out: not one submission crossed the wire.
   expect(submissions).toEqual([])
 
   // "One more" re-seats the SAME ghost and returns to the stage, where the

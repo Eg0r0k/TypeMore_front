@@ -22,7 +22,7 @@ import {
 import { isApiError, useSubmitRunMutation } from '@shared/api'
 import { useAuthStore } from '@/entities/auth'
 
-import { buildRunPayload, isRankedMode, type RunSubmitContext } from './build-payload'
+import { buildRunPayload, isSubmittableRun, type RunSubmitContext } from './build-payload'
 import { clearRestarts, peekRestarts } from './restart-counter'
 import { runSubmissionFlow, type SubmitState } from './submit-flow'
 
@@ -51,7 +51,7 @@ export function useRunSubmission(opts: UseRunSubmissionOptions): RunSubmission {
 
   async function run(): Promise<void> {
     const ctx = opts.buildContext()
-    const eligible = ctx !== null && isRankedMode(ctx.mode)
+    const eligible = ctx !== null && isSubmittableRun(ctx)
     const result = await runSubmissionFlow(
       { finished: toValue(opts.finished), authed: isAuthed.value, eligible },
       {

@@ -1,36 +1,40 @@
 <template>
-  <figure ref="root" class="pf-daily" data-testid="profile-daily-chart">
-    <div v-if="days.length === 0" class="pf-daily__empty" data-testid="profile-daily-empty">
+  <figure ref="root" class="relative m-0 w-full" data-testid="profile-daily-chart">
+    <div
+      v-if="days.length === 0"
+      class="rounded-lg bg-sub-alt px-4 py-3"
+      data-testid="profile-daily-empty"
+    >
       <Typography size="s" color="sub">{{ t('profile.charts.empty') }}</Typography>
     </div>
 
     <svg
       v-else
-      class="pf-daily__svg"
+      class="block w-full touch-pan-y overflow-visible"
       :width="width"
-      :height="HEIGHT"
-      :viewBox="`0 0 ${width} ${HEIGHT}`"
+      :height="height"
+      :viewBox="`0 0 ${width} ${height}`"
       role="img"
       :aria-label="t('profile.charts.dailyAria')"
       @pointermove="onPointerMove"
       @pointerleave="hovered = null"
     >
-      <g class="pf-daily__grid">
+      <g class="[&_line]:stroke-sub [&_line]:opacity-40 [&_line]:[stroke-dasharray:2_2]">
         <line
           v-for="tick in yTicks"
           :key="tick.value"
-          :x1="PAD.left"
-          :x2="width - PAD.right"
+          :x1="pad.left"
+          :x2="width - pad.right"
           :y1="tick.y"
           :y2="tick.y"
         />
       </g>
-      <g class="pf-daily__axis">
+      <g class="fill-sub" :style="{ fontSize: `${fontSize}px` }">
         <!-- Left axis: time typing (minutes); right axis: the line metric. -->
         <text
           v-for="tick in yTicks"
           :key="`y-${tick.value}`"
-          :x="PAD.left - 8"
+          :x="pad.left - 6"
           :y="tick.y"
           text-anchor="end"
           dominant-baseline="middle"
@@ -40,7 +44,7 @@
         <text
           v-for="tick in y1Ticks"
           :key="`y1-${tick.value}`"
-          :x="width - PAD.right + 8"
+          :x="width - pad.right + 6"
           :y="tick.y"
           text-anchor="start"
           dominant-baseline="middle"
@@ -51,7 +55,7 @@
           v-for="tick in xTicks"
           :key="tick.date"
           :x="tick.x"
-          :y="HEIGHT - PAD.bottom + 16"
+          :y="height - pad.bottom + 14"
           text-anchor="middle"
         >
           {{ tick.label }}
@@ -63,8 +67,8 @@
         <rect
           v-for="(bar, index) in bars"
           :key="bar.date"
-          class="pf-daily__bar"
-          :class="{ 'pf-daily__bar--hover': hovered === index }"
+          class="fill-sub transition-tm"
+          :class="hovered === index ? 'opacity-90' : 'opacity-55'"
           :x="bar.x"
           :y="bar.y"
           :width="bar.width"
@@ -74,20 +78,34 @@
       </g>
 
       <!-- The smoothed metric line + its dotted OLS trend. -->
-      <path class="pf-daily__trend" :d="trendPath" />
-      <path class="pf-daily__line" :d="linePath" />
+      <path
+        class="fill-none stroke-text opacity-60 [stroke-dasharray:4_4] [stroke-width:1.5]"
+        :d="trendPath"
+        data-testid="profile-daily-trend"
+      />
+      <path
+        class="fill-none stroke-main [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:2]"
+        :d="linePath"
+        data-testid="profile-daily-line"
+      />
 
-      <g v-if="hoveredDay" class="pf-daily__cursor">
-        <line :x1="hoveredDay.x" :x2="hoveredDay.x" :y1="PAD.top" :y2="HEIGHT - PAD.bottom" />
+      <g v-if="hoveredDay">
+        <line
+          class="stroke-sub [stroke-width:1]"
+          :x1="hoveredDay.x"
+          :x2="hoveredDay.x"
+          :y1="pad.top"
+          :y2="height - pad.bottom"
+        />
       </g>
     </svg>
 
     <div
       v-if="hoveredDay"
-      class="pf-daily__tooltip"
-      :style="{ left: `${hoveredDay.x}px`, top: `${PAD.top}px` }"
+      class="pointer-events-none absolute z-1 flex -translate-x-1/2 flex-col gap-0.5 rounded border border-sub bg-bg px-2 py-1.5 text-[11px] text-text"
+      :style="{ left: `${tooltipX}px`, top: `${pad.top}px` }"
     >
-      <span class="pf-daily__tooltip-title">{{ hoveredDay.date }}</span>
+      <span class="text-sub">{{ hoveredDay.date }}</span>
       <span>{{ t('profile.charts.time') }} {{ formatDuration(hoveredDay.timeTypingMs) }}</span>
       <span>
         {{ metric === 'speed' ? 'wpm' : 'acc' }}
@@ -95,17 +113,17 @@
       </span>
     </div>
 
-    <figcaption class="pf-daily__legend">
-      <span>
-        <i class="pf-daily__swatch pf-daily__swatch--bar" />
+    <figcaption class="flex flex-wrap justify-center gap-x-3 gap-y-1 text-[11px] text-text">
+      <span class="inline-flex items-center gap-1">
+        <i class="inline-block size-2 rounded-full bg-sub" />
         {{ t('profile.charts.time') }}
       </span>
-      <span>
-        <i class="pf-daily__swatch pf-daily__swatch--line" />
+      <span class="inline-flex items-center gap-1">
+        <i class="inline-block size-2 rounded-full bg-main" />
         {{ metric === 'speed' ? t('profile.charts.avgWpm') : t('profile.charts.avgAcc') }}
       </span>
-      <span>
-        <i class="pf-daily__swatch pf-daily__swatch--trend" />
+      <span class="inline-flex items-center gap-1">
+        <i class="inline-block size-2 rounded-full bg-text opacity-60" />
         {{ t('profile.charts.trend') }}
       </span>
     </figcaption>
@@ -119,6 +137,7 @@
 
   import type { ProfileTimeseries } from '@shared/api'
   import { Typography } from '@/shared/ui/typography'
+  import { clamp } from '@/shared/lib/helpers/numbers'
   import { formatDuration, percent, speed } from '../model/format'
 
   /**
@@ -129,6 +148,10 @@
    * of the RAW daily values across the visible range. The
    * "speed change per hour" header stat is server-computed and rendered by the
    * section header, not here — this figure only draws the range it was given.
+   *
+   * Every dimension (height, padding, tick density, label size) is derived from
+   * the MEASURED width, so the same figure reads on a 360 px phone and on a
+   * wide desktop card without a second layout.
    */
   const props = defineProps<{
     timeseries: ProfileTimeseries
@@ -138,15 +161,25 @@
   }>()
   const { t } = useI18n()
 
-  const HEIGHT = 240
-  const PAD = { top: 16, right: 44, bottom: 30, left: 44 } as const
   const FALLBACK_WIDTH = 640
 
   const root = useTemplateRef<HTMLElement>('root')
   const { width: measured } = useElementSize(root)
-  const width = computed(() => Math.max(320, Math.round(measured.value) || FALLBACK_WIDTH))
-  const plotWidth = computed(() => width.value - PAD.left - PAD.right)
-  const plotHeight = HEIGHT - PAD.top - PAD.bottom
+  /** The floor is a phone, not a desktop: 240 px is drawn honestly, below that
+   *  the viewBox scales the whole figure down rather than clipping it. */
+  const width = computed(() => Math.max(240, Math.round(measured.value) || FALLBACK_WIDTH))
+
+  /** Narrow cards get a shorter box, tighter gutters and smaller labels. */
+  const compact = computed(() => width.value < 520)
+  const height = computed(() => (compact.value ? 180 : width.value < 760 ? 210 : 240))
+  const fontSize = computed(() => (compact.value ? 9 : 10))
+  const pad = computed(() =>
+    compact.value
+      ? { top: 10, right: 30, bottom: 22, left: 30 }
+      : { top: 16, right: 44, bottom: 30, left: 44 }
+  )
+  const plotWidth = computed(() => width.value - pad.value.left - pad.value.right)
+  const plotHeight = computed(() => height.value - pad.value.top - pad.value.bottom)
 
   const days = computed(() => props.timeseries.days)
   const count = computed(() => days.value.length)
@@ -156,18 +189,22 @@
 
   const xAt = (index: number): number =>
     count.value < 2
-      ? PAD.left + plotWidth.value / 2
-      : PAD.left + (index / (count.value - 1)) * plotWidth.value
+      ? pad.value.left + plotWidth.value / 2
+      : pad.value.left + (index / (count.value - 1)) * plotWidth.value
 
   // Left axis: minutes typed.
   const maxMinutes = computed(() =>
     Math.max(1, ...days.value.map((d) => Math.ceil(d.timeTypingMs / 60000)))
   )
+  const TICK_ROWS = 4
   const yTicks = computed(() => {
-    const step = Math.max(1, Math.ceil(maxMinutes.value / 4))
+    const step = Math.max(1, Math.ceil(maxMinutes.value / TICK_ROWS))
     const ticks: { value: number; y: number }[] = []
     for (let value = 0; value <= maxMinutes.value; value += step) {
-      ticks.push({ value, y: PAD.top + plotHeight - (value / maxMinutes.value) * plotHeight })
+      ticks.push({
+        value,
+        y: pad.value.top + plotHeight.value - (value / maxMinutes.value) * plotHeight.value
+      })
     }
     return ticks
   })
@@ -177,10 +214,12 @@
     props.metric === 'accuracy' ? 1 : Math.max(20, ...days.value.map((d) => d.avgWpm))
   )
   const y1Of = (value: number): number =>
-    PAD.top + plotHeight - (Math.min(value, metricMax.value) / metricMax.value) * plotHeight
+    pad.value.top +
+    plotHeight.value -
+    (Math.min(value, metricMax.value) / metricMax.value) * plotHeight.value
   const y1Ticks = computed(() =>
-    Array.from({ length: 5 }, (_, i) => {
-      const value = (metricMax.value / 4) * i
+    Array.from({ length: TICK_ROWS + 1 }, (_, i) => {
+      const value = (metricMax.value / TICK_ROWS) * i
       return {
         value: props.metric === 'accuracy' ? Math.round(value * 100) : Math.round(value),
         y: y1Of(value)
@@ -188,8 +227,10 @@
     })
   )
 
+  /** As many date labels as fit without colliding — roughly one per 80 px. */
   const xTicks = computed(() => {
-    const every = Math.max(1, Math.ceil(count.value / 8))
+    const slots = Math.max(2, Math.floor(plotWidth.value / (compact.value ? 60 : 80)))
+    const every = Math.max(1, Math.ceil(count.value / slots))
     return days.value
       .map((day, index) => ({ date: day.date, label: day.date.slice(5), x: xAt(index), index }))
       .filter((tick) => tick.index % every === 0 || tick.index === count.value - 1)
@@ -202,13 +243,13 @@
     const barWidth = Math.max(2, Math.min(18, slot * 0.7))
     return days.value.map((day, i) => {
       const minutes = day.timeTypingMs / 60000
-      const height = Math.min(1, minutes / maxMinutes.value) * plotHeight
+      const barHeight = Math.min(1, minutes / maxMinutes.value) * plotHeight.value
       return {
         date: day.date,
         x: xAt(i) - barWidth / 2,
-        y: PAD.top + plotHeight - height,
+        y: pad.value.top + plotHeight.value - barHeight,
         width: barWidth,
-        height
+        height: barHeight
       }
     })
   })
@@ -261,123 +302,19 @@
     return { ...day, value: valueOf(day), x: xAt(hovered.value) }
   })
 
+  /** The tooltip is centred on the cursor but never hangs off the figure. */
+  const TOOLTIP_HALF = 60
+  const tooltipX = computed(() => {
+    const x = hoveredDay.value?.x ?? 0
+    return clamp(x, TOOLTIP_HALF, width.value - TOOLTIP_HALF)
+  })
+
   function onPointerMove(event: PointerEvent): void {
     if (count.value === 0) return
     const box = (event.currentTarget as SVGSVGElement).getBoundingClientRect()
     const x = event.clientX - box.left
-    const ratio = (x - PAD.left) / (plotWidth.value || 1)
+    const ratio = (x - pad.value.left) / (plotWidth.value || 1)
     const index = Math.round(ratio * Math.max(1, count.value - 1))
     hovered.value = Math.min(count.value - 1, Math.max(0, index))
   }
 </script>
-
-<style lang="scss" scoped>
-  .pf-daily {
-    position: relative;
-    width: 100%;
-    margin: 0;
-
-    &__svg {
-      display: block;
-      width: 100%;
-      overflow: visible;
-    }
-
-    &__grid line {
-      stroke: var(--sub-color);
-      stroke-dasharray: 2 2;
-      stroke-width: 1;
-      opacity: 0.4;
-    }
-
-    &__axis text {
-      font-size: 10px;
-      fill: var(--sub-color);
-    }
-
-    &__bar {
-      fill: var(--sub-color);
-      opacity: 0.55;
-
-      &--hover {
-        opacity: 0.9;
-      }
-    }
-
-    &__line {
-      fill: none;
-      stroke: var(--main-color);
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    &__trend {
-      fill: none;
-      stroke: var(--text-color);
-      stroke-width: 1.5;
-      stroke-dasharray: 4 4;
-      opacity: 0.6;
-    }
-
-    &__cursor line {
-      stroke: var(--sub-color);
-      stroke-width: 1;
-    }
-
-    &__tooltip {
-      position: absolute;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      padding: 6px 8px;
-      font-size: 11px;
-      color: var(--text-color);
-      pointer-events: none;
-      background-color: var(--bg-color);
-      border: 1px solid var(--sub-color);
-      border-radius: var(--border-radius);
-      transform: translate(-50%, 0);
-    }
-
-    &__tooltip-title {
-      color: var(--sub-color);
-    }
-
-    &__legend {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      font-size: 11px;
-      color: var(--text-color);
-    }
-
-    &__swatch {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      margin-right: 4px;
-      border-radius: 50%;
-
-      &--bar {
-        background-color: var(--sub-color);
-      }
-
-      &--line {
-        background-color: var(--main-color);
-      }
-
-      &--trend {
-        background-color: var(--text-color);
-        opacity: 0.6;
-      }
-    }
-
-    &__empty {
-      padding: 1rem;
-      background-color: var(--sub-alt-color);
-      border-radius: var(--border-radius);
-    }
-  }
-</style>

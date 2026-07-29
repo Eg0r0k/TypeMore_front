@@ -20,11 +20,8 @@ import {
  *
  * `now` is injectable so the boundary is testable without freezing the clock.
  */
-export const formatAchievedAt = (
-  iso: string,
-  locale?: string,
-  now: number = Date.now()
-): string => formatClockOrDate(iso, locale, now)
+export const formatAchievedAt = (iso: string, locale?: string, now: number = Date.now()): string =>
+  formatClockOrDate(iso, locale, now)
 
 /**
  * The RELATIVE "when" the date column shows: «5 минут назад» / "3 days ago".

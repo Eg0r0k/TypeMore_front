@@ -7,12 +7,10 @@
  * name), SCORE (the metric the board sorts by — visually primary, with the
  * grade badge beside the value), then wpm / raw / acc, then the date. Grade
  * and mods own no column of their own.
+ *
+ * The PAINT (padding, zebra, type scale) is not here — it comes from the app's
+ * shared table recipe in `shared/ui/table`, which the profile's runs table and
+ * the room's standings use too. This constant is only the column geometry.
  */
-@mixin board-grid {
-  display: grid;
-  grid-template-columns: 2.75rem minmax(8rem, 1fr) 6.5rem 3.5rem 3.5rem 3.5rem 6rem;
-  gap: 0.75rem;
-  align-items: center;
-  width: 100%;
-  text-align: start;
-}
+export const BOARD_GRID =
+  'grid w-full grid-cols-[2.75rem_minmax(8rem,1fr)_6.5rem_3.5rem_3.5rem_3.5rem_6rem] items-center gap-3 text-start'

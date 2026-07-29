@@ -23,13 +23,21 @@ import { Test } from '@/widgets/test'
 import type { GameView, ReplayData } from '@entities/game'
 import {
   type CoreConfig,
+  type CoreContext,
   type GameEvent,
   type GenerationConfig,
   type ModsDeclaration,
   type ScoreResult,
   DEFAULT_MAX_EXTRA_CHARS,
-  insertEvent
+  asMs,
+  commitEvent,
+  computeMetrics,
+  foldLog,
+  insertEvent,
+  isTelemetryEvent
 } from '@shared/core'
+
+import { withTelemetry, withoutSeq } from './fixtures/telemetry-twin'
 
 const WORDS = ['hello', 'world'] as const
 
@@ -336,6 +344,126 @@ describe('seeking', () => {
     expect(viewOf(wrapper).snapshot.input[0]).toBe('h')
 
     wrapper.unmount()
+  })
+})
+
+/**
+ * A log-v2 run in the replay player.
+ *
+ * The player is a `GhostDriver` at zero display delay, so it DISPATCHES every
+ * event it is handed — telemetry included — and relies on the reducer answering
+ * with the same state object. Until now no v2 log ever entered this path: the
+ * whole feature was pinned on v1 logs only, and a regression in the no-op
+ * handling would have surfaced first in front of a viewer.
+ *
+ * The property here is the playback one, not just the endpoint: at EVERY
+ * checkpoint along the timeline the v2 run renders exactly what its v1 twin
+ * renders, `lastSeq` aside (telemetry consumes seq, it never writes state).
+ */
+describe('a v2 log plays exactly like its v1 twin', () => {
+  // A complete two-word run: every letter, a commit after each word — the last
+  // commit finishes it. 70ms apart, which clears the ±8/25ms telemetry offsets.
+  const twinLog: readonly GameEvent[] = (() => {
+    const out: GameEvent[] = []
+    let seq = 0
+    let t = 0
+    for (const word of WORDS) {
+      for (const char of word) out.push(insertEvent(++seq, (t += 70), char))
+      out.push(commitEvent(++seq, (t += 70)))
+    }
+    return out
+  })()
+  const v2Log = withTelemetry(twinLog)
+  const ctx: CoreContext = { config: coreConfig(), words: [...WORDS] }
+  const endT = v2Log[v2Log.length - 1].t
+
+  /** Mount a player over `log` and read its view at each checkpoint in turn. */
+  async function playbackOf(log: readonly GameEvent[], checkpoints: readonly number[]) {
+    const wrapper = mountReplay(replayOf(NONE, { log }))
+    await nextTick()
+    const frames: { snapshot: unknown; wordIndex: number; finished: boolean }[] = []
+    let at = 0
+    for (const checkpoint of checkpoints) {
+      await play(checkpoint - at)
+      at = checkpoint
+      const view = viewOf(wrapper)
+      frames.push({
+        snapshot: withoutSeq(view.snapshot),
+        wordIndex: view.wordIndex,
+        finished: view.finished
+      })
+    }
+    const last = viewOf(wrapper).snapshot
+    wrapper.unmount()
+    return { frames, last }
+  }
+
+  it('renders the same frame at every point along the timeline', async () => {
+    // Dense enough to land between a key-down and the insert it produced.
+    const checkpoints = Array.from({ length: 40 }, (_, i) => Math.round(((i + 1) * endT) / 32))
+
+    const v1 = await playbackOf(twinLog, checkpoints)
+    const v2 = await playbackOf(v2Log, checkpoints)
+
+    expect(v2.frames).toEqual(v1.frames)
+    // Not vacuous: the run actually progressed and actually ended.
+    expect(v1.frames[0].wordIndex).toBe(0)
+    expect(v1.frames[v1.frames.length - 1].finished).toBe(true)
+  })
+
+  it('ends on the v1 twin’s fold, and on its own log’s fold bit for bit', async () => {
+    const checkpoints = [endT + 500]
+    const v2 = await playbackOf(v2Log, checkpoints)
+
+    // Exact against the log it was actually fed…
+    expect(v2.last).toEqual(foldLog(ctx, v2Log)._unsafeUnwrap())
+    // …and identical to the v1 twin apart from the seq counter.
+    expect(withoutSeq(v2.last)).toEqual(withoutSeq(foldLog(ctx, twinLog)._unsafeUnwrap()))
+    expect(v2.frames[0].finished).toBe(true)
+  })
+
+  it('measures the run off the state events alone', async () => {
+    const folded = foldLog(ctx, v2Log)._unsafeUnwrap()
+    const end = folded.finishedAt ?? asMs(endT)
+    expect(computeMetrics(ctx, v2Log, end)).toEqual(computeMetrics(ctx, twinLog, end))
+    // The v2 log is a v2 log: telemetry really is in there being dispatched.
+    expect(v2Log.filter(isTelemetryEvent).length).toBe(twinLog.length * 2)
+  })
+
+  it('seeks identically: a scrub lands on the same frame in both captures', async () => {
+    const seekAt = Math.round(endT / 2)
+    const frames = async (log: readonly GameEvent[]) => {
+      const wrapper = mountReplay(replayOf(NONE, { log }))
+      await nextTick()
+      const seek = wrapper.find('[data-testid="replay-seek"]')
+      vi.spyOn(seek.element, 'getBoundingClientRect').mockReturnValue({
+        left: 0,
+        width: 100,
+        top: 0,
+        right: 100,
+        bottom: 4,
+        height: 4,
+        x: 0,
+        y: 0,
+        toJSON: () => ({})
+      } as DOMRect)
+      const durationMs = log[log.length - 1].t
+      // Forward, then BACKWARD — the backward branch re-folds the whole prefix
+      // from zero, which is the path that would choke on an unexpected kind.
+      await seek.trigger('pointerdown', { clientX: 100, pointerId: 1 })
+      await seek.trigger('pointerup', { pointerId: 1 })
+      const atEnd = withoutSeq(viewOf(wrapper).snapshot)
+      await seek.trigger('pointerdown', {
+        clientX: Math.round((seekAt / durationMs) * 100),
+        pointerId: 1
+      })
+      await seek.trigger('pointerup', { pointerId: 1 })
+      const atHalf = withoutSeq(viewOf(wrapper).snapshot)
+      wrapper.unmount()
+      return { atEnd, atHalf }
+    }
+
+    expect(await frames(v2Log)).toEqual(await frames(twinLog))
   })
 })
 

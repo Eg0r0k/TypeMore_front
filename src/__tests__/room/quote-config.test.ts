@@ -24,8 +24,8 @@ const h = vi.hoisted(() => ({
 vi.mock('@/entities/match', () => ({
   useMatchSessionStore: () => h.session
 }))
-// Sonner is the app's ONE live toast system (the entities/alert store renders
-// nowhere) — the failure paths must land here to be seen at all.
+// Sonner is the app's ONE toast system — the failure paths must land here to
+// be seen at all.
 vi.mock('@/shared/ui/sonner', () => ({
   toast: { warning: h.toastWarning, error: h.toastError }
 }))

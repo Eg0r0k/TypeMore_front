@@ -1,11 +1,13 @@
 import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
-import { stubDictionaries } from './fixtures/dictionaries'
+import { FIXED_WIDTH_DICTIONARY, stubDictionaries } from './fixtures/dictionaries'
 
 // Word lists come from the Go server (the frontend ships none); these budget
 // probes run without a backend, so every page gets the stubbed catalogue+body.
+// The fixed-width corpus rides along for the replay probe (see its header); an
+// extra catalogue row is invisible to every other test here.
 test.beforeEach(async ({ page }) => {
-  await stubDictionaries(page)
+  await stubDictionaries(page, { extra: [FIXED_WIDTH_DICTIONARY] })
 })
 
 /**
@@ -512,17 +514,36 @@ test('active word wrapped mid-word by extra characters is pulled back off the th
  * The blocking render contracts (bounded DOM corridor + the active-word line
  * invariant) must also hold on the REPLAY field — it is the same GameField
  * rendering a GhostDriver's view-model (complete log, zero display delay).
- * Finish a real run, open the replay, and sample its shadow DOM as it plays.
+ * Finish a real run, open the replay, and sample its shadow DOM along the
+ * playback timeline.
+ *
+ * DETERMINISM — this probe used to be the file's known flake, in two places:
+ *
+ *  1. The text was 45 words of German drawn on whatever seed the client rolled.
+ *     A short draw fits in two lines, never jumps one, and `drops >= 1` fails
+ *     over the dictionary rather than over the renderer. It now runs on the
+ *     fixed-width corpus (every word ten characters), and the wrap is asserted
+ *     as a PRECONDITION before playback, so a layout change reports itself
+ *     instead of surfacing as a mystery assertion at the bottom.
+ *  2. The sampler polled the wall clock — `sleep(40)` × 120, racing the rAF
+ *     loop that advances the replay — so which frames it caught depended on how
+ *     loaded the machine was. It now DRIVES the timeline instead of chasing it:
+ *     hold the pointer down on the seek bar (which pauses playback) and drag it
+ *     across in fixed fractions, sampling after each step. No clock is read, no
+ *     duration is assumed, and the same 61 frames are inspected every run.
  */
 test('replay field honors the DOM corridor and line-position invariant', async ({ page }) => {
   test.setTimeout(60_000)
+  const RUN_WORDS = 45
+  /** Sample count across the timeline: ~0.75 words per step at 45 words. */
+  const STEPS = 60
   const cfg = {
     devTools: false,
-    words: 45,
+    words: RUN_WORDS,
     time: 15,
     fontSize: 16,
     fontFamily: 'Hack',
-    language: 'german',
+    language: FIXED_WIDTH_DICTIONARY.lang,
     showKeyboard: false,
     theme: 'VS Code',
     mode: 'words',
@@ -544,10 +565,31 @@ test('replay field honors the DOM corridor and line-position invariant', async (
   }, cfg)
   await page.reload()
   await page.waitForSelector('.game__host')
-  await page.waitForTimeout(400)
+  await page.waitForFunction(
+    (n) =>
+      (document.querySelector('.game__host')?.shadowRoot?.querySelectorAll('.word').length ?? 0) ===
+      n,
+    RUN_WORDS
+  )
 
-  // Type the whole 45-word run to completion.
-  await page.evaluate(async () => {
+  // PRECONDITION: this run wraps, and it wraps the same way every time. Uniform
+  // word width at a fixed viewport makes the line count a constant — if it ever
+  // stops being ≥ 3, the scroll assertions below are testing nothing and this is
+  // the line that says so.
+  const layout = await page.evaluate(() => {
+    const root = (document.querySelector('.game__host') as HTMLElement).shadowRoot as ShadowRoot
+    const words = Array.from(root.querySelectorAll<HTMLElement>('.word'))
+    const lengths = new Set(words.map((w) => (w.textContent ?? '').replace(/\s+/g, '').length))
+    const tops = new Set(words.map((w) => w.offsetTop))
+    return { widths: lengths.size, length: [...lengths][0], lines: tops.size, words: words.length }
+  })
+  expect(layout.words).toBe(RUN_WORDS)
+  expect(layout.widths).toBe(1) // one uniform word width, hence one stable wrap
+  expect(layout.length).toBe(FIXED_WIDTH_DICTIONARY.words[0].length)
+  expect(layout.lines).toBeGreaterThanOrEqual(3)
+
+  // Type the whole run to completion.
+  await page.evaluate(async (total) => {
     const root = () =>
       (document.querySelector('.game__host') as HTMLElement)?.shadowRoot as ShadowRoot
     const input = document.querySelector('.game-input') as HTMLTextAreaElement
@@ -569,7 +611,7 @@ test('replay field honors the DOM corridor and line-position invariant', async (
       input.dispatchEvent(
         new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true, cancelable: true })
       )
-    for (let w = 0; w < 45; w++) {
+    for (let w = 0; w < total; w++) {
       const t = activeText()
       if (!t) break
       for (const ch of t) {
@@ -579,58 +621,69 @@ test('replay field honors the DOM corridor and line-position invariant', async (
       commit()
       await raf()
     }
-  })
+  }, RUN_WORDS)
 
   // Results screen, then open the replay (an icon-only action, addressed by id).
   await page.waitForSelector('[data-testid="results-replay"]', { timeout: 8000 })
   await page.click('[data-testid="results-replay"]')
   await page.waitForSelector('.game__host', { timeout: 8000 })
 
-  const result = await page.evaluate(async () => {
-    const root = () =>
-      (document.querySelector('.game__host') as HTMLElement)?.shadowRoot as ShadowRoot
-    const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
-    const nodeCount = () => root()?.querySelectorAll('.word').length ?? 0
-    const activeLine = (): number => {
-      const active = root()?.querySelector<HTMLElement>('.word.active')
-      if (!active) return -1
-      const tops = Array.from(
-        new Set(Array.from(root().querySelectorAll<HTMLElement>('.word')).map((w) => w.offsetTop))
-      ).sort((a, b) => a - b)
-      return tops.indexOf(active.offsetTop)
-    }
-    const progress = () => {
-      const fill = document.querySelector<HTMLElement>('[data-slot="progress-fill-indicator"]')
-      return fill ? (parseFloat(fill.style.getPropertyValue('--progress-scale')) || 0) * 100 : 0
-    }
+  /**
+   * One frame of the replay field, read after the pending seek has landed.
+   *
+   * Three frames of slack, not a duration: the seek queued by `pointermove` is
+   * applied by the player's next rAF, Vue re-renders on the tick after that,
+   * and the line-jump pass (`applyGeometry`) runs a further two microtask ticks
+   * later. Nothing here waits on elapsed time.
+   */
+  const sampleFrame = () =>
+    page.evaluate(async () => {
+      const raf = () => new Promise<void>((r) => requestAnimationFrame(() => r()))
+      await raf()
+      await raf()
+      await raf()
+      const root = (document.querySelector('.game__host') as HTMLElement).shadowRoot as ShadowRoot
+      const words = Array.from(root.querySelectorAll<HTMLElement>('.word'))
+      const active = root.querySelector<HTMLElement>('.word.active')
+      const tops = Array.from(new Set(words.map((w) => w.offsetTop))).sort((a, b) => a - b)
+      return {
+        nodes: words.length,
+        line: active === null ? -1 : tops.indexOf(active.offsetTop)
+      }
+    })
 
-    let maxNodes = 0
-    let maxLine = 0
-    let drops = 0
-    let prevNodes = nodeCount()
-    let sawActive = false
-    // Sample across the whole playback (poll until progress completes or we time out).
-    for (let i = 0; i < 120; i++) {
-      const nodes = nodeCount()
-      const line = activeLine()
-      if (line >= 0) sawActive = true
-      if (nodes > maxNodes) maxNodes = nodes
-      if (line > maxLine) maxLine = line
-      if (nodes < prevNodes) drops += 1
-      prevNodes = nodes
-      if (progress() >= 100 && i > 3) break
-      await sleep(40)
-    }
-    return { maxNodes, maxLine, drops, sawActive }
-  })
+  const seek = page.getByTestId('replay-seek')
+  await seek.waitFor()
+  const box = (await seek.boundingBox())!
+  const y = box.y + box.height / 2
+  const xAt = (fraction: number) => box.x + 1 + (box.width - 2) * fraction
 
-  expect(result.sawActive).toBe(true)
+  // Pointer DOWN and held: `onSeekDown` stops playback and seeks to the start,
+  // so everything after this is driven by us, not by the clock. Each move
+  // records the next target and the player's own frame loop applies it.
+  await page.mouse.move(xAt(0), y)
+  await page.mouse.down()
+  const frames = [await sampleFrame()]
+  for (let i = 1; i <= STEPS; i++) {
+    await page.mouse.move(xAt(i / STEPS), y)
+    frames.push(await sampleFrame())
+  }
+  await page.mouse.up()
+
+  const withActive = frames.filter((f) => f.line >= 0)
+  // The field rendered a run, not an empty tape: the last frame sits past the
+  // final commit, where there is no active word left, but everything before it
+  // has one.
+  expect(withActive.length).toBeGreaterThanOrEqual(STEPS)
   // (a) bounded DOM corridor on the replay field.
-  expect(result.maxNodes).toBeLessThan(300)
-  // Playback actually scrolled (line jumps recycled leading lines).
-  expect(result.drops).toBeGreaterThanOrEqual(1)
+  expect(Math.max(...frames.map((f) => f.nodes))).toBeLessThan(300)
+  // Playback actually scrolled: the window only ever advances, so a smaller
+  // node count means whole leading lines were recycled.
+  const drops = frames.filter((f, i) => i > 0 && f.nodes < frames[i - 1].nodes).length
+  expect(drops).toBeGreaterThanOrEqual(1)
+  expect(frames[frames.length - 1].nodes).toBeLessThan(frames[0].nodes)
   // (b) active word never reached the third visible line during replay.
-  expect(result.maxLine).toBeLessThanOrEqual(1)
+  expect(Math.max(...withActive.map((f) => f.line))).toBeLessThanOrEqual(1)
 })
 
 /**

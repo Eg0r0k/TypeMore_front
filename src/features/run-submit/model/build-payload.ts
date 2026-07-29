@@ -4,7 +4,7 @@
  * the single contract-drift boundary: the snapshot test guards every field.
  *
  * Field-for-field (RUNS.md POST body → source):
- *   mode          → GameSetup config.mode (ranked-eligible: time | words only)
+ *   mode          → GameSetup config.mode
  *   durationMs    → config.durationMs           (time mode only)
  *   wordCount     → generation.length           (words mode only; exactly one of the two)
  *                                               (a QUOTE run carries NEITHER — see below)
@@ -15,8 +15,10 @@
  *   dictHash      → SeedContext.dictVersion (fnv1a of the dictionary; of the
  *                                            TEXT for a quote run)
  *   scoreVersion  → 2 (scoreV2 — see SCORE_VERSION note below)
- *   setup         → { config, generation, declaration } (replayable snapshot),
- *                   with generation.textSource STRIPPED of its text for a quote
+ *   setup         → { adoptedFromRunId?, config, generation, declaration }
+ *                   (the replayable snapshot, with generation.textSource
+ *                   STRIPPED of its text for a quote, plus the optional text
+ *                   provenance marker)
  *   clientMetrics → { wpm, raw, acc } from the store Metrics
  *   clientScore   → the finalized ScoreResult (display-only server-side)
  *   log           → { version, events } — the core EventLog wrapping the store log
@@ -47,12 +49,49 @@ import type { RunSubmitInput } from '@shared/api'
  */
 export const SCORE_VERSION = 2 as const
 
-/** Ranked-eligible, seeded modes. `free` / `custom` / `quote` are never submitted. */
-export const RANKED_MODES = ['time', 'words'] as const
-export type RankedMode = (typeof RANKED_MODES)[number]
+/**
+ * The run's SUBMITTED DIMENSION, or `null` when the run has none to name.
+ *
+ * This one function is both the gate and the payload field, so the two can never
+ * disagree about what a submittable run is — the same "one predicate, two
+ * callers" rule `emitsRawTokens` follows in the core. It mirrors the server's
+ * dimension rule exactly (RUNS.md, "Dimensions are conditional on the text
+ * source", and the `runs_one_dimension` CHECK):
+ *
+ *   quote  → NEITHER. Its length is the text's, named by `quoteId`; inventing a
+ *            `wordCount` would be a second, forgeable copy of something the
+ *            registry already knows.
+ *   time   → durationMs
+ *   words  → wordCount
+ *   else   → no dimension, and therefore no board coordinate: `free` is zen and
+ *            never ends, `custom` is unranked by SCORING_CONCEPT §2. A run that
+ *            cannot name its own shape is not one the server could rank.
+ *
+ * The quote arm asks the CORE (`quoteOf`) whether this run's targets are a fixed
+ * text, rather than testing `mode === 'quote'`. That is the difference between a
+ * property and a list: a quote-mode config with no `textSource` degrades to the
+ * seeded word-count path in `generateWords`, so the mode name is not the thing
+ * that decides — the resolved text source is.
+ */
+function dimensionOf(ctx: RunSubmitContext): { durationMs?: number; wordCount?: number } | null {
+  if (quoteOf(ctx.generation) !== undefined) return {}
+  if (ctx.mode === 'time') return { durationMs: ctx.config.durationMs }
+  if (ctx.mode === 'words') return { wordCount: ctx.generation.length }
+  return null
+}
 
-export const isRankedMode = (mode: GenerationMode): mode is RankedMode =>
-  mode === 'time' || mode === 'words'
+/**
+ * Whether this finished run is one the server can rank.
+ *
+ * NOTE what stopped being a reason. This predicate used to be
+ * `mode === 'time' || mode === 'words'`, with `quote` listed beside `free` and
+ * `custom` as "never submitted". A quote run is nothing like those two: the
+ * server re-resolves its text by id and judges it on the same track as a seeded
+ * run, and it ranks on its own per-quote board. Choosing a quote — and typing
+ * the same one as often as you like — is the intended way to compete on that
+ * board, not a way around anything.
+ */
+export const isSubmittableRun = (ctx: RunSubmitContext): boolean => dimensionOf(ctx) !== null
 
 /**
  * Everything the payload needs, assembled at run finish from the game store's
@@ -76,6 +115,18 @@ export interface RunSubmitContext {
    * pre-telemetry build submitted.
    */
   readonly logVersion?: EventLogVersion
+  /**
+   * The run this run's TEXT was taken from, when it was taken from one — today,
+   * the record race, which applies the target run's seed and word list wholesale
+   * (`features/test/race`). Absent means the text was generated fresh.
+   *
+   * A run that carries it is a SEEDED REPEAT: saved, judged, and visible in
+   * history, but ranked nowhere — no board slot, no PB, no TP (RUNS.md, "Text
+   * provenance"). The marker is about the ORIGIN OF THE TEXT and nothing else:
+   * a pace caret or a ghost drawn over freshly generated words is an ordinary
+   * run, and whether the player beat it changes nothing.
+   */
+  readonly adoptedFromRunId?: string
 }
 
 /**
@@ -89,7 +140,7 @@ export type WireGenerationConfig = Omit<GenerationConfig, 'textSource'> & {
   readonly textSource?: SeededTextSource | QuoteRef
 }
 
-/** Build the exact RUNS.md POST body. Assumes `ctx.mode` is ranked-eligible. */
+/** Build the exact RUNS.md POST body. Assumes `isSubmittableRun(ctx)`. */
 export function buildRunPayload(ctx: RunSubmitContext): RunSubmitInput {
   const eventLog: EventLog = { version: ctx.logVersion ?? EVENT_LOG_VERSION, events: ctx.log }
   const quote = quoteOf(ctx.generation)
@@ -102,15 +153,27 @@ export function buildRunPayload(ctx: RunSubmitContext): RunSubmitInput {
   return {
     mode: ctx.mode,
     // Exactly one dimension is set: time → durationMs, words → wordCount. A
-    // quote run has neither — its length is the quote's, named by `quoteId`,
-    // and inventing a `wordCount` would be a second, forgeable copy of it. The
-    // server relaxes its XOR check for quotes in Stage C.
-    ...dimensionOf(ctx),
+    // quote run has neither — see `dimensionOf`.
+    ...(dimensionOf(ctx) ?? {}),
     lang: ctx.lang,
     seed: ctx.seed,
     dictHash: ctx.dictHash,
     scoreVersion: SCORE_VERSION,
     setup: {
+      // Provenance sits at the TOP LEVEL, beside the three snapshot halves and
+      // deliberately not inside `generation`. `generation` is what the core
+      // reconstructs a run from — it travels in the seed context and every
+      // replay and `validateLog` reads it — and this field must not be able to
+      // influence a single target. The server's `Replay` destructures the setup
+      // into config / generation / declaration and nothing else, so a fourth key
+      // is invisible to the fold by construction.
+      //
+      // Omitted, not `undefined`, when the text was generated fresh: that is the
+      // shape every payload predating the field has, and the one the server
+      // reads as "no marker".
+      ...(ctx.adoptedFromRunId !== undefined
+        ? { adoptedFromRunId: ctx.adoptedFromRunId }
+        : {}),
       config: ctx.config,
       generation,
       declaration: ctx.declaration
@@ -123,10 +186,4 @@ export function buildRunPayload(ctx: RunSubmitContext): RunSubmitInput {
     clientScore: ctx.score,
     log: eventLog
   }
-}
-
-function dimensionOf(ctx: RunSubmitContext): { durationMs?: number; wordCount?: number } {
-  if (ctx.mode === 'quote') return {}
-  if (ctx.mode === 'time') return { durationMs: ctx.config.durationMs }
-  return { wordCount: ctx.generation.length }
 }

@@ -1,10 +1,18 @@
 import {
-  getMedian,
-  numberWithSpaces,
+  clamp,
+  clamp01,
+  groupThousands,
   randomIntFromRange,
-  roundTo2
+  THIN_SPACE
 } from '@/shared/lib/helpers/numbers'
 import { describe, it, expect } from 'vitest'
+
+/**
+ * Expectations are BUILT from `THIN_SPACE` rather than pasted as literals: the
+ * separator is invisible in source, and a hand-typed plain space here would
+ * fail in a way no one can see in the diff.
+ */
+const group = (...parts: string[]): string => parts.join(THIN_SPACE)
 
 describe('randomIntFromRange', () => {
   it('should return a number within the specified range', () => {
@@ -32,57 +40,71 @@ describe('randomIntFromRange', () => {
   })
 })
 
-describe('roundTo2', () => {
-  it('should round numbers to 2 decimal places', () => {
-    expect(roundTo2(3.14159)).toBe(3.14)
-    expect(roundTo2(2.005)).toBe(2.01)
-    expect(roundTo2(2.0)).toBe(2)
+describe('clamp', () => {
+  it('should pass through a value already inside the range', () => {
+    expect(clamp(5, 0, 10)).toBe(5)
+    expect(clamp(0, 0, 10)).toBe(0)
+    expect(clamp(10, 0, 10)).toBe(10)
   })
 
-  it('should handle negative numbers', () => {
-    expect(roundTo2(-3.14159)).toBe(-3.14)
-    expect(roundTo2(-2.005)).toBe(-2.01)
+  it('should pull an out-of-range value to the nearest bound', () => {
+    expect(clamp(-3, 0, 10)).toBe(0)
+    expect(clamp(42, 0, 10)).toBe(10)
   })
 
-  it('should handle zero', () => {
-    expect(roundTo2(0)).toBe(0)
-  })
-})
-
-describe('getMedian', () => {
-  it('should calculate median for odd length arrays', () => {
-    expect(getMedian([1, 2, 3])).toBe(2)
-    expect(getMedian([5, 2, 1, 4, 3])).toBe(3)
+  it('should handle negative ranges', () => {
+    expect(clamp(-5, -10, -1)).toBe(-5)
+    expect(clamp(0, -10, -1)).toBe(-1)
+    expect(clamp(-20, -10, -1)).toBe(-10)
   })
 
-  it('should calculate median for even length arrays', () => {
-    expect(getMedian([1, 2, 3, 4])).toBe(2.5)
-    expect(getMedian([1, 2])).toBe(1.5)
-  })
-
-  it('should handle arrays with one element', () => {
-    expect(getMedian([1])).toBe(1)
-  })
-
-  it('should handle unsorted arrays', () => {
-    expect(getMedian([3, 1, 2])).toBe(2)
+  it('should leave NaN alone, as the inlined form did', () => {
+    expect(clamp(NaN, 0, 1)).toBeNaN()
   })
 })
 
-describe('numberWithSpaces', () => {
-  it('should format numbers with spaces as thousand separators', () => {
-    expect(numberWithSpaces(1000)).toBe('1 000')
-    expect(numberWithSpaces(12345)).toBe('12 345')
-    expect(numberWithSpaces(1234567)).toBe('1 234 567')
+describe('clamp01', () => {
+  it('should constrain a fraction to the unit range', () => {
+    expect(clamp01(0.5)).toBe(0.5)
+    expect(clamp01(-0.2)).toBe(0)
+    expect(clamp01(1.7)).toBe(1)
+  })
+
+  it('should keep the exact bounds', () => {
+    expect(clamp01(0)).toBe(0)
+    expect(clamp01(1)).toBe(1)
+  })
+})
+
+describe('groupThousands', () => {
+  it('should separate groups with U+2009, never a plain space', () => {
+    expect(THIN_SPACE.codePointAt(0)).toBe(0x2009)
+    expect(groupThousands(1000)).not.toBe('1 000')
+    expect(groupThousands(1000)).toBe(group('1', '000'))
+  })
+
+  it('should group thousands', () => {
+    expect(groupThousands(1000)).toBe(group('1', '000'))
+    expect(groupThousands(12345)).toBe(group('12', '345'))
+    expect(groupThousands(1234567)).toBe(group('1', '234', '567'))
   })
 
   it('should handle small numbers', () => {
-    expect(numberWithSpaces(100)).toBe('100')
-    expect(numberWithSpaces(10)).toBe('10')
-    expect(numberWithSpaces(1)).toBe('1')
+    expect(groupThousands(100)).toBe('100')
+    expect(groupThousands(10)).toBe('10')
+    expect(groupThousands(1)).toBe('1')
   })
 
   it('should handle zero', () => {
-    expect(numberWithSpaces(0)).toBe('0')
+    expect(groupThousands(0)).toBe('0')
+  })
+
+  it('should handle negative numbers', () => {
+    expect(groupThousands(-1234)).toBe('-1 234')
+  })
+
+  it('should round before grouping, never grouping decimals', () => {
+    expect(groupThousands(1234.56)).toBe('1 235')
+    expect(groupThousands(999.4)).toBe('999')
   })
 })

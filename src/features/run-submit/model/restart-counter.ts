@@ -18,6 +18,8 @@
  * turn the NEXT legitimate submission into a 422.
  */
 
+import { clamp } from '@/shared/lib/helpers/numbers'
+
 const STORAGE_KEY = 'runs-restarts-since-submit'
 
 /** RUNS.md: integer in [0, 10 000]; beyond is `422 invalid_restarts`. */
@@ -27,7 +29,7 @@ const read = (): number => {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
     const parsed = raw === null ? 0 : Number.parseInt(raw, 10)
-    return Number.isFinite(parsed) ? Math.min(Math.max(parsed, 0), MAX_RESTARTS) : 0
+    return Number.isFinite(parsed) ? clamp(parsed, 0, MAX_RESTARTS) : 0
   } catch {
     return 0
   }

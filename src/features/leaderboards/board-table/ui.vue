@@ -1,28 +1,31 @@
 <template>
-  <div class="board">
-    <Typography v-if="isLoading" class="board__state" size="s" color="sub">
+  <div class="flex w-full flex-col gap-2">
+    <Typography v-if="isLoading" class="board__state block px-2 py-6" size="s" color="sub">
       {{ t('boards.loading') }}
     </Typography>
 
     <TooltipProvider v-else :delay-duration="80">
-      <div v-if="entries.length > 0" class="board__head" aria-hidden="true">
-        <span class="board__cell board__cell--rank">{{ t('boards.column.rank') }}</span>
-        <span class="board__cell board__cell--player">{{ t('boards.column.player') }}</span>
-        <span class="board__cell board__cell--score">{{ t('boards.column.score') }}</span>
-        <span class="board__cell board__cell--num">{{ t('boards.column.wpm') }}</span>
-        <span class="board__cell board__cell--num">{{ t('boards.column.raw') }}</span>
-        <span class="board__cell board__cell--num">{{ t('boards.column.acc') }}</span>
-        <span class="board__cell board__cell--when">{{ t('boards.column.when') }}</span>
+      <div v-if="entries.length > 0" :class="[BOARD_GRID, TABLE_GRID_HEAD]" aria-hidden="true">
+        <span class="inline-flex items-center gap-1">{{ t('boards.column.rank') }}</span>
+        <span>{{ t('boards.column.player') }}</span>
+        <span>{{ t('boards.column.score') }}</span>
+        <span class="text-end">{{ t('boards.column.wpm') }}</span>
+        <span class="text-end">{{ t('boards.column.raw') }}</span>
+        <span class="text-end">{{ t('boards.column.acc') }}</span>
+        <span class="text-end">{{ t('boards.column.when') }}</span>
       </div>
 
-      <ul v-if="entries.length > 0" ref="rows" class="board__rows">
+      <ul v-if="entries.length > 0" ref="rows" class="m-0 list-none p-0">
         <template v-for="segment in segments" :key="segment.id">
           <!--
             A segment that does not start at rank 1 sits under a gap; this is
             the upward continuation of the keyset walk (?before=), the mirror
             of the "load more" at the bottom.
           -->
-          <li v-if="segment.prevCursor !== undefined" class="board__gap">
+          <li
+            v-if="segment.prevCursor !== undefined"
+            class="flex justify-center border-t border-dashed border-sub-alt py-1"
+          >
             <Button
               data-testid="boards-more-above"
               color="gray"
@@ -36,7 +39,7 @@
           <li
             v-for="entry in segment.entries"
             :key="entry.runId"
-            class="board__row"
+            class="board__row group relative"
             :class="{
               'board__row--self': entry.userId === selfUserId,
               'board__row--flash': entry.userId === flashUserId
@@ -51,42 +54,59 @@
           -->
             <button
               type="button"
-              class="board__watch"
+              class="board__watch cursor-pointer border-none bg-transparent font-sans text-text transition-tm group-odd:bg-sub-alt hover:text-main focus-visible:bg-sub-alt"
+              :class="[
+                BOARD_GRID,
+                TABLE_GRID_ROW,
+                { 'text-main': entry.userId === selfUserId },
+                { 'animate-row-flash': entry.userId === flashUserId }
+              ]"
               data-testid="boards-watch"
               :aria-label="t('boards.watch', { player: entry.displayName })"
               @click="watchRun(entry)"
             >
-              <span class="board__cell board__cell--rank" data-testid="boards-rank">
+              <span class="inline-flex items-center gap-1" data-testid="boards-rank">
                 <!-- Crown for the throne, muted medals for the podium. -->
-                <IconCrown v-if="entry.rank === 1" class="board__crown" aria-hidden="true" />
+                <IconCrown
+                  v-if="entry.rank === 1"
+                  class="board__crown text-main"
+                  aria-hidden="true"
+                />
                 <IconMedal
                   v-else-if="entry.rank === 2 || entry.rank === 3"
-                  class="board__medal"
+                  class="board__medal text-sub"
                   aria-hidden="true"
                 />
                 <span :class="{ 'sr-only': entry.rank === 1 }">{{ entry.rank }}</span>
               </span>
-              <span class="board__cell board__cell--player" data-testid="boards-player">
-                <span class="board__name">{{ entry.displayName }}</span>
-                <span v-if="entry.userId === selfUserId" class="board__you">
+              <span class="flex min-w-0 items-baseline gap-2" data-testid="boards-player">
+                <span class="truncate">{{ entry.displayName }}</span>
+                <span v-if="entry.userId === selfUserId" class="ml-1.5 text-[0.7rem] text-main">
                   {{ t('boards.you') }}
                 </span>
                 <BoardModChips :mods="entry.mods" />
               </span>
-              <span class="board__cell board__cell--score" data-testid="boards-score">
-                <span class="board__score">{{ formatScore(entry.score) }}</span>
+              <span class="inline-flex items-baseline gap-1.5" data-testid="boards-score">
+                <span class="font-bold tabular-nums">{{ formatScore(entry.score) }}</span>
                 <span
-                  class="board__grade"
-                  :class="{ 'board__grade--top': entry.grade === 'SS' || entry.grade === 'S' }"
+                  class="board__grade rounded px-1 text-[0.65rem]"
+                  :class="
+                    entry.grade === 'SS' || entry.grade === 'S'
+                      ? 'bg-main text-bg'
+                      : 'bg-sub-alt text-sub'
+                  "
                   data-testid="boards-grade"
                 >
                   {{ entry.grade }}
                 </span>
               </span>
-              <span class="board__cell board__cell--num">{{ formatWpm(entry.wpm) }}</span>
-              <span class="board__cell board__cell--num">{{ formatWpm(entry.raw) }}</span>
-              <span class="board__cell board__cell--num">{{ formatAccuracy(entry.acc) }}</span>
-              <span class="board__cell board__cell--when">
+              <span class="text-end tabular-nums">{{ formatWpm(entry.wpm) }}</span>
+              <span class="text-end tabular-nums">{{ formatWpm(entry.raw) }}</span>
+              <span class="text-end tabular-nums">{{ formatAccuracy(entry.acc) }}</span>
+              <!-- The date makes way for the actions on hover/focus. -->
+              <span
+                class="text-end text-sub transition-tm group-hover:opacity-0 group-focus-within:opacity-0"
+              >
                 <Tooltip>
                   <TooltipTrigger as-child>
                     <span data-testid="boards-when" tabindex="-1">{{ whenLabel(entry) }}</span>
@@ -98,28 +118,30 @@
 
             <!-- Hover actions: watch is the row's own click, race seats you
                  against this run's ghost. Focusable, so the keyboard reaches
-                 them without the hover. -->
-            <span class="board__actions">
-              <button
-                type="button"
-                class="board__action"
+                 them without the hover. Same icon pair as every other table. -->
+            <span
+              class="pointer-events-none absolute right-2 top-1/2 inline-flex -translate-y-1/2 gap-1 opacity-0 transition-tm group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
+            >
+              <Button
+                color="shadow"
+                size="icon-sm"
                 data-testid="boards-action-watch"
                 :aria-label="t('boards.watch', { player: entry.displayName })"
                 :title="t('boards.actions.watch')"
                 @click.stop="watchRun(entry)"
               >
                 <IconPlayerPlay />
-              </button>
-              <button
-                type="button"
-                class="board__action"
+              </Button>
+              <Button
+                color="shadow"
+                size="icon-sm"
                 data-testid="boards-action-race"
                 :aria-label="t('boards.race', { player: entry.displayName })"
                 :title="t('boards.actions.race')"
                 @click.stop="raceRun(entry)"
               >
                 <IconSwords />
-              </button>
+              </Button>
             </span>
           </li>
         </template>
@@ -127,7 +149,7 @@
 
       <Typography
         v-else-if="!isError"
-        class="board__state"
+        class="board__state block px-2 py-6"
         data-testid="boards-empty"
         size="s"
         color="sub"
@@ -135,7 +157,7 @@
         {{ t('boards.empty') }}
       </Typography>
 
-      <div v-if="isError" class="board__error">
+      <div v-if="isError" class="flex items-center gap-3 p-2">
         <Typography data-testid="boards-error" size="s" color="error">
           {{ t('boards.pageError') }}
         </Typography>
@@ -146,7 +168,7 @@
 
       <Button
         v-else-if="hasMore"
-        class="board__more"
+        class="self-center"
         data-testid="boards-more"
         color="gray"
         size="s"
@@ -170,8 +192,10 @@
   import IconPlayerPlay from '~icons/tabler/player-play-filled'
   import IconSwords from '~icons/tabler/swords'
   import { Button } from '@/shared/ui/button'
+  import { TABLE_GRID_HEAD, TABLE_GRID_ROW } from '@/shared/ui/table'
   import { Typography } from '@/shared/ui/typography'
   import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip'
+  import { BOARD_GRID } from '../board-grid'
   import { BoardModChips } from '../mod-chips'
   import { useBoardFeed } from '../model/use-board-feed'
   import {
@@ -279,209 +303,3 @@
     })
   }
 </script>
-
-<style lang="scss" scoped>
-  @use '../board-grid' as grid;
-
-  .board {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    width: 100%;
-
-    &__state {
-      display: block;
-      padding: 1.5rem 0.5rem;
-    }
-
-    &__head,
-    &__watch {
-      @include grid.board-grid;
-    }
-
-    &__head {
-      padding: 0 0.5rem;
-      font-size: 0.75rem;
-      color: var(--sub-color);
-      text-transform: uppercase;
-    }
-
-    &__rows {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-
-    &__row {
-      position: relative;
-      border-top: 1px solid var(--sub-alt-color);
-
-      &:hover .board__actions,
-      &:focus-within .board__actions {
-        opacity: 1;
-        pointer-events: auto;
-      }
-
-      &:hover .board__cell--when,
-      &:focus-within .board__cell--when {
-        opacity: 0;
-      }
-    }
-
-    &__gap {
-      display: flex;
-      justify-content: center;
-      padding: 0.25rem 0;
-      border-top: 1px dashed var(--sub-alt-color);
-    }
-
-    &__row--self .board__watch {
-      color: var(--main-color);
-    }
-
-    /* The jump-to-me landing flash: long enough to catch, gone before it nags. */
-    &__row--flash .board__watch {
-      animation: board-flash 1.6s ease-out;
-    }
-
-    &__watch {
-      padding: 0.5rem;
-      font-family: inherit;
-      font-size: 0.875rem;
-      color: var(--text-color);
-      background: none;
-      border: none;
-      cursor: pointer;
-
-      &:hover,
-      &:focus-visible {
-        background-color: var(--sub-alt-color);
-      }
-    }
-
-    &__cell--num,
-    &__cell--when {
-      text-align: end;
-    }
-
-    &__cell--when {
-      color: var(--sub-color);
-      transition: opacity var(--transition-duration) ease;
-    }
-
-    &__cell--rank {
-      display: inline-flex;
-      gap: 0.25rem;
-      align-items: center;
-    }
-
-    &__crown {
-      font-size: 1rem;
-      color: var(--main-color);
-    }
-
-    &__medal {
-      font-size: 0.9rem;
-      color: var(--sub-color);
-    }
-
-    &__cell--player {
-      display: flex;
-      gap: 0.5rem;
-      align-items: baseline;
-      min-width: 0;
-    }
-
-    &__name {
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-
-    /* The ranking metric: what the column order says with weight. */
-    &__cell--score {
-      display: inline-flex;
-      gap: 0.375rem;
-      align-items: baseline;
-    }
-
-    &__score {
-      font-weight: 700;
-    }
-
-    &__grade {
-      padding: 0 0.3rem;
-      font-size: 0.65rem;
-      color: var(--sub-color);
-      background-color: var(--sub-alt-color);
-      border-radius: var(--border-radius);
-    }
-
-    &__grade--top {
-      color: var(--bg-color);
-      background-color: var(--main-color);
-    }
-
-    /* Hover actions float over the date cell; keyboard focus reveals them too. */
-    &__actions {
-      position: absolute;
-      top: 50%;
-      right: 0.5rem;
-      display: inline-flex;
-      gap: 0.25rem;
-      opacity: 0;
-      transform: translateY(-50%);
-      transition: opacity var(--transition-duration) ease;
-      pointer-events: none;
-    }
-
-    &__action {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 1.6rem;
-      height: 1.6rem;
-      padding: 0;
-      font-size: 0.9rem;
-      color: var(--sub-color);
-      background-color: var(--sub-alt-color);
-      border: none;
-      border-radius: var(--border-radius);
-      cursor: pointer;
-      transition: color var(--transition-duration) ease;
-
-      &:hover,
-      &:focus-visible {
-        color: var(--main-color);
-      }
-    }
-
-    &__you {
-      margin-left: 0.375rem;
-      font-size: 0.7rem;
-      color: var(--main-color);
-    }
-
-    &__error {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.5rem;
-    }
-
-    &__more {
-      align-self: center;
-    }
-  }
-
-  @keyframes board-flash {
-    0%,
-    40% {
-      background-color: var(--sub-alt-color);
-    }
-
-    100% {
-      background-color: transparent;
-    }
-  }
-</style>

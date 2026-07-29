@@ -11,7 +11,7 @@ import {
 } from '@shared/core'
 import {
   buildRunPayload,
-  isRankedMode,
+  isSubmittableRun,
   SCORE_VERSION,
   type RunSubmitContext
 } from '@/features/run-submit/model/build-payload'
@@ -73,13 +73,70 @@ const timeCtx = (): RunSubmitContext => ({
   log
 })
 
-describe('isRankedMode — seeded, ranked-eligible modes only', () => {
-  it('accepts time and words, rejects free/custom/quote', () => {
-    expect(isRankedMode('time')).toBe(true)
-    expect(isRankedMode('words')).toBe(true)
-    expect(isRankedMode('free')).toBe(false)
-    expect(isRankedMode('custom')).toBe(false)
-    expect(isRankedMode('quote')).toBe(false)
+const QUOTE_TEXT = 'the quick brown fox'
+const QUOTE_ID = '1f5f1f2c-6f0f-4d5a-9f0a-3f2a1b0c9d8e'
+
+const quoteCtx = (): RunSubmitContext => ({
+  ...timeCtx(),
+  mode: 'quote',
+  config: { ...config, mode: 'quote' },
+  generation: {
+    ...generation,
+    mode: 'quote',
+    // A quote has no magnitude — its length is the text's.
+    length: 0,
+    textSource: {
+      kind: 'quote',
+      quoteId: QUOTE_ID,
+      quoteHash: '8b1cf30a',
+      text: QUOTE_TEXT
+    }
+  },
+  dictHash: '8b1cf30a'
+})
+
+describe('isSubmittableRun — a run the server can rank names its own dimension', () => {
+  const withMode = (mode: RunSubmitContext['mode']): RunSubmitContext => ({
+    ...timeCtx(),
+    mode,
+    config: { ...config, mode },
+    generation: { ...generation, mode }
+  })
+
+  it('accepts the two seeded shapes', () => {
+    expect(isSubmittableRun(withMode('time'))).toBe(true)
+    expect(isSubmittableRun(withMode('words'))).toBe(true)
+  })
+
+  /**
+   * The change this phase made. `quote` used to sit beside free/custom as
+   * "never submitted"; it is nothing like them. The server re-resolves the text
+   * by id and judges it on the same track as a seeded run, onto that quote's
+   * own board.
+   */
+  it('accepts a quote run — it names its text instead of a size', () => {
+    expect(isSubmittableRun(quoteCtx())).toBe(true)
+  })
+
+  it('rejects the shapes that name no dimension at all', () => {
+    expect(isSubmittableRun(withMode('free'))).toBe(false)
+    expect(isSubmittableRun(withMode('custom'))).toBe(false)
+  })
+
+  /**
+   * The predicate reads the resolved TEXT SOURCE, not the mode label — which is
+   * what makes it a property rather than a second list of mode names.
+   *
+   * `mode: 'quote'` with NO textSource is a config that names a fixed text and
+   * supplies none. It is refused rather than guessed at: the payload it would
+   * produce carries `mode: "quote"` and no textSource, so the server reads it as
+   * seeded, demands exactly one dimension, and answers 422 invalid_dimensions.
+   * Failing here is the same verdict without the round trip.
+   */
+  it('refuses a quote-labelled run whose text source never resolved', () => {
+    const labelledOnly = withMode('quote')
+    expect(labelledOnly.generation.textSource).toBeUndefined()
+    expect(isSubmittableRun(labelledOnly)).toBe(false)
   })
 })
 
@@ -174,26 +231,6 @@ describe('buildRunPayload — RUNS.md field-for-field (contract-drift guard)', (
 })
 
 describe('buildRunPayload — a quote run names its text, never carries it', () => {
-  const QUOTE_TEXT = 'the quick brown fox'
-  const quoteCtx = (): RunSubmitContext => ({
-    ...timeCtx(),
-    mode: 'quote',
-    config: { ...config, mode: 'quote' },
-    generation: {
-      ...generation,
-      mode: 'quote',
-      // A quote has no magnitude — its length is the text's.
-      length: 0,
-      textSource: {
-        kind: 'quote',
-        quoteId: '1f5f1f2c-6f0f-4d5a-9f0a-3f2a1b0c9d8e',
-        quoteHash: '8b1cf30a',
-        text: QUOTE_TEXT
-      }
-    },
-    dictHash: '8b1cf30a'
-  })
-
   it('emits quoteId + quoteHash, strips the text, and carries no dimension', () => {
     const payload = buildRunPayload(quoteCtx())
 
@@ -228,7 +265,7 @@ describe('buildRunPayload — a quote run names its text, never carries it', () 
         reverse: false,
         textSource: {
           kind: 'quote',
-          quoteId: '1f5f1f2c-6f0f-4d5a-9f0a-3f2a1b0c9d8e',
+          quoteId: QUOTE_ID,
           quoteHash: '8b1cf30a'
         }
       },
@@ -249,9 +286,74 @@ describe('buildRunPayload — a quote run names its text, never carries it', () 
     buildRunPayload(ctx)
     expect(ctx.generation.textSource).toEqual({
       kind: 'quote',
-      quoteId: '1f5f1f2c-6f0f-4d5a-9f0a-3f2a1b0c9d8e',
+      quoteId: QUOTE_ID,
       quoteHash: '8b1cf30a',
       text: QUOTE_TEXT
     })
+  })
+})
+
+describe('buildRunPayload — text provenance (RUNS.md "Text provenance")', () => {
+  const RACED_RUN_ID = '8f14e45f-ceea-4d0e-9c9a-1b0c9d8e3f2a'
+
+  /**
+   * The rule is about where the TEXT came from and about nothing else.
+   *
+   * A pace caret or a ghost is drawn by the page; it never reaches this
+   * function, and there is no field it could reach. So a run played with one
+   * over a freshly generated text produces the very same bytes as a run played
+   * with an empty field — which is the strongest form the claim can take: not
+   * "the caret is ignored" but "the caret is not expressible".
+   */
+  it('is byte-identical with or without an opponent on screen', () => {
+    const alone = buildRunPayload(timeCtx())
+    const raced = buildRunPayload(timeCtx())
+    expect(JSON.stringify(raced)).toBe(JSON.stringify(alone))
+    expect(JSON.stringify(alone)).not.toContain('adoptedFromRunId')
+  })
+
+  it('omits the marker entirely when the text was generated fresh', () => {
+    const payload = buildRunPayload(timeCtx())
+    expect('adoptedFromRunId' in payload.setup).toBe(false)
+    // The legacy shape, unchanged: exactly the three snapshot halves.
+    expect(Object.keys(payload.setup).sort()).toEqual(
+      ['config', 'declaration', 'generation'].sort()
+    )
+  })
+
+  it('names the origin run when the text was adopted from one', () => {
+    const payload = buildRunPayload({ ...timeCtx(), adoptedFromRunId: RACED_RUN_ID })
+
+    expect(payload.setup).toEqual({
+      adoptedFromRunId: RACED_RUN_ID,
+      config,
+      generation,
+      declaration
+    })
+    // Top level of `setup`, NOT inside `generation`: the core reconstructs a run
+    // from `generation`, so a provenance note living there could influence a
+    // target. It must be invisible to the fold.
+    expect(JSON.stringify(payload.setup.generation)).not.toContain('adoptedFromRunId')
+  })
+
+  it('carries the marker on a quote run too — the rule is not about the mode', () => {
+    const payload = buildRunPayload({ ...quoteCtx(), adoptedFromRunId: RACED_RUN_ID })
+    expect((payload.setup as { adoptedFromRunId?: string }).adoptedFromRunId).toBe(RACED_RUN_ID)
+    // …and still names its quote, still carries no dimension.
+    expect('durationMs' in payload).toBe(false)
+    expect('wordCount' in payload).toBe(false)
+    expect(JSON.stringify(payload)).not.toContain(QUOTE_TEXT)
+  })
+
+  /**
+   * The marker must not disturb anything else. Stripping it from an adopted
+   * payload has to leave the exact bytes a fresh run of the same setup produces
+   * — otherwise "the same run, told apart by one field" would not be true, and
+   * the server's twin tests would be comparing two different runs.
+   */
+  it('changes nothing but its own key', () => {
+    const adopted = buildRunPayload({ ...timeCtx(), adoptedFromRunId: RACED_RUN_ID })
+    const { adoptedFromRunId: _origin, ...setup } = adopted.setup as Record<string, unknown>
+    expect(JSON.stringify({ ...adopted, setup })).toBe(JSON.stringify(buildRunPayload(timeCtx())))
   })
 })

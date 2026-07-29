@@ -4,6 +4,8 @@
 // forfeit path (finish{forfeit:true}, eliminated screen, dnf row), and a kick
 // that lands while the transport is down must drain through the existing
 // finish parking on resume.
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
@@ -25,6 +27,58 @@ import {
   AFK_KICK_WARMUP_MS,
   useMatchSessionStore
 } from '@entities/match'
+
+/**
+ * The server's match timings, read from the artifact the backend generates from
+ * its own Go constants (`TypeMore_back/contract/match-timings.json`, produced by
+ * `make contract` and documented in that repo's `contract/README.md`).
+ *
+ * Reading it is the point. Both halves of every AFK pair used to be literals —
+ * the server's `AfkTrailingMs = 15_000` was asserted by no Go test at all, and
+ * the frontend carried its own copy of the number in a test — so either side
+ * could be retyped and both repos stayed green. The artifact is the one place
+ * the numbers exist; a consumer that copies them back out has bought nothing.
+ *
+ * The path assumes the sibling checkout the backend's own tooling assumes
+ * (`FRONTEND ?= ../TypeMore_front` in its Makefile). `TYPEMORE_BACKEND`
+ * overrides it. A checkout without the server repo SKIPS the assertion out
+ * loud rather than passing quietly.
+ */
+const CONTRACT_PATH = resolve(
+  process.env.TYPEMORE_BACKEND ?? '../TypeMore_back',
+  'contract/match-timings.json'
+)
+
+interface ServerMatchTimings {
+  readonly afkTrailingMs: number
+  readonly afkKickShare: number
+  readonly afkWarmupMs: number
+}
+
+const serverTimings = (): ServerMatchTimings | null => {
+  let raw: string
+  try {
+    raw = readFileSync(CONTRACT_PATH, 'utf8')
+  } catch {
+    return null
+  }
+  // A malformed or truncated artifact is a FAILURE, not a skip: the file was
+  // found, so something produced it wrong, and silently passing would hide it.
+  const parsed = JSON.parse(raw) as { match?: Partial<ServerMatchTimings> }
+  const match = parsed.match
+  if (
+    typeof match?.afkTrailingMs !== 'number' ||
+    typeof match.afkKickShare !== 'number' ||
+    typeof match.afkWarmupMs !== 'number'
+  ) {
+    throw new Error(`${CONTRACT_PATH} does not carry the match AFK timings`)
+  }
+  return {
+    afkTrailingMs: match.afkTrailingMs,
+    afkKickShare: match.afkKickShare,
+    afkWarmupMs: match.afkWarmupMs
+  }
+}
 
 class FakeTimerWorker implements TimerWorkerLike {
   onmessage: ((event: MessageEvent<TimerTick>) => void) | null = null
@@ -129,14 +183,31 @@ describe('idle kick (loopback)', () => {
   })
 
   it('every client number sits strictly inside its server counterpart', () => {
-    // Share pair against the loopback mirror of the server sweep.
-    expect(AFK_KICK_SHARE_CLIENT).toBeLessThan(AFK_KICK_SHARE)
-    expect(AFK_KICK_WARMUP_MS).toBeLessThan(AFK_WARMUP_MS)
-    // Streak against the server's TRAILING rule. The loopback does not mirror
-    // it, so the number is pinned here verbatim from the backend's
-    // protocol.go (AfkTrailingMs) — see MATCH.md "AFK" for the pair.
-    const SERVER_AFK_TRAILING_MS = 15_000
-    expect(AFK_KICK_STREAK_MS).toBeLessThan(SERVER_AFK_TRAILING_MS)
+    const server = serverTimings()
+    if (server === null) {
+      // Stated, not silent: a checkout without the sibling server repo cannot
+      // run this assertion, and a green run that skipped it must say so.
+      console.warn(`skipping the server-threshold check: ${CONTRACT_PATH} is not readable`)
+      return
+    }
+
+    // Every number comes from the backend's own generated artifact
+    // (TypeMore_back/contract/match-timings.json, `make contract`) — nothing
+    // here is a literal. A retyped constant on the server therefore fails HERE,
+    // which is the whole reason the artifact exists: before it, the frontend
+    // carried its own copy of 15 000 and the two could drift in silence.
+    expect(AFK_KICK_SHARE_CLIENT).toBeLessThan(server.afkKickShare)
+    expect(AFK_KICK_WARMUP_MS).toBeLessThan(server.afkWarmupMs)
+    // The streak is checked against the server's TRAILING rule (MATCH.md "AFK"
+    // documents them as a pair); the loopback does not mirror that rule at all.
+    expect(AFK_KICK_STREAK_MS).toBeLessThan(server.afkTrailingMs)
+
+    // The loopback is the client's stand-in for the sweep, so its own mirror of
+    // the two server numbers has to BE the server's, not merely be above the
+    // client's. A drifted mirror would make every kick test below a test of a
+    // server that does not exist.
+    expect(AFK_KICK_SHARE).toBe(server.afkKickShare)
+    expect(AFK_WARMUP_MS).toBe(server.afkWarmupMs)
   })
 
   it('a seat that never types is kicked by its own rule onto the eliminated screen', async () => {

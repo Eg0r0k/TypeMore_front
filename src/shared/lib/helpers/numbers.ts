@@ -10,45 +10,55 @@ export const randomIntFromRange = (min: number, max: number): number => {
   const normMax = Math.floor(max)
   return Math.floor(Math.random() * (normMax - normMin + 1) + normMin)
 }
-/**
- * Rounds a number to two decimal places.
- *
- * @param num
- * @returns The number rounded to two decimal places.
- */
-export const roundTo2 = (num: number): number => {
-  const sign = num < 0 ? -1 : 1
-  const absNum = Math.abs(num)
-  return (sign * Math.round((absNum + Number.EPSILON) * 100)) / 100
-}
-/**
- * Calculates the median of an array of numbers.
- *
- * @param arr
- * @returns The median of the array.
- */
-export const getMedian = (arr: number[]): number => {
-  const sortedArr = arr.slice().sort((a, b) => a - b)
-  const middle = Math.floor(sortedArr.length / 2)
 
-  if (sortedArr.length % 2 === 0) {
-    return (sortedArr[middle - 1] + sortedArr[middle]) / 2
-  } else {
-    return sortedArr[middle]
-  }
-}
 /**
- * Formats a number with spaces as thousand separators.
+ * Constrains a value to the inclusive `[min, max]` range.
  *
- * @param x - The number to format.
- * @returns - The formatted number with spaces.
- * @example
- * // returns "12 345"
- * numberWithSpaces(12345)
- * @example
- * // returns "12 345 678"
- * numberWithSpaces(12345678)
+ * The ONE clamp in the app: it used to live as a private helper inside the
+ * colour code and as four hand-inlined `Math.min(Math.max(...))` expressions
+ * (two chart tooltips, the restart counter, the progress driver). `NaN` passes
+ * through unchanged, exactly as every inlined form did.
+ *
+ * @param value - The number to constrain.
+ * @param min - Lower bound (inclusive).
+ * @param max - Upper bound (inclusive).
+ * @returns The value pulled inside the range.
  */
-export function numberWithSpaces(x: number): string {
-  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+export const clamp = (value: number, min: number, max: number): number =>
+  Math.min(Math.max(value, min), max)
+
+/** {@link clamp} to the unit range — the shape a fraction/progress value wants. */
+export const clamp01 = (value: number): number => clamp(value, 0, 1)
+
+/**
+ * The thousands separator: U+2009 THIN SPACE, not a plain `' '`.
+ *
+ * Written as an escape ON PURPOSE. It is invisible in source, so a literal
+ * would read as an ordinary space to the next person and get "tidied" into one
+ * — which silently widens every count in the UI and breaks any test comparing
+ * against the real output. A regular space also lets a number wrap across two
+ * lines mid-value; the thin space is the typographically correct choice.
+ */
+export const THIN_SPACE = '\u2009'
+
+/**
+ * Groups thousands with a {@link THIN_SPACE}: `1234567` → `"1 234 567"`.
+ *
+ * The number is ROUNDED first — this formats COUNTS, and a fractional input
+ * would otherwise have its decimals grouped too.
+ *
+ * @param n - The number to format.
+ * @returns The grouped number.
+ * @example
+ * // returns "12 345" (separated by U+2009)
+ * groupThousands(12345)
+ */
+export const groupThousands = (n: number): string => {
+  const digits = String(Math.round(n))
+  let out = ''
+  for (let i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 === 0) out += THIN_SPACE
+    out += digits[i]
+  }
+  return out
 }

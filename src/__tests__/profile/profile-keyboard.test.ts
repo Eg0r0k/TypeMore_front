@@ -2,8 +2,9 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import { createI18n } from 'vue-i18n'
 
-import type { KeyboardLayout, ProfileKeyboard as KeyboardData } from '@shared/api'
+import type { ProfileKeyboard as KeyboardData } from '@shared/api'
 import { ProfileKeyboard } from '@/features/profile'
+import { KEYBOARD_LAYOUT_PRESETS, layoutByName } from '@/features/profile/model/layouts'
 import en from '@/app/i18n/locales/en'
 
 const i18n = createI18n({ legacy: false, locale: 'en', messages: { en } })
@@ -13,25 +14,9 @@ const global = { plugins: [i18n] }
  * The keyboard heatmap's honesty rules (C9): mapping fidelity from a fixture
  * profile to expected colours, the metric toggle actually changing the map,
  * and low-data neutrality — a key under the observation minimum renders
- * neutral, never a colour faked from three presses.
+ * neutral, never a colour faked from three presses. Plus the layout presets
+ * themselves: same physical board, latin only.
  */
-
-const layouts: KeyboardLayout[] = [
-  {
-    name: 'qwerty',
-    label: 'QWERTY',
-    keys: [
-      { id: 'KeyA', row: 0, col: 0, finger: 'pinky', hand: 'left', chars: ['a', 'A'] },
-      { id: 'KeyS', row: 0, col: 1, finger: 'ring', hand: 'left', chars: ['s', 'S'] },
-      { id: 'KeyD', row: 0, col: 2, finger: 'middle', hand: 'left', chars: ['d', 'D'] }
-    ]
-  },
-  {
-    name: 'jcuken',
-    label: 'ЙЦУКЕН',
-    keys: [{ id: 'KeyA', row: 0, col: 0, finger: 'pinky', hand: 'left', chars: ['ф', 'Ф'] }]
-  }
-]
 
 // KeyA: clean and fast. KeyS: error-prone but slow-metric-poor. KeyD: three
 // presses — an anecdote.
@@ -53,7 +38,7 @@ const keyFill = (wrapper: ReturnType<typeof mount>, id: string): string =>
 
 describe('profile keyboard heatmap', () => {
   it('maps the fixture onto expected colours: best key main-most, worst key error-most', () => {
-    const wrapper = mount(ProfileKeyboard, { props: { keyboard, layouts }, global })
+    const wrapper = mount(ProfileKeyboard, { props: { keyboard }, global })
     // Accuracy metric (default): KeyA is the best scored key (0% badness →
     // pure main colour), KeyS the worst (100% → error-most mix).
     expect(keyTone(wrapper, 'KeyA')).toBe('scored')
@@ -63,35 +48,61 @@ describe('profile keyboard heatmap', () => {
   })
 
   it('low-data keys render NEUTRAL — never a colour faked from three presses', () => {
-    const wrapper = mount(ProfileKeyboard, { props: { keyboard, layouts }, global })
+    const wrapper = mount(ProfileKeyboard, { props: { keyboard }, global })
     expect(keyTone(wrapper, 'KeyD')).toBe('low-data')
     // The neutral tone carries no metric colour: no color-mix fill on the cap.
     expect(keyFill(wrapper, 'KeyD')).not.toContain('color-mix')
   })
 
   it('the metric toggle recolours the map (speed reads intervals, not errors)', async () => {
-    const wrapper = mount(ProfileKeyboard, { props: { keyboard, layouts }, global })
-    const accuracyFill = keyFill(wrapper, 'KeyS')
+    const wrapper = mount(ProfileKeyboard, { props: { keyboard }, global })
     await wrapper.find('[data-testid="profile-kbd-metric-speed"]').trigger('click')
     // Under speed, KeyA (120 ms) is best and KeyS (260 ms) worst — the fills
     // move even though the errors did not.
     expect(keyFill(wrapper, 'KeyA')).toContain('--error-color) 0%')
     expect(keyFill(wrapper, 'KeyS')).toContain('--error-color) 100%')
-    expect(keyFill(wrapper, 'KeyS')).not.toBe('')
-    void accuracyFill
   })
 
-  it('defaults to the profile’s dominant-language layout and toggles to the other', async () => {
-    const wrapper = mount(ProfileKeyboard, { props: { keyboard, layouts }, global })
-    // qwerty default (the response's layout): the KeyA cap reads 'a'.
-    expect(wrapper.find('[data-testid="profile-kbd-key-KeyA"]').text()).toBe('a')
-    await wrapper.find('[data-testid="profile-kbd-layout-jcuken"]').trigger('click')
-    expect(wrapper.find('[data-testid="profile-kbd-key-KeyA"]').text()).toBe('ф')
+  it('relabels the SAME physical board when the layout changes', async () => {
+    const wrapper = mount(ProfileKeyboard, { props: { keyboard }, global })
+    // qwerty default (the response's layout): the KeyS cap reads 's'.
+    expect(wrapper.find('[data-testid="profile-kbd-key-KeyS"]').text()).toBe('s')
+    await wrapper.find('[data-testid="profile-kbd-layout-dvorak"]').trigger('click')
+    expect(wrapper.find('[data-testid="profile-kbd-key-KeyS"]').text()).toBe('o')
+    // Relabelling is not recolouring: the key's own numbers did not change.
+    expect(keyTone(wrapper, 'KeyS')).toBe('scored')
+  })
+
+  it('ships no cyrillic layout, and an unknown one falls back to QWERTY', () => {
+    expect(KEYBOARD_LAYOUT_PRESETS.some((preset) => preset.name === 'jcuken')).toBe(false)
+    expect(layoutByName('jcuken').name).toBe('qwerty')
+
+    const wrapper = mount(ProfileKeyboard, {
+      props: { keyboard: { ...keyboard, layout: 'jcuken' } },
+      global
+    })
+    expect(wrapper.find('[data-testid="profile-kbd-layout-jcuken"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="profile-kbd-key-KeyS"]').text()).toBe('s')
+  })
+
+  it('every preset draws the same physical keys — a layout is only a relabelling', () => {
+    const idsOf = (name: string): string =>
+      layoutByName(name)
+        .rows.flatMap((row) => row.map((key) => key.id))
+        .join(',')
+    const qwerty = idsOf('qwerty')
+    for (const preset of KEYBOARD_LAYOUT_PRESETS) expect(idsOf(preset.name)).toBe(qwerty)
+    // …and each cap carries exactly one glyph.
+    for (const preset of KEYBOARD_LAYOUT_PRESETS) {
+      for (const row of preset.rows) {
+        for (const key of row) expect(key.label.length).toBeGreaterThan(0)
+      }
+    }
   })
 
   it('renders the honest empty note for a fresh account', () => {
     const wrapper = mount(ProfileKeyboard, {
-      props: { keyboard: { layout: 'qwerty', keys: [] }, layouts },
+      props: { keyboard: { layout: 'qwerty', keys: [] } },
       global
     })
     expect(wrapper.find('[data-testid="profile-keyboard-empty"]').exists()).toBe(true)

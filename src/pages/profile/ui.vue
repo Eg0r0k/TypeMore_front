@@ -1,10 +1,20 @@
 <template>
-  <main class="profile">
+  <!--
+    `min-w-0` is load-bearing, not decoration. The app shell's `#main` is a GRID
+    (the global `main { display: grid }` rule), so this page is a grid item, and
+    a grid item defaults to `min-width: auto` — it may not shrink below its own
+    min-content. The calendar and the keyboard are ~680 px of min-content, so
+    the column sized itself to THEM: the page laid out 677 px wide inside a
+    328 px shell, every `overflow-x-auto` inside had nothing to scroll against,
+    and the charts measured 677 and drew at 677. Allowing the item to shrink is
+    what makes all of the responsive work below actually take effect.
+  -->
+  <main class="flex w-full min-w-0 flex-col gap-6 pb-12 pt-5 sm:gap-8">
     <!-- Anonymous: the page is a sign-in hint, not a redirect — the URL is
          shareable and the answer to "what is here" is honest. -->
     <section
       v-if="authStore.isResolved && !authed"
-      class="profile__signin"
+      class="flex flex-col items-start gap-4 rounded-lg bg-sub-alt p-6 sm:p-8"
       data-testid="profile-signin-hint"
     >
       <Typography size="m" color="sub">{{ t('profile.signin.hint') }}</Typography>
@@ -18,25 +28,23 @@
       <ProfileSection
         name="summary"
         :loading="summary.isPending.value"
+        :busy="isBusy(summary)"
         :error="summary.isError.value"
         @retry="summary.refetch"
       >
         <ProfileSummaryCard v-if="summary.data.value" :summary="summary.data.value" />
       </ProfileSection>
 
-      <!-- C3 — the activity calendar + streak. -->
+      <!-- C3 — the activity calendar (the streak line lives on the card above). -->
       <ProfileSection
         name="activity"
         :title="t('profile.activity.title')"
         :loading="activity.isPending.value"
+        :busy="isBusy(activity)"
         :error="activity.isError.value"
         @retry="activity.refetch"
       >
-        <ProfileActivity
-          v-if="activity.data.value"
-          :activity="activity.data.value"
-          :streak="summary.data.value?.streak ?? { current: 0, best: 0 }"
-        />
+        <ProfileActivity v-if="activity.data.value" :activity="activity.data.value" />
       </ProfileSection>
 
       <!-- C4 — PB cards, with the race action wired to the home race flow. -->
@@ -44,6 +52,7 @@
         name="pbs"
         :title="t('profile.pbs.title')"
         :loading="pbs.isPending.value"
+        :busy="isBusy(pbs)"
         :error="pbs.isError.value"
         @retry="pbs.refetch"
       >
@@ -56,19 +65,23 @@
       </ProfileSection>
 
       <!-- C5 — the two charts. The daily chart owns the range presets and the
-           two toggles; the header stat is the SERVER's regression. -->
+           two toggles; the header stat is the SERVER's regression. A range
+           switch keeps the previous range on screen (keepPreviousData) and only
+           dims the section, so the chart is never torn down and rebuilt. -->
       <ProfileSection
         name="charts"
         :title="t('profile.charts.title')"
         :loading="timeseries.isPending.value"
+        :busy="isBusy(timeseries)"
         :error="timeseries.isError.value"
         @retry="timeseries.refetch"
       >
         <template #head>
-          <div class="profile__chart-controls">
+          <div class="flex flex-wrap gap-1.5 sm:gap-2">
             <ToggleGroup
               :model-value="range"
               type="single"
+              size="sm"
               :aria-label="t('profile.charts.range')"
               @update:model-value="onRange"
             >
@@ -76,6 +89,7 @@
                 v-for="preset in RANGE_PRESETS"
                 :key="preset"
                 :value="preset"
+                class="text-xs"
                 :data-testid="`profile-range-${preset}`"
               >
                 {{ t(`profile.charts.rangePreset.${preset}`) }}
@@ -84,74 +98,85 @@
             <ToggleGroup
               :model-value="metric"
               type="single"
+              size="sm"
               :aria-label="t('profile.charts.metric')"
               @update:model-value="onMetric"
             >
-              <ToggleGroupItem value="speed" data-testid="profile-metric-speed">
+              <ToggleGroupItem value="speed" class="text-xs" data-testid="profile-metric-speed">
                 {{ t('profile.charts.speed') }}
               </ToggleGroupItem>
-              <ToggleGroupItem value="accuracy" data-testid="profile-metric-accuracy">
+              <ToggleGroupItem
+                value="accuracy"
+                class="text-xs"
+                data-testid="profile-metric-accuracy"
+              >
                 {{ t('profile.charts.accuracy') }}
               </ToggleGroupItem>
             </ToggleGroup>
             <ToggleGroup
               :model-value="String(smoothing)"
               type="single"
+              size="sm"
               :aria-label="t('profile.charts.smoothing')"
               @update:model-value="onSmoothing"
             >
-              <ToggleGroupItem value="10" data-testid="profile-smoothing-10">
+              <ToggleGroupItem value="10" class="text-xs" data-testid="profile-smoothing-10">
                 {{ t('profile.charts.avgOf', { n: 10 }) }}
               </ToggleGroupItem>
-              <ToggleGroupItem value="100" data-testid="profile-smoothing-100">
+              <ToggleGroupItem value="100" class="text-xs" data-testid="profile-smoothing-100">
                 {{ t('profile.charts.avgOf', { n: 100 }) }}
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
         </template>
 
-        <template v-if="timeseries.data.value">
-          <!-- The header stat: computed server-side (OLS of wpm over
-               cumulative hours in range — docs/PROFILE.md). -->
-          <Typography size="s" color="sub" data-testid="profile-wpm-per-hour">
-            {{
-              t('profile.charts.perHour', {
-                delta: `${timeseries.data.value.wpmPerHour >= 0 ? '+' : ''}${timeseries.data.value.wpmPerHour.toFixed(1)}`
-              })
-            }}
-          </Typography>
-          <ProfileDailyChart
-            :timeseries="timeseries.data.value"
-            :metric="metric"
-            :smoothing="smoothing"
-          />
-        </template>
+        <div class="flex flex-col gap-4">
+          <template v-if="timeseries.data.value">
+            <!-- The header stat: computed server-side (OLS of wpm over
+                 cumulative hours in range — docs/PROFILE.md). -->
+            <Typography size="s" color="sub" data-testid="profile-wpm-per-hour">
+              {{
+                t('profile.charts.perHour', {
+                  delta: `${timeseries.data.value.wpmPerHour >= 0 ? '+' : ''}${timeseries.data.value.wpmPerHour.toFixed(1)}`
+                })
+              }}
+            </Typography>
+            <ProfileDailyChart
+              :timeseries="timeseries.data.value"
+              :metric="metric"
+              :smoothing="smoothing"
+            />
+          </template>
 
-        <div class="profile__hist">
-          <Typography size="s" color="sub">{{ t('profile.charts.histogramTitle') }}</Typography>
-          <ProfileHistogram v-if="histogram.data.value" :histogram="histogram.data.value" />
-          <div v-if="histogram.isError.value" class="profile__hist-error">
-            <Typography size="s" color="error">{{ t('profile.sectionError') }}</Typography>
-            <Button color="main-outline" size="s" @click="histogram.refetch">
-              {{ t('profile.retry') }}
-            </Button>
+          <div class="relative flex flex-col gap-2">
+            <Typography size="s" color="sub">{{ t('profile.charts.histogramTitle') }}</Typography>
+            <div
+              v-if="histogram.isPending.value"
+              class="min-h-32 animate-pulse rounded-lg bg-sub-alt"
+              data-testid="profile-loading-histogram"
+              aria-hidden="true"
+            />
+            <ProfileHistogram v-else-if="histogram.data.value" :histogram="histogram.data.value" />
+            <div v-if="histogram.isError.value" class="flex flex-wrap items-center gap-4">
+              <Typography size="s" color="error">{{ t('profile.sectionError') }}</Typography>
+              <Button color="main-outline" size="s" @click="histogram.refetch">
+                {{ t('profile.retry') }}
+              </Button>
+            </div>
           </div>
         </div>
       </ProfileSection>
 
-      <!-- C9 — the keyboard heatmap. -->
+      <!-- C9 — the keyboard heatmap over the local layout presets. -->
       <ProfileSection
         name="keyboard"
         :title="t('profile.keyboard.title')"
-        :loading="keyboard.isPending.value || layouts.isPending.value"
-        :error="keyboard.isError.value || layouts.isError.value"
-        @retry="retryKeyboard"
+        :loading="keyboard.isPending.value"
+        :busy="isBusy(keyboard)"
+        :error="keyboard.isError.value"
+        @retry="keyboard.refetch"
       >
-        <ProfileKeyboard
-          v-if="keyboard.data.value && layouts.data.value"
-          :keyboard="keyboard.data.value"
-          :layouts="layouts.data.value.layouts"
-        />
+        <ProfileKeyboard v-if="keyboard.data.value" :keyboard="keyboard.data.value" />
       </ProfileSection>
 
       <!-- The runs table (its own keyset pagination and error handling). -->
@@ -169,7 +194,6 @@
   import { useI18n } from 'vue-i18n'
 
   import {
-    keyboardLayoutsQueryOptions,
     profileActivityQueryOptions,
     profileHistogramQueryOptions,
     profileKeyboardQueryOptions,
@@ -216,7 +240,6 @@
   const pbs = useQuery(computed(() => gatedBy(profilePBsQueryOptions(), authed.value)))
   const histogram = useQuery(computed(() => gatedBy(profileHistogramQueryOptions(), authed.value)))
   const keyboard = useQuery(computed(() => gatedBy(profileKeyboardQueryOptions(), authed.value)))
-  const layouts = useQuery(computed(() => gatedBy(keyboardLayoutsQueryOptions(), authed.value)))
 
   // ── The range presets: all time / 3 months / month / week / day ────────────
   const RANGE_PRESETS = ['all', '3mo', 'month', 'week', 'day'] as const
@@ -235,6 +258,15 @@
     computed(() => gatedBy(profileTimeseriesQueryOptions(from.value), authed.value))
   )
 
+  /**
+   * "Busy" is every load that is NOT the first one: there is data on screen, so
+   * the section dims and floats a spinner instead of tearing its content down.
+   */
+  const isBusy = (query: {
+    isFetching: { value: boolean }
+    isPending: { value: boolean }
+  }): boolean => query.isFetching.value && !query.isPending.value
+
   const metric = ref<'speed' | 'accuracy'>('speed')
   const smoothing = ref(10)
 
@@ -249,11 +281,6 @@
     if (value === '10' || value === '100') smoothing.value = Number(value)
   }
 
-  const retryKeyboard = (): void => {
-    if (keyboard.isError.value) void keyboard.refetch()
-    if (layouts.isError.value) void layouts.refetch()
-  }
-
   // ── Actions ────────────────────────────────────────────────────────────────
   const toLogin = (): void => void router.push(routeLocation.login())
   /** Every race entry point goes through /race/{id} — one application path. */
@@ -262,42 +289,3 @@
   const toReplay = (runId: string): void =>
     void router.push({ name: ROUTE_NAMES.REPLAY, params: { runId } })
 </script>
-
-<style lang="scss" scoped>
-  .profile {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    width: 100%;
-    padding: 1.25rem 0 3rem;
-
-    &__signin {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      align-items: flex-start;
-      padding: 2rem;
-      background-color: var(--sub-alt-color);
-      border-radius: var(--border-radius);
-    }
-
-    &__chart-controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-    }
-
-    &__hist {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      margin-top: 1rem;
-    }
-
-    &__hist-error {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
-  }
-</style>

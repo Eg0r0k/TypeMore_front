@@ -87,7 +87,11 @@ export const WORDS_SHADOW_STYLES = `
   width: 2px;
   background: var(--sub-color);
   opacity: 0.7;
-  transition: transform 0.12s ease;
+  /* Defaults are the relayed opponent's: a short ease that smooths the jitter
+     of positions arriving off the wire. A PACED caret (the pace bot) overrides
+     both — it knows exactly when its next character is due, so it travels for
+     exactly that long at constant speed. */
+  transition: transform var(--tm-ghost-ms, 0.12s) var(--tm-ghost-ease, ease);
   will-change: transform;
   pointer-events: none;
 }

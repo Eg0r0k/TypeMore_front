@@ -41,7 +41,12 @@
           }"
           :style="{
             transform: `translate(${ghost.x}px, ${ghost.y}px)`,
-            height: `${ghost.height}px`
+            height: `${ghost.height}px`,
+            // A paced ghost travels for exactly the time it has; a relayed one
+            // leaves these unset and keeps the field's default transition.
+            ...(ghost.glideMs === undefined
+              ? {}
+              : { '--tm-ghost-ms': `${ghost.glideMs}ms`, '--tm-ghost-ease': 'linear' })
           }"
         >
           <!-- No label for a nameless ghost: a pace bot is nobody — not even

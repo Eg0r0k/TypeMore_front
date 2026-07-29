@@ -28,6 +28,8 @@ import {
 } from '@shared/core'
 import { GhostDriver } from '@entities/match'
 
+import { withTelemetry, withoutSeq } from '../fixtures/telemetry-twin'
+
 const DELAY = 250
 
 const config = (over: Partial<CoreConfig> = {}): CoreConfig => ({
@@ -86,18 +88,46 @@ const goDeadline = 10_000
 
 interface Scenario {
   readonly ctx: CoreContext
+  /** The log the driver is actually fed. */
   readonly log: readonly GameEvent[]
+  /** The v1 capture of the same keystrokes — the result the fold must equal. */
+  readonly twin: readonly GameEvent[]
   /** Virtual instant by which everything (deadline included) must be over. */
   readonly endMs: number
 }
 
-const wordsScenario: Scenario = {
-  ctx: wordsCtx,
-  log: wordsLog,
-  endMs: wordsLog[wordsLog.length - 1].t + DELAY + 50
+/**
+ * The two wire formats the driver has to be equivalent under. `v1` is the
+ * historic coverage; `v2` is the same run captured by a client with keystroke
+ * telemetry, which until now never reached this path at all. Telemetry is NOT
+ * skipped anywhere along it: the driver dispatches it into the reducer like
+ * everything else and the reducer answers with the same state object — feeding
+ * these logs through is the only thing that proves it.
+ */
+const VARIANTS = [
+  { name: 'v1 log', capture: (log: readonly GameEvent[]) => log },
+  { name: 'v2 log with telemetry', capture: (log: readonly GameEvent[]) => withTelemetry(log) }
+] as const
+type Variant = (typeof VARIANTS)[number]
+
+const lastT = (log: readonly GameEvent[]): number => log[log.length - 1].t
+
+const wordsScenario = (variant: Variant): Scenario => {
+  const log = variant.capture(wordsLog)
+  return { ctx: wordsCtx, log, twin: wordsLog, endMs: lastT(log) + DELAY + 50 }
 }
-const timeScenario: Scenario = { ctx: timeCtx, log: timeLog, endMs: timeDeadline + DELAY + 50 }
-const goScenario: Scenario = { ctx: goCtx, log: timeLog, endMs: goDeadline + DELAY + 50 }
+const timeScenario = (variant: Variant): Scenario => ({
+  ctx: timeCtx,
+  log: variant.capture(timeLog),
+  twin: timeLog,
+  endMs: timeDeadline + DELAY + 50
+})
+const goScenario = (variant: Variant): Scenario => ({
+  ctx: goCtx,
+  log: variant.capture(timeLog),
+  twin: timeLog,
+  endMs: goDeadline + DELAY + 50
+})
 
 /**
  * Run one randomized delivery: random chunk sizes, per-chunk arrival latency
@@ -140,19 +170,25 @@ function runScenario(scenario: Scenario, rng: () => number): GhostDriver {
   return driver
 }
 
-describe('GhostDriver equivalence (property)', () => {
+describe.each(VARIANTS)('GhostDriver equivalence (property): $name', (variant) => {
   const SEEDS = Array.from({ length: 40 }, (_, i) => i + 1)
 
   it.each(SEEDS)(
     'word-mode log: any chunking/cadence reproduces foldLog exactly (seed %i)',
     (seed) => {
-      const driver = runScenario(wordsScenario, lcg(seed))
-      const folded = foldLog(wordsCtx, wordsLog)._unsafeUnwrap()
+      const scenario = wordsScenario(variant)
+      const driver = runScenario(scenario, lcg(seed))
+      const folded = foldLog(wordsCtx, scenario.log)._unsafeUnwrap()
       expect(driver.view.snapshot).toEqual(folded)
       expect(driver.view.finished).toBe(true)
       expect(folded.finishedAt).not.toBeNull()
+      // …and that fold IS the v1 twin's, apart from the seq counter telemetry
+      // also consumes. Metrics are compared against the TWIN's, not the fed
+      // log's: identical to the last decimal, telemetry or not.
+      const twin = foldLog(wordsCtx, scenario.twin)._unsafeUnwrap()
+      expect(withoutSeq(folded)).toEqual(withoutSeq(twin))
       expect(driver.metrics.value).toEqual(
-        computeMetrics(wordsCtx, wordsLog, folded.finishedAt ?? asMs(0))
+        computeMetrics(wordsCtx, scenario.twin, twin.finishedAt ?? asMs(0))
       )
     }
   )
@@ -160,28 +196,38 @@ describe('GhostDriver equivalence (property)', () => {
   it.each(SEEDS)(
     'time-mode log with idle tail: deadline settles via tick, still exact (seed %i)',
     (seed) => {
-      const driver = runScenario(timeScenario, lcg(seed))
+      const scenario = timeScenario(variant)
+      const driver = runScenario(scenario, lcg(seed))
       // foldLog settled well past the deadline == driver display settled there.
-      const folded = foldLog(timeCtx, timeLog, asMs(timeScenario.endMs + DELAY))._unsafeUnwrap()
+      const settleAt = asMs(scenario.endMs + DELAY)
+      const folded = foldLog(timeCtx, scenario.log, settleAt)._unsafeUnwrap()
       expect(folded.phase).toBe('finished')
       expect(folded.finishedAt).toBe(timeDeadline) // pinned to the deadline, not a tick instant
       expect(driver.view.snapshot).toEqual(folded)
+      const twin = foldLog(timeCtx, scenario.twin, settleAt)._unsafeUnwrap()
+      expect(withoutSeq(folded)).toEqual(withoutSeq(twin))
       expect(driver.metrics.value).toEqual(
-        computeMetrics(timeCtx, timeLog, folded.finishedAt ?? asMs(0))
+        computeMetrics(timeCtx, scenario.twin, twin.finishedAt ?? asMs(0))
       )
     }
   )
 
   it.each(SEEDS)('start policy go: the deadline anchors at t=0, still exact (seed %i)', (seed) => {
-    const driver = runScenario(goScenario, lcg(seed))
-    const folded = foldLog(goCtx, timeLog, asMs(goScenario.endMs + DELAY))._unsafeUnwrap()
+    const scenario = goScenario(variant)
+    const driver = runScenario(scenario, lcg(seed))
+    const settleAt = asMs(scenario.endMs + DELAY)
+    const folded = foldLog(goCtx, scenario.log, settleAt)._unsafeUnwrap()
     expect(folded.finishedAt).toBe(goDeadline) // the go instant + duration, not first-keystroke + duration
     expect(driver.view.snapshot).toEqual(folded)
+    const twin = foldLog(goCtx, scenario.twin, settleAt)._unsafeUnwrap()
+    expect(withoutSeq(folded)).toEqual(withoutSeq(twin))
     expect(driver.metrics.value).toEqual(
-      computeMetrics(goCtx, timeLog, folded.finishedAt ?? asMs(0))
+      computeMetrics(goCtx, scenario.twin, twin.finishedAt ?? asMs(0))
     )
   })
+})
 
+describe('GhostDriver equivalence (property): degenerate deliveries', () => {
   it('start policy go: an idle ghost settles at its deadline from advance() alone', () => {
     const driver = new GhostDriver({ config: goCtx.config, words: wordsList }, { delayMs: DELAY })
     // Nothing is ever appended: this player never typed a character.
@@ -198,24 +244,34 @@ describe('GhostDriver equivalence (property)', () => {
     expect(driver.metrics.value).toEqual(computeMetrics(goCtx, [], folded.finishedAt ?? asMs(0)))
   })
 
-  it('degenerate chunkings: all-at-once and one-event-per-chunk both reproduce foldLog', () => {
-    const folded = foldLog(wordsCtx, wordsLog)._unsafeUnwrap()
+  it.each(VARIANTS)(
+    'degenerate chunkings ($name): all-at-once and one-event-per-chunk both reproduce foldLog',
+    (variant) => {
+      const scenario = wordsScenario(variant)
+      const folded = foldLog(wordsCtx, scenario.log)._unsafeUnwrap()
+      expect(withoutSeq(folded)).toEqual(
+        withoutSeq(foldLog(wordsCtx, scenario.twin)._unsafeUnwrap())
+      )
 
-    const bulk = new GhostDriver({ config: wordsCtx.config, words: wordsList }, { delayMs: DELAY })
-    bulk.append(wordsLog)
-    bulk.advance(wordsScenario.endMs + DELAY)
-    expect(bulk.view.snapshot).toEqual(folded)
+      const bulk = new GhostDriver(
+        { config: wordsCtx.config, words: wordsList },
+        { delayMs: DELAY }
+      )
+      bulk.append(scenario.log)
+      bulk.advance(scenario.endMs + DELAY)
+      expect(bulk.view.snapshot).toEqual(folded)
 
-    const single = new GhostDriver(
-      { config: wordsCtx.config, words: wordsList },
-      { delayMs: DELAY }
-    )
-    for (const event of wordsLog) {
-      single.append([event])
-      single.advance(event.t + DELAY)
+      const single = new GhostDriver(
+        { config: wordsCtx.config, words: wordsList },
+        { delayMs: DELAY }
+      )
+      for (const event of scenario.log) {
+        single.append([event])
+        single.advance(event.t + DELAY)
+      }
+      expect(single.view.snapshot).toEqual(folded)
     }
-    expect(single.view.snapshot).toEqual(folded)
-  })
+  )
 })
 
 // Ports of the ReplayScheduler suite (superseded by GhostDriver): the clock,

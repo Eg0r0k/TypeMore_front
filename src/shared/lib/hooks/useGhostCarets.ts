@@ -11,6 +11,18 @@ export interface TestGhostCaret {
   wordIndex: number
   /** Caret position inside that word (typed length). */
   charIndex: number
+  /**
+   * Travel time to THIS position, ms — a caret that is being paced rather than
+   * relayed. A ghost that leaves it undefined keeps the field's default
+   * transition, which is what every relayed opponent wants: their positions
+   * arrive when they arrive, and a duration would be a guess.
+   *
+   * The pace bot is the opposite case: its next position and its exact due
+   * instant are both known in advance, so it hands over the time it has to get
+   * there and the caret travels for exactly that long, linearly. See
+   * `features/test/pace/model/use-pace-caret.ts`.
+   */
+  glideMs?: number
 }
 
 /**
@@ -38,11 +50,14 @@ export interface GhostCaretPosition {
   labelBelow: boolean
   /** Grow the nick LEFTWARDS: the caret is close enough to the right edge that a left-anchored label would be clipped. */
   labelLeft: boolean
+  /** Travel time to this position, ms; `undefined` leaves the default transition. */
+  glideMs?: number
 }
 
 interface GhostCacheEntry {
   wordIndex: number
   charIndex: number
+  glideMs: number | undefined
   /** Window start the slot was resolved against — a window shift moves every word. */
   start: number
   visible: boolean
@@ -97,7 +112,8 @@ export function useGhostCarets(
         cached !== undefined &&
         cached.wordIndex === ghost.wordIndex &&
         cached.charIndex === ghost.charIndex &&
-        cached.start === start
+        cached.start === start &&
+        cached.glideMs === ghost.glideMs
       ) {
         if (cached.visible) {
           next.push({
@@ -107,7 +123,8 @@ export function useGhostCarets(
             y: cached.y,
             height: cached.height,
             labelBelow: cached.labelBelow,
-            labelLeft: cached.labelLeft
+            labelLeft: cached.labelLeft,
+            glideMs: cached.glideMs
           })
         }
         continue
@@ -123,6 +140,7 @@ export function useGhostCarets(
         cache.set(ghost.id, {
           wordIndex: ghost.wordIndex,
           charIndex: ghost.charIndex,
+          glideMs: ghost.glideMs,
           start,
           visible: false,
           x: 0,
@@ -170,6 +188,7 @@ export function useGhostCarets(
       cache.set(ghost.id, {
         wordIndex: ghost.wordIndex,
         charIndex: ghost.charIndex,
+        glideMs: ghost.glideMs,
         start,
         visible: true,
         x,
@@ -178,7 +197,16 @@ export function useGhostCarets(
         labelBelow,
         labelLeft
       })
-      next.push({ id: ghost.id, label: ghost.label, x, y, height, labelBelow, labelLeft })
+      next.push({
+        id: ghost.id,
+        label: ghost.label,
+        x,
+        y,
+        height,
+        labelBelow,
+        labelLeft,
+        glideMs: ghost.glideMs
+      })
     }
 
     // Drop cache entries for ghosts that left (finished / disconnected peers).

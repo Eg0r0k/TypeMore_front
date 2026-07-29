@@ -8,8 +8,12 @@ export interface ListRunsParams {
 
 /**
  * POST /runs body. `setup`/`clientMetrics`/`clientScore`/`log` are opaque JSON
- * produced by the game core (fenced) and stored verbatim. Exactly one of
- * `durationMs` / `wordCount` is set.
+ * produced by the game core (fenced) and stored verbatim.
+ *
+ * Exactly one of `durationMs` / `wordCount` is set — EXCEPT on a quote run,
+ * which carries neither: its length is the quote's, named by the `quoteId` in
+ * `setup.generation.textSource` (RUNS.md, "Dimensions are conditional on the
+ * text source"). `build-payload.ts` is the one place that decides which.
  */
 export interface RunSubmitInput {
   mode: string

@@ -126,20 +126,29 @@
       'player chat' 1fr
       'controls chat' auto / 1fr 3fr;
 
+    /*
+     * Every area carries `min-width: 0`. A grid item defaults to
+     * `min-width: auto` — it may not shrink below its own min-content — so one
+     * long chat message or one long room name would widen its whole column and
+     * squeeze the other one, instead of wrapping inside the box it was given.
+     */
     &__room {
       display: flex;
       flex-direction: column;
       gap: 1rem;
       grid-area: player;
+      min-width: 0;
       min-height: 0;
     }
 
     &__config {
       grid-area: config;
+      min-width: 0;
     }
 
     &__chat {
       grid-area: chat;
+      min-width: 0;
     }
 
     &__players {

@@ -95,6 +95,52 @@
   --radius-tm: var(--border-radius);
 }
 
+/*
+ * THE popup entrance — one utility for every portalled surface (dropdown,
+ * popover, select, tooltip). It is composed of tw-animate-css primitives
+ * (`animate-in`/`animate-out` + fade/zoom) rather than a hand-rolled keyframe,
+ * so the duration and easing stay Tailwind tokens: `--tw-duration` and
+ * `--tw-ease` are what `duration-*` / `ease-*` set, and a consumer can retune
+ * one popup by adding those utilities instead of editing this.
+ *
+ * The slide is applied by the consumer through `data-[side=…]` variants, since
+ * only the consumer knows which sides its content can open on.
+ */
+@utility popup-motion {
+  &[data-state='open'] {
+    --tw-duration: 0.16s;
+    --tw-ease: var(--ease-standard);
+
+    @apply animate-in fade-in-0 zoom-in-95;
+  }
+
+  &[data-state='closed'] {
+    --tw-duration: 0.12s;
+    --tw-ease: var(--ease-out);
+
+    @apply animate-out fade-out-0 zoom-out-95;
+  }
+}
+
+/*
+ * The "you landed here" flash for a table row jumped to from elsewhere
+ * (boards' jump-to-me): long enough to catch the eye, gone before it nags.
+ */
+@theme {
+  --animate-row-flash: row-flash 1.6s ease-out;
+
+  @keyframes row-flash {
+    0%,
+    40% {
+      background-color: var(--sub-color);
+    }
+
+    100% {
+      background-color: transparent;
+    }
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

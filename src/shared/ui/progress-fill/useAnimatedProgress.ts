@@ -1,13 +1,13 @@
 import { onScopeDispose, toValue, watch, type MaybeRefOrGetter } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 
+import { clamp01 } from '@/shared/lib/helpers/numbers'
+
 /** Easing curve: maps linear time t∈[0,1] to eased t∈[0,1]. Pure and swappable. */
 export type Easing = (t: number) => number
 
 /** Default decelerating curve — quick start, gentle settle. */
 export const easeOutQuad: Easing = (t) => t * (2 - t)
-
-const clamp01 = (n: number): number => (n < 0 ? 0 : n > 1 ? 1 : n)
 
 export interface AnimatedProgressOptions {
   /** Catch-up duration toward the target, ms. Default ~120. */
