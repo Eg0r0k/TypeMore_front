@@ -129,7 +129,9 @@ test('a board race action runs on HOME: repeated mark, ghost pace, guest never s
   await expect.poll(async () => await configSnapshot(page)).toEqual(before)
 })
 
-test('the deep link seats the race on HOME, and Esc re-seats the same ghost', async ({ page }) => {
+test('the deep link seats the race on HOME, and the restart combo re-seats the same ghost', async ({
+  page
+}) => {
   await page.goto('/race/run-ada')
   await expect(page).toHaveURL(/127\.0\.0\.1:5178\/(\?|$)/)
   // The race's only chrome: the repeated mark and the ghost-mode pace chip.
@@ -140,8 +142,8 @@ test('the deep link seats the race on HOME, and Esc re-seats the same ghost', as
   await page.locator('.game-input').focus()
   await page.keyboard.type('aaaa', { delay: 40 })
 
-  // …and Esc re-seats the SAME ghost: still racing, same record.
-  await page.keyboard.press('Escape')
+  // …and the restart combo re-seats the SAME ghost: still racing, same record.
+  await page.keyboard.press('Control+Enter')
   await expect(page.getByTestId('race-repeated')).toBeVisible()
   await expect(page.getByTestId('pace-picker')).toContainText('Ada')
 })

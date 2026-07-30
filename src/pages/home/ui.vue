@@ -172,7 +172,7 @@
    * The game lives on `/`. This page owns the session lifecycle so the field can be
    * swapped for the results screen and back without losing it: it generates words
    * from the config, rebuilds on any core-bound setting change, drives the timer,
-   * and restarts on Esc. The field (`Test`) and `TestResults` are pure views.
+   * and restarts on Ctrl+Enter. The field (`Test`) and `TestResults` are pure views.
    */
   const { t } = useI18n()
   const game = useGameStore('local')
@@ -661,12 +661,19 @@
     game.setup({ ...setup, declaration: declarationOf() })
   }
 
-  // Esc — and Ctrl+Enter, the combo the footer advertises — exit the replay
-  // if open, otherwise restart (same routing as the restart button: a race
-  // re-races its ghost, solo regenerates).
+  // Ctrl+Enter — the combo the footer advertises — exits the replay if open,
+  // otherwise restarts (same routing as the restart button: a race re-races
+  // its ghost, solo regenerates). Esc only closes the replay overlay: it no
+  // longer restarts, and an unhandled Esc is left alone so dialogs above the
+  // page (pace, language) keep their own Esc-to-close.
   useEventListener(window, 'keydown', (event: KeyboardEvent) => {
-    const restartCombo = event.ctrlKey && event.key === 'Enter'
-    if (event.key !== 'Escape' && !restartCombo) return
+    if (event.key === 'Escape') {
+      if (!replaying.value) return
+      event.preventDefault()
+      replaying.value = false
+      return
+    }
+    if (!(event.ctrlKey && event.key === 'Enter')) return
     event.preventDefault()
     if (replaying.value) {
       replaying.value = false
