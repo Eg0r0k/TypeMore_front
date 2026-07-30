@@ -25,10 +25,10 @@
 
     <template v-else>
       <!--
-        Reading order serves the page's two jobs — "my progress" (PBs, then
-        the averages) and "my recent runs" (the table) — in that order.
-        Charts, the calendar and the keyboard portrait elaborate on progress
-        and follow the table instead of pushing it below the fold.
+        Reading order, top to bottom: identity → activity → personal bests →
+        statistics → progress → keyboard → tests. The run history (and its
+        replays) closes the page by request; everything above it is the
+        "my progress" read.
       -->
       <!-- C1 — identity header; the stat block renders after the PBs, both
            off the ONE summary query. -->
@@ -44,6 +44,18 @@
           :summary="summary.data.value"
           part="identity"
         />
+      </ProfileSection>
+
+      <!-- C3 — the activity calendar (the streak line lives on the card above). -->
+      <ProfileSection
+        name="activity"
+        :title="t('profile.activity.title')"
+        :loading="activity.isPending.value"
+        :busy="isBusy(activity)"
+        :error="activity.isError.value"
+        @retry="activity.refetch"
+      >
+        <ProfileActivity v-if="activity.data.value" :activity="activity.data.value" />
       </ProfileSection>
 
       <!-- C4 — PB cards, with the race action wired to the home race flow. -->
@@ -73,11 +85,6 @@
         @retry="summary.refetch"
       >
         <ProfileSummaryCard v-if="summary.data.value" :summary="summary.data.value" part="stats" />
-      </ProfileSection>
-
-      <!-- The runs table (its own keyset pagination and error handling). -->
-      <ProfileSection name="runs" :title="t('profile.runs.title')">
-        <ProfileRunsTable @race="toRace" @watch="toReplay" />
       </ProfileSection>
 
       <!-- C5 — the two charts. The daily chart owns the range presets and the
@@ -187,20 +194,7 @@
         </div>
       </ProfileSection>
 
-      <!-- C3 — the activity calendar (the streak line lives on the card above). -->
-      <ProfileSection
-        name="activity"
-        :title="t('profile.activity.title')"
-        :loading="activity.isPending.value"
-        :busy="isBusy(activity)"
-        :error="activity.isError.value"
-        @retry="activity.refetch"
-      >
-        <ProfileActivity v-if="activity.data.value" :activity="activity.data.value" />
-      </ProfileSection>
-
-      <!-- C9 — the keyboard heatmap, deliberately last: a curiosity, not a
-           daily read, and above the table it pushed the history off-screen. -->
+      <!-- C9 — the keyboard heatmap over the local layout presets. -->
       <ProfileSection
         name="keyboard"
         :title="t('profile.keyboard.title')"
@@ -210,6 +204,12 @@
         @retry="keyboard.refetch"
       >
         <ProfileKeyboard v-if="keyboard.data.value" :keyboard="keyboard.data.value" />
+      </ProfileSection>
+
+      <!-- The runs table closes the page (its own keyset pagination and
+           error handling) — the replays live at the very bottom by request. -->
+      <ProfileSection name="runs" :title="t('profile.runs.title')">
+        <ProfileRunsTable @race="toRace" @watch="toReplay" />
       </ProfileSection>
     </template>
   </main>
