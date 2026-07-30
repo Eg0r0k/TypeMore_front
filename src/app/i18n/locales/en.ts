@@ -102,7 +102,6 @@ export default {
       sound: 'sound',
       caret: 'caret',
       appearance: 'appearance',
-      theme: 'theme',
       danger: 'danger zone'
     },
     value: {
@@ -129,7 +128,7 @@ export default {
     stopOnError: {
       label: 'stop on error',
       description:
-        'Letter mode will stop input when pressing any incorrect letters. Word mode will not allow you to continue to the next word until you correct all mistakes.',
+        'Letter stops input on a wrong letter; word holds you on the word until every mistake is fixed.',
       off: 'off',
       word: 'word',
       letter: 'letter'
@@ -137,7 +136,7 @@ export default {
     quickEnd: {
       label: 'quick end',
       description:
-        'This only applies to the words mode — when enabled, the test will end as soon as the last word has been typed, even if it is incorrect. When disabled, you need to manually confirm the last incorrect entry with a space.'
+        'Words mode only: the test ends on the last typed word, even with an error — no trailing space needed.'
     },
     soundVolume: {
       label: 'sound volume',
@@ -165,7 +164,7 @@ export default {
     background: {
       label: 'custom background',
       description:
-        'Set an image url or a local image to be a custom background image. The local image always takes priority over the image url. Cover fits the image to cover the screen. Contain fits the image to be fully visible. Max fits the image corner to corner.',
+        'An image url or a local file (the local one wins). Cover fills the screen, contain shows the whole image, max stretches it corner to corner.',
       note: 'The local image is stored in your browser’s local storage and is never uploaded to the server — clearing that storage or switching browser loses it.',
       url: 'image url',
       urlPlaceholder: 'https://example.com/image.png',
@@ -184,8 +183,7 @@ export default {
     },
     theme: {
       label: 'theme',
-      description:
-        'Completely change the look and feel of the website by picking one of the presets, or by creating your own completely custom theme.',
+      description: 'Pick a colour preset or build a fully custom look.',
       open: 'browse themes'
     },
     colors: {

@@ -3,7 +3,6 @@ import type { Component, InjectionKey } from 'vue'
 import IconKeyboard from '~icons/tabler/keyboard'
 import IconVolume from '~icons/tabler/volume'
 import IconCursorText from '~icons/tabler/cursor-text'
-import IconTypography from '~icons/tabler/typography'
 import IconPalette from '~icons/tabler/palette'
 import IconAlertTriangle from '~icons/tabler/alert-triangle'
 
@@ -15,7 +14,7 @@ import IconAlertTriangle from '~icons/tabler/alert-triangle'
  * in their section — a generic control renderer would buy nothing and cost
  * every future setting a detour through an abstraction.
  */
-export type CategoryId = 'input' | 'sound' | 'caret' | 'appearance' | 'theme' | 'danger'
+export type CategoryId = 'input' | 'sound' | 'caret' | 'appearance' | 'danger'
 
 export type SettingId =
   | 'freedomMode'
@@ -48,12 +47,13 @@ export interface SettingMeta {
   keywords?: readonly string[]
 }
 
+// Appearance carries the palette icon: the theme rows live in it now — one
+// "how it looks" tab instead of two.
 export const CATEGORIES: readonly CategoryMeta[] = [
   { id: 'input', icon: IconKeyboard },
   { id: 'sound', icon: IconVolume },
   { id: 'caret', icon: IconCursorText },
-  { id: 'appearance', icon: IconTypography },
-  { id: 'theme', icon: IconPalette },
+  { id: 'appearance', icon: IconPalette },
   { id: 'danger', icon: IconAlertTriangle }
 ]
 
@@ -69,9 +69,9 @@ export const SETTINGS: readonly SettingMeta[] = [
   { id: 'fontFamily', category: 'appearance', keywords: ['typeface', 'font'] },
   { id: 'fontSize', category: 'appearance', keywords: ['font', 'bigger', 'smaller'] },
   { id: 'showFps', category: 'appearance', keywords: ['frame rate', 'performance'] },
-  { id: 'background', category: 'theme', keywords: ['image', 'wallpaper', 'picture'] },
-  { id: 'theme', category: 'theme', keywords: ['colors', 'preset', 'dark', 'light'] },
-  { id: 'colors', category: 'theme', keywords: ['palette', 'custom', 'hex'] },
+  { id: 'background', category: 'appearance', keywords: ['image', 'wallpaper', 'picture'] },
+  { id: 'theme', category: 'appearance', keywords: ['colors', 'preset', 'dark', 'light'] },
+  { id: 'colors', category: 'appearance', keywords: ['palette', 'custom', 'hex'] },
   { id: 'data', category: 'danger', keywords: ['json', 'backup', 'import', 'export'] },
   { id: 'reset', category: 'danger', keywords: ['default', 'defaults', 'wipe', 'restore'] },
   { id: 'cookies', category: 'danger', keywords: ['consent', 'privacy', 'gdpr'] }

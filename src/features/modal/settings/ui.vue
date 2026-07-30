@@ -58,8 +58,11 @@
               <InputSection v-if="category === 'input'" />
               <SoundSection v-else-if="category === 'sound'" />
               <CaretSection v-else-if="category === 'caret'" />
-              <AppearanceSection v-else-if="category === 'appearance'" />
-              <ThemeSection v-else-if="category === 'theme'" />
+              <!-- Appearance owns the theme rows too: one "how it looks" tab. -->
+              <template v-else-if="category === 'appearance'">
+                <AppearanceSection />
+                <ThemeSection />
+              </template>
               <DangerSection v-else />
             </div>
           </template>
@@ -283,7 +286,7 @@
 
   .settings-dialog__pane {
     min-width: 0;
-    padding: 50px 48px 24px 20px;
+    padding: 28px 48px 24px 20px;
     overflow-y: auto;
   }
 
