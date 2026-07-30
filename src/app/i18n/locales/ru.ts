@@ -527,6 +527,7 @@ export default {
     },
     sectionError: 'эта секция не загрузилась',
     retry: 'повторить',
+    statsTitle: 'статистика',
     loading: 'загрузка…',
     joined: 'с нами с {date}',
     testsStarted: 'тестов начато',

@@ -564,6 +564,8 @@ export default {
     },
     sectionError: 'this section failed to load',
     retry: 'retry',
+    /** Heading of the summary-numbers block (it renders apart from the identity header). */
+    statsTitle: 'statistics',
     loading: 'loading…',
     joined: 'joined {date}',
     testsStarted: 'tests started',

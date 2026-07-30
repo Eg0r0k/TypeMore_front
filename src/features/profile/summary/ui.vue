@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-3" data-testid="profile-summary">
     <!-- C1 — identity. Who this is and how long they have been at it; the
          numbers live in their own block below. -->
-    <header class="flex items-center gap-3 rounded-lg bg-sub-alt p-3 sm:p-4">
+    <header v-if="part !== 'stats'" class="flex items-center gap-3 rounded-lg bg-sub-alt p-3 sm:p-4">
       <IconUser class="size-12 shrink-0 text-sub sm:size-14" aria-hidden="true" />
       <div class="flex min-w-0 flex-col gap-0.5">
         <Typography
@@ -53,13 +53,14 @@
       table: a stat block is a list of figures, and the figures are the design.
     -->
     <div
-      class="grid grid-cols-3 gap-x-4 gap-y-5 rounded-lg p-3 sm:p-4"
+      v-if="part !== 'identity'"
+      class="grid grid-cols-3 gap-x-4 gap-y-4 rounded-lg p-3 sm:p-4"
       data-testid="profile-stats-grid"
     >
       <div v-for="cell in cells" :key="cell.testid" class="min-w-0">
         <div class="text-xs text-sub sm:text-sm">{{ cell.label }}</div>
         <div
-          class="text-2xl leading-[1.1] tabular-nums text-text md:text-3xl lg:text-5xl"
+          class="text-2xl leading-[1.1] tabular-nums text-text md:text-3xl"
           :data-testid="cell.testid"
         >
           {{ cell.value }}
@@ -81,7 +82,12 @@
   import { formatShortDate } from '@/shared/lib/helpers/datetime'
   import { formatClock, grouped, percent, speed } from '../model/format'
 
-  const props = defineProps<{ summary: ProfileSummary }>()
+  /**
+   * `part` lets the page place identity and the stat block on opposite sides
+   * of the PB cards while both stay fed by the one summary query. Absent, the
+   * card renders whole — the shape every existing test mounts.
+   */
+  const props = defineProps<{ summary: ProfileSummary; part?: 'identity' | 'stats' }>()
   const { t, locale } = useI18n()
 
   const joinedDate = computed(() => formatShortDate(props.summary.joined, locale.value))
