@@ -14,6 +14,7 @@ export default {
     flashlight: 'фонарик',
     minSpeed: 'мин. скорость',
     minSpeedOff: 'выкл',
+    textMods: 'текстовые моды',
     language: 'язык',
     difficulty: { label: 'сложность', normal: 'обычная', expert: 'эксперт', master: 'мастер' },
     quote: {
@@ -634,6 +635,7 @@ export default {
         'этот забег повторял текст другого забега, поэтому не занимает место на борде, не обновляет личный рекорд и не даёт очков рейтинга',
       replay: 'смотреть',
       race: 'гонка',
+      actions: 'действия',
       more: 'показать ещё',
       loading: 'загрузка…',
       status: {

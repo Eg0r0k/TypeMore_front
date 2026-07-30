@@ -10,14 +10,14 @@
         v-if="textMods.length"
         type="multiple"
         :model-value="activeTextMods"
-        aria-label="text modifiers"
+        :aria-label="t('game.textMods')"
         @update:model-value="onTextMods"
       >
         <ToggleGroupItem
           v-for="option in textMods"
           :key="option.key"
           :value="option.key"
-          class="settings-bar__btn"
+          class="settings-bar__btn data-[disabled]:pointer-events-auto"
           :disabled="reasonOf(option) !== null"
           :title="titleOf(option)"
         >
@@ -37,7 +37,7 @@
           v-for="value in modeValues"
           :key="value"
           :value="value"
-          class="settings-bar__btn"
+          class="settings-bar__btn data-[disabled]:pointer-events-auto"
           :disabled="modeReason(value) !== null"
           :title="modeReason(value) ?? undefined"
         >
@@ -59,7 +59,7 @@
             v-for="value in valuesOf(dimension)"
             :key="value"
             :value="value"
-            class="settings-bar__btn"
+            class="settings-bar__btn data-[disabled]:pointer-events-auto"
             :disabled="raceLock !== null"
             :title="raceLock ?? undefined"
           >

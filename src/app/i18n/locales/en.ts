@@ -15,6 +15,8 @@ export default {
     flashlight: 'flashlight',
     minSpeed: 'min speed',
     minSpeedOff: 'off',
+    /** Accessible name of the settings bar's text-mod toggle group. */
+    textMods: 'text modifiers',
     language: 'language',
     difficulty: { label: 'difficulty', normal: 'normal', expert: 'expert', master: 'master' },
     quote: {
@@ -670,6 +672,8 @@ export default {
         'this run replayed another run’s text, so it does not take a board slot, a personal best or rating points',
       replay: 'watch',
       race: 'race',
+      /** Screen-reader-only header of the watch/race icon column. */
+      actions: 'actions',
       more: 'load more',
       loading: 'loading…',
       status: {
