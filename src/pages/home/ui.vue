@@ -661,10 +661,12 @@
     game.setup({ ...setup, declaration: declarationOf() })
   }
 
-  // Esc exits the replay if open, otherwise restarts (same routing as the
-  // restart button: a race re-races its ghost, solo regenerates).
+  // Esc — and Ctrl+Enter, the combo the footer advertises — exit the replay
+  // if open, otherwise restart (same routing as the restart button: a race
+  // re-races its ghost, solo regenerates).
   useEventListener(window, 'keydown', (event: KeyboardEvent) => {
-    if (event.key !== 'Escape') return
+    const restartCombo = event.ctrlKey && event.key === 'Enter'
+    if (event.key !== 'Escape' && !restartCombo) return
     event.preventDefault()
     if (replaying.value) {
       replaying.value = false

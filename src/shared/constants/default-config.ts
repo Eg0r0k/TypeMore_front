@@ -16,7 +16,7 @@ export default {
   backgroundImg: '',
   backgroundLocal: '',
   backgroundSize: 'cover',
-  showFps: true,
+  showFps: false,
   playSound: true,
   soundVolume: 0.5,
   soundSet: DEFAULT_SOUND_PACK,
