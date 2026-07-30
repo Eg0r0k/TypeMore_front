@@ -67,18 +67,20 @@
           >
             {{ room.name }}
           </span>
-          <span class="lobby__cell lobby__cell--players" data-testid="lobby-players">
-            {{ t('servers.lobby.players', { count: room.playerCount, max: room.maxPlayers }) }}
-          </span>
-          <span class="lobby__cell">
+          <!-- The scan line: seats, dimension, language — one tight group next
+               to the name instead of columns strewn across the page width. -->
+          <span class="lobby__meta">
+            <span class="lobby__cell lobby__cell--players" data-testid="lobby-players">
+              {{ t('servers.lobby.players', { count: room.playerCount, max: room.maxPlayers }) }}
+            </span>
             <span class="lobby__chip" data-testid="lobby-mode">{{ dimensionLabel(room) }}</span>
-          </span>
-          <span
-            class="lobby__cell lobby__cell--lang"
-            data-testid="lobby-lang"
-            :title="languageName(room.settings.lang)"
-          >
-            {{ languageName(room.settings.lang) }}
+            <span
+              class="lobby__cell lobby__cell--lang"
+              data-testid="lobby-lang"
+              :title="languageName(room.settings.lang)"
+            >
+              {{ languageName(room.settings.lang) }}
+            </span>
           </span>
           <span class="lobby__cell lobby__cell--state">
             <span v-if="room.inMatch" class="lobby__badge" data-testid="lobby-in-match">
@@ -87,9 +89,14 @@
             <!--
               A disabled row must SAY why. An unexplained dead row reads as a
               broken list, and the reader has no way to tell the two apart.
+              A joinable row says what a press does instead — the row's one
+              action, always visible, never only on hover.
             -->
             <span v-if="reasonFor(room) !== null" class="lobby__reason" data-testid="lobby-reason">
               {{ reasonFor(room) }}
+            </span>
+            <span v-else class="lobby__go" aria-hidden="true">
+              {{ t('servers.join.submit') }}
             </span>
           </span>
         </button>
@@ -145,7 +152,19 @@
   )
 
   const rooms = useQuery({ ...roomListQueryOptions(), refetchInterval: pollInterval })
-  const openRooms = computed<readonly RoomListEntry[]>(() => rooms.data.value ?? [])
+
+  /**
+   * Joinable rooms first, then full, then in-match — the reader's question is
+   * "where can I go", so the rooms that answer it lead. The sort key is the
+   * room's PHASE only (never the live player count), and Array#sort is stable,
+   * so within a group the server's order is preserved and a poll tick cannot
+   * shuffle rows under the cursor unless a room actually changed phase.
+   */
+  const phaseRank = (room: RoomListEntry): number =>
+    room.inMatch ? 2 : room.playerCount >= room.maxPlayers ? 1 : 0
+  const openRooms = computed<readonly RoomListEntry[]>(() =>
+    [...(rooms.data.value ?? [])].sort((a, b) => phaseRank(a) - phaseRank(b))
+  )
 
   // Room commands are only sendable from a connected, not-yet-seated socket —
   // the same gate the create/join-by-code buttons use.
@@ -229,8 +248,8 @@
       display: grid;
       align-items: center;
       width: 100%;
-      gap: 0.75rem;
-      grid-template-columns: minmax(6rem, 1fr) 7rem auto minmax(4rem, auto) minmax(0, 1fr);
+      gap: 0.25rem 1.5rem;
+      grid-template-columns: minmax(0, 1fr) auto auto;
       padding: 0.5rem;
       font-family: inherit;
       font-size: 0.875rem;
@@ -261,8 +280,8 @@
       }
     }
 
-    // Grid items default to min-width auto; without this a long room name or
-    // language name widens its column past the row instead of truncating.
+    // Grid/flex items default to min-width auto; without this a long room name
+    // or language name widens its column past the row instead of truncating.
     &__cell {
       min-width: 0;
     }
@@ -281,6 +300,15 @@
 
     &__cell--players {
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    // Seats · dimension · language: one glance, one group.
+    &__meta {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      min-width: 0;
     }
 
     &__cell--state {
@@ -289,6 +317,14 @@
       justify-content: flex-end;
       gap: 0.375rem;
       text-align: end;
+      white-space: nowrap;
+    }
+
+    // The row's one action, spelled out for joinable rooms. Inherits the sub
+    // colour swap on a disabled row, but a disabled row never renders it.
+    &__go {
+      font-size: 0.75rem;
+      color: var(--main-color);
     }
 
     &__chip {
@@ -341,10 +377,30 @@
     }
   }
 
+  // Two-line card: name + action on the first line, the meta group on its
+  // own full-width second line — nothing clips, nothing leaves the viewport.
+  // Rows are pinned explicitly: auto-placement would push the action cell
+  // onto a third line once the meta group claims the full second row.
   @media screen and (width <= 640px) {
     .lobby__join {
-      gap: 0.25rem 0.5rem;
+      gap: 0.25rem 0.75rem;
       grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .lobby__cell--name {
+      grid-row: 1;
+      grid-column: 1;
+    }
+
+    .lobby__cell--state {
+      grid-row: 1;
+      grid-column: 2;
+      white-space: normal;
+    }
+
+    .lobby__meta {
+      grid-row: 2;
+      grid-column: 1 / -1;
     }
   }
 </style>

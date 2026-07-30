@@ -93,6 +93,16 @@
 
 <style scoped lang="scss">
   .server-page {
+    // The shell's #main is a grid; as its item this page must be allowed to
+    // shrink (min-width: auto would size it to the row grid's min-content and
+    // clip at phone widths — same trap /profile documents). The cap keeps a
+    // scanning list at a readable width instead of strewing its columns
+    // across the full 1440.
+    width: 100%;
+    min-width: 0;
+    max-width: 64rem;
+    margin-inline: auto;
+
     &__head {
       display: flex;
       flex-wrap: wrap;
