@@ -264,7 +264,6 @@
     soloOptions.value.find((option) => AMOUNT_KEYS.includes(option.key))
   )
 
-
   const noticeOptions = computed(() =>
     soloOptions.value.filter((option) => !BAR_KEYS.includes(option.key) && !isTextMod(option))
   )
@@ -414,10 +413,6 @@
     &__dim {
       display: flex;
       justify-content: center;
-
-      @media screen and (width > 640px) {
-        min-inline-size: 20rem;
-      }
     }
 
     &__notice {
@@ -443,5 +438,4 @@
       user-select: none;
     }
   }
-
 </style>

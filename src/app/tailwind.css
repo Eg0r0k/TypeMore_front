@@ -232,3 +232,16 @@
   min-height: 0;
   overflow: hidden;
 }
+
+@utility btn-motion {
+  scale: 1;
+  transition-property: color, background-color, border-color, box-shadow, opacity, filter, scale;
+  transition-duration:
+    var(--transition-duration), var(--transition-duration), var(--transition-duration),
+    var(--transition-duration), var(--transition-duration), var(--transition-duration), 0.15s;
+  transition-timing-function: linear, linear, linear, linear, linear, linear, var(--ease-standard);
+
+  &:active {
+    scale: 0.96;
+  }
+}
