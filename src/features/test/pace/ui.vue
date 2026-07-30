@@ -36,6 +36,34 @@
         </button>
       </span>
     </template>
+
+    <!-- The speed FLOOR lives with the speed things: dropping below it fails
+         the run. Same registry option the notice chip used to draw — only the
+         rendering moved here; a live race locks it like the rest of the bar. -->
+    <template #footer>
+      <span class="inline-flex items-center gap-1.5 text-xs text-sub">
+        <component :is="OPTION_ICONS.minWpm" class="size-3.5" aria-hidden="true" />
+        {{ t('game.minSpeed') }}
+      </span>
+      <ToggleGroup
+        size="sm"
+        :model-value="String(config.minWpm)"
+        :aria-label="t('game.minSpeed')"
+        @update:model-value="onMinWpm"
+      >
+        <ToggleGroupItem
+          v-for="value in minWpmValues"
+          :key="value"
+          :value="value"
+          class="text-xs data-[disabled]:pointer-events-auto"
+          :disabled="race.racing"
+          :title="race.racing ? t('game.constraint.racing') : undefined"
+          :data-testid="`pace-min-wpm-${value}`"
+        >
+          {{ value === '0' ? t('game.minSpeedOff') : value }}
+        </ToggleGroupItem>
+      </ToggleGroup>
+    </template>
   </ConsoleModal>
 
   <!-- Custom speed: one number, applied on confirm — cancelling keeps the
@@ -69,11 +97,13 @@
 
   import { useAuthStore } from '@/entities/auth'
   import { useConfigStore } from '@/entities/config'
+  import { OPTION_ICONS, optionOf, presetsFor } from '@/entities/game'
   import { useRaceStore } from '@entities/race'
   import { ConsoleModal } from '@/features/modal/console'
   import { Button } from '@/shared/ui/button'
   import { Dialog, DialogContent, DialogTitle } from '@/shared/ui/dialog'
   import { Input } from '@/shared/ui/input'
+  import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
   import { Typography } from '@/shared/ui/typography'
   import type { PaceCaretMode } from '@/shared/constants/type'
   import IconGauge from '~icons/tabler/gauge'
@@ -161,6 +191,17 @@
     configStore.setConfig('paceCaretWpm', wpm)
     configStore.setConfig('paceCaret', 'custom')
     customOpen.value = false
+  }
+
+  /**
+   * The minimum-speed floor, presented here with the other speed controls.
+   * Values come from the registry's `minWpm` presets; the write goes through
+   * the store's validator like every other config write.
+   */
+  const minWpmValues = presetsFor(optionOf('minWpm')).map(String)
+  const onMinWpm = (value: unknown): void => {
+    if (typeof value !== 'string' || value === '') return
+    configStore.setConfig('minWpm', Number(value))
   }
 
   /** The bar's chip look; lit while any pace (or a ghost) is on the track. */

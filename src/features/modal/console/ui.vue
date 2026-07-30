@@ -74,6 +74,12 @@
           </Typography>
           <Button size="s" @click="open = false">{{ t('picker.done') }}</Button>
         </div>
+
+        <!-- A caller-owned strip under the list (the pace picker parks its
+             min-speed control here) — same chrome as the multiple-footer. -->
+        <div v-else-if="$slots.footer" class="console-modal__footer">
+          <slot name="footer" />
+        </div>
       </div>
     </DialogContent>
   </Dialog>
