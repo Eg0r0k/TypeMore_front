@@ -8,7 +8,7 @@ import {
   errorWords,
   insertEvent,
   wordHistory
-} from '@shared/core'
+} from '@typemore/core'
 
 /**
  * `wordHistory` — the per-word derivation behind the results input-history

@@ -1,0 +1,5 @@
+# The app lives at the repo root (minimally invasive: vite/tauri/playwright
+# configs, CI and the backend's FRONTEND=../TypeMore_front convention all keep
+# working); extracted libraries live under packages/.
+packages:
+  - 'packages/*'

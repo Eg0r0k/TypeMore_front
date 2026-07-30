@@ -29,7 +29,7 @@ import {
   scoreOfLog,
   scoreV2OfLog,
   validateLog
-} from '@shared/core'
+} from '@typemore/core'
 
 /**
  * Log v2 keystroke telemetry (`down` / `up`).

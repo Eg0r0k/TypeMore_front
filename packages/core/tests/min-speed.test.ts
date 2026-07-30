@@ -28,7 +28,7 @@ import {
   netCharsOf,
   settle,
   validateLog
-} from '@shared/core'
+} from '@typemore/core'
 
 // Uniform 5-char words so net-char arithmetic is exact regardless of generation order.
 const dict: Dictionary = {

@@ -8,7 +8,7 @@ import {
   makeSeedContext,
   mulberry32,
   reverseWord
-} from '@shared/core'
+} from '@typemore/core'
 
 const dict: Dictionary = {
   name: 'test',

@@ -12,7 +12,7 @@ import {
   MOD_MULTIPLIER_CAP,
   activeModsV1,
   modMultiplierV1
-} from '@shared/core'
+} from '@typemore/core'
 
 const gen = (over: Partial<GenerationConfig> = {}): GenerationConfig => ({
   mode: 'words',

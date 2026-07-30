@@ -7,7 +7,7 @@
  * incremental separator/char counters) changed no observable output.
  *
  * WHAT THIS IS NOT: shipped code. Nothing outside `src/__tests__/core` may import
- * it, it is not re-exported from `@shared/core`, and it is deliberately frozen —
+ * it, it is not re-exported from `@typemore/core`, and it is deliberately frozen —
  * do not "fix" or modernise it. Its only value is being the old thing.
  *
  * WHEN TO DELETE IT: the moment the next rewrite of the reducer makes a
@@ -26,8 +26,8 @@ import type {
   GameState,
   Ms,
   Seq
-} from '@shared/core'
-import { asMs } from '@shared/core'
+} from '@typemore/core'
+import { asMs } from '@typemore/core'
 
 /** The pre-B2 `sortEvents`: always copies, always sorts. */
 function sortEvents(events: readonly GameEvent[]): GameEvent[] {

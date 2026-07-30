@@ -9,7 +9,7 @@ import {
   foldLog,
   insertEvent,
   reduce
-} from '@shared/core'
+} from '@typemore/core'
 
 const core = (over: Partial<CoreConfig> = {}): CoreConfig => ({
   mode: 'words',

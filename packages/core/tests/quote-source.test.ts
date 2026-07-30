@@ -21,7 +21,7 @@ import {
   makeSeedContext,
   modMultiplierV1,
   validateLog
-} from '@shared/core'
+} from '@typemore/core'
 
 /**
  * Fixed-text ("quote") runs — the second text source beside the seeded one.

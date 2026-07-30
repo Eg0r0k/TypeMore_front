@@ -10,9 +10,9 @@ import { fileURLToPath } from 'node:url'
 
 import { describe, expect, it } from 'vitest'
 
-import { type CoreConfig, GameCore, commitEvent, insertEvent, metricsOf } from '@shared/core'
+import { type CoreConfig, GameCore, commitEvent, insertEvent, metricsOf } from '@typemore/core'
 
-const coreDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'shared', 'core')
+const coreDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'src')
 
 describe('core runs headless in pure Node', () => {
   it('has no DOM and computes metrics for a full game', () => {

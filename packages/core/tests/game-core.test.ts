@@ -20,7 +20,7 @@ import {
   reduce,
   replaceEvent,
   targetCharsOf
-} from '@shared/core'
+} from '@typemore/core'
 
 const config = (over: Partial<CoreConfig> = {}): CoreConfig => ({
   mode: 'words',

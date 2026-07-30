@@ -27,13 +27,28 @@ export default mergeConfig(
   defineConfig({
     plugins: [stubMediaAssets()],
     test: {
-      environment: 'happy-dom',
-      // Project convention: explicit imports (`import { describe, it, expect } from 'vitest'`),
-      // so global test APIs stay disabled.
-      globals: false,
-      include: ['src/**/*.{test,spec}.{ts,tsx}'],
-      exclude: [...configDefaults.exclude, 'e2e/**', 'dist/**'],
-      root: fileURLToPath(new URL('./', import.meta.url)),
+      // Two projects, one run: the app suite and the extracted @typemore/core
+      // suite. `vitest run` at the root executes both, so the workspace-wide
+      // green is still a single command and a single summary.
+      projects: [
+        {
+          // Inherit THIS file's pipeline (Vue plugins, aliases, media stubs) —
+          // the app tests compile exactly as before the extraction.
+          extends: true,
+          test: {
+            name: 'web',
+            environment: 'happy-dom',
+            // Project convention: explicit imports (`import { describe, it, expect } from 'vitest'`),
+            // so global test APIs stay disabled.
+            globals: false,
+            include: ['src/**/*.{test,spec}.{ts,tsx}'],
+            exclude: [...configDefaults.exclude, 'e2e/**', 'dist/**'],
+            root: fileURLToPath(new URL('./', import.meta.url))
+          }
+        },
+        // Uses packages/core/vitest.config.ts (no Vue pipeline needed there).
+        'packages/core'
+      ],
       coverage: {
         provider: 'v8',
         reporter: ['text', 'json', 'html'],

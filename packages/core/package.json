@@ -1,0 +1,35 @@
+{
+  "name": "@typemore/core",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Framework-free TypeMore game core: event log, reducer, metrics, score, FNV/mulberry32. Single source of truth for the web app and the server's goja bundle.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./timer.worker": "./src/timer.worker.ts",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "vitest run",
+    "test:purity": "vitest run tests/purity.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "neverthrow": "^8.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "esbuild": "0.25.12",
+    "happy-dom": "^20.11.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  }
+}

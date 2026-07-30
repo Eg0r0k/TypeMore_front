@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    // WebWorker, not DOM: timer.worker.ts is a worker entry and needs worker
+    // globals; nothing in the reducer graph may touch a document — the purity
+    // scan enforces that at the source level, this keeps the type level honest.
+    "lib": ["ES2020", "WebWorker"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": false,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": [],
+    "paths": {
+      // Tests import the package by its public name, like every consumer.
+      "@typemore/core": ["./src/index.ts"]
+    }
+  },
+  "include": ["src", "tests", "scripts"]
+}

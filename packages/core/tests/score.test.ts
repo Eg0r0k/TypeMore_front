@@ -31,7 +31,7 @@ import {
   scoreStep,
   scoreV2OfLog,
   sortEvents
-} from '@shared/core'
+} from '@typemore/core'
 
 const config = (over: Partial<CoreConfig> = {}): CoreConfig => ({
   mode: 'words',

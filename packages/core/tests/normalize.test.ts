@@ -6,7 +6,7 @@ import {
   isSpaceGrapheme,
   makeNormalizer,
   normalizeGrapheme
-} from '@shared/core'
+} from '@typemore/core'
 
 /**
  * Visual-equivalence registry (shared/core/normalize). The behaviour mirrors

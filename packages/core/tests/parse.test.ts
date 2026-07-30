@@ -11,7 +11,7 @@ import {
   parseEventBatch,
   parseGameEvent,
   replaceEvent
-} from '@shared/core'
+} from '@typemore/core'
 
 const valid = { kind: 'insert', seq: 1, t: 0, text: 'a' }
 

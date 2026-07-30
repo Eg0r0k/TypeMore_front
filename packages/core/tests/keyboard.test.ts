@@ -11,7 +11,7 @@ import {
   commitEvent,
   deleteEvent,
   insertEvent
-} from '@shared/core'
+} from '@typemore/core'
 
 const config = (over: Partial<CoreConfig> = {}): CoreConfig => ({
   mode: 'words',

@@ -58,7 +58,7 @@ import {
   sortEvents,
   targetCharsOf,
   wpmOverTime
-} from '@shared/core'
+} from '@typemore/core'
 
 import {
   legacyFoldLog,

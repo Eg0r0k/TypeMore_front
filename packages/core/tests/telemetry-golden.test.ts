@@ -37,7 +37,7 @@ import {
   scoreOfLog,
   scoreV2OfLog,
   validateLog
-} from '@shared/core'
+} from '@typemore/core'
 
 import dictionaryFixture from '../fixtures/telemetry-golden/dictionary.json'
 import runV1Twin from '../fixtures/telemetry-golden/run-v1-twin.json'

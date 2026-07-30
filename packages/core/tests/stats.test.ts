@@ -16,7 +16,7 @@ import {
   foldLog,
   insertEvent,
   wpmOverTime
-} from '@shared/core'
+} from '@typemore/core'
 
 const config = (over: Partial<CoreConfig> = {}): CoreConfig => ({
   mode: 'words',

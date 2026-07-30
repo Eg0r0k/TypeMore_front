@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@lucide/vue": "^1.26.0",
+    "@typemore/core": "workspace:*",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/vue-query": "^5.101.4",
     "@tanstack/vue-virtual": "^3.13.34",

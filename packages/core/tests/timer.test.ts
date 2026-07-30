@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { TICK_INTERVAL_MS, nextTickDelay } from '@shared/core'
+import { TICK_INTERVAL_MS, nextTickDelay } from '@typemore/core'
 
 describe('nextTickDelay (ideal grid)', () => {
   it('targets the grid point start + N*interval', () => {

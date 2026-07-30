@@ -17,7 +17,7 @@ import {
   insertEvent,
   makeSeedContext,
   validateLog
-} from '@shared/core'
+} from '@typemore/core'
 
 const dict: Dictionary = {
   name: 'test',

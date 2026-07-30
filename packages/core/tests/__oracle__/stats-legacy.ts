@@ -19,7 +19,7 @@ import type {
   Metrics,
   Ms,
   TimelinePoint
-} from '@shared/core'
+} from '@typemore/core'
 
 import {
   legacyEndsLine as endsLine,
