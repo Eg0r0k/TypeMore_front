@@ -27,83 +27,55 @@
       </ToggleGroup>
 
       <!-- The amount for the current mode: seconds, words, or a quote's length
-           band. Mode switches play monkeytype's swap: the outgoing and
-           incoming groups cross-fade stacked in one grid cell while the slot's
-           width tweens from the old group's to the new one's (the dimension
-           watch below), so the row slides instead of jumping. -->
-      <span v-if="dimension" ref="dimScope" class="settings-bar__dim">
-        <AnimatePresence :initial="false">
-          <!-- The exiting cell is display-only: stacked over the incoming one,
-               it must not swallow the click that just changed the mode. -->
-          <motion.span
-            :key="dimension.key"
-            :data-dim="dimension.key"
-            :initial="{ opacity: 0 }"
-            :animate="{ opacity: 1 }"
-            :exit="{ opacity: 0, pointerEvents: 'none' }"
-            :transition="swapTransition"
+           band. The slot's width is RESERVED at the widest variant, so a mode
+           switch moves nothing — the incoming group simply replaces the old
+           one inside the fixed slot. Deliberately no animation here. -->
+      <span v-if="dimension" class="settings-bar__dim">
+        <ToggleGroup
+          class="max-sm:flex-wrap max-sm:justify-center"
+          :model-value="String(config[dimension.key])"
+          :aria-label="dimension.ariaLabel"
+          @update:model-value="onDimension(dimension, $event)"
+        >
+          <ToggleGroupItem
+            v-for="value in valuesOf(dimension)"
+            :key="value"
+            :value="value"
+            class="settings-bar__btn data-[disabled]:pointer-events-auto"
+            :disabled="raceLock !== null"
+            :title="raceLock ?? undefined"
           >
-            <ToggleGroup
-              class="max-sm:flex-wrap max-sm:justify-center"
-              :model-value="String(config[dimension.key])"
-              :aria-label="dimension.ariaLabel"
-              @update:model-value="onDimension(dimension, $event)"
-            >
-              <ToggleGroupItem
-                v-for="value in valuesOf(dimension)"
-                :key="value"
-                :value="value"
-                class="settings-bar__btn data-[disabled]:pointer-events-auto"
-                :disabled="raceLock !== null"
-                :title="raceLock ?? undefined"
-              >
-                {{ labelOf(dimension, value) }}
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </motion.span>
-        </AnimatePresence>
+            {{ labelOf(dimension, value) }}
+          </ToggleGroupItem>
+        </ToggleGroup>
       </span>
 
       <!-- Text mods that cannot affect the current run (quote's fixed text)
-           are not greyed out — the whole group folds away with its separator
-           in ONE gentle motion (width + fade; the exit also swallows the flex
-           gap so nothing snaps when the element unmounts). One moving block,
-           not four pills animating at once — that read as jumpy. A race lock
-           still renders them disabled in place: the record's setup stays
-           readable. -->
-      <AnimatePresence :initial="false">
-        <motion.div
-          v-if="visibleTextMods.length"
-          key="text-mods"
-          class="settings-bar__mods"
-          :initial="{ opacity: 0, width: 0, marginLeft: '-0.5rem' }"
-          :animate="{ opacity: 1, width: 'auto', marginLeft: '0rem' }"
-          :exit="{ opacity: 0, width: 0, marginLeft: '-0.5rem' }"
-          :transition="swapTransition"
-        >
-          <span class="settings-bar__sep" aria-hidden="true"></span>
+           leave the bar together with their separator. A race lock still
+           renders them disabled in place: the record's setup stays readable. -->
+      <template v-if="visibleTextMods.length">
+        <span class="settings-bar__sep" aria-hidden="true"></span>
 
-          <ToggleGroup
-            class="max-sm:flex-wrap max-sm:justify-center"
-            type="multiple"
-            :model-value="activeTextMods"
-            :aria-label="t('game.textMods')"
-            @update:model-value="onTextMods"
+        <ToggleGroup
+          class="max-sm:flex-wrap max-sm:justify-center"
+          type="multiple"
+          :model-value="activeTextMods"
+          :aria-label="t('game.textMods')"
+          @update:model-value="onTextMods"
+        >
+          <ToggleGroupItem
+            v-for="option in visibleTextMods"
+            :key="option.key"
+            :value="option.key"
+            class="settings-bar__btn data-[disabled]:pointer-events-auto"
+            :disabled="reasonOf(option) !== null"
+            :title="titleOf(option)"
           >
-            <ToggleGroupItem
-              v-for="option in visibleTextMods"
-              :key="option.key"
-              :value="option.key"
-              class="settings-bar__btn data-[disabled]:pointer-events-auto"
-              :disabled="reasonOf(option) !== null"
-              :title="titleOf(option)"
-            >
-              <component :is="OPTION_ICONS[option.key]" aria-hidden="true" />
-              {{ t(option.i18nKey) }}
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </motion.div>
-      </AnimatePresence>
+            <component :is="OPTION_ICONS[option.key]" aria-hidden="true" />
+            {{ t(option.i18nKey) }}
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </template>
     </div>
 
     <!--
@@ -193,10 +165,9 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, nextTick, ref, watch } from 'vue'
+  import { computed, ref, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
   import { useQuery } from '@tanstack/vue-query'
-  import { AnimatePresence, motion, useAnimate, useReducedMotion } from 'motion-v'
   import clsx from 'clsx'
 
   import { useConfigStore } from '@/entities/config'
@@ -293,53 +264,6 @@
     soloOptions.value.find((option) => AMOUNT_KEYS.includes(option.key))
   )
 
-  // ── Monkeytype's mode swap, on motion-v (Framer Motion for Vue) ────────────
-  const [dimScope, animateDim] = useAnimate<HTMLElement>()
-  const reducedMotion = useReducedMotion()
-
-  /**
-   * One transition for the whole swap choreography — every moving part (the
-   * cross-fade, the width tween, the mods fold) rides the same curve and
-   * duration, which is what makes the swap read as one motion instead of
-   * several things twitching. Size changes want ease-in-out (--ease-in-out
-   * token's curve) and a bit more time than a popup fade; 250ms sits between
-   * the popup's 160ms and grid-collapse's 300ms. Collapses to an instant cut
-   * under prefers-reduced-motion.
-   */
-  const SWAP_EASE = [0.77, 0, 0.175, 1] as [number, number, number, number]
-  const SWAP_SECONDS = 0.25
-  const swapTransition = computed(() =>
-    reducedMotion.value ? { duration: 0 } : { duration: SWAP_SECONDS, ease: SWAP_EASE }
-  )
-
-  /**
-   * The slot's width tweens from the outgoing group's to the incoming one's
-   * while `AnimatePresence` cross-fades the two groups stacked in the same
-   * grid cell — monkeytype's exact choreography. The tween runs on keyframes
-   * (old → new), so the slot needs no pre-set style; the inline width the
-   * animation leaves behind is cleared after, and the slot goes back to
-   * tracking its content.
-   */
-  watch(
-    () => dimension.value?.key,
-    async (next, prev) => {
-      const host = dimScope.value as HTMLElement | undefined
-      if (!host || next === undefined || prev === undefined || next === prev) return
-      if (reducedMotion.value) return
-      const oldWidth = host.getBoundingClientRect().width
-      await nextTick()
-      const incoming = host.querySelector<HTMLElement>(`[data-dim="${next}"]`)
-      if (incoming === null) return
-      const newWidth = incoming.getBoundingClientRect().width
-      if (oldWidth === 0 || Math.abs(newWidth - oldWidth) < 1) return
-      await animateDim(
-        host,
-        { width: [`${oldWidth}px`, `${newWidth}px`] },
-        { duration: SWAP_SECONDS, ease: SWAP_EASE }
-      )
-      host.style.width = ''
-    }
-  )
 
   const noticeOptions = computed(() =>
     soloOptions.value.filter((option) => !BAR_KEYS.includes(option.key) && !isTextMod(option))
@@ -484,29 +408,16 @@
       opacity: 0.25;
     }
 
-    // The amount slot: a one-cell grid so the outgoing and incoming groups
-    // stack during the swap, while the slot's width is tweened by the script's
-    // dimension watch. `overflow: hidden` is what keeps the swap calm: without
-    // it the wider of the two stacked groups spills over the neighbours while
-    // the width catches up, and the whole row reads as jumping.
+    // The amount slot: width RESERVED at the widest variant (the quote length
+    // bands), so a mode switch moves NOTHING — the row never re-centres. On
+    // phones the row wraps anyway and the reservation would only waste height.
     &__dim {
-      display: grid;
-      justify-items: center;
-      overflow: hidden;
-
-      > * {
-        grid-area: 1 / 1;
-      }
-    }
-
-    // The collapsible text-mod block (separator + group): it animates its
-    // width shut, so it must clip its content while folding.
-    &__mods {
       display: flex;
-      flex-shrink: 0;
-      gap: 0.5rem;
-      align-items: center;
-      overflow: hidden;
+      justify-content: center;
+
+      @media screen and (width > 640px) {
+        min-inline-size: 20rem;
+      }
     }
 
     &__notice {
