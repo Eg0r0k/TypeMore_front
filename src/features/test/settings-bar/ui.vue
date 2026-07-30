@@ -65,18 +65,20 @@
       </span>
 
       <!-- Text mods that cannot affect the current run (quote's fixed text)
-           are not greyed out — they leave, animated: each pill collapses and
-           fades, and when the last one goes the whole group with its
-           separator folds away. A race lock still renders them disabled in
-           place: the record's setup stays readable. -->
+           are not greyed out — the whole group folds away with its separator
+           in ONE gentle motion (width + fade; the exit also swallows the flex
+           gap so nothing snaps when the element unmounts). One moving block,
+           not four pills animating at once — that read as jumpy. A race lock
+           still renders them disabled in place: the record's setup stays
+           readable. -->
       <AnimatePresence :initial="false">
         <motion.div
           v-if="visibleTextMods.length"
           key="text-mods"
           class="settings-bar__mods"
-          :initial="{ opacity: 0, width: 0 }"
-          :animate="{ opacity: 1, width: 'auto' }"
-          :exit="{ opacity: 0, width: 0 }"
+          :initial="{ opacity: 0, width: 0, marginLeft: '-0.5rem' }"
+          :animate="{ opacity: 1, width: 'auto', marginLeft: '0rem' }"
+          :exit="{ opacity: 0, width: 0, marginLeft: '-0.5rem' }"
           :transition="swapTransition"
         >
           <span class="settings-bar__sep" aria-hidden="true"></span>
@@ -88,27 +90,17 @@
             :aria-label="t('game.textMods')"
             @update:model-value="onTextMods"
           >
-            <AnimatePresence :initial="false">
-              <motion.span
-                v-for="option in visibleTextMods"
-                :key="option.key"
-                class="settings-bar__mod"
-                :initial="{ opacity: 0, width: 0 }"
-                :animate="{ opacity: 1, width: 'auto' }"
-                :exit="{ opacity: 0, width: 0 }"
-                :transition="swapTransition"
-              >
-                <ToggleGroupItem
-                  :value="option.key"
-                  class="settings-bar__btn data-[disabled]:pointer-events-auto"
-                  :disabled="reasonOf(option) !== null"
-                  :title="titleOf(option)"
-                >
-                  <component :is="OPTION_ICONS[option.key]" aria-hidden="true" />
-                  {{ t(option.i18nKey) }}
-                </ToggleGroupItem>
-              </motion.span>
-            </AnimatePresence>
+            <ToggleGroupItem
+              v-for="option in visibleTextMods"
+              :key="option.key"
+              :value="option.key"
+              class="settings-bar__btn data-[disabled]:pointer-events-auto"
+              :disabled="reasonOf(option) !== null"
+              :title="titleOf(option)"
+            >
+              <component :is="OPTION_ICONS[option.key]" aria-hidden="true" />
+              {{ t(option.i18nKey) }}
+            </ToggleGroupItem>
           </ToggleGroup>
         </motion.div>
       </AnimatePresence>
@@ -306,14 +298,18 @@
   const reducedMotion = useReducedMotion()
 
   /**
-   * One transition for the whole swap choreography: the shared easing token's
-   * curve (--ease-standard) at the popup entrance duration. Collapses to an
-   * instant cut under prefers-reduced-motion.
+   * One transition for the whole swap choreography — every moving part (the
+   * cross-fade, the width tween, the mods fold) rides the same curve and
+   * duration, which is what makes the swap read as one motion instead of
+   * several things twitching. Size changes want ease-in-out (--ease-in-out
+   * token's curve) and a bit more time than a popup fade; 250ms sits between
+   * the popup's 160ms and grid-collapse's 300ms. Collapses to an instant cut
+   * under prefers-reduced-motion.
    */
+  const SWAP_EASE = [0.77, 0, 0.175, 1] as [number, number, number, number]
+  const SWAP_SECONDS = 0.25
   const swapTransition = computed(() =>
-    reducedMotion.value
-      ? { duration: 0 }
-      : { duration: 0.16, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] }
+    reducedMotion.value ? { duration: 0 } : { duration: SWAP_SECONDS, ease: SWAP_EASE }
   )
 
   /**
@@ -339,7 +335,7 @@
       await animateDim(
         host,
         { width: [`${oldWidth}px`, `${newWidth}px`] },
-        { duration: 0.16, ease: [0.23, 1, 0.32, 1] }
+        { duration: SWAP_SECONDS, ease: SWAP_EASE }
       )
       host.style.width = ''
     }
@@ -348,8 +344,12 @@
   const noticeOptions = computed(() =>
     soloOptions.value.filter((option) => !BAR_KEYS.includes(option.key) && !isTextMod(option))
   )
+  // `minWpm` is presented inside the pace picker (speed things live together);
+  // the registry option itself is untouched — this is only where it renders.
   const gradedSettings = computed(() =>
-    noticeOptions.value.filter((option) => option.control.kind !== 'boolean')
+    noticeOptions.value.filter(
+      (option) => option.control.kind !== 'boolean' && option.key !== 'minWpm'
+    )
   )
   const flagSettings = computed(() =>
     noticeOptions.value.filter((option) => option.control.kind === 'boolean')
@@ -486,28 +486,26 @@
 
     // The amount slot: a one-cell grid so the outgoing and incoming groups
     // stack during the swap, while the slot's width is tweened by the script's
-    // dimension watch — the row slides to its new size instead of jumping.
+    // dimension watch. `overflow: hidden` is what keeps the swap calm: without
+    // it the wider of the two stacked groups spills over the neighbours while
+    // the width catches up, and the whole row reads as jumping.
     &__dim {
       display: grid;
       justify-items: center;
+      overflow: hidden;
 
       > * {
         grid-area: 1 / 1;
       }
     }
 
-    // The collapsible text-mod block (separator + group) and its per-pill
-    // cells: both animate their width shut, so both must clip their content
-    // while folding.
+    // The collapsible text-mod block (separator + group): it animates its
+    // width shut, so it must clip its content while folding.
     &__mods {
       display: flex;
+      flex-shrink: 0;
       gap: 0.5rem;
       align-items: center;
-      overflow: hidden;
-    }
-
-    &__mod {
-      display: inline-flex;
       overflow: hidden;
     }
 
