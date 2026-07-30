@@ -106,7 +106,7 @@ kbd {
 }
 a {
   color: var(--sub-color);
-  transition: all var(--transition-duration);
+  transition: color var(--transition-duration) linear;
   border-radius: var(--border-radius);
   &:hover {
     color: var(--main-color);
