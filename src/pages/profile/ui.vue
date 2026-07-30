@@ -1,15 +1,15 @@
 <template>
-  <!--
-    `min-w-0` is load-bearing, not decoration. The app shell's `#main` is a GRID
-    (the global `main { display: grid }` rule), so this page is a grid item, and
-    a grid item defaults to `min-width: auto` — it may not shrink below its own
-    min-content. The calendar and the keyboard are ~680 px of min-content, so
-    the column sized itself to THEM: the page laid out 677 px wide inside a
-    328 px shell, every `overflow-x-auto` inside had nothing to scroll against,
-    and the charts measured 677 and drew at 677. Allowing the item to shrink is
-    what makes all of the responsive work below actually take effect.
-  -->
   <main class="flex w-full min-w-0 flex-col gap-6 pb-12 pt-5 sm:gap-8">
+    <!--
+      `min-w-0` is load-bearing, not decoration. The app shell's `#main` is a GRID
+      (the global `main { display: grid }` rule), so this page is a grid item, and
+      a grid item defaults to `min-width: auto` — it may not shrink below its own
+      min-content. The calendar and the keyboard are ~680 px of min-content, so
+      the column sized itself to THEM: the page laid out 677 px wide inside a
+      328 px shell, every `overflow-x-auto` inside had nothing to scroll against,
+      and the charts measured 677 and drew at 677. Allowing the item to shrink is
+      what makes all of the responsive work below actually take effect.
+    -->
     <!-- Anonymous: the page is a sign-in hint, not a redirect — the URL is
          shareable and the answer to "what is here" is honest. -->
     <section
