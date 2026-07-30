@@ -20,17 +20,19 @@
     </div>
 
     <div v-else :class="TABLE_SCROLL">
-      <table :class="TABLE">
+      <!-- Slightly denser rows than the shared default: this table is the
+           page's longest block and a laptop should fit a dozen runs. -->
+      <table :class="[TABLE, '[&_td]:py-1.5']">
         <thead :class="TABLE_HEAD">
           <tr>
             <td />
             <th scope="col">{{ t('profile.runs.grade') }}</th>
-            <th scope="col">wpm / raw</th>
-            <th scope="col">acc</th>
-            <th scope="col" :title="t('profile.metric.consistency')">
+            <th scope="col" data-num>wpm / raw</th>
+            <th scope="col" data-num>acc</th>
+            <th scope="col" data-num :title="t('profile.metric.consistency')">
               {{ t('profile.runs.consistency') }}
             </th>
-            <th scope="col" :title="t('profile.runs.charsTitle')">
+            <th scope="col" data-num :title="t('profile.runs.charsTitle')">
               {{ t('profile.runs.chars') }}
             </th>
             <th scope="col">{{ t('profile.runs.mods') }}</th>
@@ -53,19 +55,19 @@
                 {{ points(run) }}
               </span>
             </td>
-            <td class="whitespace-nowrap tabular-nums">
+            <td class="whitespace-nowrap" data-num>
               {{ serverWpm(run) }}
               <span class="text-sub">/ {{ serverRaw(run) }}</span>
             </td>
-            <td class="tabular-nums">{{ serverAcc(run) }}</td>
-            <td class="tabular-nums" data-testid="profile-run-consistency">
+            <td data-num>{{ serverAcc(run) }}</td>
+            <td data-num data-testid="profile-run-consistency">
               {{
                 run.consistency !== null && run.consistency !== undefined
                   ? percent(run.consistency)
                   : '—'
               }}
             </td>
-            <td class="whitespace-nowrap tabular-nums" data-testid="profile-run-chars">
+            <td class="whitespace-nowrap" data-num data-testid="profile-run-chars">
               <template v-if="run.chars">
                 {{ run.chars.correct }}/{{ run.chars.incorrect }}/{{ run.chars.extra }}/{{
                   run.chars.missed

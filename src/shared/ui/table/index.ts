@@ -34,7 +34,11 @@ export const TABLE = [
   '[&_th]:appearance-none [&_th]:p-2 [&_th]:align-bottom [&_th]:text-left [&_th]:text-xs',
   '[&_th]:font-normal [&_th]:whitespace-nowrap',
   '[&_th:first-child]:pl-4 [&_th:last-child]:pr-4',
-  'xl:[&_td:first-child]:pl-8 xl:[&_th:first-child]:pl-8'
+  'xl:[&_td:first-child]:pl-8 xl:[&_th:first-child]:pl-8',
+  // Numeric columns opt in with data-num on the th/td: right-aligned tabular
+  // digits stack into comparable place-value columns. The attribute selector
+  // outweighs the [&_td]:text-left default, so no !important is needed.
+  '[&_td[data-num]]:text-right [&_td[data-num]]:tabular-nums [&_th[data-num]]:text-right'
 ].join(' ')
 
 /** `<thead>` — labels, never data. */
