@@ -1,3 +1,5 @@
+import { randomFillSync } from 'node:crypto'
+
 import { describe, it, expect, afterEach } from 'vitest'
 
 import { uuid } from '@/shared/lib/helpers/misc'
@@ -31,6 +33,12 @@ describe('uuid', () => {
 
   it('falls back to getRandomValues when randomUUID is missing (plain-http dev server)', () => {
     define('randomUUID', undefined)
+    // This happy-dom's `crypto` ships no getRandomValues of its own, so back
+    // the fallback with Node's real entropy — the path under test is the
+    // helper's branch choice, not the host's crypto surface. randomFillSync,
+    // not webcrypto.getRandomValues: node's webcrypto IS this same global
+    // here, so delegating to it would recurse into this very stub.
+    define('getRandomValues', (buffer: Uint8Array) => randomFillSync(buffer))
     expect(uuid()).toMatch(V4)
   })
 
@@ -44,6 +52,7 @@ describe('uuid', () => {
 
   it('does not repeat across calls on the fallback path', () => {
     define('randomUUID', undefined)
+    define('getRandomValues', (buffer: Uint8Array) => randomFillSync(buffer))
     const seen = new Set(Array.from({ length: 100 }, () => uuid()))
     expect(seen.size).toBe(100)
   })

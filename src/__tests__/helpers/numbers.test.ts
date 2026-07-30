@@ -100,11 +100,14 @@ describe('groupThousands', () => {
   })
 
   it('should handle negative numbers', () => {
-    expect(groupThousands(-1234)).toBe('-1 234')
+    // Built from THIN_SPACE like every other expectation here — these two cases
+    // used to paste literals with a hand-typed U+0020, the exact invisible trap
+    // this file's header warns about, and failed against the real separator.
+    expect(groupThousands(-1234)).toBe(group('-1', '234'))
   })
 
   it('should round before grouping, never grouping decimals', () => {
-    expect(groupThousands(1234.56)).toBe('1 235')
+    expect(groupThousands(1234.56)).toBe(group('1', '235'))
     expect(groupThousands(999.4)).toBe('999')
   })
 })
