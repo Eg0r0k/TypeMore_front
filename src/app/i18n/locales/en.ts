@@ -342,32 +342,32 @@ export default {
       offline: 'offline'
     },
     ping: { label: 'your ping', value: '{ms} ms' },
-    create: 'Create room',
-    joinByCode: 'Join by code',
+    create: 'create room',
+    joinByCode: 'join by code',
     join: {
-      title: 'Enter the code',
-      placeholder: 'Code',
-      hint: 'If you have a room code, enter it here to connect.',
-      paste: 'Paste code',
+      title: 'enter the code',
+      placeholder: 'code',
+      hint: 'if you have a room code, enter it here to connect.',
+      paste: 'paste code',
       pasteFailed: 'could not read the clipboard',
       submit: 'join',
-      invalid: 'Room codes are 6 characters',
-      notFound: 'Room not found',
-      full: 'That room is full'
+      invalid: 'room codes are 6 characters',
+      notFound: 'room not found',
+      full: 'that room is full'
     },
     /** Public room list — discovery beside create/join-by-code, not instead of it. */
     lobby: {
-      title: 'Open rooms',
+      title: 'open rooms',
       loading: 'loading rooms…',
-      error: 'Could not load the room list',
+      error: 'could not load the room list',
       retry: 'retry',
-      empty: 'No open rooms right now',
+      empty: 'no open rooms right now',
       players: 'players {count}/{max}',
       time: '{seconds}s',
       words: '{count} words',
       inMatch: 'in match',
       /** Accessible name of a row: the whole row is one button. */
-      joinRoom: 'Join {name}',
+      joinRoom: 'join {name}',
       /** Why a row cannot be clicked. Always rendered — never a dead row. */
       reason: {
         full: 'room is full',
