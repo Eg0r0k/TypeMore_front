@@ -1,0 +1,109 @@
+# syntax=docker/dockerfile:1.9
+
+# Production image for the TypeMore SPA.
+#
+# Separate from the plain `Dockerfile` (which stays as-is for the existing
+# dev compose on port 80 as root) because the deploy image differs in ways that
+# would break that setup: it listens on 8080 as an unprivileged user and it
+# reverse-proxies the API, the dictionary origin and the WebSocket to the Go
+# server so the whole app is served from ONE origin. Same origin is what makes
+# the session cookie first-party and removes CORS from the deployment entirely.
+#
+#   docker build -f Dockerfile.prod --build-arg PUBLIC_URL=https://typemore.gg -t typemore-web .
+
+ARG NODE_VERSION=22
+# nginx stable branch. Alpine keeps the runtime layer ~50 MB.
+ARG NGINX_VERSION=1.28
+
+# --- base ------------------------------------------------------------------
+# corepack pins pnpm from package.json#packageManager, so the version is the
+# lockfile's, not whatever the build host has.
+FROM node:${NODE_VERSION}-alpine AS base
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+ENV CI=true
+RUN corepack enable
+
+# --- dependencies ----------------------------------------------------------
+# Only the manifest and the lockfile land in this stage, so editing a .vue file
+# never reinstalls node_modules. The pnpm store cache mount survives across
+# builds and makes a cold `install` mostly a link step.
+FROM base AS deps
+WORKDIR /app
+COPY package.json pnpm-lock.yaml ./
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+	pnpm install --frozen-lockfile
+
+# --- build -----------------------------------------------------------------
+FROM base AS build
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# PUBLIC_URL is the browser-visible origin of the deployment, and it is
+# REQUIRED: `VITE_API_URL` has to be an ABSOLUTE url, because the client feeds
+# it to `new URL()` twice — once for the dictionary origin
+# (`<origin>/static/dictionaries/<hash>.json`, src/shared/api/dictionaries)
+# and once for the realtime endpoint (`/ws`, src/entities/match/model). A
+# relative value throws `Invalid URL` and an EMPTY value silently collapses the
+# api base to "" (the code uses `??`, and "" is not nullish), which drops the
+# /api/v1 prefix from every request. Both failures are runtime-only, so the
+# arg is asserted here at build time instead.
+ARG PUBLIC_URL
+ARG VITE_API_URL=${PUBLIC_URL}/api/v1
+# Empty = derived from VITE_API_URL (wss://<host>/ws), which is what the
+# same-origin proxy below serves. Set it only to split the realtime host off.
+ARG VITE_WS_URL=""
+# Cloudflare Turnstile site key. Empty disables the widget — pair it with an
+# empty TYPEMORE_TURNSTILE_SECRET on the server, or users solve a challenge
+# nobody verifies.
+ARG VITE_TURNSTILE_SITE_KEY=""
+
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_WS_URL=${VITE_WS_URL}
+ENV VITE_TURNSTILE_SITE_KEY=${VITE_TURNSTILE_SITE_KEY}
+
+RUN case "${VITE_API_URL}" in \
+		http://*|https://*) ;; \
+		*) echo "ERROR: VITE_API_URL must be absolute (got '${VITE_API_URL}')." >&2; \
+		   echo "       Pass --build-arg PUBLIC_URL=https://your.host" >&2; \
+		   exit 1 ;; \
+	esac; \
+	pnpm build
+
+# --- runtime ---------------------------------------------------------------
+FROM nginx:${NGINX_VERSION}-alpine AS runtime
+ARG VERSION=docker
+ARG COMMIT=none
+ARG BUILD_DATE=unknown
+LABEL org.opencontainers.image.title="typemore-web" \
+	org.opencontainers.image.description="TypeMore SPA + reverse proxy to the API" \
+	org.opencontainers.image.version="${VERSION}" \
+	org.opencontainers.image.revision="${COMMIT}" \
+	org.opencontainers.image.created="${BUILD_DATE}"
+
+# A full main config, not a conf.d snippet: `pid` and the temp paths are
+# main-context directives and they have to move out of /var/run and
+# /var/cache before nginx can run unprivileged.
+COPY nginx.prod.conf /etc/nginx/nginx.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# nginx:alpine ships an unprivileged `nginx` user (uid 101) but runs its master
+# as root by default. Everything the worker writes to has to be owned by that
+# user first; /tmp (mode 1777) covers the request temp paths from the config.
+RUN chown -R nginx:nginx /var/cache/nginx \
+	&& nginx -t -c /etc/nginx/nginx.conf
+
+USER nginx
+EXPOSE 8080
+
+# SIGQUIT is nginx's graceful stop; the default SIGTERM is a hard one and cuts
+# in-flight WebSocket proxying.
+STOPSIGNAL SIGQUIT
+
+# A static endpoint, so the check reports on nginx itself and does not turn an
+# API outage into a restart loop of the proxy in front of it.
+HEALTHCHECK --interval=15s --timeout=4s --start-period=5s --retries=3 \
+	CMD ["/usr/bin/wget", "--quiet", "--tries=1", "--timeout=3", "--spider", "http://127.0.0.1:8080/nginx-health"]
+
+CMD ["nginx", "-g", "daemon off;"]

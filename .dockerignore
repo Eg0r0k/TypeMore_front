@@ -15,3 +15,27 @@ eslint.config.js
 tsconfig_.json
 .vscode
 .idea
+
+# Local env files must NOT reach the build context. Vite loads .env for a
+# production build too, and this repo's .env points VITE_API_URL at
+# http://localhost:8080 — which would get baked into the deployed bundle.
+# The build args in Dockerfile.prod are the only intended source.
+.env
+.env.*
+!.env.example
+
+# Build outputs and tool state: regenerated inside the image, and `dist` in
+# particular would be copied in only to be overwritten.
+dist
+coverage
+test-results
+playwright-report
+.codegraph
+stats.html
+tsconfig.tsbuildinfo
+
+# Tests and docs are not part of `vite build`.
+e2e
+docs
+playwright.config.ts
+vitest.config.ts
