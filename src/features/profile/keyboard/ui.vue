@@ -51,14 +51,13 @@
           <!-- What the colours MEAN under the current metric — the map itself
                only shows the scale, this names it. -->
           <Tooltip>
-            <TooltipTrigger as-child>
-              <span
-                class="inline-flex cursor-help text-sub transition-tm hover:text-text"
-                :aria-label="t('profile.keyboard.metric')"
-                data-testid="profile-kbd-metric-hint"
-              >
-                <IconInfoCircle class="size-4" />
-              </span>
+            <TooltipTrigger
+              type="button"
+              class="inline-flex cursor-help rounded-md text-sub transition-tm focus-ring hover:text-text"
+              :aria-label="t('profile.keyboard.metric')"
+              data-testid="profile-kbd-metric-hint"
+            >
+              <IconInfoCircle class="size-4" />
             </TooltipTrigger>
             <TooltipContent>
               <span class="flex max-w-64 flex-col gap-0.5">

@@ -2,6 +2,7 @@
   <div class="flex flex-col gap-3" data-testid="profile-runs">
     <div
       v-if="state === 'error' && rows.length === 0"
+      role="status"
       class="flex items-center gap-4 rounded bg-sub-alt p-4"
     >
       <Typography size="s" color="error">{{ t('profile.sectionError') }}</Typography>
@@ -22,18 +23,20 @@
       <table :class="TABLE">
         <thead :class="TABLE_HEAD">
           <tr>
-            <th />
-            <th>{{ t('profile.runs.grade') }}</th>
-            <th>wpm / raw</th>
-            <th>acc</th>
-            <th>{{ t('profile.runs.consistency') }}</th>
-            <th :title="t('profile.runs.charsTitle')">
+            <td />
+            <th scope="col">{{ t('profile.runs.grade') }}</th>
+            <th scope="col">wpm / raw</th>
+            <th scope="col">acc</th>
+            <th scope="col">{{ t('profile.runs.consistency') }}</th>
+            <th scope="col" :title="t('profile.runs.charsTitle')">
               {{ t('profile.runs.chars') }}
             </th>
-            <th>{{ t('profile.runs.mods') }}</th>
-            <th>{{ t('profile.runs.lang') }}</th>
-            <th>{{ t('profile.runs.when') }}</th>
-            <th />
+            <th scope="col">{{ t('profile.runs.mods') }}</th>
+            <th scope="col">{{ t('profile.runs.lang') }}</th>
+            <th scope="col">{{ t('profile.runs.when') }}</th>
+            <th scope="col">
+              <span class="sr-only">{{ t('profile.runs.actions') }}</span>
+            </th>
           </tr>
         </thead>
         <tbody :class="TABLE_BODY">

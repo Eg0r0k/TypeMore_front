@@ -157,7 +157,11 @@
               aria-hidden="true"
             />
             <ProfileHistogram v-else-if="histogram.data.value" :histogram="histogram.data.value" />
-            <div v-if="histogram.isError.value" class="flex flex-wrap items-center gap-4">
+            <div
+              v-if="histogram.isError.value"
+              role="status"
+              class="flex flex-wrap items-center gap-4"
+            >
               <Typography size="s" color="error">{{ t('profile.sectionError') }}</Typography>
               <Button color="main-outline" size="s" @click="histogram.refetch">
                 {{ t('profile.retry') }}

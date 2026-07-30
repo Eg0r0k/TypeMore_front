@@ -17,6 +17,7 @@
 
     <div
       v-else-if="error"
+      role="status"
       class="flex flex-wrap items-center gap-4 rounded-lg bg-sub-alt p-4"
       :data-testid="`profile-error-${name}`"
     >
