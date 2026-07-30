@@ -1,34 +1,14 @@
 <template>
   <div class="settings-bar">
     <!--
-      The bar proper: text mods | modes | amount, monkeytype's three groups. Only
-      what shapes the TEXT lives here, and each group is one ToggleGroup, so the
-      pills and the separators between them carry the grouping.
+      The bar proper, ordered by use: mode and its amount lead (the pair a
+      player reads and changes most), the text mods follow past the separator.
+      Only what shapes the TEXT lives here, and each group is one ToggleGroup,
+      so the pills and the separator carry the grouping.
     -->
     <div class="settings-bar__row">
       <ToggleGroup
-        v-if="textMods.length"
-        type="multiple"
-        :model-value="activeTextMods"
-        :aria-label="t('game.textMods')"
-        @update:model-value="onTextMods"
-      >
-        <ToggleGroupItem
-          v-for="option in textMods"
-          :key="option.key"
-          :value="option.key"
-          class="settings-bar__btn data-[disabled]:pointer-events-auto"
-          :disabled="reasonOf(option) !== null"
-          :title="titleOf(option)"
-        >
-          <component :is="OPTION_ICONS[option.key]" aria-hidden="true" />
-          {{ t(option.i18nKey) }}
-        </ToggleGroupItem>
-      </ToggleGroup>
-
-      <span class="settings-bar__sep" aria-hidden="true"></span>
-
-      <ToggleGroup
+        class="max-sm:flex-wrap max-sm:justify-center"
         :model-value="config.mode"
         :aria-label="modeOption.ariaLabel"
         @update:model-value="onMode"
@@ -46,11 +26,12 @@
         </ToggleGroupItem>
       </ToggleGroup>
 
-      <!-- The amount for the current mode: seconds, words, or a quote's length band. -->
-      <template v-if="dimension">
-        <span class="settings-bar__sep" aria-hidden="true"></span>
-
+      <!-- The amount for the current mode: seconds, words, or a quote's length
+           band. The slot reserves the widest variant's width, so switching
+           modes never reflows the row under the pointer. -->
+      <span v-if="dimension" class="settings-bar__dim">
         <ToggleGroup
+          class="max-sm:flex-wrap max-sm:justify-center"
           :model-value="String(config[dimension.key])"
           :aria-label="dimension.ariaLabel"
           @update:model-value="onDimension(dimension, $event)"
@@ -64,6 +45,30 @@
             :title="raceLock ?? undefined"
           >
             {{ labelOf(dimension, value) }}
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </span>
+
+      <template v-if="textMods.length">
+        <span class="settings-bar__sep" aria-hidden="true"></span>
+
+        <ToggleGroup
+          class="max-sm:flex-wrap max-sm:justify-center"
+          type="multiple"
+          :model-value="activeTextMods"
+          :aria-label="t('game.textMods')"
+          @update:model-value="onTextMods"
+        >
+          <ToggleGroupItem
+            v-for="option in textMods"
+            :key="option.key"
+            :value="option.key"
+            class="settings-bar__btn data-[disabled]:pointer-events-auto"
+            :disabled="reasonOf(option) !== null"
+            :title="titleOf(option)"
+          >
+            <component :is="OPTION_ICONS[option.key]" aria-hidden="true" />
+            {{ t(option.i18nKey) }}
           </ToggleGroupItem>
         </ToggleGroup>
       </template>
@@ -379,6 +384,19 @@
       height: 1.25rem;
       background-color: var(--sub-color);
       opacity: 0.25;
+    }
+
+    // The amount slot. Reserving the widest variant's width (the quote length
+    // bands) keeps the centred row from reflowing when the mode changes — the
+    // button the player just aimed at stays where it was. On phones the row
+    // wraps anyway, so the reservation would only waste height.
+    &__dim {
+      display: flex;
+      justify-content: center;
+
+      @media screen and (width > 640px) {
+        min-inline-size: 20rem;
+      }
     }
 
     &__notice {
