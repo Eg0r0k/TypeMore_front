@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { type TimerCommand, type TimerTick, GameCore, insertEvent } from '@shared/core'
+import { type TimerCommand, type TimerTick, GameCore, insertEvent } from '@typemore/core'
 import { type TimerWorkerLike, useGameTimer } from '@shared/lib/hooks/useGameTimer'
 
 class FakeWorker implements TimerWorkerLike {

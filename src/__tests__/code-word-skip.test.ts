@@ -40,7 +40,7 @@ import {
   type GameEvent,
   type GameState,
   type GenerationConfig
-} from '@shared/core'
+} from '@typemore/core'
 
 const CSS_TEXT =
   'p.center {\n\ttext-align: center;\n\tcolor: red;\n}\n\np.large {\n\tfont-size: 300%\n;}'

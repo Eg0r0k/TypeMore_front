@@ -25,7 +25,7 @@ import {
   computeMetrics,
   foldLog,
   insertEvent
-} from '@shared/core'
+} from '@typemore/core'
 import { GhostDriver } from '@entities/match'
 
 import { withTelemetry, withoutSeq } from '../fixtures/telemetry-twin'

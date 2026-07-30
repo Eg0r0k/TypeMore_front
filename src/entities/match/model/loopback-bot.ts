@@ -18,7 +18,7 @@ import {
   LoopbackTransport,
   sampleNtp
 } from '@shared/match-transport'
-import { type Dictionary, generateWords, makeSeedContext } from '@shared/core'
+import { type Dictionary, generateWords, makeSeedContext } from '@typemore/core'
 
 import { synthesizeBotLog } from './demo-feed'
 import { isQuoteMatch, loadMatchDictionary, loadMatchQuote, matchGeneration } from './match-setup'

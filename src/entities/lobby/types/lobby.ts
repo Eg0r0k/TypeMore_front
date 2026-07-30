@@ -5,7 +5,7 @@
  * host | player (host = `room_state.hostPlayerId`); spectators do not exist on
  * the wire.
  */
-import type { CharCounts, FailReason } from '@shared/core'
+import type { CharCounts, FailReason } from '@typemore/core'
 import type { ChatKind, Freemods } from '@shared/match-transport'
 
 export type {

@@ -1,5 +1,5 @@
 import type { UiLanguage } from '@/shared/lib/i18n/locale'
-import type { Difficulty } from '@shared/core'
+import type { Difficulty } from '@typemore/core'
 
 /** Input: how hard the test stops you on a mistake. */
 export type StopOnError = 'off' | 'word' | 'letter'

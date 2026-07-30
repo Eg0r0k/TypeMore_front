@@ -18,7 +18,7 @@
  * back to v1. Composition sessions additionally suppress capture at the
  * adapter level even on a v2 run — see features/test/input.
  */
-import { EVENT_LOG_VERSION, EVENT_LOG_VERSION_TELEMETRY, type EventLogVersion } from '@shared/core'
+import { EVENT_LOG_VERSION, EVENT_LOG_VERSION_TELEMETRY, type EventLogVersion } from '@typemore/core'
 
 const MOBILE_UA = /Android|iPhone|iPad|iPod|Mobile|IEMobile|Opera Mini/i
 

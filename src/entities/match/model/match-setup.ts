@@ -13,8 +13,8 @@
  * content hash (`dictVersion`) against `settings.dictHash` — a mismatch is
  * REPORTED, never silently adapted.
  */
-import type { CoreConfig, Dictionary, GenerationConfig, GenerationTextSource } from '@shared/core'
-import { DEFAULT_MAX_EXTRA_CHARS } from '@shared/core'
+import type { CoreConfig, Dictionary, GenerationConfig, GenerationTextSource } from '@typemore/core'
+import { DEFAULT_MAX_EXTRA_CHARS } from '@typemore/core'
 import type { Freemods, RoomSettings } from '@shared/match-transport'
 import { loadDictionaryBody, loadQuoteById } from '@shared/api'
 

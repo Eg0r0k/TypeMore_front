@@ -123,7 +123,7 @@
   import { computed, ref, useTemplateRef } from 'vue'
   import { useElementSize } from '@vueuse/core'
 
-  import type { TimelinePoint } from '@shared/core'
+  import type { TimelinePoint } from '@typemore/core'
 
   /**
    * WPM-over-time chart for the results screen. Pure view: it charts a

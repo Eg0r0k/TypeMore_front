@@ -37,7 +37,7 @@ import {
   makeSeedContext,
   type Dictionary,
   type GameEvent
-} from '@shared/core'
+} from '@typemore/core'
 import type { ReplayData } from '@entities/game'
 import type { DictionaryBody, Quote, RunReplay, RunReplayLog } from '@shared/api'
 

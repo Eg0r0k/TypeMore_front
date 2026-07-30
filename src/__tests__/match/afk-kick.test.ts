@@ -9,7 +9,7 @@ import { resolve } from 'node:path'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
-import { type Dictionary, type TimerCommand, type TimerTick, dictVersion } from '@shared/core'
+import { type Dictionary, type TimerCommand, type TimerTick, dictVersion } from '@typemore/core'
 import type { TimerWorkerLike } from '@shared/lib/hooks/useGameTimer'
 import {
   type RoomSettings,

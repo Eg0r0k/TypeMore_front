@@ -8,7 +8,7 @@ import {
   type Metrics,
   type ModsDeclaration,
   type ScoreResult
-} from '@shared/core'
+} from '@typemore/core'
 import {
   buildRunPayload,
   isSubmittableRun,

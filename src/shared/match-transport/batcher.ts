@@ -1,5 +1,5 @@
-import type { EventLogVersion, GameEvent } from '@shared/core'
-import { EVENT_LOG_VERSION } from '@shared/core'
+import type { EventLogVersion, GameEvent } from '@typemore/core'
+import { EVENT_LOG_VERSION } from '@typemore/core'
 import type { EventBatchFrame } from './protocol'
 import type { MatchTransport, Unsubscribe } from './transport'
 import { CONNECTED_STATES } from './transport'

@@ -21,7 +21,7 @@
   import { computed, ref } from 'vue'
 
   import { wordsHaveTab, type GameSession } from '@entities/game'
-  import { isSpaceGrapheme, normalizeGrapheme } from '@shared/core'
+  import { isSpaceGrapheme, normalizeGrapheme } from '@typemore/core'
   import { useSounds } from '@/shared/lib/hooks/useSounds'
   import { useConfigStore } from '@/entities/config'
   import { getSoundPack } from '@/shared/constants/sound-packs'

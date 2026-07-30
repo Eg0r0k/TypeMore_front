@@ -22,7 +22,7 @@ import type { MatchSelfRun } from '@/features/room/results'
 import type { StandingRow } from '@/entities/lobby'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 import { i18n } from '@app/i18n'
-import type { Metrics } from '@shared/core'
+import type { Metrics } from '@typemore/core'
 
 const NO_MODS = { difficulty: 'normal', minWpm: 0, nospace: false } as const
 

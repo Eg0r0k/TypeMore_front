@@ -146,7 +146,7 @@
   import { computed } from 'vue'
   import { useI18n } from 'vue-i18n'
   import clsx from 'clsx'
-  import type { CharCounts } from '@shared/core'
+  import type { CharCounts } from '@typemore/core'
   import { FreemodChips } from '@/entities/lobby'
   import type { StandingRow } from '@/entities/lobby'
   import type { OutcomeReason } from '@/entities/match'

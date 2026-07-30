@@ -1,8 +1,12 @@
 import { createServer } from 'node:http'
 import { gzipSync } from 'node:zlib'
 import type { Page } from '@playwright/test'
-import { dictVersion, generateWords, makeSeedContext } from '../../src/shared/core/words'
-import type { Dictionary, GenerationConfig } from '../../src/shared/core/words'
+// Through the package's PUBLIC surface, not a deep path into its src/ — this
+// file used to reach `src/shared/core/words` directly, which is exactly the
+// kind of side-door the @typemore/core exports map now closes. Every name it
+// needs is (and must stay) exported from the package index.
+import { dictVersion, generateWords, makeSeedContext } from '@typemore/core'
+import type { Dictionary, GenerationConfig } from '@typemore/core'
 
 /**
  * Leaderboards + public-replay stubs for the backend-less E2E harness.

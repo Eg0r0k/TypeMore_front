@@ -53,7 +53,7 @@ vi.mock('@/features/test/replay', () => ({
   })
 }))
 
-import { dictVersion, insertEvent, type CoreConfig, type GenerationConfig } from '@shared/core'
+import { dictVersion, insertEvent, type CoreConfig, type GenerationConfig } from '@typemore/core'
 import { i18n } from '@app/i18n'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 import ReplayPage from '@/pages/replay/ui.vue'

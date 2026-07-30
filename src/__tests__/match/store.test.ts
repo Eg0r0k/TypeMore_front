@@ -7,7 +7,7 @@ import {
   type TimerTick,
   foldLog,
   DEFAULT_MAX_EXTRA_CHARS
-} from '@shared/core'
+} from '@typemore/core'
 import type { TimerWorkerLike } from '@shared/lib/hooks/useGameTimer'
 import { MATCH_LOCAL_STORE_ID, synthesizeBotLog, useMatchStore } from '@entities/match'
 import { useGameStore } from '@entities/game'

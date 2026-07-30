@@ -6,7 +6,7 @@ import { beforeEach, describe, it, expect, vi } from 'vitest'
 import { TestResults, type ResultSummary } from '@/features/test/results'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 import { i18n } from '@app/i18n'
-import type { Metrics } from '@shared/core'
+import type { Metrics } from '@typemore/core'
 
 // Real i18n is provided via the plugin below so assertions read the actual copy.
 

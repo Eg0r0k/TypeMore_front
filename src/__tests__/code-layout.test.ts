@@ -21,7 +21,7 @@ import {
   makeSeedContext,
   type Dictionary,
   type GenerationConfig
-} from '@shared/core'
+} from '@typemore/core'
 
 /** The owner's screenshot text. */
 const CSS_TEXT =

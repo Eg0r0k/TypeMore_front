@@ -25,7 +25,7 @@
  * the next option cannot be added to the type and quietly forgotten by a
  * surface.
  */
-import { emitsRawTokens, type GenerationConfig, type GenerationTextSource } from '@shared/core'
+import { emitsRawTokens, type GenerationConfig, type GenerationTextSource } from '@typemore/core'
 import type { Config } from '@/shared/constants/type'
 import DEFAULT_CONFIG from '@/shared/constants/default-config'
 

@@ -6,7 +6,7 @@
  * the one place the twin relation is spelled out, so `ghost-driver.test.ts` and
  * `replay-player.test.ts` cannot drift apart on what "the same run" means.
  */
-import { type GameEvent, type GameState, asSeq, keyDownEvent, keyUpEvent } from '@shared/core'
+import { type GameEvent, type GameState, asSeq, keyDownEvent, keyUpEvent } from '@typemore/core'
 
 /** `KeyboardEvent.code` for what a state event was typed with — physical, never the glyph. */
 function codeOf(event: GameEvent): string {

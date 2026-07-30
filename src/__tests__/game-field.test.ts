@@ -10,7 +10,7 @@ import { createPinia } from 'pinia'
 
 import { Test } from '@/widgets/test'
 import type { GameView } from '@entities/game'
-import { type GameState, asMs, asSeq } from '@shared/core'
+import { type GameState, asMs, asSeq } from '@typemore/core'
 import { SMOOTH_CARET_MS } from '@/widgets/test/game-styles'
 
 interface MutableView {

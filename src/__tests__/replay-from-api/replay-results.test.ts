@@ -17,7 +17,7 @@ import {
   insertEvent,
   wordHistory,
   wpmOverTime
-} from '@shared/core'
+} from '@typemore/core'
 import { replayResults } from '@/features/replay-view'
 import type { ReplayData } from '@entities/game'
 

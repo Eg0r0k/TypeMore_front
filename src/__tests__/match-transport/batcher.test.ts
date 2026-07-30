@@ -3,7 +3,7 @@
 // across a disconnect/reconnect.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { insertEvent } from '@shared/core'
+import { insertEvent } from '@typemore/core'
 import {
   type ClientCommand,
   type ConnectOptions,

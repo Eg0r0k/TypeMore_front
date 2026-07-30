@@ -1,4 +1,4 @@
-import { parseEventBatch } from '@shared/core'
+import { parseEventBatch } from '@typemore/core'
 import type { ClientCommand, HelloFrame, ServerFrame } from './protocol'
 import { PROTOCOL_VERSION, decodeServerFrame } from './protocol'
 import type {

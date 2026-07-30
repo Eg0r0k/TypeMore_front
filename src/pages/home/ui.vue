@@ -152,7 +152,7 @@
     type ModsDeclaration,
     generateWords,
     makeSeedContext
-  } from '@shared/core'
+  } from '@typemore/core'
   import { useRouter } from 'vue-router'
   import {
     adoptedFromOf,

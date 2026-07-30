@@ -17,7 +17,7 @@ import {
   modMultiplierV1,
   CODE_MAX_EXTRA_CHARS,
   DEFAULT_MAX_EXTRA_CHARS
-} from '@shared/core'
+} from '@typemore/core'
 import { QUOTE_PROBE } from '../config/registry'
 
 /** The saved-config subset that influences the core. `blind` is deliberately absent — it is view-only. */

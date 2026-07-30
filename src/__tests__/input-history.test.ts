@@ -20,7 +20,7 @@ vi.mock('@/shared/ui/sonner', () => ({
 import InputHistory from '@/features/test/results/input-history.vue'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 import { i18n } from '@app/i18n'
-import type { WordHistoryEntry } from '@shared/core'
+import type { WordHistoryEntry } from '@typemore/core'
 
 const HISTORY: readonly WordHistoryEntry[] = [
   { target: 'ab', typed: 'ab', committed: true, burst: 80 },

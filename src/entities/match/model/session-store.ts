@@ -49,7 +49,7 @@ import {
   progressOf,
   scoreV2OfLog,
   settle
-} from '@shared/core'
+} from '@typemore/core'
 import {
   type ChatFrame,
   type ChatKind,

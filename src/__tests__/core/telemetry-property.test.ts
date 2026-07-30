@@ -61,7 +61,7 @@ import {
   scoreOfLog,
   scoreV2OfLog,
   validateLog
-} from '@shared/core'
+} from '@typemore/core'
 import { releaseGameStore, useGameStore } from '@entities/game'
 
 const dict: Dictionary = {

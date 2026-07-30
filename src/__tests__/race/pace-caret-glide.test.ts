@@ -19,7 +19,7 @@ import { reactive } from 'vue'
 import { Test } from '@/widgets/test'
 import type { GameView } from '@entities/game'
 import { type TestGhostCaret, useGhostCarets } from '@shared/lib/hooks/useGhostCarets'
-import { asMs, asSeq } from '@shared/core'
+import { asMs, asSeq } from '@typemore/core'
 import { ref } from 'vue'
 
 const rect = (left: number, top: number): DOMRect =>

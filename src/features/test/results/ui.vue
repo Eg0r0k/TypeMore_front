@@ -242,7 +242,7 @@
     type TimelinePoint,
     type WordHistoryEntry,
     gradeOf
-  } from '@shared/core'
+  } from '@typemore/core'
   import WpmChart from './wpm-chart.vue'
   import InputHistory from './input-history.vue'
   import IconHistory from '~icons/tabler/history'

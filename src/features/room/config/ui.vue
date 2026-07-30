@@ -183,7 +183,7 @@
   import { LanguageModal } from '@/features/modal/language'
   import { toast } from '@/shared/ui/sonner'
   import { Typography } from '@/shared/ui/typography'
-  import { dictVersion } from '@shared/core'
+  import { dictVersion } from '@typemore/core'
   import IconLoader from '~icons/tabler/loader-2'
 
   import { useRoomSettings } from './model/use-room-settings'

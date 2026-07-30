@@ -30,7 +30,11 @@ RUN corepack enable
 # builds and makes a cold `install` mostly a link step.
 FROM base AS deps
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
+# The workspace manifests, not just the root one: the app depends on
+# @typemore/core (workspace:*), and pnpm refuses a frozen install unless every
+# workspace package's manifest is present.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/core/package.json packages/core/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 	pnpm install --frozen-lockfile
 

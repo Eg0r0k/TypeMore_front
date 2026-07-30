@@ -3,7 +3,7 @@
 // and valibot/core rejection of malformed inbound frames.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { EVENT_LOG_VERSION, insertEvent } from '@shared/core'
+import { EVENT_LOG_VERSION, insertEvent } from '@typemore/core'
 import {
   type TransportEvent,
   type WebSocketLike,

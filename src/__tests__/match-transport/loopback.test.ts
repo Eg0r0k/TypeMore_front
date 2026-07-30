@@ -2,7 +2,7 @@
 // the in-memory server — create/join/ready/start/relay/finish per PROTOCOL.md.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { EVENT_LOG_VERSION, insertEvent } from '@shared/core'
+import { EVENT_LOG_VERSION, insertEvent } from '@typemore/core'
 import {
   type MatchTransport,
   type RoomSettings,

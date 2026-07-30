@@ -35,7 +35,7 @@ import {
   foldLog,
   insertEvent,
   isTelemetryEvent
-} from '@shared/core'
+} from '@typemore/core'
 
 import { withTelemetry, withoutSeq } from './fixtures/telemetry-twin'
 

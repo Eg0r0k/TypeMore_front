@@ -30,8 +30,8 @@ import {
   sortEvents,
   timelineFrom,
   wordHistoryFrom
-} from '@shared/core'
-import type { CoreContext } from '@shared/core'
+} from '@typemore/core'
+import type { CoreContext } from '@typemore/core'
 import type { ReplayData } from '@entities/game'
 
 export interface ReplayResults {

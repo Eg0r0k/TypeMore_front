@@ -13,7 +13,7 @@ import {
   commitEvent,
   dictVersion,
   insertEvent
-} from '@shared/core'
+} from '@typemore/core'
 import type { TimerWorkerLike } from '@shared/lib/hooks/useGameTimer'
 import {
   type RoomSettings,

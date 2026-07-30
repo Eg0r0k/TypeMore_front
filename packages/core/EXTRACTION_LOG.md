@@ -1,0 +1,136 @@
+# @typemore/core — журнал извлечения
+
+Дата: 2026-07-30. Задача: вынести `src/shared/core` в pnpm-workspace-пакет
+`@typemore/core` — единственный источник истины для фронта и goja-бандла
+бэкенда. Ниже — решения и находки, по стадиям.
+
+## Stage 0 — предчек
+
+- Рабочее дерево было грязным (файлы прод-деплоя: `Dockerfile.prod`,
+  `nginx.prod.conf`, правка `.dockerignore`). Закоммичено отдельным
+  коммитом `pre-extraction baseline` **до** любых перемещений.
+- Baseline тестов зафиксирован до извлечения: **2326 passed | 4 failed |
+  1 skipped (2331, 119 файлов)**. Предсуществующие красные — не «тест
+  профиля» из постановки, а 4 средовых падения: `helpers/misc` (2, в
+  happy-dom нет `crypto.getRandomValues` на этой связке Node) и
+  `helpers/numbers` (2, NBSP-сравнение). Они остаются красными и не
+  чинятся в этой задаче; критерий приёмки — тот же набор до/после.
+
+## Stage 1 — извлечение
+
+- **Приложение остаётся в корне репозитория**, workspace получает только
+  `packages/*`. Вариант `apps/web` отвергнут как избыточно инвазивный:
+  переезд корня ломает пути в vite/tauri/playwright-конфигах, CI и
+  бэкендовую конвенцию `FRONTEND=../TypeMore_front`.
+- Extraction-коммит — **чистое перемещение**: 38 renames, 100%
+  similarity, 0 insertions/deletions. Вся проводка — отдельными
+  коммитами после него.
+- Тесты ядра переехали в `packages/core/tests` **кроме**
+  `telemetry-property.test.ts`: он гоняет живой Pinia game store
+  (`@entities/game`) — это интеграционный тест приложения, а не ядра.
+  Остался в `src/__tests__/core/`.
+- Фикстуры `telemetry-golden` читаются только переехавшим
+  `telemetry-golden.test.ts` → переехали в `packages/core/fixtures`
+  (уровнем выше tests/, чтобы существующие импорты
+  `../fixtures/telemetry-golden/*` остались верны без единой правки).
+- `fixtures/telemetry-twin.ts` НЕ переехал: его читают только
+  `ghost-driver.test.ts` и `replay-player.test.ts` — тесты приложения.
+
+## Stage 2 — публичная поверхность
+
+- Единственный entry — `src/index.ts`. Он уже экспортировал все модули
+  ядра; добавлен только `export * from './version'`
+  (CORE_PACKAGE_VERSION, см. Stage 3).
+- `exports`: `'.'` → `./src/index.ts`. **Workspace-потребители получают
+  TS-исходники**, не dist: пайплайн компиляции у приложения остаётся
+  байт-в-байт прежним (критерий «те же 2326 зелёных»), HMR и coverage
+  работают как до извлечения. `dist/` — собранный артефакт (ESM + d.ts
+  + goja-бандл) для вендоринга бэком и будущей публикации; npm-публикации
+  в этой задаче нет, при её появлении exports переключается через
+  `publishConfig`.
+- Вторая (и единственная другая) точка входа — `./timer.worker`:
+  Vite-воркер, который приложение инстанциирует как
+  `@typemore/core/timer.worker?worker`. Через index он пройти не может
+  по своей природе (это отдельный entry для сборщика, cadence-оболочка,
+  исключённая из purity-скана). Явный subpath вместо deep-import.
+- Deep-import'ы `@typemore/core/src/...` не резолвятся (нет в exports).
+- **Находка**: `e2e/fixtures/leaderboards.ts` импортировал
+  `../../src/shared/core/words` напрямую, мимо index. Все нужные имена
+  (`dictVersion`, `generateWords`, `makeSeedContext`, типы) уже были в
+  публичной поверхности — переведён на `@typemore/core`. Других обходов
+  index не нашлось (единственный `@shared/core/*`-импорт с путём был
+  worker).
+
+## Stage 3 — два артефакта из одного entry
+
+- `pnpm --filter @typemore/core build` → `dist/index.js` (ESM,
+  neverthrow external), `dist/*.d.ts` (tsc --emitDeclarationOnly),
+  `dist/core.bundle.js` (IIFE для goja). Оба JS-артефакта собираются из
+  `src/index.ts`; отдельного entry для бандла не существует — корень B11
+  устранён конструктивно.
+- Опции goja-бандла — преемник бэкендового `esbuild.args`, живут ОДНИМ
+  объектом в `scripts/bundle-options.mjs`; его же используют build,
+  determinism-тест и export-parity-тест.
+- esbuild запинен **точно** (`0.25.12`, без каретки) — версия бандлера
+  входит в детерминизм байтов. cwd сборки — каталог пакета (esbuild
+  пишет пути модулей в комментарии выходного файла).
+- `CORE_PACKAGE_VERSION` инжектится esbuild define в оба артефакта; из
+  исходников (vitest/dev) читается `'0.0.0-dev'`.
+- Трейлер бандла `//# typemore-core-build {...}`: version,
+  eventLogVersion, telemetryLogVersion, gitSha, gitDirty. Числа версий
+  лога **считываются из уже собранного бандла** (node:vm), а не
+  переписываются руками — дублировать константы значило бы завести
+  второй источник истины, тот самый класс ошибок. Git-состояние — в
+  трейлере-комментарии, а не в экспортируемой константе: sha меняется
+  каждым коммитом и как экспорт ломал бы export-parity и создавал шум в
+  диффах freshness-гейта (гейт срезает трейлер перед сравнением).
+- Нечитаемое git-состояние трактуется как dirty, никогда как clean.
+
+## Stage 4 — миграция фронта
+
+- Механическая замена `@shared/core` → `@typemore/core` (72 импорта в
+  src/**, .ts и .vue), плюс worker-импорт
+  `@typemore/core/timer.worker?worker`.
+- Корневой vitest переведён на `projects` (`web` + `packages/core`),
+  чтобы `pnpm test` остался одной командой с одной сводкой по всему
+  workspace. Проект `web` наследует пайплайн корневого конфига
+  (`extends: true`) — приложенческие тесты компилируются как раньше.
+- Упоминания «shared/core» в комментариях кода приложения оставлены как
+  есть (проза, поведения не меняет).
+- Dockerfile.prod: deps-стадия теперь копирует `pnpm-workspace.yaml` и
+  `packages/core/package.json` (иначе `pnpm install --frozen-lockfile`
+  падает на workspace-манифесте). Необходимая правка, не переписывание
+  сборки.
+
+## Stage 5 — путь вендоринга в бэк
+
+- `make core-bundle` больше не запускает esbuild: он берёт ГОТОВЫЙ
+  `$(FRONTEND)/packages/core/dist/core.bundle.js`, проверяет трейлер и
+  отказывается вендорить, если: dist отсутствует; `gitDirty: true`;
+  `gitSha` ≠ текущему HEAD фронтового чекаута. Сообщения об ошибке
+  говорят, какую команду выполнить.
+- Freshness-гейт (`TestVendoredBundleIsFresh`) сравнивает вендоренный
+  бандл с dist-файлом, **срезав у обоих трейлер**: несвязанный коммит
+  фронта (новый sha при неизменном ядре) не должен читаться как
+  «бандл протух». Дрейф самого кода по-прежнему ловится побайтово.
+- Go логирует при загрузке бандла: BundleSHA + CORE_PACKAGE_VERSION +
+  EVENT_LOG_VERSION / EVENT_LOG_VERSION_TELEMETRY, прочитанные из
+  goja-рантайма.
+
+## Stage 6 — гарды
+
+- `tests/export-parity.test.ts`: множество runtime-экспортов бандла ≡
+  множеству экспортов `src/index.ts` (собирает бандл теми же опциями во
+  временный файл, исполняет в node:vm, сравнивает наборы имён).
+  Ловит «собрали не из того entry» навсегда.
+- `tests/bundle-determinism.test.ts`: две сборки подряд → байт-в-байт
+  одинаковый файл (без трейлера и с ним — git-состояние в пределах
+  одного дерева стабильно).
+- Версионирование: **2.0.0** — semver, major = текущая версия формата
+  лога (wire-формат на log v2). Бамп формата лога = бамп major.
+
+## Что осталось за пользователем / известные хвосты
+
+- Полный прогон Playwright-сьютов сверх perf-гейта — по желанию.
+- `.codegraph`-индексы обоих репо привязаны к старым путям — нужен
+  реиндекс.

@@ -9,7 +9,7 @@ import {
   type Metrics,
   type ModsDeclaration,
   type ScoreResult
-} from '@shared/core'
+} from '@typemore/core'
 import type { RunSubmitContext } from '@/features/run-submit/model/build-payload'
 
 // Shared handles reachable from the hoisted module mocks below.

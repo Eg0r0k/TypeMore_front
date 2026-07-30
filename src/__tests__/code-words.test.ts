@@ -17,7 +17,7 @@ import { Test } from '@/widgets/test'
 import { TestWord } from '@/features/test/word'
 import { TestInput } from '@/features/test/input'
 import { wordBreaksLine, wordsHaveNewline, wordsHaveTab, type GameSession } from '@entities/game'
-import { type GameState, asMs, asSeq } from '@shared/core'
+import { type GameState, asMs, asSeq } from '@typemore/core'
 
 const state = (over: Partial<GameState> = {}): GameState => ({
   phase: 'running',

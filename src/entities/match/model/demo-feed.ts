@@ -15,7 +15,7 @@
  * bit-exact against the log. C1 replaces this class with the real transport
  * behind the same append() seam.
  */
-import { type GameEvent, commitEvent, insertEvent, mulberry32 } from '@shared/core'
+import { type GameEvent, commitEvent, insertEvent, mulberry32 } from '@typemore/core'
 import type { GhostDriver } from './ghost-driver'
 
 export interface DemoFeedOptions {

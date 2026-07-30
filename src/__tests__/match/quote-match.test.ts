@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { isQuoteMatch, matchGeneration } from '@/entities/match/model/match-setup'
 import type { RoomSettings } from '@shared/match-transport'
-import { emitsRawTokens } from '@shared/core'
+import { emitsRawTokens } from '@typemore/core'
 
 /**
  * A quote match takes the OTHER text path (PROTOCOL.md §5, QUOTES.md): the id

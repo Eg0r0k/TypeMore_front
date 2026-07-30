@@ -8,7 +8,7 @@ import {
   type TimerCommand,
   type TimerTick,
   DEFAULT_MAX_EXTRA_CHARS
-} from '@shared/core'
+} from '@typemore/core'
 import type { TimerWorkerLike } from '@shared/lib/hooks/useGameTimer'
 import { releaseGameStore, toCoreSetup, useGameStore } from '@entities/game'
 

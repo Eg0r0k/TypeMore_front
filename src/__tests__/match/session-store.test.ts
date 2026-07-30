@@ -18,7 +18,7 @@ import {
   makeSeedContext,
   progressOf,
   scoreV2OfLog
-} from '@shared/core'
+} from '@typemore/core'
 import type { TimerWorkerLike } from '@shared/lib/hooks/useGameTimer'
 import {
   type CountdownFrame,

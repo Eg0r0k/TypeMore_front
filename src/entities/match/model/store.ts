@@ -21,7 +21,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
 
-import type { GameEvent, TimerTick } from '@shared/core'
+import type { GameEvent, TimerTick } from '@typemore/core'
 import { type GameSetup, type GameStore, releaseGameStore, useGameStore } from '@entities/game'
 import type { TimerWorkerLike } from '@shared/lib/hooks/useGameTimer'
 

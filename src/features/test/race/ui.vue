@@ -15,7 +15,7 @@
   import { useRaceStore, type RaceConfigSnapshot } from '@entities/race'
   import { useReplaySource } from '@/features/replay-view'
   import { toast } from '@/shared/ui/sonner'
-  import type { CoreContext } from '@shared/core'
+  import type { CoreContext } from '@typemore/core'
 
   /**
    * The race engine of the HOME solo screen — logic only. It fetches the run

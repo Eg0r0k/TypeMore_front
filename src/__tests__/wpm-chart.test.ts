@@ -7,7 +7,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 
-import type { TimelinePoint } from '@shared/core'
+import type { TimelinePoint } from '@typemore/core'
 import WpmChart from '@/features/test/results/wpm-chart.vue'
 
 const timeline: TimelinePoint[] = [

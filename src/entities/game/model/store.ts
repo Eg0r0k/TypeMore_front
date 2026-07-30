@@ -70,7 +70,7 @@ import {
   replaceEvent,
   type WordHistoryEntry,
   wordHistoryOf
-} from '@shared/core'
+} from '@typemore/core'
 import { type GameTimer, type TimerWorkerLike, useGameTimer } from '@shared/lib/hooks/useGameTimer'
 import { detectLogVersion } from '@shared/lib/log-version'
 

@@ -15,7 +15,7 @@ import { reactive } from 'vue'
 
 import { Test, type TestGhostCaret } from '@/widgets/test'
 import type { GameSession, GameView } from '@entities/game'
-import { type GameState, asMs, asSeq } from '@shared/core'
+import { type GameState, asMs, asSeq } from '@typemore/core'
 
 interface MutableView {
   snapshot: GameState

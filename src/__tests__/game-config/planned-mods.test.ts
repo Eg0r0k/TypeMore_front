@@ -9,7 +9,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { plannedMultiplier, type GameSettings } from '@/entities/game'
-import { MOD_MULTIPLIERS, MOD_MULTIPLIER_CAP } from '@shared/core'
+import { MOD_MULTIPLIERS, MOD_MULTIPLIER_CAP } from '@typemore/core'
 
 const NO_MODS = { blind: false, fading: false, flashlight: false }
 

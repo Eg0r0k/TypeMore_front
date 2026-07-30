@@ -129,7 +129,7 @@
     replayResults,
     type ReplayTextSource
   } from '@/features/replay-view'
-  import { activeModsV1 } from '@shared/core'
+  import { activeModsV1 } from '@typemore/core'
   import {
     dictionaryBodyByHashQueryOptions,
     quoteByIdQueryOptions,

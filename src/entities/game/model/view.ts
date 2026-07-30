@@ -13,7 +13,7 @@
  * (docs/game-architecture.md — view-only slot), and the consumers are the
  * widget layer, which already depends on this entity.
  */
-import type { GameState } from '@shared/core'
+import type { GameState } from '@typemore/core'
 
 export interface GameView {
   /** Immutable reducer snapshot: typed buffers, phase, indices. */

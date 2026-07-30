@@ -16,7 +16,7 @@ import {
   SCORE_VERSION_2,
   commitEvent,
   insertEvent
-} from '@shared/core'
+} from '@typemore/core'
 import en from '@/app/i18n/locales/en'
 
 /**

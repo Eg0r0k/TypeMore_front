@@ -37,7 +37,7 @@ import {
   type QuoteRef,
   type ScoreResult,
   type SeededTextSource
-} from '@shared/core'
+} from '@typemore/core'
 import type { RunSubmitInput } from '@shared/api'
 
 /**

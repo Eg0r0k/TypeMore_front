@@ -19,7 +19,7 @@
  * No absolute worker time is ever compared against event time. See timer.worker.ts.
  */
 
-import { type Ms, type TimerCommand, type TimerTick, asMs } from '@shared/core'
+import { type Ms, type TimerCommand, type TimerTick, asMs } from '@typemore/core'
 
 /**
  * Minimal worker surface the timer needs. The real `Worker` satisfies it; tests

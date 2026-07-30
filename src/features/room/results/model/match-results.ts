@@ -9,7 +9,7 @@
  */
 import { computed } from 'vue'
 
-import type { ActiveMod, FailReason, Metrics, ScoreResult, TimelinePoint } from '@shared/core'
+import type { ActiveMod, FailReason, Metrics, ScoreResult, TimelinePoint } from '@typemore/core'
 import type { Freemods } from '@shared/match-transport'
 import { useGameStore } from '@/entities/game'
 import { MATCH_SESSION_STORE_ID, useMatchSessionStore } from '@/entities/match'

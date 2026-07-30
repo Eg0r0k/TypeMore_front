@@ -114,7 +114,7 @@
   import { Test } from '@/widgets/test'
   import { type ReplayData, withBlind } from '@entities/game'
   import { GhostDriver } from '@entities/match'
-  import { activeModsV1, analyzeLog } from '@shared/core'
+  import { activeModsV1, analyzeLog } from '@typemore/core'
   import IconPlayerPlay from '~icons/tabler/player-play-filled'
   import IconPlayerPause from '~icons/tabler/player-pause-filled'
   import IconRefresh from '~icons/tabler/refresh'

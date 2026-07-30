@@ -20,5 +20,8 @@
       "@typemore/core": ["./src/index.ts"]
     }
   },
-  "include": ["src", "tests", "scripts"]
+  // Tests are deliberately NOT type-checked, matching the app repo (its root
+  // tsconfig excludes src/**/__tests__/** and always has). Vitest transforms
+  // them without checking; tightening them is a separate task.
+  "include": ["src", "scripts"]
 }

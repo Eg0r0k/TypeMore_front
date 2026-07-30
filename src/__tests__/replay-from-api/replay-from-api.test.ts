@@ -20,7 +20,7 @@ import {
   type GenerationConfig,
   type ModsDeclaration,
   type ScoreResult
-} from '@shared/core'
+} from '@typemore/core'
 import type { DictionaryBody, Quote, RunReplay, RunReplayLog } from '@shared/api'
 import { quoteRefOf, replayFromApi, type ReplayTextSource } from '@/features/replay-view'
 

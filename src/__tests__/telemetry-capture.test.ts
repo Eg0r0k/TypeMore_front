@@ -9,7 +9,7 @@ import {
   insertEvent,
   isTelemetryEvent,
   keyDownEvent
-} from '@shared/core'
+} from '@typemore/core'
 import { detectLogVersion } from '@shared/lib/log-version'
 import { releaseGameStore, useGameStore } from '@entities/game'
 import { EventBatcher } from '@shared/match-transport'

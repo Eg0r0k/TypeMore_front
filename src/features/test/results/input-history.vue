@@ -105,7 +105,7 @@
   import { computed, ref } from 'vue'
   import { useI18n } from 'vue-i18n'
 
-  import type { WordHistoryEntry } from '@shared/core'
+  import type { WordHistoryEntry } from '@typemore/core'
   import { TestWord } from '@/features/test/word'
   import IconCopy from '~icons/tabler/copy'
   import IconCopyX from '~icons/tabler/copy-x'

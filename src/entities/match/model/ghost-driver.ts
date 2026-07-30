@@ -42,7 +42,7 @@ import {
   scoreOfLog,
   scoreStep,
   sortEvents
-} from '@shared/core'
+} from '@typemore/core'
 import type { GameSetup, GameView } from '@entities/game'
 
 export const DEFAULT_GHOST_DELAY_MS = 250

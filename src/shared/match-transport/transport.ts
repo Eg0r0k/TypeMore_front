@@ -1,4 +1,4 @@
-import type { GameEvent } from '@shared/core'
+import type { GameEvent } from '@typemore/core'
 import type {
   ChatFrame,
   ClientCommand,

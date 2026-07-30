@@ -11,7 +11,7 @@ import { createPinia } from 'pinia'
 
 import { TestInput } from '@/features/test/input'
 import type { GameSession } from '@entities/game'
-import { asMs, asSeq, type GameState } from '@shared/core'
+import { asMs, asSeq, type GameState } from '@typemore/core'
 
 const state = (): GameState => ({
   phase: 'running',
