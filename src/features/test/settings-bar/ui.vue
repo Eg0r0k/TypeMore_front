@@ -27,26 +27,32 @@
       </ToggleGroup>
 
       <!-- The amount for the current mode: seconds, words, or a quote's length
-           band. The slot reserves the widest variant's width, so switching
-           modes never reflows the row under the pointer. -->
-      <span v-if="dimension" class="settings-bar__dim">
-        <ToggleGroup
-          class="max-sm:flex-wrap max-sm:justify-center"
-          :model-value="String(config[dimension.key])"
-          :aria-label="dimension.ariaLabel"
-          @update:model-value="onDimension(dimension, $event)"
-        >
-          <ToggleGroupItem
-            v-for="value in valuesOf(dimension)"
-            :key="value"
-            :value="value"
-            class="settings-bar__btn data-[disabled]:pointer-events-auto"
-            :disabled="raceLock !== null"
-            :title="raceLock ?? undefined"
+           band. Mode switches play monkeytype's swap: the outgoing and
+           incoming groups cross-fade stacked in one grid cell while the slot's
+           width tweens from the old group's to the new one's (the dimension
+           watch below), so the row slides instead of jumping. -->
+      <span v-if="dimension" ref="dimHost" class="settings-bar__dim">
+        <Transition name="dim-swap">
+          <ToggleGroup
+            :key="dimension.key"
+            :data-dim="dimension.key"
+            class="max-sm:flex-wrap max-sm:justify-center"
+            :model-value="String(config[dimension.key])"
+            :aria-label="dimension.ariaLabel"
+            @update:model-value="onDimension(dimension, $event)"
           >
-            {{ labelOf(dimension, value) }}
-          </ToggleGroupItem>
-        </ToggleGroup>
+            <ToggleGroupItem
+              v-for="value in valuesOf(dimension)"
+              :key="value"
+              :value="value"
+              class="settings-bar__btn data-[disabled]:pointer-events-auto"
+              :disabled="raceLock !== null"
+              :title="raceLock ?? undefined"
+            >
+              {{ labelOf(dimension, value) }}
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </Transition>
       </span>
 
       <template v-if="textMods.length">
@@ -161,9 +167,11 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, ref, watch } from 'vue'
+  import { computed, nextTick, ref, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
   import { useQuery } from '@tanstack/vue-query'
+  import { useMediaQuery } from '@vueuse/core'
+  import { useMotion } from '@vueuse/motion'
   import clsx from 'clsx'
 
   import { useConfigStore } from '@/entities/config'
@@ -245,6 +253,42 @@
   /** The one amount control the current mode makes visible. */
   const dimension = computed(() =>
     soloOptions.value.find((option) => AMOUNT_KEYS.includes(option.key))
+  )
+
+  // ── Monkeytype's mode swap, on v-motion (@vueuse/motion) ───────────────────
+  const dimHost = ref<HTMLElement | null>(null)
+  const dimMotion = useMotion(dimHost, { initial: {} })
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+
+  /**
+   * The slot's width tweens from the outgoing group's to the incoming one's
+   * while the `dim-swap` CSS transition cross-fades the two groups stacked in
+   * the same grid cell — monkeytype's exact choreography. The explicit width
+   * exists only for the tween's duration and is cleared after, so the slot
+   * goes back to tracking its content; under prefers-reduced-motion the swap
+   * is instant (the fade is disabled in CSS alongside).
+   */
+  watch(
+    () => dimension.value?.key,
+    async (next, prev) => {
+      const host = dimHost.value
+      if (!host || next === undefined || prev === undefined || next === prev) return
+      if (reducedMotion.value) return
+      const oldWidth = host.getBoundingClientRect().width
+      await nextTick()
+      const incoming = host.querySelector<HTMLElement>(`[data-dim="${next}"]`)
+      if (incoming === null) return
+      const newWidth = incoming.getBoundingClientRect().width
+      if (oldWidth === 0 || Math.abs(newWidth - oldWidth) < 1) return
+      host.style.width = `${oldWidth}px`
+      await dimMotion.apply({
+        width: newWidth,
+        // The shared easing token's curve (--ease-standard) and the popup
+        // entrance duration — the swap speaks the app's motion language.
+        transition: { type: 'keyframes', duration: 160, ease: [0.23, 1, 0.32, 1] }
+      })
+      host.style.width = ''
+    }
   )
 
   const noticeOptions = computed(() =>
@@ -386,16 +430,15 @@
       opacity: 0.25;
     }
 
-    // The amount slot. Reserving the widest variant's width (the quote length
-    // bands) keeps the centred row from reflowing when the mode changes — the
-    // button the player just aimed at stays where it was. On phones the row
-    // wraps anyway, so the reservation would only waste height.
+    // The amount slot: a one-cell grid so the outgoing and incoming groups
+    // stack during the swap, while the slot's width is tweened by the script's
+    // dimension watch — the row slides to its new size instead of jumping.
     &__dim {
-      display: flex;
-      justify-content: center;
+      display: grid;
+      justify-items: center;
 
-      @media screen and (width > 640px) {
-        min-inline-size: 20rem;
+      > * {
+        grid-area: 1 / 1;
       }
     }
 
@@ -420,6 +463,30 @@
       color: var(--error-color);
       text-transform: lowercase;
       user-select: none;
+    }
+  }
+
+  // The swap's cross-fade: enter on the popup entrance, exit softer and
+  // quicker, both stacked in the slot's single grid cell. A leaving group is
+  // display only — it must not swallow the click that just changed the mode.
+  .dim-swap-enter-active {
+    transition: opacity 0.16s var(--ease-standard);
+  }
+
+  .dim-swap-leave-active {
+    pointer-events: none;
+    transition: opacity 0.12s var(--ease-out);
+  }
+
+  .dim-swap-enter-from,
+  .dim-swap-leave-to {
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dim-swap-enter-active,
+    .dim-swap-leave-active {
+      transition: none;
     }
   }
 </style>
