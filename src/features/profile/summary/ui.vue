@@ -10,6 +10,7 @@
           tag-name="h1"
           size="l"
           color="primary"
+          :title="summary.displayName"
           data-testid="profile-nick"
         >
           {{ summary.displayName }}

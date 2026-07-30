@@ -27,7 +27,9 @@
             <th scope="col">{{ t('profile.runs.grade') }}</th>
             <th scope="col">wpm / raw</th>
             <th scope="col">acc</th>
-            <th scope="col">{{ t('profile.runs.consistency') }}</th>
+            <th scope="col" :title="t('profile.metric.consistency')">
+              {{ t('profile.runs.consistency') }}
+            </th>
             <th scope="col" :title="t('profile.runs.charsTitle')">
               {{ t('profile.runs.chars') }}
             </th>

@@ -403,16 +403,5 @@
       text-transform: lowercase;
       user-select: none;
     }
-
-    // Reserved whether it has anything to say or not — see the template.
-    &__note {
-      display: flex;
-      gap: 0.75rem;
-      align-items: center;
-      min-height: 1.0625rem;
-      font-size: 0.75rem;
-      color: var(--sub-color);
-      opacity: 0.6;
-    }
   }
 </style>
