@@ -164,7 +164,7 @@
   import { TABLE, TABLE_BODY, TABLE_HEAD, TABLE_SCROLL } from '@/shared/ui/table'
   import { Typography } from '@/shared/ui/typography'
   import IconRace from '~icons/tabler/swords'
-  import IconWatch from '~icons/tabler/player-play-filled'
+  import IconWatch from '~icons/tabler/eye'
   import { percent, speed } from '../model/format'
   import QuoteCell from './quote-cell.vue'
 

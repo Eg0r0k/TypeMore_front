@@ -130,7 +130,7 @@
                 :title="t('boards.actions.watch')"
                 @click.stop="watchRun(entry)"
               >
-                <IconPlayerPlay />
+                <IconEye />
               </Button>
               <Button
                 color="shadow"
@@ -189,7 +189,7 @@
   import { ROUTE_NAMES } from '@/app/router/route-names'
   import IconCrown from '~icons/tabler/crown'
   import IconMedal from '~icons/tabler/medal'
-  import IconPlayerPlay from '~icons/tabler/player-play-filled'
+  import IconEye from '~icons/tabler/eye'
   import IconSwords from '~icons/tabler/swords'
   import { Button } from '@/shared/ui/button'
   import { TABLE_GRID_HEAD, TABLE_GRID_ROW } from '@/shared/ui/table'

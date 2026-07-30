@@ -15,18 +15,24 @@
     <li
       v-for="pb in pbs"
       :key="pb.bucket"
-      class="flex flex-col gap-1 rounded-md bg-sub-alt px-2.5 py-2"
+      class="flex flex-col gap-1.5 rounded-md bg-sub-alt px-3 py-2.5"
       :data-testid="`profile-pb-${pb.bucket}`"
     >
-      <div class="flex items-baseline justify-between gap-1.5">
+      <!-- What this record IS (the bucket), with the grade as a quiet badge —
+           one hero number per card, and that number is the wpm below. -->
+      <div class="flex items-center justify-between gap-1.5">
         <span class="truncate text-[11px] text-sub" :title="bucketLabel(pb)">
           {{ bucketLabel(pb) }}
         </span>
-        <span class="shrink-0 text-xl font-semibold leading-none text-main">{{ pb.grade }}</span>
+        <span
+          class="shrink-0 rounded bg-bg px-1.5 py-0.5 text-xs font-semibold leading-none text-main"
+        >
+          {{ pb.grade }}
+        </span>
       </div>
 
       <div class="flex items-baseline gap-1">
-        <span class="text-xl leading-none tabular-nums text-text">{{ speed(pb.wpm) }}</span>
+        <span class="text-2xl leading-none tabular-nums text-text">{{ speed(pb.wpm) }}</span>
         <span class="text-[10px] text-sub">wpm</span>
         <span class="ml-auto text-[11px] tabular-nums text-sub">{{ percent(pb.acc) }}</span>
       </div>
@@ -76,7 +82,7 @@
   import { Typography } from '@/shared/ui/typography'
   import { formatShortDate } from '@/shared/lib/helpers/datetime'
   import IconRace from '~icons/tabler/swords'
-  import IconWatch from '~icons/tabler/player-play-filled'
+  import IconWatch from '~icons/tabler/eye'
   import { grouped, percent, speed } from '../model/format'
 
   /**
