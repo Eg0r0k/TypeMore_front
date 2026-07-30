@@ -37,6 +37,7 @@ export default {
     setup: {
       loading: 'загрузка слов…',
       dictionaryError: 'не удалось загрузить список слов для {lang}',
+      dictionarySwitchFailed: 'не удалось загрузить {lang} — остаёмся на {kept}',
       generationError: 'не удалось собрать тест с этими настройками',
       quoteEmpty: 'нет цитат ({group}) для языка {lang} — выберите другую длину или язык',
       quoteError: 'не удалось загрузить цитату',

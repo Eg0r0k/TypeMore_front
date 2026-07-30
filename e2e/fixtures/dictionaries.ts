@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import { dictVersion } from '@typemore/core'
 
 /**
  * Dictionary stub for the backend-less E2E harness.
@@ -9,10 +10,12 @@ import type { Page } from '@playwright/test'
  * backend, so both endpoints are fulfilled here. The client path under test is
  * unchanged and real: catalogue lookup → hash → body.
  *
- * The advertised hashes are opaque addresses, not fingerprints to verify: the
- * app recomputes `dictVersion(words)` from the body it receives whenever a hash
- * actually matters (room settings, match-frame validation). Any stable, unique
- * value works.
+ * The advertised hashes are REAL fingerprints, computed with the same core
+ * `dictVersion` the app and the server use. They have to be: since B-DICT-4
+ * (docs/DICTFIX_LOG.md) the client re-fingerprints every downloaded body and
+ * refuses one that does not hash to its address, so a stub advertising an
+ * opaque made-up hash would fail every load in the suite — which is exactly
+ * the behaviour that catches a real catalogue/body mismatch in production.
  */
 
 const WORDS: Record<string, string[]> = {
@@ -129,12 +132,10 @@ const WORDS: Record<string, string[]> = {
   ]
 }
 
-/** Stable, unique stand-in addresses; see the note above on why these are opaque. */
-const HASHES: Record<string, string> = {
-  german: 'e2e00001',
-  russian: 'e2e00002',
-  code_css: 'e2e00003'
-}
+/** Real content addresses: the core's FNV of each list (see the note above). */
+const HASHES: Record<string, string> = Object.fromEntries(
+  Object.entries(WORDS).map(([lang, words]) => [lang, dictVersion(words)])
+)
 
 /**
  * The catalogue's human names. NOT derived from the key: the server owns this
@@ -185,24 +186,26 @@ function fillerRows(): { lang: string; name: string; words: string[] }[] {
  *
  * Opt-in via `extra`, so the catalogue every other spec sees is unchanged.
  */
+const FIXED_WIDTH_WORDS = [
+  'alphabetic',
+  'buttercups',
+  'cornflower',
+  'dandelions',
+  'elderberry',
+  'fieldstone',
+  'grapevines',
+  'hailstorms',
+  'immersions',
+  'jackhammer',
+  'kilometers',
+  'lighthouse'
+] as const
+
 export const FIXED_WIDTH_DICTIONARY = {
   lang: 'e2e_fixed_width',
   name: 'Fixed Width (e2e)',
-  dictHash: 'e2e0f1x0',
-  words: [
-    'alphabetic',
-    'buttercups',
-    'cornflower',
-    'dandelions',
-    'elderberry',
-    'fieldstone',
-    'grapevines',
-    'hailstorms',
-    'immersions',
-    'jackhammer',
-    'kilometers',
-    'lighthouse'
-  ]
+  dictHash: dictVersion(FIXED_WIDTH_WORDS),
+  words: FIXED_WIDTH_WORDS
 } as const
 
 export interface ExtraDictionary {
@@ -237,9 +240,9 @@ export async function stubDictionaries(
   }
 
   if (opts.full === true) {
-    fillerRows().forEach((row, i) => {
+    fillerRows().forEach((row) => {
       words[row.lang] = row.words
-      hashes[row.lang] = `e2ef${String(i).padStart(4, '0')}`
+      hashes[row.lang] = dictVersion(row.words)
       names[row.lang] = row.name
     })
   }

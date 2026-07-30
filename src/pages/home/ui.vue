@@ -118,6 +118,8 @@
   import { useEventListener } from '@vueuse/core'
   import { useI18n } from 'vue-i18n'
 
+  import { toast } from '@/shared/ui/sonner'
+
   import { Test, type TestGhostCaret } from '@/widgets/test'
   import { TestStage } from '@/features/layouts/test-stage'
   import { SettingsBar } from '@/features/test/settings-bar'
@@ -280,6 +282,15 @@
    * one more thing changing height around the words.
    */
   const activeQuote = ref<Quote | null>(null)
+
+  /**
+   * The last language whose body actually loaded — the fallback a FAILED
+   * language switch reverts to (DICTFIX_LOG.md, B-DICT-3). Its body sits in the
+   * query cache with `staleTime: Infinity`, so the revert rebuilds the field
+   * without the network — switching languages on a dead connection must not
+   * cost the player the dictionary they were just typing on.
+   */
+  const lastLoadedLanguage = ref<string | null>(null)
 
   const setupErrorText = computed(() => {
     switch (setupState.value) {
@@ -507,9 +518,22 @@
     let body: DictionaryBody | null = null
     try {
       body = await loadDictionaryBody(config.language)
+      lastLoadedLanguage.value = config.language
     } catch (error) {
       console.error('dictionary load failed', error)
       if (!quoteMode) {
+        // A failed SWITCH is not a dead field: the previous language's body is
+        // still in the immutable query cache, so revert the config (the watcher
+        // re-runs this setup from cache) and say what happened. Only a load
+        // with nothing to fall back to becomes the blocking error state.
+        const fallback = lastLoadedLanguage.value
+        if (fallback !== null && fallback !== config.language) {
+          toast.error(
+            t('game.setup.dictionarySwitchFailed', { lang: config.language, kept: fallback })
+          )
+          config.language = fallback
+          return
+        }
         setupState.value = 'dictionary-error'
         return
       }

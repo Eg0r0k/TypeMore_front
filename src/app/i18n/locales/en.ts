@@ -39,6 +39,7 @@ export default {
     setup: {
       loading: 'loading words…',
       dictionaryError: 'could not load the word list for {lang}',
+      dictionarySwitchFailed: 'could not load {lang} — staying on {kept}',
       generationError: 'could not build a test from these settings',
       quoteEmpty: 'no {group} quotes in {lang} yet — try another length or language',
       quoteError: 'could not load a quote',

@@ -70,6 +70,27 @@ Playwright против реального бэка, чистый профиль
   `dictVersion` из @typemore/core (B-DICT-4); mismatch → ошибка загрузки.
 - Stage 3: неудачная смена языка больше не роняет текущий словарь
   (B-DICT-3); retry с бэкоффом на каталоге — штатный TanStack.
-- Stage 5: Go route-тесты + контракт «каталог→роутер→FNV в goja»;
-  фронт e2e: холодный happy-path words/quote, 500→retry→играбельно,
-  регрессия B-DICT-1 (пустой реестр → честный disabled, не спиннер).
+- Stage 4: матчевый путь проверен живьём до фиксов (Stage 0, строки 6-7
+  таблицы) и не менялся: dictHash-блокировка на countdown тянет тело по
+  хэшу, quote-матч резолвит текст по id из прогретого кэша, loopback-бот
+  проходит оба режима. Desync-freeze не трогался — ложных срабатываний
+  нет (фиксы не касаются матчевого кода).
+- Stage 5, Go: требуемые тесты УЖЕ существовали и зелёные —
+  `TestCatalogueListsEverySeededDictionary` (каталог),
+  `TestBodyServedImmutable` (200 + immutable + ETag=hash),
+  `TestUnknownHashIs404`, `TestPublishedHashesAreImmutable` (жив,
+  прогнан в обоих сьютах), и контракт сильнее заказанного:
+  `TestBodyIsTheContentItsHashAddresses` качает ВСЕ тела каталога через
+  реальный роутер и сверяет FNV через goja. Ничего не добавлено —
+  добавлять было нечего; это и есть вывод.
+- Stage 5, фронт: `e2e/dictfix.spec.ts`, 6 сценариев — холодный
+  happy-path words и quote; «500 → error-стейт → retry → играбельно»;
+  регрессии по именам: B-DICT-1 (пустой реестр → words играется,
+  quote-тумблер честно disabled), B-DICT-3 (dead-net смена языка
+  сохраняет поле + тост), B-DICT-4 (битое тело → отказ, не использование).
+  Все 6 зелёные.
+- Фикстура `e2e/fixtures/dictionaries.ts` перестала раздавать фейковые
+  хэши («opaque addresses») — с B-DICT-4 хэш обязан быть настоящим
+  отпечатком, поэтому фикстура считает их тем же `dictVersion` из
+  @typemore/core. Все 36 не-perf e2e-спеков зелёные с честными хэшами;
+  юнит-сьют 2334 passed | 1 skipped; vue-tsc чист.
