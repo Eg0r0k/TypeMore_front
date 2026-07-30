@@ -31,53 +31,87 @@
            incoming groups cross-fade stacked in one grid cell while the slot's
            width tweens from the old group's to the new one's (the dimension
            watch below), so the row slides instead of jumping. -->
-      <span v-if="dimension" ref="dimHost" class="settings-bar__dim">
-        <Transition name="dim-swap">
-          <ToggleGroup
+      <span v-if="dimension" ref="dimScope" class="settings-bar__dim">
+        <AnimatePresence :initial="false">
+          <!-- The exiting cell is display-only: stacked over the incoming one,
+               it must not swallow the click that just changed the mode. -->
+          <motion.span
             :key="dimension.key"
             :data-dim="dimension.key"
-            class="max-sm:flex-wrap max-sm:justify-center"
-            :model-value="String(config[dimension.key])"
-            :aria-label="dimension.ariaLabel"
-            @update:model-value="onDimension(dimension, $event)"
+            :initial="{ opacity: 0 }"
+            :animate="{ opacity: 1 }"
+            :exit="{ opacity: 0, pointerEvents: 'none' }"
+            :transition="swapTransition"
           >
-            <ToggleGroupItem
-              v-for="value in valuesOf(dimension)"
-              :key="value"
-              :value="value"
-              class="settings-bar__btn data-[disabled]:pointer-events-auto"
-              :disabled="raceLock !== null"
-              :title="raceLock ?? undefined"
+            <ToggleGroup
+              class="max-sm:flex-wrap max-sm:justify-center"
+              :model-value="String(config[dimension.key])"
+              :aria-label="dimension.ariaLabel"
+              @update:model-value="onDimension(dimension, $event)"
             >
-              {{ labelOf(dimension, value) }}
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </Transition>
+              <ToggleGroupItem
+                v-for="value in valuesOf(dimension)"
+                :key="value"
+                :value="value"
+                class="settings-bar__btn data-[disabled]:pointer-events-auto"
+                :disabled="raceLock !== null"
+                :title="raceLock ?? undefined"
+              >
+                {{ labelOf(dimension, value) }}
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </motion.span>
+        </AnimatePresence>
       </span>
 
-      <template v-if="textMods.length">
-        <span class="settings-bar__sep" aria-hidden="true"></span>
-
-        <ToggleGroup
-          class="max-sm:flex-wrap max-sm:justify-center"
-          type="multiple"
-          :model-value="activeTextMods"
-          :aria-label="t('game.textMods')"
-          @update:model-value="onTextMods"
+      <!-- Text mods that cannot affect the current run (quote's fixed text)
+           are not greyed out — they leave, animated: each pill collapses and
+           fades, and when the last one goes the whole group with its
+           separator folds away. A race lock still renders them disabled in
+           place: the record's setup stays readable. -->
+      <AnimatePresence :initial="false">
+        <motion.div
+          v-if="visibleTextMods.length"
+          key="text-mods"
+          class="settings-bar__mods"
+          :initial="{ opacity: 0, width: 0 }"
+          :animate="{ opacity: 1, width: 'auto' }"
+          :exit="{ opacity: 0, width: 0 }"
+          :transition="swapTransition"
         >
-          <ToggleGroupItem
-            v-for="option in textMods"
-            :key="option.key"
-            :value="option.key"
-            class="settings-bar__btn data-[disabled]:pointer-events-auto"
-            :disabled="reasonOf(option) !== null"
-            :title="titleOf(option)"
+          <span class="settings-bar__sep" aria-hidden="true"></span>
+
+          <ToggleGroup
+            class="max-sm:flex-wrap max-sm:justify-center"
+            type="multiple"
+            :model-value="activeTextMods"
+            :aria-label="t('game.textMods')"
+            @update:model-value="onTextMods"
           >
-            <component :is="OPTION_ICONS[option.key]" aria-hidden="true" />
-            {{ t(option.i18nKey) }}
-          </ToggleGroupItem>
-        </ToggleGroup>
-      </template>
+            <AnimatePresence :initial="false">
+              <motion.span
+                v-for="option in visibleTextMods"
+                :key="option.key"
+                class="settings-bar__mod"
+                :initial="{ opacity: 0, width: 0 }"
+                :animate="{ opacity: 1, width: 'auto' }"
+                :exit="{ opacity: 0, width: 0 }"
+                :transition="swapTransition"
+              >
+                <ToggleGroupItem
+                  :value="option.key"
+                  class="settings-bar__btn data-[disabled]:pointer-events-auto"
+                  :disabled="reasonOf(option) !== null"
+                  :title="titleOf(option)"
+                >
+                  <component :is="OPTION_ICONS[option.key]" aria-hidden="true" />
+                  {{ t(option.i18nKey) }}
+                </ToggleGroupItem>
+              </motion.span>
+            </AnimatePresence>
+          </ToggleGroup>
+        </motion.div>
+      </AnimatePresence>
     </div>
 
     <!--
@@ -170,8 +204,7 @@
   import { computed, nextTick, ref, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
   import { useQuery } from '@tanstack/vue-query'
-  import { useMediaQuery } from '@vueuse/core'
-  import { useMotion } from '@vueuse/motion'
+  import { AnimatePresence, motion, useAnimate, useReducedMotion } from 'motion-v'
   import clsx from 'clsx'
 
   import { useConfigStore } from '@/entities/config'
@@ -250,28 +283,51 @@
     textMods.value.filter((option) => config[option.key] === true).map((option) => option.key)
   )
 
+  /**
+   * The text mods the bar RENDERS. A mod gated by the mode itself (quote's
+   * fixed text — toggling it would change nothing) leaves the bar entirely
+   * instead of sitting greyed out; the constraint context here deliberately
+   * omits `racing`, because a race lock is temporary and the record's setup
+   * must stay readable — those render disabled in place, exactly as before.
+   * Writes still run over the full `textMods` list, so a hidden mod keeps its
+   * stored value the same way a disabled one always has.
+   */
+  const visibleTextMods = computed(() =>
+    textMods.value.filter((option) => disabledReason(option, { mode: config.mode }) === null)
+  )
+
   /** The one amount control the current mode makes visible. */
   const dimension = computed(() =>
     soloOptions.value.find((option) => AMOUNT_KEYS.includes(option.key))
   )
 
-  // ── Monkeytype's mode swap, on v-motion (@vueuse/motion) ───────────────────
-  const dimHost = ref<HTMLElement | null>(null)
-  const dimMotion = useMotion(dimHost, { initial: {} })
-  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+  // ── Monkeytype's mode swap, on motion-v (Framer Motion for Vue) ────────────
+  const [dimScope, animateDim] = useAnimate<HTMLElement>()
+  const reducedMotion = useReducedMotion()
+
+  /**
+   * One transition for the whole swap choreography: the shared easing token's
+   * curve (--ease-standard) at the popup entrance duration. Collapses to an
+   * instant cut under prefers-reduced-motion.
+   */
+  const swapTransition = computed(() =>
+    reducedMotion.value
+      ? { duration: 0 }
+      : { duration: 0.16, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] }
+  )
 
   /**
    * The slot's width tweens from the outgoing group's to the incoming one's
-   * while the `dim-swap` CSS transition cross-fades the two groups stacked in
-   * the same grid cell — monkeytype's exact choreography. The explicit width
-   * exists only for the tween's duration and is cleared after, so the slot
-   * goes back to tracking its content; under prefers-reduced-motion the swap
-   * is instant (the fade is disabled in CSS alongside).
+   * while `AnimatePresence` cross-fades the two groups stacked in the same
+   * grid cell — monkeytype's exact choreography. The tween runs on keyframes
+   * (old → new), so the slot needs no pre-set style; the inline width the
+   * animation leaves behind is cleared after, and the slot goes back to
+   * tracking its content.
    */
   watch(
     () => dimension.value?.key,
     async (next, prev) => {
-      const host = dimHost.value
+      const host = dimScope.value as HTMLElement | undefined
       if (!host || next === undefined || prev === undefined || next === prev) return
       if (reducedMotion.value) return
       const oldWidth = host.getBoundingClientRect().width
@@ -280,13 +336,11 @@
       if (incoming === null) return
       const newWidth = incoming.getBoundingClientRect().width
       if (oldWidth === 0 || Math.abs(newWidth - oldWidth) < 1) return
-      host.style.width = `${oldWidth}px`
-      await dimMotion.apply({
-        width: newWidth,
-        // The shared easing token's curve (--ease-standard) and the popup
-        // entrance duration — the swap speaks the app's motion language.
-        transition: { type: 'keyframes', duration: 160, ease: [0.23, 1, 0.32, 1] }
-      })
+      await animateDim(
+        host,
+        { width: [`${oldWidth}px`, `${newWidth}px`] },
+        { duration: 0.16, ease: [0.23, 1, 0.32, 1] }
+      )
       host.style.width = ''
     }
   )
@@ -442,6 +496,21 @@
       }
     }
 
+    // The collapsible text-mod block (separator + group) and its per-pill
+    // cells: both animate their width shut, so both must clip their content
+    // while folding.
+    &__mods {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    &__mod {
+      display: inline-flex;
+      overflow: hidden;
+    }
+
     &__notice {
       display: flex;
       flex-wrap: wrap;
@@ -466,27 +535,4 @@
     }
   }
 
-  // The swap's cross-fade: enter on the popup entrance, exit softer and
-  // quicker, both stacked in the slot's single grid cell. A leaving group is
-  // display only — it must not swallow the click that just changed the mode.
-  .dim-swap-enter-active {
-    transition: opacity 0.16s var(--ease-standard);
-  }
-
-  .dim-swap-leave-active {
-    pointer-events: none;
-    transition: opacity 0.12s var(--ease-out);
-  }
-
-  .dim-swap-enter-from,
-  .dim-swap-leave-to {
-    opacity: 0;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .dim-swap-enter-active,
-    .dim-swap-leave-active {
-      transition: none;
-    }
-  }
 </style>
