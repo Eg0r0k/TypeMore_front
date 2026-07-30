@@ -1,31 +1,24 @@
 <template>
   <div class="controls">
     <Button
-      class="controls__btn"
-      size="l"
+      size="m"
       color="gray"
       :disabled="!canAct"
       :title="canAct ? undefined : t('servers.lobby.reason.offline')"
       @click="session.createRoom()"
     >
-      <div class="flex flex-col gap-2 items-center">
-        <IconUsers class="size-10" />
-        <Typography is-bold>{{ t('servers.create') }}</Typography>
-      </div>
+      <IconUsers />
+      {{ t('servers.create') }}
     </Button>
     <Button
-      class="controls__btn"
-      size="l"
+      size="m"
       color="gray"
       :disabled="!canAct"
       :title="canAct ? undefined : t('servers.lobby.reason.offline')"
       @click="joinOpen = true"
     >
-      <div class="flex flex-col gap-2 items-center">
-        <IconCode class="size-10" />
-        <Typography is-bold>{{ t('servers.joinByCode') }}</Typography>
-        <Typography size="xs">{{ t('servers.join.hint') }}</Typography>
-      </div>
+      <IconCode />
+      {{ t('servers.joinByCode') }}
     </Button>
     <JoinCodeModal v-model:open="joinOpen" />
   </div>
@@ -37,14 +30,14 @@
   import { useMatchSessionStore } from '@/entities/match'
   import { JoinCodeModal } from '@/features/modal/joinCode'
   import { Button } from '@/shared/ui/button'
-  import { Typography } from '@/shared/ui/typography'
   import IconCode from '~icons/tabler/code'
   import IconUsers from '~icons/tabler/users'
 
   /**
-   * v1 entry points: create a room or join by code. The public-room-list
-   * browser has no protocol support in v1 (the room list is a later server
-   * phase), so it is gone along with the old mock server request.
+   * v1 entry points: create a room or join by code — as a COMPACT action row,
+   * not banner cards. The page's decision lives in the room list below, so the
+   * entry points take one line and the list gets the fold. The join hint lives
+   * in the join modal, next to the input it explains.
    */
   const { t } = useI18n()
   const session = useMatchSessionStore()
@@ -56,23 +49,8 @@
 
 <style lang="scss" scoped>
   .controls {
-    display: grid;
-    gap: 20px;
-    grid-template-columns: repeat(2, 1fr);
-    grid-auto-rows: 1fr;
-
-    &__btn {
-      height: 100%;
-    }
-  }
-
-  @media screen and (width <=475px) {
-    .controls {
-      grid-template-columns: 1fr;
-    }
-
-    .controls__btn {
-      width: 100%;
-    }
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
   }
 </style>
