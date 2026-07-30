@@ -51,6 +51,7 @@ import {
   EVENT_LOG_VERSION_TELEMETRY,
   GameCore,
   activeModsV1,
+  asMs,
   commitEvent,
   comboMultiplier,
   deleteEvent,
@@ -149,6 +150,17 @@ function createGameStore(storeId: string) {
     let core: GameCore | null = null
     let timer: GameTimer | null = null
     let anchorPerf: number | null = null
+    /**
+     * Event-time (`Ms`) of the instant the timer was started. The worker only
+     * reports elapsed-since-start, and the anchor is NOT always the start
+     * instant: a v2 telemetry key event (the keyup of the very Ctrl+Enter/Esc
+     * that restarted the test) pins the anchor on the idle core hundreds of ms
+     * before the first insert starts the run. Ticks are mapped into event time
+     * as `timerStartT + elapsed` — without the offset the worker's terminal
+     * tick lands short of `startedAt + durationMs` and a timed run never
+     * finishes (the worker has already stopped by then).
+     */
+    let timerStartT = 0
     let seq = 0
     // Live scoring accumulator (scoreV1). Mutated in place per event (O(1)); the
     // reactive projections below are refreshed from it after each dispatch.
@@ -246,6 +258,8 @@ function createGameStore(storeId: string) {
         // Cadence timer on the first event in EVERY mode: timed runs tick to their
         // deadline; all others tick unbounded so live wpm/raw decay with elapsed
         // time and any MinSpeed floor breach surfaces even when the player stops.
+        // The starting event's own `t` is the tick base — see `timerStartT`.
+        timerStartT = nowMs
         timer?.start(core.config.mode === 'time' ? core.config.durationMs : UNBOUNDED_TIMER_MS)
       }
       if (next.phase === 'finished') timer?.stop()
@@ -277,6 +291,7 @@ function createGameStore(storeId: string) {
       words.value = core.words
       snapshot.value = core.state
       anchorPerf = null
+      timerStartT = 0
       seq = 0
       logVersion.value = game.logVersion ?? detectLogVersion()
       liveNow.value = 0 as Ms
@@ -312,6 +327,7 @@ function createGameStore(storeId: string) {
       core.reset()
       snapshot.value = core.state
       anchorPerf = null
+      timerStartT = 0
       seq = 0
       liveNow.value = 0 as Ms
       timer?.reset()
@@ -331,6 +347,8 @@ function createGameStore(storeId: string) {
       anchorPerf = atPerf
       snapshot.value = core.state
       liveNow.value = 0 as Ms
+      // GO pins the anchor and starts the timer at the same instant: zero offset.
+      timerStartT = 0
       timer?.start(core.config.mode === 'time' ? core.config.durationMs : UNBOUNDED_TIMER_MS)
     }
 
@@ -453,8 +471,11 @@ function createGameStore(storeId: string) {
     function attachTimer(createWorker: () => TimerWorkerLike): void {
       if (timer) return
       timer = useGameTimer(createWorker)
-      timer.onTick((nowMs) => {
+      timer.onTick((elapsedMs) => {
         if (!core) return
+        // The worker reports elapsed-since-start; event time is that delta on
+        // top of the starting event's `t` (see `timerStartT`).
+        const nowMs = asMs(timerStartT + elapsedMs)
         core.tick(nowMs)
         snapshot.value = core.state
         liveNow.value = nowMs
