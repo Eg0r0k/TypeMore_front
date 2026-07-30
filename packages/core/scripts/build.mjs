@@ -57,7 +57,6 @@ await build({
   platform: 'neutral',
   packages: 'external',
   legalComments: 'none',
-  charset: 'utf8',
   define: { __TYPEMORE_CORE_VERSION__: JSON.stringify(packageVersion()) },
   absWorkingDir: packageRoot,
   outfile: join(dist, 'index.js')

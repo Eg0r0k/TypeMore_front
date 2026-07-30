@@ -43,7 +43,10 @@ export const gojaBundleOptions = () => ({
   target: 'es2017',
   platform: 'browser',
   legalComments: 'none',
-  charset: 'utf8',
+  // Default charset (ascii): non-ASCII escapes to \uXXXX, exactly like the
+  // previously vendored bundle. normalize.ts is a table of unicode
+  // lookalikes — a pure-ASCII artifact survives any encoding mishap between
+  // here and goja, and keeps re-vendor diffs about code, not bytes.
   define: { __TYPEMORE_CORE_VERSION__: JSON.stringify(packageVersion()) },
   absWorkingDir: packageRoot
 })
