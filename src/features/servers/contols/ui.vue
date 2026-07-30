@@ -5,6 +5,7 @@
       size="l"
       color="gray"
       :disabled="!canAct"
+      :title="canAct ? undefined : t('servers.lobby.reason.offline')"
       @click="session.createRoom()"
     >
       <div class="flex flex-col gap-2 items-center">
@@ -17,6 +18,7 @@
       size="l"
       color="gray"
       :disabled="!canAct"
+      :title="canAct ? undefined : t('servers.lobby.reason.offline')"
       @click="joinOpen = true"
     >
       <div class="flex flex-col gap-2 items-center">

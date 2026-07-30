@@ -36,6 +36,7 @@
         color="gray"
         size="s"
         :disabled="!canAct"
+        :title="canAct ? undefined : t('servers.lobby.reason.offline')"
         @click="session.createRoom()"
       >
         {{ t('servers.create') }}
@@ -236,6 +237,16 @@
       &:hover:not(:disabled),
       &:focus-visible:not(:disabled) {
         background-color: var(--sub-alt-color);
+      }
+
+      // The design system's focus-visible double ring (see `focus-ring` in
+      // tailwind.css): a background-only focus cue disappears on a row whose
+      // hover state is that same background.
+      &:focus-visible {
+        outline: none;
+        box-shadow:
+          0 0 0 1.5px var(--bg-color),
+          0 0 0 3px var(--text-color);
       }
     }
 
