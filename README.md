@@ -174,7 +174,7 @@ login → play → run persisted. Requires the compose stack up (API + Mailpit).
 ### Playing online (multiplayer dev)
 
 Multiplayer runs over a WebSocket at `/ws` (wire protocol v1, see
-`docs/PROTOCOL.md`). The endpoint is resolved from `VITE_WS_URL` if set, else
+`TypeMore_back/docs/PROTOCOL.md`). The endpoint is resolved from `VITE_WS_URL` if set, else
 derived from `VITE_API_URL` (its origin + `/ws`).
 
 **With the real backend:**

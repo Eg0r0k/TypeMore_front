@@ -2,7 +2,7 @@ import * as v from 'valibot'
 import { Result, err, ok } from 'neverthrow'
 
 /**
- * Wire contract for the TypeMore realtime protocol v1 (docs/PROTOCOL.md).
+ * Wire contract for the TypeMore realtime protocol v1 (TypeMore_back/docs/PROTOCOL.md).
  *
  * Every schema here mirrors the protocol document verbatim; mismatches between
  * a received frame and its schema are surfaced as `protocol-violation`

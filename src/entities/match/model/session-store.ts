@@ -1,5 +1,5 @@
 /**
- * Match session store — the C1 realtime match client (docs/PROTOCOL.md,
+ * Match session store — the C1 realtime match client (TypeMore_back/docs/PROTOCOL.md,
  * TypeMore_back/docs/MATCH.md) over an injected `MatchTransport`.
  *
  * DI mirrors the timer seam: `init(transport?)` takes the transport (tests
@@ -267,7 +267,7 @@ interface PeerRecord {
 const AFK_BUCKET_MS = 1000
 
 /**
- * Client idle-kick rule (docs/MATCH.md "AFK") — the client kick is a COURTESY,
+ * Client idle-kick rule (TypeMore_back/docs/MATCH.md "AFK") — the client kick is a COURTESY,
  * the server's sweep is the AUTHORITY. The server judges two rules
  * (protocol.go / loopback mirror): TRAILING — 15 000 ms with no accepted
  * batch, every mode; SHARE — idle ≥ 0.6 of the GO-anchored window after a
@@ -1068,7 +1068,7 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
    * simply sits out to the server's sweep and is dnf'd there — no honesty hole,
    * the rule only improves the exit for honest players. That courtesy carries
    * an obligation: BOTH client triggers sit strictly inside the server's rule
-   * (share margin AND warmup margin — docs/MATCH.md "AFK"), so an honest seat
+   * (share margin AND warmup margin — TypeMore_back/docs/MATCH.md "AFK"), so an honest seat
    * always leaves by its own rule, with its own screen, before the sweep.
    *
    * Two triggers, and the meter is the max of their progress — it reaches 1
