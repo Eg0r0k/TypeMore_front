@@ -57,7 +57,11 @@
           :aria-label="t('servers.lobby.joinRoom', { name: room.name })"
           @click="join(room)"
         >
-          <span class="lobby__cell lobby__cell--name" data-testid="lobby-name">
+          <span
+            class="lobby__cell lobby__cell--name"
+            data-testid="lobby-name"
+            :title="room.name"
+          >
             {{ room.name }}
           </span>
           <span class="lobby__cell lobby__cell--players" data-testid="lobby-players">
@@ -66,7 +70,11 @@
           <span class="lobby__cell">
             <span class="lobby__chip" data-testid="lobby-mode">{{ dimensionLabel(room) }}</span>
           </span>
-          <span class="lobby__cell lobby__cell--lang" data-testid="lobby-lang">
+          <span
+            class="lobby__cell lobby__cell--lang"
+            data-testid="lobby-lang"
+            :title="languageName(room.settings.lang)"
+          >
             {{ languageName(room.settings.lang) }}
           </span>
           <span class="lobby__cell lobby__cell--state">
@@ -250,9 +258,26 @@
       }
     }
 
+    // Grid items default to min-width auto; without this a long room name or
+    // language name widens its column past the row instead of truncating.
+    &__cell {
+      min-width: 0;
+    }
+
+    &__cell--name,
+    &__cell--lang {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     &__cell--players,
     &__cell--lang {
       color: var(--sub-color);
+    }
+
+    &__cell--players {
+      font-variant-numeric: tabular-nums;
     }
 
     &__cell--state {

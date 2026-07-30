@@ -95,6 +95,8 @@
   .server-page {
     &__head {
       display: flex;
+      flex-wrap: wrap;
+      gap: 8px 24px;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 24px;

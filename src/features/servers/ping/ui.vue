@@ -1,7 +1,7 @@
 <template>
   <Typography v-if="connected" size="s" color="sub" data-testid="server-ping">
     {{ t('servers.ping.label') }}
-    <Typography tag-name="span" size="m" :color="color">
+    <Typography tag-name="span" size="m" :color="color" class="tabular-nums">
       {{ text }}
     </Typography>
   </Typography>
