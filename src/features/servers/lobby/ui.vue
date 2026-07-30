@@ -43,7 +43,10 @@
       </Button>
     </div>
 
-    <ul v-else class="lobby__rows">
+    <!-- The poll adds and removes rooms under the reader; a soft fade (the
+         popup's own durations) keeps the list from popping. First render is
+         not animated — TransitionGroup has no appear here on purpose. -->
+    <TransitionGroup v-else tag="ul" name="lobby-rows" class="lobby__rows">
       <li v-for="room in openRooms" :key="room.code" class="lobby__row" data-testid="lobby-row">
         <!--
           The whole row is the affordance, so the whole row is one real button:
@@ -91,7 +94,7 @@
           </span>
         </button>
       </li>
-    </ul>
+    </TransitionGroup>
   </section>
 </template>
 
@@ -308,6 +311,33 @@
     &__reason {
       font-size: 0.7rem;
       color: var(--sub-color);
+    }
+  }
+
+  // Poll churn: enters ride the popup entrance duration, exits go softer and
+  // quicker (the popup exit), reorders slide on the shared easing token.
+  .lobby-rows-enter-active {
+    transition: opacity 0.16s var(--ease-standard);
+  }
+
+  .lobby-rows-leave-active {
+    transition: opacity 0.12s var(--ease-out);
+  }
+
+  .lobby-rows-enter-from,
+  .lobby-rows-leave-to {
+    opacity: 0;
+  }
+
+  .lobby-rows-move {
+    transition: transform 0.16s var(--ease-standard);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lobby-rows-enter-active,
+    .lobby-rows-leave-active,
+    .lobby-rows-move {
+      transition: none;
     }
   }
 
