@@ -13,6 +13,7 @@ import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 
 import type { BoardEntry, BoardMods, BoardPage } from '@shared/api'
 import { i18n } from '@app/i18n'
+import { groupThousands } from '@/shared/lib/helpers/numbers'
 import { ROUTE_NAMES } from '@/app/router/route-names'
 
 const h = vi.hoisted(() => ({ page: vi.fn(), before: vi.fn(), around: vi.fn() }))
@@ -148,7 +149,12 @@ describe('board table', () => {
     expect(rowTexts(wrapper, 'boards-rank')).toEqual(['1', '2'])
     expect(rowTexts(wrapper, 'boards-player')).toEqual(['boardsmoke', 'runner-up'])
     // Score carries the grade BADGE beside the value — neither owns a column.
-    expect(rowTexts(wrapper, 'boards-score')).toEqual(['2864SS', '2402A'])
+    // Badge first, value after: the redesigned cell leads with the grade, the
+    // same order the pinned self row renders.
+    expect(rowTexts(wrapper, 'boards-score')).toEqual([
+      `SS${groupThousands(2864)}`,
+      `A${groupThousands(2402)}`
+    ])
     expect(rowTexts(wrapper, 'boards-grade')).toEqual(['SS', 'A'])
     // raw renders as its own column, whole words like wpm.
     expect(wrapper.text()).toContain('90')

@@ -80,3 +80,56 @@ export const formatShortDate = (iso: string, locale?: string): string => {
   return at.isValid() ? at.locale(dayjsLocale(locale)).format('L') : '—'
 }
 
+/**
+ * Intl, not dayjs, for the two formats below — dayjs cannot produce either:
+ * its ru long date has no way to drop the « г.» suffix short of the same
+ * part-stripping done here, and its short weekday set («пнд») is not the
+ * two-letter one the calendar rail shows («пн»). The module stays the ONE
+ * boundary; which library sits behind a given format is its private business.
+ */
+const intlFormat = (() => {
+  const cache = new Map<string, Intl.DateTimeFormat>()
+  return (locale: string | undefined, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat => {
+    const key = `${dayjsLocale(locale)}|${JSON.stringify(options)}`
+    let format = cache.get(key)
+    if (format === undefined) {
+      format = new Intl.DateTimeFormat(dayjsLocale(locale), options)
+      cache.set(key, format)
+    }
+    return format
+  }
+})()
+
+/**
+ * The LONG calendar date («29 июля 2026» / "July 29, 2026"). Trailing literal
+ * parts are dropped so ru does not render its « г.» suffix.
+ */
+export const formatLongDate = (iso: string, locale?: string): string => {
+  const at = dayjs(iso)
+  if (!at.isValid()) return '—'
+  const parts = intlFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).formatToParts(at.toDate())
+  while (parts.length > 0 && parts[parts.length - 1]?.type === 'literal') parts.pop()
+  return parts.map((part) => part.value).join('')
+}
+
+/**
+ * The 24h clock of the instant alone («00:11») — the line under a long date.
+ * No locale parameter: `HH:mm` reads the same in every locale we ship.
+ */
+export const formatTimeOfDay = (iso: string): string => {
+  const at = dayjs(iso)
+  return at.isValid() ? at.format('HH:mm') : '—'
+}
+
+/** Monday-first lowercase short weekday names («пн»…/"mon"…) — a calendar's rail. */
+export const shortWeekdayLabels = (locale?: string): readonly string[] => {
+  const format = intlFormat(locale, { weekday: 'short', timeZone: 'UTC' })
+  // 2024-01-01 is a Monday — the anchor the week is unrolled from.
+  return Array.from({ length: 7 }, (_, i) =>
+    format.format(new Date(Date.UTC(2024, 0, 1 + i))).toLowerCase()
+  )
+}

@@ -27,6 +27,9 @@ $var-fonts: (
   --text-color: #eeeeee;
   --error-color: #da3333;
   --error-extra-color: #791717;
+  // Connection-quality tones (servers status indicator): good / degraded.
+  --success-color: #4caf50;
+  --warning-color: #e6a23c;
   --font: 'JetBrainsMono', 'Vazirmatn', monospace;
   --border-radius: 6px;
   --transition-duration: 0.08s;

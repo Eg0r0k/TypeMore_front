@@ -100,7 +100,10 @@ describe('profile runs table — derived cells and keyset load-more', () => {
     expect(row.find('[data-testid="profile-run-consistency"]').text()).toBe('76%')
     expect(row.find('[data-testid="profile-run-chars"]').text()).toBe('240/5/2/1')
     expect(row.text()).toContain('S')
-    expect(row.text()).toContain('punctuation · expert')
+    // Mods render as icon chips now: difficulty stays text, a boolean mod is a
+    // glyph whose word lives in the tooltip and the trigger's aria-label.
+    expect(row.text()).toContain('expert')
+    expect(row.find('li button[aria-label="punctuation"] svg').exists()).toBe(true)
   })
 
   /**

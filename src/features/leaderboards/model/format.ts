@@ -11,6 +11,7 @@ import {
   formatExactInstant,
   formatRelativeInstant
 } from '@/shared/lib/helpers/datetime'
+import { groupThousands } from '@/shared/lib/helpers/numbers'
 
 /**
  * `achievedAt` is an ISO string. Within the last day the clock time is what
@@ -48,5 +49,8 @@ export const formatAccuracy = (acc: number): string => `${Math.round(acc <= 1 ? 
 /** wpm carries full float precision on the wire; a board column shows whole words. */
 export const formatWpm = (wpm: number): string => String(Math.round(wpm))
 
-/** Score is an integer server-side; rounding is belt-and-braces against a float. */
-export const formatScore = (score: number): string => String(Math.round(score))
+/**
+ * Score is an integer server-side (rounding is belt-and-braces against a
+ * float), thousands-grouped like every other unbounded count in the UI.
+ */
+export const formatScore = (score: number): string => groupThousands(score)

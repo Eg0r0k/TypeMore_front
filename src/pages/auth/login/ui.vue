@@ -34,14 +34,12 @@
               type="button"
               size="s"
               color="shadow"
-              :button-label="
+              :aria-label="
                 visiblePassword ? t('auth.common.hidePassword') : t('auth.common.showPassword')
               "
               @click.prevent="visiblePassword = !visiblePassword"
             >
-              <template #left-icon>
-                <component :is="visiblePassword ? IconEyeOff : IconEye" width="24" height="24" />
-              </template>
+              <component :is="visiblePassword ? IconEyeOff : IconEye" class="size-5" />
             </Button>
           </template>
         </TextInput>
@@ -58,12 +56,12 @@
       </div>
 
       <div class="auth__oauth">
-        <Button color="gray" :button-label="t('auth.login.github')" @click="startOAuth('github')">
-          <template #left-icon><IconBrandGithub width="22" height="22" /></template>
+        <Button color="gray" @click="startOAuth('github')">
+          <IconBrandGithub class="size-5" />
           {{ t('auth.login.github') }}
         </Button>
-        <Button color="gray" :button-label="t('auth.login.google')" @click="startOAuth('google')">
-          <template #left-icon><IconBrandGoogle width="22" height="22" /></template>
+        <Button color="gray" @click="startOAuth('google')">
+          <IconBrandGoogle class="size-5" />
           {{ t('auth.login.google') }}
         </Button>
       </div>
@@ -75,9 +73,11 @@
             {{ t('auth.login.createOne') }}
           </RouterLink>
         </Typography>
-        <RouterLink class="auth__link" :to="routeLocation.reset()">
-          <Typography color="sub" size="xs">{{ t('auth.login.forgotPassword') }}</Typography>
-        </RouterLink>
+        <Typography tag-name="p" color="sub" size="xs">
+          <RouterLink class="auth__link" :to="routeLocation.reset()">
+            {{ t('auth.login.forgotPassword') }}
+          </RouterLink>
+        </Typography>
       </div>
     </div>
   </div>
@@ -108,7 +108,9 @@
       email: v.pipe(
         v.string(t('auth.validation.emailRequired')),
         v.nonEmpty(t('auth.validation.emailRequired')),
-        v.email(t('auth.validation.emailInvalid'))
+        v.email(t('auth.validation.emailInvalid')),
+        // Mirrors the server bound (validateEmail: ≤ 254 characters).
+        v.maxLength(254, t('auth.validation.emailMax'))
       ),
       password: v.pipe(
         v.string(t('auth.validation.passwordRequired')),
@@ -117,7 +119,12 @@
     })
   )
 
-  const { handleSubmit, errors, defineField } = useForm({ validationSchema: schema })
+  // Seed every key: an ABSENT key makes valibot's `v.object` report its own raw
+  // "Invalid key" issue on blur, before the localized `nonEmpty` message runs.
+  const { handleSubmit, errors, defineField } = useForm({
+    validationSchema: schema,
+    initialValues: { email: '', password: '' }
+  })
   const [email, emailProps] = defineField('email')
   const [password, passwordProps] = defineField('password')
 
@@ -145,7 +152,7 @@
   .auth {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 20px;
     width: min(360px, 100%);
     margin: 0 auto;
 
@@ -166,7 +173,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 4px 0;
     }
 
     &__oauth {
@@ -180,12 +186,13 @@
       flex-direction: column;
       gap: 8px;
       align-items: center;
-      margin-top: 8px;
     }
 
     &__link {
       color: var(--main-color);
       text-decoration: underline;
+      text-decoration-thickness: from-font;
+      text-underline-position: from-font;
     }
   }
 </style>

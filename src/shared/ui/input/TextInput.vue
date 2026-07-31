@@ -15,7 +15,7 @@
       variants: {
         size: {
           xs: 'text-xs px-2 py-1',
-          s: 'text-sm px-3 py-1.5',
+          s: 'text-base sm:text-sm px-3 py-1.5',
           m: 'text-base px-3 py-2',
           l: 'text-lg px-4 py-2.5',
           xl: 'text-xl px-4 py-3'
@@ -96,7 +96,7 @@
         @blur="emit('blur', $event)"
       />
 
-      <span v-if="$slots['right-icon']" class="absolute right-2 flex items-center">
+      <span v-if="$slots['right-icon']" class="absolute right-0 flex items-center">
         <slot name="right-icon" />
       </span>
     </div>

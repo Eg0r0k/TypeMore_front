@@ -1,27 +1,36 @@
 <template>
-  <div class="controls">
-    <Button
-      size="m"
-      color="gray"
-      :disabled="!canAct"
-      :title="canAct ? undefined : t('servers.lobby.reason.offline')"
-      @click="session.createRoom()"
-    >
-      <IconUsers />
-      {{ t('servers.create') }}
-    </Button>
-    <Button
-      size="m"
-      color="gray"
-      :disabled="!canAct"
-      :title="canAct ? undefined : t('servers.lobby.reason.offline')"
-      @click="joinOpen = true"
-    >
-      <IconCode />
-      {{ t('servers.joinByCode') }}
-    </Button>
+  <aside class="panel" :aria-label="t('servers.panel.label')">
+    <div class="panel__action">
+      <Button
+        class="w-full"
+        size="m"
+        :disabled="!canAct"
+        :title="canAct ? undefined : t('servers.lobby.reason.offline')"
+        @click="session.createRoom()"
+      >
+        <IconPlus class="size-5" />
+        {{ t('servers.create') }}
+      </Button>
+      <Typography size="xs" color="sub">{{ t('servers.panel.createHint') }}</Typography>
+    </div>
+
+    <div class="panel__action">
+      <Button
+        class="w-full"
+        size="m"
+        color="main-outline"
+        :disabled="!canAct"
+        :title="canAct ? undefined : t('servers.lobby.reason.offline')"
+        @click="joinOpen = true"
+      >
+        <IconHash class="size-5" />
+        {{ t('servers.joinByCode') }}
+      </Button>
+      <Typography size="xs" color="sub">{{ t('servers.panel.joinHint') }}</Typography>
+    </div>
+
     <JoinCodeModal v-model:open="joinOpen" />
-  </div>
+  </aside>
 </template>
 
 <script lang="ts" setup>
@@ -30,14 +39,16 @@
   import { useMatchSessionStore } from '@/entities/match'
   import { JoinCodeModal } from '@/features/modal/joinCode'
   import { Button } from '@/shared/ui/button'
-  import IconCode from '~icons/tabler/code'
-  import IconUsers from '~icons/tabler/users'
+  import { Typography } from '@/shared/ui/typography'
+  import IconHash from '~icons/tabler/hash'
+  import IconPlus from '~icons/tabler/plus'
 
   /**
-   * v1 entry points: create a room or join by code — as a COMPACT action row,
-   * not banner cards. The page's decision lives in the room list below, so the
-   * entry points take one line and the list gets the fold. The join hint lives
-   * in the join modal, next to the input it explains.
+   * v1 entry points as the page's side panel: create (the primary action, in
+   * the accent colour) over join-by-code, each with a one-line hint. The list
+   * keeps the leading column — the panel answers "how do I start", the list
+   * answers "where can I go". The full join hint still lives in the join
+   * modal, next to the input it explains.
    */
   const { t } = useI18n()
   const session = useMatchSessionStore()
@@ -48,9 +59,18 @@
 </script>
 
 <style lang="scss" scoped>
-  .controls {
+  .panel {
     display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    background-color: var(--sub-alt-color);
+    border-radius: var(--border-radius);
+
+    &__action {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
   }
 </style>

@@ -7,6 +7,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createPinia, setActivePinia } from 'pinia'
+import { until } from '../helpers/until'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { type Dictionary, type TimerCommand, type TimerTick, dictVersion } from '@typemore/core'
@@ -108,16 +109,6 @@ const settings: RoomSettings = {
 }
 
 /** Real-timer polling — same rationale as session-resilience: one consistent clock. */
-async function until(cond: () => boolean, label: string, timeoutMs = 10_000): Promise<void> {
-  const startedAt = Date.now()
-  while (!cond()) {
-    if (Date.now() - startedAt > timeoutMs) throw new Error(`timed out waiting for ${label}`)
-    const { promise, resolve } = Promise.withResolvers<void>()
-    setTimeout(resolve, 5)
-    await promise
-  }
-}
-
 interface RawClient {
   transport: LoopbackTransport
   events: TransportEvent[]

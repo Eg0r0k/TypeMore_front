@@ -16,9 +16,22 @@
       data-testid="replay-results"
     >
       <div class="replay-page__byline">
-        <Button color="main-outline" size="s" data-testid="replay-back" @click="goBack">
-          {{ t('replay.back') }}
-        </Button>
+        <!-- An icon beside someone else's result: the words live in the
+             tooltip and aria-label, so the byline stays a byline. -->
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <Button
+              color="main-outline"
+              size="icon-sm"
+              :aria-label="t('replay.back')"
+              data-testid="replay-back"
+              @click="goBack"
+            >
+              <IconArrowLeft class="size-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{{ t('replay.back') }}</TooltipContent>
+        </Tooltip>
         <Typography v-if="byLine" size="s" color="sub">
           {{ byLine }} · {{ achievedDate }}
         </Typography>
@@ -138,7 +151,9 @@
   } from '@shared/api'
   import { ROUTE_NAMES } from '@app/router/route-names'
   import { Button } from '@shared/ui/button'
+  import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
   import { Typography } from '@shared/ui/typography'
+  import IconArrowLeft from '~icons/tabler/arrow-left'
   import { formatShortDate } from '@/shared/lib/helpers/datetime'
 
   /**

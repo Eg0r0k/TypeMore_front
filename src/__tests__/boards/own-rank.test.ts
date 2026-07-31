@@ -19,6 +19,7 @@ import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 
 import type { BoardEntry, BoardMe, BoardMods } from '@shared/api'
 import { i18n } from '@app/i18n'
+import { groupThousands } from '@/shared/lib/helpers/numbers'
 import { ROUTE_NAMES } from '@/app/router/route-names'
 
 const h = vi.hoisted(() => ({ page: vi.fn(), me: vi.fn() }))
@@ -177,7 +178,7 @@ describe('the pinned self row', () => {
       i18n.global.t('boards.self.top', { percent: 14 })
     )
     // The metrics are the table's columns: score formatted the same way.
-    expect(wrapper.get('[data-testid="boards-self-score"]').text()).toBe('1234')
+    expect(wrapper.get('[data-testid="boards-self-score"]').text()).toBe(groupThousands(1234))
     // And the caller's row below is marked as theirs.
     const players = wrapper.findAll('[data-testid="boards-player"]').map((node) => node.text())
     expect(players[0]).not.toContain(i18n.global.t('boards.you'))

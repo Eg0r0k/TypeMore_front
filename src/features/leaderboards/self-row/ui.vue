@@ -25,10 +25,10 @@
         <BoardModChips :mods="entry.mods" />
       </span>
       <span class="inline-flex items-baseline gap-1.5">
-        <span class="font-bold tabular-nums" data-testid="boards-self-score">
+        <span class="rounded bg-main px-1 text-lg text-bg font-bold">{{ entry.grade }}</span>
+        <span class="font-bold text-sm text-sub tabular-numss" data-testid="boards-self-score">
           {{ formatScore(entry.score) }}
         </span>
-        <span class="rounded bg-main px-1 text-[0.65rem] text-bg">{{ entry.grade }}</span>
       </span>
       <span class="text-end tabular-nums">{{ formatWpm(entry.wpm) }}</span>
       <span class="text-end tabular-nums">{{ formatWpm(entry.raw) }}</span>

@@ -2,6 +2,13 @@
   <section class="lobby" data-testid="lobby">
     <Typography class="lobby__title" tag-name="h2" size="m" color="primary">
       {{ t('servers.lobby.title') }}
+      <span
+        v-if="!rooms.isPending.value && !rooms.isError.value"
+        class="lobby__count"
+        data-testid="lobby-count"
+      >
+        ({{ openRooms.length }})
+      </span>
     </Typography>
 
     <Typography
@@ -221,9 +228,16 @@
       margin-bottom: 0;
     }
 
+    &__count {
+      font-variant-numeric: tabular-nums;
+      color: var(--sub-color);
+    }
+
     &__state {
       display: block;
-      padding: 1.5rem 0.5rem;
+      padding: 1.5rem 1rem;
+      background-color: var(--sub-alt-color);
+      border-radius: var(--border-radius);
     }
 
     &__error,
@@ -231,52 +245,58 @@
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      padding: 0.5rem;
+      padding: 1rem;
+      background-color: var(--sub-alt-color);
+      border-radius: var(--border-radius);
     }
 
     &__rows {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
       margin: 0;
       padding: 0;
       list-style: none;
     }
 
-    &__row {
-      border-top: 1px solid var(--sub-alt-color);
-    }
-
+    // Two-line card: name + action on the first line, the meta group on its
+    // own full-width second line — nothing clips at any column width.
     &__join {
       display: grid;
       align-items: center;
       width: 100%;
-      gap: 0.25rem 1.5rem;
-      grid-template-columns: minmax(0, 1fr) auto auto;
-      padding: 0.5rem;
+      gap: 0.375rem 0.75rem;
+      grid-template-columns: minmax(0, 1fr) auto;
+      padding: 0.625rem 0.75rem;
       font-family: inherit;
       font-size: 0.875rem;
       color: var(--text-color);
       text-align: start;
-      background: none;
+      background-color: var(--sub-alt-color);
       border: none;
+      border-radius: var(--border-radius);
       cursor: pointer;
+      transition: box-shadow var(--transition-duration);
 
       &:disabled {
         color: var(--sub-color);
         cursor: not-allowed;
       }
 
-      &:hover:not(:disabled),
-      &:focus-visible:not(:disabled) {
-        background-color: var(--sub-alt-color);
-      }
-
       // The design system's focus-visible double ring (see `focus-ring` in
-      // tailwind.css): a background-only focus cue disappears on a row whose
-      // hover state is that same background.
+      // tailwind.css): the card and the page background are close in value,
+      // so the cue is a ring, not a background swap.
       &:focus-visible {
         outline: none;
         box-shadow:
           0 0 0 1.5px var(--bg-color),
           0 0 0 3px var(--text-color);
+      }
+
+      // Cards keep their surface; the hover cue is a ring, because the meta
+      // line is sub-coloured and would vanish on a sub-coloured background.
+      &:hover:not(:disabled) {
+        box-shadow: inset 0 0 0 1.5px var(--sub-color);
       }
     }
 
@@ -293,6 +313,13 @@
       white-space: nowrap;
     }
 
+    // Rows are pinned explicitly: auto-placement would push the action cell
+    // onto a third line once the meta group claims the full second row.
+    &__cell--name {
+      grid-row: 1;
+      grid-column: 1;
+    }
+
     &__cell--players,
     &__cell--lang {
       color: var(--sub-color);
@@ -303,12 +330,15 @@
       white-space: nowrap;
     }
 
-    // Seats · dimension · language: one glance, one group.
+    // Seats · dimension · language: one glance, one group, the card's own
+    // full-width second line.
     &__meta {
       display: flex;
       gap: 0.75rem;
       align-items: center;
       min-width: 0;
+      grid-row: 2;
+      grid-column: 1 / -1;
     }
 
     &__cell--state {
@@ -318,6 +348,8 @@
       gap: 0.375rem;
       text-align: end;
       white-space: nowrap;
+      grid-row: 1;
+      grid-column: 2;
     }
 
     // The row's one action, spelled out for joinable rooms. Inherits the sub
@@ -327,12 +359,14 @@
       color: var(--main-color);
     }
 
+    // Inset against the card surface, not the page background — a sub-alt
+    // chip on a sub-alt card would have no edge at all.
     &__chip {
       display: inline-block;
       padding: 0.1rem 0.5rem;
       font-size: 0.7rem;
       color: var(--sub-color);
-      background-color: var(--sub-alt-color);
+      background-color: var(--bg-color);
       border-radius: var(--border-radius);
     }
 
@@ -377,30 +411,4 @@
     }
   }
 
-  // Two-line card: name + action on the first line, the meta group on its
-  // own full-width second line — nothing clips, nothing leaves the viewport.
-  // Rows are pinned explicitly: auto-placement would push the action cell
-  // onto a third line once the meta group claims the full second row.
-  @media screen and (width <= 640px) {
-    .lobby__join {
-      gap: 0.25rem 0.75rem;
-      grid-template-columns: minmax(0, 1fr) auto;
-    }
-
-    .lobby__cell--name {
-      grid-row: 1;
-      grid-column: 1;
-    }
-
-    .lobby__cell--state {
-      grid-row: 1;
-      grid-column: 2;
-      white-space: normal;
-    }
-
-    .lobby__meta {
-      grid-row: 2;
-      grid-column: 1 / -1;
-    }
-  }
 </style>

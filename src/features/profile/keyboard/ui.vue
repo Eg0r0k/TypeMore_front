@@ -104,7 +104,7 @@
               >
                 <b>{{ key.id === 'Space' ? 'space' : key.label }}</b>
                 <template v-if="key.stats">
-                  <span>{{ t('profile.keyboard.presses', { n: grouped(key.stats.count) }) }}</span>
+                  <span>{{ t('profile.keyboard.presses', { n: groupThousands(key.stats.count) }) }}</span>
                   <span>
                     {{ t('profile.keyboard.errors', { p: percent(key.stats.errorRate) }) }}
                   </span>
@@ -153,9 +153,10 @@
   import type { ProfileKeyboard } from '@shared/api'
   import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
+  import { groupThousands } from '@/shared/lib/helpers/numbers'
   import { Typography } from '@/shared/ui/typography'
   import IconInfoCircle from '~icons/tabler/info-circle'
-  import { grouped, percent } from '../model/format'
+  import { percent } from '../model/format'
   import { KEYBOARD_LAYOUT_PRESETS, type LayoutKey, layoutByName } from '../model/layouts'
 
   /**

@@ -57,6 +57,13 @@
   const { playRandomClickSound, playErrorSound } = useSounds([...pack.click], pack.error)
 
   const playKeyFeedback = (grapheme: string): void => {
+    // Blind hides correctness, and the sounds are part of the view: the error
+    // sample would leak the very signal the mod masks, so under blind every
+    // keystroke clicks like a correct one.
+    if (store.blind) {
+      playRandomClickSound()
+      return
+    }
     const expected = [...(store.words[store.wordIndex] ?? '')][caretPos()]
     if (grapheme === expected) playRandomClickSound()
     else playErrorSound()

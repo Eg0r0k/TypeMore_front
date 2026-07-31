@@ -18,7 +18,7 @@
         <Tooltip>
           <TooltipTrigger as-child>
             <Button
-              style="height: 37px"
+              class="h-full"
               size="s"
               :aria-label="t('servers.join.paste')"
               @click="pasteFromClipboard"
@@ -33,7 +33,7 @@
       <Typography v-if="errorText" class="code-modal__error" color="error" size="xs">
         {{ errorText }}
       </Typography>
-      <Button aria-label="join room by code" size="m" color="gray" @click="sendCode">
+      <Button aria-label="join room by code" size="m" color="main-outline" @click="sendCode">
         {{ t('servers.join.submit') }}
       </Button>
     </DialogContent>
@@ -114,9 +114,8 @@
   .code-modal {
     &__input {
       display: flex;
-      align-items: flex-end;
-      gap: 5px;
-      margin-bottom: 10px;
+      align-items: center;
+      justify-content: space-between;
     }
 
     &__title {

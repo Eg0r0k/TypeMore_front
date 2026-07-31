@@ -86,18 +86,18 @@
                 </span>
                 <BoardModChips :mods="entry.mods" />
               </span>
-              <span class="inline-flex items-baseline gap-1.5" data-testid="boards-score">
-                <span class="font-bold tabular-nums">{{ formatScore(entry.score) }}</span>
+              <span class="flex items-baseline gap-1.5" data-testid="boards-score">
                 <span
-                  class="board__grade rounded px-1 text-[0.65rem]"
+                  class="board__grade font-bold rounded px-1 text-lg"
                   :class="
-                    entry.grade === 'SS' || entry.grade === 'S'
-                      ? 'bg-main text-bg'
-                      : 'bg-sub-alt text-sub'
+                    entry.grade === 'SS' || entry.grade === 'S' ? 'bg-main text-bg' : 'bg-sub-alt '
                   "
                   data-testid="boards-grade"
                 >
                   {{ entry.grade }}
+                </span>
+                <span class="font-bold text-sm text-sub tabular-nums">
+                  {{ formatScore(entry.score) }}
                 </span>
               </span>
               <span class="text-end tabular-nums">{{ formatWpm(entry.wpm) }}</span>

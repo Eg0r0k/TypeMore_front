@@ -156,6 +156,53 @@ describe('GameField with no words', () => {
 })
 
 /**
+ * `inputDisabled` (match countdown lockout): the field stays live — words and
+ * ghosts render — but no input adapter exists, so a keystroke produces neither
+ * state changes nor sound feedback. When the lockout lifts (GO), the adapter
+ * mounts AND arms itself: the first real keystroke must type, not re-arm.
+ */
+describe('GameField with inputDisabled', () => {
+  const makeSession = (): GameView & MutableView =>
+    Object.assign(makeView(), {
+      insert: () => undefined,
+      replace: () => undefined,
+      deleteBackward: () => undefined,
+      commit: () => undefined
+    })
+
+  const mountLocked = (session: GameView) =>
+    mount(Test, {
+      props: { store: session, inputDisabled: true, shadowMode: 'open' as const },
+      global: { plugins: [createPinia()] },
+      attachTo: document.body
+    })
+
+  it('mounts no input adapter and no focus hint while disabled', async () => {
+    const wrapper = mountLocked(makeSession())
+    await flushPromises()
+
+    expect(wrapper.find('textarea').exists()).toBe(false)
+    expect(wrapper.find('.game__focus-hint').exists()).toBe(false)
+
+    wrapper.unmount()
+  })
+
+  it('mounts AND focuses the adapter when the lockout lifts', async () => {
+    const wrapper = mountLocked(makeSession())
+    await flushPromises()
+
+    await wrapper.setProps({ inputDisabled: false })
+    await flushPromises()
+
+    const textarea = wrapper.find('textarea')
+    expect(textarea.exists()).toBe(true)
+    expect(document.activeElement).toBe(textarea.element)
+
+    wrapper.unmount()
+  })
+})
+
+/**
  * Caret styles are PROPS, not config: the field draws whatever shape it is told
  * to, and a ghost/replay view keeps the defaults. happy-dom reports zero
  * geometry, so only the element, its modifier class and the geometry/timing vars

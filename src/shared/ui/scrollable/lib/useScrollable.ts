@@ -285,7 +285,15 @@ export default function useScrollable(
   }
 
   function scrollToEnd(behavior: ScrollBehavior = 'smooth') {
-    scrollTo({ position: scrollSize.value, behavior })
+    // LIVE read, not the `scrollSize` computed: that computed's only reactive
+    // dependency is `containerRef`, so after the first read it caches whatever
+    // the content measured THEN and never invalidates — DOM size is not
+    // reactive. Scrolling to the cached size sent a grown list toward where
+    // its end used to be, i.e. UP (the chat's "send a message, jump to the
+    // top" bug).
+    const container = containerRef.value
+    if (container === null) return
+    scrollTo({ position: container[props.value.scrollSize], behavior })
   }
 
   function scrollToStart(behavior: ScrollBehavior = 'smooth') {

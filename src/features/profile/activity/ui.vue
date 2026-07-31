@@ -6,7 +6,7 @@
     <!-- Left: how much there is in total. Right: what the shades mean. -->
     <header class="flex flex-wrap items-center justify-between gap-2">
       <Typography size="xs" color="sub" data-testid="profile-activity-total">
-        {{ t('profile.activity.total', { tests: grouped(totalTests) }, totalTests) }}
+        {{ t('profile.activity.total', { tests: groupThousands(totalTests) }, totalTests) }}
       </Typography>
 
       <div
@@ -84,8 +84,10 @@
 
   import type { ProfileActivity } from '@shared/api'
   import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip'
+  import { shortWeekdayLabels } from '@/shared/lib/helpers/datetime'
+  import { groupThousands } from '@/shared/lib/helpers/numbers'
   import { Typography } from '@/shared/ui/typography'
-  import { grouped, isoDay } from '../model/format'
+  import { isoDay } from '../model/format'
 
   /**
    * The GitHub-style activity calendar: 366 UTC day cells in Monday-first week
@@ -133,13 +135,7 @@
   const totalTests = computed(() => props.activity.days.reduce((sum, day) => sum + day.tests, 0))
 
   /** Monday-first weekday names in the UI locale ("mon", "вт", …). */
-  const weekdayLabels = computed(() => {
-    const format = new Intl.DateTimeFormat(locale.value, { weekday: 'short', timeZone: 'UTC' })
-    // 2024-01-01 is a Monday — the anchor the rail is built from.
-    return Array.from({ length: 7 }, (_, i) =>
-      format.format(new Date(Date.UTC(2024, 0, 1 + i))).toLowerCase()
-    )
-  })
+  const weekdayLabels = computed(() => shortWeekdayLabels(locale.value))
 
   /** Quartile-ish levels over the user's own peak — 1..4 for any played day. */
   const levelOf = (tests: number, max: number): number => {

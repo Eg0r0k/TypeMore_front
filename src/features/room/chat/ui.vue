@@ -1,31 +1,43 @@
 <template>
   <div class="chat">
-    <VirtualScrollable
-      ref="messagesContainer"
-      class="chat__messages"
-      :items="session.chatLog"
-      :estimate-size="MESSAGE_HEIGHT"
-      :get-item-key="keyAt"
-    >
-      <template #default="{ item: entry }">
-        <div :class="messageClass(entry)">
-          <template v-if="entry.from === 'system'">
-            <div class="message__text message__text--system">{{ entry.text }}</div>
-          </template>
-          <template v-else>
-            <div
-              class="message__author"
-              :class="{ 'message__author--me': entry.from === session.selfId }"
-              :title="nickOf(entry)"
-            >
-              {{ nickOf(entry) }}:
-            </div>
-            <!-- eslint-disable-next-line vue/no-v-html -- parseEmojis HTML-escapes its input first -->
-            <div class="message__text" v-html="parseEmojis(entry.text)"></div>
-          </template>
-        </div>
-      </template>
-    </VirtualScrollable>
+    <div class="chat__log">
+      <VirtualScrollable
+        ref="messagesContainer"
+        class="chat__messages"
+        :items="session.chatLog"
+        :estimate-size="MESSAGE_HEIGHT"
+        :get-item-key="keyAt"
+        @scroll="onScroll"
+      >
+        <template #default="{ item: entry }">
+          <div :class="messageClass(entry)">
+            <template v-if="entry.from === 'system'">
+              <div class="message__text message__text--system">{{ entry.text }}</div>
+            </template>
+            <template v-else>
+              <div
+                class="message__author"
+                :class="{ 'message__author--me': entry.from === session.selfId }"
+                :title="nickOf(entry)"
+              >
+                {{ nickOf(entry) }}:
+              </div>
+              <!-- eslint-disable-next-line vue/no-v-html -- parseEmojis HTML-escapes its input first -->
+              <div class="message__text" v-html="parseEmojis(entry.text)"></div>
+            </template>
+          </div>
+        </template>
+      </VirtualScrollable>
+      <button
+        v-if="unseenCount > 0"
+        class="chat__new-messages"
+        type="button"
+        data-testid="chat-new-messages"
+        @click="jumpToNew"
+      >
+        {{ t('room.chat.newMessages') }} ↓
+      </button>
+    </div>
     <div class="chat__input">
       <div v-if="showSuggestion" class="chat__emoji-suggestion">
         <div
@@ -68,7 +80,7 @@
   import { watchThrottled } from '@vueuse/core'
   import { useI18n } from 'vue-i18n'
   import clsx from 'clsx'
-  import { computed, nextTick, ref, watchEffect } from 'vue'
+  import { computed, nextTick, onMounted, ref, watch } from 'vue'
 
   /**
    * Lobby chat over the session store's chatLog. Player text goes through
@@ -120,6 +132,10 @@
     if (!text) return
     session.sendChat(text)
     inputValue.value = ''
+    // Sending re-pins the view: your own message (it arrives as a server echo)
+    // must always come into view, wherever the chat was scrolled.
+    pinned.value = true
+    unseenCount.value = 0
     scrollToBottom()
   }
 
@@ -177,17 +193,65 @@
     showSuggestion.value = false
     activeIndex.value = 0
   }
-  const scrollToBottom = () => {
-    nextTick(() => {
-      messagesContainer.value?.scrollToEnd()
+  // ── scroll pinning ────────────────────────────────────────────────────────
+  /**
+   * The view auto-follows new messages ONLY while it is pinned to the bottom.
+   * Scrolled up to read history, it stays put and counts the arrivals into the
+   * "new messages" pill instead; the pill (or scrolling back down, or sending)
+   * re-pins it. `pinned` is owned by the scroll handler — the one source of
+   * truth for "where the user actually is".
+   */
+  const STICK_THRESHOLD_PX = 48
+
+  const pinned = ref(true)
+  const unseenCount = ref(0)
+
+  const onScroll = (event: Event) => {
+    const el = event.target as HTMLElement
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= STICK_THRESHOLD_PX
+    pinned.value = atBottom
+    if (atBottom) unseenCount.value = 0
+  }
+
+  /**
+   * Two frames past nextTick, not one tick: the virtualizer measures the new
+   * row only after it renders (its own nextTick + rAF), and `scrollToEnd`
+   * computes the target from the CURRENT scrollHeight. Scrolling off the
+   * not-yet-measured size is exactly what used to land the view short of the
+   * last message.
+   */
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    void nextTick(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          messagesContainer.value?.scrollToEnd(behavior)
+        })
+      })
     })
   }
 
-  watchEffect(() => {
-    // Track log growth so new messages keep the view pinned to the bottom.
-    void session.chatLog.length
+  const jumpToNew = () => {
+    pinned.value = true
+    unseenCount.value = 0
     scrollToBottom()
-  })
+  }
+
+  watch(
+    () => session.chatLog.length,
+    (length, previous) => {
+      if (length === 0) {
+        // A new room starts a new chat: nothing unseen from the old one.
+        pinned.value = true
+        unseenCount.value = 0
+        return
+      }
+      if (length < previous) return
+      if (pinned.value) scrollToBottom()
+      else unseenCount.value += length - previous
+    }
+  )
+
+  onMounted(() => scrollToBottom('auto'))
 </script>
 <style lang="scss" scoped>
   :deep(.chat__input--flat) {
@@ -273,10 +337,37 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
+
     // The chat is a grid item in the lobby; without this it may not shrink
     // below its own min-content and would push its column wider (the same
     // reason each message has to be able to break).
     min-width: 0;
+
+    &__log {
+      // Anchor for the new-messages pill; the pill floats over the log, so it
+      // never reflows the messages or the input under it.
+      position: relative;
+    }
+
+    &__new-messages {
+      position: absolute;
+      bottom: 0.75rem;
+      left: 50%;
+      z-index: 5;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.8rem;
+      color: var(--main-color);
+      cursor: pointer;
+      background-color: var(--sub-alt-color);
+      border: none;
+      border-radius: var(--border-radius);
+      transform: translateX(-50%);
+      transition: var(--transition-duration);
+
+      &:hover {
+        color: var(--text-color);
+      }
+    }
 
     &__input {
       position: relative;

@@ -2,6 +2,7 @@
 // finish round-trips through the REAL client path (session store → WsTransport
 // core → LoopbackServer), plus the MATCH.md standings rules.
 import { createPinia, setActivePinia } from 'pinia'
+import { until } from '../helpers/until'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import {
@@ -83,16 +84,6 @@ const roomSettings = (overrides: Partial<RoomSettings> = {}): RoomSettings => ({
  * stay mutually consistent; vitest's fake timers do not fake performance.now
  * by default, and splitting the clocks desyncs the match anchor.
  */
-async function until(cond: () => boolean, label: string, timeoutMs = 10_000): Promise<void> {
-  const startedAt = Date.now()
-  while (!cond()) {
-    if (Date.now() - startedAt > timeoutMs) throw new Error(`timed out waiting for ${label}`)
-    const { promise, resolve } = Promise.withResolvers<void>()
-    setTimeout(resolve, 5)
-    await promise
-  }
-}
-
 interface Harness {
   session: MatchSessionStore
   transport: LoopbackTransport

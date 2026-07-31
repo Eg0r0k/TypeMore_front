@@ -12,9 +12,11 @@
         {{ t('auth.callback.failed') }}
       </Typography>
 
-      <RouterLink v-if="state === 'failed'" class="auth__link" :to="routeLocation.login()">
-        <Typography color="sub" size="xs">{{ t('auth.callback.toLogin') }}</Typography>
-      </RouterLink>
+      <Typography v-if="state === 'failed'" tag-name="p" color="sub" size="xs">
+        <RouterLink class="auth__link" :to="routeLocation.login()">
+          {{ t('auth.callback.toLogin') }}
+        </RouterLink>
+      </Typography>
     </div>
   </div>
 </template>
@@ -67,7 +69,7 @@
   .auth {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 20px;
     width: min(360px, 100%);
     margin: 0 auto;
     text-align: center;
@@ -82,6 +84,8 @@
     &__link {
       color: var(--main-color);
       text-decoration: underline;
+      text-decoration-thickness: from-font;
+      text-underline-position: from-font;
     }
   }
 </style>

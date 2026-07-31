@@ -20,6 +20,8 @@ export {
 } from './config/registry'
 export { OPTION_ICONS, modeIconOf } from './config/icons'
 export { ModGroup } from './ui/mod-group'
+export { GameModIcons } from './ui/mod-icons'
+export type { GameModsLike } from './ui/mod-icons'
 export type {
   GameOption,
   GameOptionKey,

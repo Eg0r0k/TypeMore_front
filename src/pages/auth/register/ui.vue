@@ -13,7 +13,7 @@
         <TextInput
           v-bind="nameProps"
           v-model="name"
-          autocomplete="username"
+          autocomplete="nickname"
           name="name"
           :has-error-space="true"
           :error-message="errors.name"
@@ -49,14 +49,12 @@
               type="button"
               size="s"
               color="shadow"
-              :button-label="
+              :aria-label="
                 visiblePassword ? t('auth.common.hidePassword') : t('auth.common.showPassword')
               "
               @click.prevent="visiblePassword = !visiblePassword"
             >
-              <template #left-icon>
-                <component :is="visiblePassword ? IconEyeOff : IconEye" width="24" height="24" />
-              </template>
+              <component :is="visiblePassword ? IconEyeOff : IconEye" class="size-5" />
             </Button>
           </template>
         </TextInput>
@@ -109,7 +107,8 @@
 
   const { t } = useI18n()
 
-  // Mirror the server rules: display name 3–20 chars, charset [a-zA-Z0-9_.-].
+  // Mirror the server rules: display name 3–20 chars, charset [a-zA-Z0-9_.-],
+  // password 8–128, email ≤ 254.
   const schema = toTypedSchema(
     v.object({
       name: v.pipe(
@@ -122,19 +121,25 @@
       email: v.pipe(
         v.string(t('auth.validation.emailRequired')),
         v.nonEmpty(t('auth.validation.emailRequired')),
-        v.email(t('auth.validation.emailInvalid'))
+        v.email(t('auth.validation.emailInvalid')),
+        v.maxLength(254, t('auth.validation.emailMax'))
       ),
       password: v.pipe(
         v.string(t('auth.validation.passwordRequired')),
         v.nonEmpty(t('auth.validation.passwordRequired')),
         v.minLength(8, t('auth.validation.passwordMin')),
-        v.maxLength(72, t('auth.validation.passwordMax'))
+        v.maxLength(128, t('auth.validation.passwordMax'))
       ),
       turnstileToken: captchaTokenSchema(t('auth.captcha.required'))
     })
   )
 
-  const { handleSubmit, errors, defineField } = useForm({ validationSchema: schema })
+  // Seed every typed key: an ABSENT key makes valibot's `v.object` report its
+  // own raw "Invalid key" issue on blur, before the localized message runs.
+  const { handleSubmit, errors, defineField } = useForm({
+    validationSchema: schema,
+    initialValues: { name: '', email: '', password: '' }
+  })
   const [name, nameProps] = defineField('name')
   const [email, emailProps] = defineField('email')
   const [password, passwordProps] = defineField('password')
@@ -178,7 +183,7 @@
   .auth {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 20px;
     width: min(360px, 100%);
     margin: 0 auto;
 
@@ -200,12 +205,13 @@
       flex-direction: column;
       gap: 8px;
       align-items: center;
-      margin-top: 8px;
     }
 
     &__link {
       color: var(--main-color);
       text-decoration: underline;
+      text-decoration-thickness: from-font;
+      text-underline-position: from-font;
     }
   }
 </style>

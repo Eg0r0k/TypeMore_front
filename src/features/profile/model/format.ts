@@ -35,17 +35,6 @@ export const speed = (wpm: number): string => {
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
 }
 
-/** Group thousands with a space: `1234567` → `"1 234 567"`. */
-export const grouped = (n: number): string => {
-  const digits = String(Math.round(n))
-  let out = ''
-  for (let i = 0; i < digits.length; i++) {
-    if (i > 0 && (digits.length - i) % 3 === 0) out += ' '
-    out += digits[i]
-  }
-  return out
-}
-
 /** ISO `YYYY-MM-DD` of a Date, in UTC — the grid every profile day bucket uses. */
 export const isoDay = (date: Date): string => date.toISOString().slice(0, 10)
 

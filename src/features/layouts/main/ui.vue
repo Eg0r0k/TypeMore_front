@@ -49,7 +49,7 @@
     max-width: 1532px;
     min-height: 100vh;
     margin: 0 auto;
-    padding: 28px 16px;
+    padding: 26px 0 0 0;
     background-size: cover;
   }
 

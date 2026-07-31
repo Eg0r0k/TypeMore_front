@@ -1,1 +1,1 @@
-export { default as ServerPing } from './ui.vue'
+export { default as ServerStatus } from './ui.vue'

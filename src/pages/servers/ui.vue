@@ -7,33 +7,31 @@
           {{ t('servers.title.name') }}
         </Typography>
       </Typography>
-      <div class="server-page__info">
-        <Typography size="s" color="sub">
-          {{ t('servers.status.label') }}
-          <Typography tag-name="span" size="m" :color="statusColor">{{ statusText }}</Typography>
-        </Typography>
-        <ServerPing />
-      </div>
+      <ServerStatus />
     </div>
     <Typography v-if="session.connectionError" class="server-page__error" size="s" color="error">
       {{ session.connectionError.message }}
     </Typography>
-    <ServersControls />
-    <ServersLobby class="server-page__lobby" />
+    <!-- DOM order is panel → list so the page's entry actions lead on mobile
+         and for assistive tech; the grid areas put the list on the leading
+         side on wide screens, where it is the page's decision. -->
+    <div class="server-page__body">
+      <ServersControls class="server-page__panel" />
+      <ServersLobby class="server-page__lobby" />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { computed, onMounted, watch } from 'vue'
+  import { onMounted, watch } from 'vue'
   import { useRouter } from 'vue-router'
   import { useI18n } from 'vue-i18n'
   import { Typography } from '@/shared/ui/typography'
   import { ServersControls } from '@/features/servers/contols'
   import { ServersLobby } from '@/features/servers/lobby'
-  import { ServerPing } from '@/features/servers/ping'
+  import { ServerStatus } from '@/features/servers/ping'
   import { routeLocation } from '@/shared/router'
   import { useMatchSessionStore } from '@/entities/match'
-  import logger from '@/shared/lib/helpers/logger'
 
   /**
    * Multiplayer entry point. PROTOCOL v1 has no online-count message, so the
@@ -48,36 +46,6 @@
 
   onMounted(() => {
     void session.init()
-  })
-
-  const statusText = computed(() => {
-    switch (session.connection) {
-      case 'connecting':
-        return t('servers.status.connecting')
-      case 'reconnecting':
-        return t('servers.status.reconnecting')
-      case 'failed':
-        return t('servers.status.failed')
-      case 'idle':
-      case 'in_room':
-      case 'in_match':
-        return t('servers.status.connected')
-      case 'disconnected':
-        return t('servers.status.offline')
-      default: {
-        // Exhaustiveness: a new TransportState fails to compile here; at runtime
-        // the fallback stays what it always was.
-        const unhandled: never = session.connection
-        logger.warn('unhandled transport state', unhandled)
-        return t('servers.status.offline')
-      }
-    }
-  })
-
-  const statusColor = computed(() => {
-    if (session.connection === 'failed') return 'error'
-    if (session.connection === 'connecting' || session.connection === 'reconnecting') return 'sub'
-    return 'main'
   })
 
   // Already in a room (fresh room_state, or a back-navigation while seated):
@@ -100,7 +68,6 @@
     // across the full 1440.
     width: 100%;
     min-width: 0;
-    max-width: 64rem;
     margin-inline: auto;
 
     &__head {
@@ -112,10 +79,6 @@
       margin-bottom: 24px;
     }
 
-    &__info {
-      text-align: end;
-    }
-
     &__title {
       margin-bottom: 0;
     }
@@ -125,8 +88,29 @@
       margin-bottom: 16px;
     }
 
+    &__body {
+      display: grid;
+      grid-template-areas: 'lobby panel';
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    &__panel {
+      grid-area: panel;
+    }
+
     &__lobby {
-      margin-top: 32px;
+      grid-area: lobby;
+    }
+
+    // One column once the list would be squeezed below a readable row
+    // (~380px list + 280px panel + gap); the actions move above the list.
+    @media screen and (width <= 720px) {
+      &__body {
+        grid-template-areas: 'panel' 'lobby';
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
   }
 </style>

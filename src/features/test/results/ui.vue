@@ -9,8 +9,11 @@
     -->
     <div class="results__main">
       <div class="results__verdict">
-        <!-- What the run was worth before a single key: the mods it was cleared under. -->
-        <span v-if="modLabel" class="text-sm tabular-nums text-sub">{{ modLabel }}</span>
+        <!-- What the run was played under, before a single key: the mods as
+             the shared icon chips (tooltips carry the words) — the same glyphs
+             the settings bar, the boards and the profile use. Renders nothing
+             when the run was plain. -->
+        <GameModIcons :mods="summaryMods" />
 
         <!-- Grade and combo are one mark, not two facts: the combo hangs off the
              grade's baseline rather than starting a line of its own. -->
@@ -34,6 +37,7 @@
             <div class="results__score" data-testid="results-score">
               <span class="text-xs text-sub">score</span>
               <span class="text-main text-4xl leading-tight tabular-nums">{{ scoreText }}</span>
+              <span v-if="modLabel" class="text-xs tabular-nums text-sub">{{ modLabel }}</span>
             </div>
           </TooltipTrigger>
           <TooltipContent side="right" class="w-56">
@@ -94,7 +98,14 @@
       </div>
       <div class="results__stat">
         <dt class="text-xs text-sub">time</dt>
-        <dd class="m-0 text-2xl/tight tabular-nums">{{ Math.round(metrics.durationSec) }}s</dd>
+        <dd class="m-0 flex flex-col text-2xl/tight tabular-nums">
+          <span>{{ Math.round(metrics.durationSec) }}s</span>
+          <!-- Idle time belongs to the duration it ate from: seconds and the
+               share of the run window, one quiet line under the number. -->
+          <span v-if="afkLabel" class="text-sm text-sub" data-testid="results-afk">
+            {{ afkLabel }}
+          </span>
+        </dd>
       </div>
 
       <!-- Quote runs only: who wrote it, and the one way into its board. -->
@@ -125,12 +136,8 @@
     <!-- Anything unusual about the run, and nothing else. The bot line only
          ever reports a LOSS — a win over the pace bot or the record ghost says
          nothing here. -->
-    <div
-      v-if="failReason || afkLabel || botDefeat"
-      class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-sub"
-    >
+    <div v-if="failReason || botDefeat" class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-sub">
       <span v-if="failReason">{{ reason }}</span>
-      <span v-if="afkLabel" data-testid="results-afk">{{ afkLabel }}</span>
       <span v-if="botDefeat" class="text-error" data-testid="results-bot-loss">
         {{ t('results.botLoss', { you: botDefeat.you, them: botDefeat.them }) }}
       </span>
@@ -253,11 +260,13 @@
   import IconCamera from '~icons/tabler/camera-filled'
   import IconBoard from '~icons/tabler/trophy'
   import { quoteBucketKey } from '@shared/api'
+  import { GameModIcons, type GameModsLike } from '@/entities/game'
   import { routeLocation } from '@/app/router/route-locations'
   import { Button } from '@/shared/ui/button'
   import { Link } from '@/shared/ui/link'
   import { toast } from '@/shared/ui/sonner'
   import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
+  import { groupThousands } from '@/shared/lib/helpers/numbers'
   import { useScreenshot } from '@/shared/lib/hooks/useScreenshot'
 
   /**
@@ -456,12 +465,12 @@
   const isTopGrade = computed(() => grade.value === 'SS' || grade.value === 'S')
 
   /** Thousands-grouped: a score has no ceiling and reads as noise without them. */
-  const scoreText = computed(() => props.score?.total.toLocaleString() ?? '')
+  const scoreText = computed(() => (props.score ? groupThousands(props.score.total) : ''))
 
   /** The peak streak, hung under the grade — the other half of how the run went. */
   const comboLabel = computed(() => (props.score ? `x${props.score.comboPeak}` : ''))
 
-  /** What the run was played under, above the grade. Absent when nothing was on. */
+  /** What the mods multiplied the score by. Absent when nothing was on. */
   const modLabel = computed(() => {
     const multiplier = props.score?.modMultiplier ?? 1
     return multiplier > 1 ? t('results.mods', { multiplier: multiplier.toFixed(2) }) : ''
@@ -490,27 +499,30 @@
   })
 
   /**
-   * The "test type" cell, one fact per line: what was typed, in what language,
-   * and under which mods. A quote run says `quote` and the word count it turned
-   * out to be — a quote has no configured length to report. A repeat says so
-   * on its own last line — the reader comparing two result screens should see
-   * why this one saved nothing.
+   * The "test type" cell, one fact per line: what was typed and in what
+   * language. A quote run says `quote` and the word count it turned out to be
+   * — a quote has no configured length to report. A repeat says so on its own
+   * last line — the reader comparing two result screens should see why this
+   * one saved nothing. The mods (difficulty included — `normal` is the absence
+   * of one) moved out of the lines into the shared icon chips below.
    */
   const testType = computed(() => {
     const s = props.summary
     const shape =
       s.mode === 'time' ? `time ${s.amount}` : s.mode === 'quote' ? 'quote' : `words ${s.amount}`
-    const mods = [
-      s.punctuation && 'punctuation',
-      s.numbers && 'numbers',
-      s.randomCase && 'random case',
-      s.nospace && 'no space'
-    ].filter(Boolean)
-    const lines = [shape, s.language, s.difficulty]
-    if (mods.length) lines.push(mods.join(' '))
+    const lines = [shape, s.language]
     if (props.repeated) lines.push(t('game.repeated'))
     return lines
   })
+
+  /** The summary's mods slice, in the shape the shared chips take. */
+  const summaryMods = computed<GameModsLike>(() => ({
+    punctuation: props.summary.punctuation,
+    numbers: props.summary.numbers,
+    randomCase: props.summary.randomCase,
+    nospace: props.summary.nospace,
+    difficulty: props.summary.difficulty
+  }))
 
   /**
    * Whole seconds: a sub-second idle gap is noise, not a fact worth a line.

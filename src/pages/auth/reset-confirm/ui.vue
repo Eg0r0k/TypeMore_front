@@ -31,14 +31,12 @@
               type="button"
               size="s"
               color="shadow"
-              :button-label="
+              :aria-label="
                 visiblePassword ? t('auth.common.hidePassword') : t('auth.common.showPassword')
               "
               @click.prevent="visiblePassword = !visiblePassword"
             >
-              <template #left-icon>
-                <component :is="visiblePassword ? IconEyeOff : IconEye" width="24" height="24" />
-              </template>
+              <component :is="visiblePassword ? IconEyeOff : IconEye" class="size-5" />
             </Button>
           </template>
         </TextInput>
@@ -50,9 +48,19 @@
         <Button type="submit" :disabled="isPending">{{ t('auth.resetConfirm.submit') }}</Button>
       </Form>
 
-      <RouterLink v-if="done || !token" class="auth__link" :to="routeLocation.login()">
-        <Typography color="sub" size="xs">{{ t('auth.resetConfirm.toLogin') }}</Typography>
-      </RouterLink>
+      <!-- An expired link is the most common failure here; without this escape
+           the only way to a fresh link is guessing the route by hand. -->
+      <Typography v-if="submitError" tag-name="p" color="sub" size="xs">
+        <RouterLink class="auth__link" :to="routeLocation.reset()">
+          {{ t('auth.resetConfirm.requestNew') }}
+        </RouterLink>
+      </Typography>
+
+      <Typography v-if="done || !token" tag-name="p" color="sub" size="xs">
+        <RouterLink class="auth__link" :to="routeLocation.login()">
+          {{ t('auth.resetConfirm.toLogin') }}
+        </RouterLink>
+      </Typography>
     </div>
   </div>
 </template>
@@ -84,12 +92,18 @@
         v.string(t('auth.validation.passwordRequired')),
         v.nonEmpty(t('auth.validation.passwordRequired')),
         v.minLength(8, t('auth.validation.passwordMin')),
-        v.maxLength(72, t('auth.validation.passwordMax'))
+        // Mirrors the server bound (passwordMaxLen = 128).
+        v.maxLength(128, t('auth.validation.passwordMax'))
       )
     })
   )
 
-  const { handleSubmit, errors, defineField } = useForm({ validationSchema: schema })
+  // Seed every key: an ABSENT key makes valibot's `v.object` report its own raw
+  // "Invalid key" issue on blur, before the localized message runs.
+  const { handleSubmit, errors, defineField } = useForm({
+    validationSchema: schema,
+    initialValues: { password: '' }
+  })
   const [password, passwordProps] = defineField('password')
 
   const visiblePassword = ref(false)
@@ -114,7 +128,7 @@
   .auth {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 20px;
     width: min(360px, 100%);
     margin: 0 auto;
 
@@ -134,6 +148,8 @@
     &__link {
       color: var(--main-color);
       text-decoration: underline;
+      text-decoration-thickness: from-font;
+      text-underline-position: from-font;
     }
   }
 </style>

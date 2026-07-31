@@ -54,9 +54,11 @@
         </Form>
       </template>
 
-      <RouterLink v-if="state !== 'pending'" class="auth__link" :to="routeLocation.login()">
-        <Typography color="sub" size="xs">{{ t('auth.verify.toLogin') }}</Typography>
-      </RouterLink>
+      <Typography v-if="state !== 'pending'" tag-name="p" color="sub" size="xs">
+        <RouterLink class="auth__link" :to="routeLocation.login()">
+          {{ t('auth.verify.toLogin') }}
+        </RouterLink>
+      </Typography>
     </div>
   </div>
 </template>
@@ -109,13 +111,20 @@
       email: v.pipe(
         v.string(t('auth.validation.emailRequired')),
         v.nonEmpty(t('auth.validation.emailRequired')),
-        v.email(t('auth.validation.emailInvalid'))
+        v.email(t('auth.validation.emailInvalid')),
+        // Mirrors the server bound (validateEmail: ≤ 254 characters).
+        v.maxLength(254, t('auth.validation.emailMax'))
       ),
       turnstileToken: captchaTokenSchema(t('auth.captcha.required'))
     })
   )
 
-  const { handleSubmit, errors, defineField } = useForm({ validationSchema: schema })
+  // Seed every typed key: an ABSENT key makes valibot's `v.object` report its
+  // own raw "Invalid key" issue on blur, before the localized message runs.
+  const { handleSubmit, errors, defineField } = useForm({
+    validationSchema: schema,
+    initialValues: { email: '' }
+  })
   const [email, emailProps] = defineField('email')
   const [turnstileToken] = defineField('turnstileToken')
   const captcha = useTemplateRef<TurnstileFieldExpose>('captcha')
@@ -148,7 +157,7 @@
   .auth {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 20px;
     width: min(360px, 100%);
     margin: 0 auto;
     text-align: center;
@@ -170,6 +179,8 @@
     &__link {
       color: var(--main-color);
       text-decoration: underline;
+      text-decoration-thickness: from-font;
+      text-underline-position: from-font;
     }
   }
 </style>

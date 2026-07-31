@@ -40,9 +40,9 @@
       <div class="flex items-center justify-between gap-1">
         <span
           class="truncate text-[10px] tabular-nums text-sub"
-          :title="`${t('profile.pbs.score')} ${grouped(pb.score)} · ${formatShortDate(pb.achievedAt, locale)}`"
+          :title="`${t('profile.pbs.score')} ${groupThousands(pb.score)} · ${formatShortDate(pb.achievedAt, locale)}`"
         >
-          {{ grouped(pb.score) }} · {{ formatShortDate(pb.achievedAt, locale) }}
+          {{ groupThousands(pb.score) }} · {{ formatShortDate(pb.achievedAt, locale) }}
         </span>
 
         <!-- The app's one action pair, in the app's one icon-button size —
@@ -81,9 +81,10 @@
   import { Button } from '@/shared/ui/button'
   import { Typography } from '@/shared/ui/typography'
   import { formatShortDate } from '@/shared/lib/helpers/datetime'
+  import { groupThousands } from '@/shared/lib/helpers/numbers'
   import IconRace from '~icons/tabler/swords'
   import IconWatch from '~icons/tabler/eye'
-  import { grouped, percent, speed } from '../model/format'
+  import { percent, speed } from '../model/format'
 
   /**
    * PB cards from /profile/pbs — the leaderboard entries, decorated. Deliberately

@@ -39,7 +39,7 @@
             :key="entry.lang"
             class="rounded bg-bg px-1.5 py-0.5 text-[10px] text-sub"
           >
-            {{ entry.lang }} · {{ grouped(entry.tests) }}
+            {{ entry.lang }} · {{ groupThousands(entry.tests) }}
           </span>
         </div>
       </div>
@@ -80,7 +80,8 @@
   import type { ProfileMetricStats, ProfileSummary } from '@shared/api'
   import { Typography } from '@/shared/ui/typography'
   import { formatShortDate } from '@/shared/lib/helpers/datetime'
-  import { formatClock, grouped, percent, speed } from '../model/format'
+  import { groupThousands } from '@/shared/lib/helpers/numbers'
+  import { formatClock, percent, speed } from '../model/format'
 
   /**
    * `part` lets the page place identity and the stat block on opposite sides
@@ -121,7 +122,7 @@
     return [
       {
         label: t('profile.testsStarted'),
-        value: grouped(summary.testsStarted),
+        value: groupThousands(summary.testsStarted),
         testid: 'profile-tests-started'
       },
       {
@@ -130,8 +131,8 @@
         label: t('profile.testsCompleted'),
         value:
           summary.testsStarted > 0
-            ? `${grouped(summary.testsCompleted)} (${percent(summary.testsCompleted / summary.testsStarted)})`
-            : grouped(summary.testsCompleted),
+            ? `${groupThousands(summary.testsCompleted)} (${percent(summary.testsCompleted / summary.testsStarted)})`
+            : groupThousands(summary.testsCompleted),
         hint: {
           text: `${summary.restartsPerCompleted.toFixed(1)} ${t('profile.restartsPerCompleted')}`,
           testid: 'profile-restarts'
@@ -142,7 +143,7 @@
         label: t('profile.timeTyping'),
         value: formatClock(summary.timeTypingMs),
         hint: {
-          text: `${grouped(summary.estimatedWordsTyped)} ${t('profile.wordsTyped')}`,
+          text: `${groupThousands(summary.estimatedWordsTyped)} ${t('profile.wordsTyped')}`,
           testid: 'profile-words-typed'
         },
         testid: 'profile-time-typing'

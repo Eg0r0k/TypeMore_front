@@ -11,7 +11,8 @@ import {
   ProfileSection,
   ProfileSummaryCard
 } from '@/features/profile'
-import { grouped, isoDay } from '@/features/profile/model/format'
+import { isoDay } from '@/features/profile/model/format'
+import { groupThousands } from '@/shared/lib/helpers/numbers'
 import en from '@/app/i18n/locales/en'
 
 const i18n = createI18n({ legacy: false, locale: 'en', messages: { en } })
@@ -47,7 +48,7 @@ describe('profile summary — counters and the stats grid from a fixture', () =>
     expect(completed).toContain('83%')
     // Time typing is a clock, not prose — a total that only grows reads as one.
     expect(wrapper.find('[data-testid="profile-time-typing"]').text()).toBe('01:02:05')
-    expect(wrapper.find('[data-testid="profile-words-typed"]').text()).toContain(grouped(12_345))
+    expect(wrapper.find('[data-testid="profile-words-typed"]').text()).toContain(groupThousands(12_345))
     expect(wrapper.find('[data-testid="profile-restarts"]').text()).toContain('0.2')
 
     // The grid: speeds at one decimal, fractions as %.
@@ -134,7 +135,7 @@ describe('profile PB cards', () => {
     const wrapper = mount(ProfilePBCards, { props: { pbs: [pb] }, global })
     const card = wrapper.find('[data-testid="profile-pb-time:15000:german:seeded"]')
     expect(card.text()).toContain('time 15s · german')
-    expect(card.text()).toContain(grouped(1645))
+    expect(card.text()).toContain(groupThousands(1645))
     expect(card.text()).toContain('103.2')
     expect(card.text()).toContain('SS')
 

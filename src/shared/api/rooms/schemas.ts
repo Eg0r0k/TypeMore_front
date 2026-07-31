@@ -1,4 +1,5 @@
 import * as v from 'valibot'
+import logger from '@/shared/lib/helpers/logger'
 import type { RoomDimension } from './types'
 
 /**
@@ -23,8 +24,8 @@ import type { RoomDimension } from './types'
  *
  * The exclusivity is checked rather than merely documented because the
  * alternative is a `?? 0` at every read site — a room silently rendered as
- * "0 words" is worse than a list that says out loud that the server broke its
- * own contract.
+ * "0 words" is worse than a room that is dropped with the breach logged out
+ * loud (see RoomListSchema for the per-entry tolerance).
  */
 export const RoomListSettingsSchema = v.pipe(
   v.object({
@@ -72,10 +73,29 @@ export type RoomListEntry = v.InferOutput<typeof RoomListEntrySchema>
  * Private rooms are absent server-side, in any state — the client never
  * receives them and so cannot leak one by filtering wrongly. Order is the
  * server's (busiest first, then oldest first) and is preserved as received.
+ *
+ * Entries are validated ONE BY ONE and a contract-breaking entry is dropped
+ * with a logged warning rather than failing the whole response. The envelope
+ * itself is still strict — `rooms` missing or non-array is a broken response,
+ * not a broken room. The tolerance exists because the failure unit of this
+ * list is a room: one malformed listing (a stale server has shipped quote
+ * rooms with no dimension) should not blank every healthy room a player could
+ * have walked into.
  */
-export const RoomListSchema = v.object({
-  rooms: v.array(RoomListEntrySchema)
-})
+export const RoomListSchema = v.pipe(
+  v.object({ rooms: v.array(v.unknown()) }),
+  v.transform(({ rooms }) => ({
+    rooms: rooms.flatMap((raw): RoomListEntry[] => {
+      const parsed = v.safeParse(RoomListEntrySchema, raw)
+      if (parsed.success) return [parsed.output]
+      logger.warn('room list entry breaks the contract; dropping it', {
+        entry: raw,
+        issues: v.flatten<typeof RoomListEntrySchema>(parsed.issues)
+      })
+      return []
+    })
+  }))
+)
 export type RoomList = v.InferOutput<typeof RoomListSchema>
 
 /**

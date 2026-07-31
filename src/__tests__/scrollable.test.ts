@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { Scrollable } from '@/shared/ui/scrollable'
 import { VirtualScrollable } from '@/shared/ui/virtualScrollable'
-import { expect, it, describe } from 'vitest'
+import { expect, it, describe, vi } from 'vitest'
 
 describe('Scrollable', () => {
   it('Renders slot content inside scroll container', () => {
@@ -28,6 +28,28 @@ describe('Scrollable', () => {
     })
     await wrapper.get('.scrollable').trigger('scroll')
     expect(wrapper.emitted('scroll')).toHaveLength(1)
+  })
+
+  it('scrollToEnd targets the LIVE content size, not a cached measurement', () => {
+    // The internal `scrollSize` computed has no reactive dependency on the DOM,
+    // so it caches its first read forever. scrollToEnd built its target from
+    // that cache: once the content grew, "scroll to end" scrolled to where the
+    // end USED to be — visibly upward in a chat that had filled up.
+    const wrapper = mount(Scrollable, {
+      slots: { default: '<p>Content</p>' }
+    })
+    const container = wrapper.get('.scrollable').element as HTMLElement
+    let height = 100
+    Object.defineProperty(container, 'scrollHeight', { configurable: true, get: () => height })
+    const scrollTo = vi.fn()
+    container.scrollTo = scrollTo
+
+    const vm = wrapper.vm as unknown as { scrollToEnd: (behavior?: ScrollBehavior) => void }
+    vm.scrollToEnd('auto') // primes any internal cache at the small size
+    height = 1000
+    vm.scrollToEnd('auto')
+
+    expect(scrollTo).toHaveBeenLastCalledWith(expect.objectContaining({ top: 1000 }))
   })
 })
 

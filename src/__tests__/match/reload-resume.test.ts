@@ -3,6 +3,7 @@
 // seat, and kick/leave clear the token so a reload cannot resurrect the seat.
 // Mid-match the reclaim is a FORFEIT — see `forfeitStaleSeat` in the store.
 import { createPinia, setActivePinia } from 'pinia'
+import { until } from '../helpers/until'
 import { watch } from 'vue'
 import { beforeEach, describe, expect, it } from 'vitest'
 
@@ -54,16 +55,6 @@ const wordsSettings: RoomSettings = {
  * Real-timer polling — deliberate: same rationale as session-store.test.ts
  * (NTP sampling and loopback delivery must share one consistent clock).
  */
-async function until(cond: () => boolean, label: string, timeoutMs = 10_000): Promise<void> {
-  const startedAt = Date.now()
-  while (!cond()) {
-    if (Date.now() - startedAt > timeoutMs) throw new Error(`timed out waiting for ${label}`)
-    const { promise, resolve } = Promise.withResolvers<void>()
-    setTimeout(resolve, 10)
-    await promise
-  }
-}
-
 /**
  * A raw wire client — the opponent seat. A second SESSION store cannot coexist
  * with the one under test: `MATCH_SESSION_STORE_ID` is a single global

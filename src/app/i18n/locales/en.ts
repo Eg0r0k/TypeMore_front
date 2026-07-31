@@ -273,14 +273,16 @@ export default {
       success: 'Your password has been updated. You can now log in.',
       failed: 'This reset link is invalid or has expired.',
       missingToken: 'No reset token was provided.',
-      toLogin: 'Go to login'
+      toLogin: 'Go to login',
+      requestNew: 'Request a new reset link'
     },
     validation: {
       emailRequired: 'Email is required.',
       emailInvalid: 'Enter a valid email address.',
+      emailMax: 'Email must be at most 254 characters.',
       passwordRequired: 'Password is required.',
       passwordMin: 'Password must be at least 8 characters.',
-      passwordMax: 'Password must be at most 72 characters.',
+      passwordMax: 'Password must be at most 128 characters.',
       nameRequired: 'Display name is required.',
       nameLength: 'Display name must be 3–20 characters.',
       nameCharset: 'Only letters, numbers, and _ . - are allowed.'
@@ -342,6 +344,12 @@ export default {
     ping: { label: 'your ping', value: '{ms} ms' },
     create: 'create room',
     joinByCode: 'join by code',
+    /** Side panel beside the room list: the two entry points with hints. */
+    panel: {
+      label: 'play',
+      createHint: 'pick the mode and invite friends.',
+      joinHint: 'got a code from a friend? enter it here.'
+    },
     join: {
       title: 'enter the code',
       placeholder: 'code',
@@ -411,7 +419,8 @@ export default {
     },
     chat: {
       placeholder: 'Send a message',
-      rateLimited: 'sending too fast — message dropped'
+      rateLimited: 'sending too fast — message dropped',
+      newMessages: 'new messages'
     },
     match: {
       go: 'go',

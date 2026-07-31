@@ -87,9 +87,7 @@
                 :fallback="t('profile.runs.quote')"
               />
               <span v-else class="block whitespace-nowrap">{{ modeDetail(run) }}</span>
-              <span v-if="modChips(run)" class="block max-w-48 truncate text-xs text-sub">
-                {{ modChips(run) }}
-              </span>
+              <GameModIcons v-if="modsOf(run)" class="mt-0.5 max-w-48" :mods="modsOf(run)!" />
               <!-- Saved, not counted: this run's text was taken from another run
                    (a race), so it is stored and shown and ranked nowhere. The
                    row is the only place that fact is visible after the results
@@ -155,11 +153,13 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, onMounted, ref } from 'vue'
+  import { onMounted, ref } from 'vue'
   import { useI18n } from 'vue-i18n'
 
   import { queryClient, runsQueryOptions, type RunSummary } from '@shared/api'
-  import { formatExactInstant } from '@/shared/lib/helpers/datetime'
+  import { GameModIcons, type GameModsLike } from '@/entities/game'
+  import { formatExactInstant, formatLongDate, formatTimeOfDay } from '@/shared/lib/helpers/datetime'
+  import { groupThousands } from '@/shared/lib/helpers/numbers'
   import { Button } from '@/shared/ui/button'
   import { TABLE, TABLE_BODY, TABLE_HEAD, TABLE_SCROLL } from '@/shared/ui/table'
   import { Typography } from '@/shared/ui/typography'
@@ -241,52 +241,16 @@
     }
     return undefined
   }
-  const scoreFormat = computed(() => new Intl.NumberFormat(locale.value))
   const points = (run: RunSummary): string => {
     const value = scoreOf(run.serverScore)
-    return value === undefined ? '' : scoreFormat.value.format(Math.round(value))
+    return value === undefined ? '' : groupThousands(value)
   }
 
-  /** The mods slice as a compact chips string ("punctuation · expert"). */
-  const modChips = (run: RunSummary): string => {
-    const mods = run.mods as Record<string, unknown> | null | undefined
-    if (!mods) return ''
-    const chips: string[] = []
-    for (const key of [
-      'punctuation',
-      'numbers',
-      'randomCase',
-      'reverse',
-      'nospace',
-      'blind',
-      'fading',
-      'flashlight'
-    ]) {
-      if (mods[key] === true) chips.push(key)
-    }
-    if (typeof mods.difficulty === 'string' && mods.difficulty !== 'normal') {
-      chips.push(mods.difficulty)
-    }
-    if (typeof mods.minWpm === 'number' && mods.minWpm > 0) chips.push(`min ${mods.minWpm}`)
-    return chips.join(' · ')
-  }
+  /** The mods slice, narrowed for the shared icon chips; null when absent. */
+  const modsOf = (run: RunSummary): GameModsLike | null =>
+    (run.mods ?? null) as GameModsLike | null
 
-  /**
-   * Date and clock as two lines ("29 июля 2026" / "00:11"). Trailing literals
-   * are dropped so ru doesn't render its " г." suffix; the cell keeps the full
-   * exact instant as a title.
-   */
-  const dateFormat = computed(
-    () => new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'long', year: 'numeric' })
-  )
-  const timeFormat = computed(
-    () =>
-      new Intl.DateTimeFormat(locale.value, { hour: '2-digit', minute: '2-digit', hour12: false })
-  )
-  const runDate = (iso: string): string => {
-    const parts = dateFormat.value.formatToParts(new Date(iso))
-    while (parts.length > 0 && parts[parts.length - 1]?.type === 'literal') parts.pop()
-    return parts.map((part) => part.value).join('')
-  }
-  const runTime = (iso: string): string => timeFormat.value.format(new Date(iso))
+  /** Date and clock as two lines ("29 июля 2026" / "00:11"); the cell keeps the exact instant as a title. */
+  const runDate = (iso: string): string => formatLongDate(iso, locale.value)
+  const runTime = formatTimeOfDay
 </script>
