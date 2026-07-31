@@ -1,12 +1,14 @@
 import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
 import { FIXED_WIDTH_DICTIONARY, stubDictionaries } from './fixtures/dictionaries'
+import { installVisibleText } from './support/visible-text'
 
 // Word lists come from the Go server (the frontend ships none); these budget
 // probes run without a backend, so every page gets the stubbed catalogue+body.
 // The fixed-width corpus rides along for the replay probe (see its header); an
 // extra catalogue row is invisible to every other test here.
 test.beforeEach(async ({ page }) => {
+  await installVisibleText(page)
   await stubDictionaries(page, { extra: [FIXED_WIDTH_DICTIONARY] })
 })
 
@@ -84,7 +86,7 @@ async function measureKeystrokeBudget(): Promise<{
   for (let w = 0; w < 30; w++) {
     const el = activeEl()
     if (!el) break
-    const text = (el.textContent ?? '').replace(/\s+/g, '')
+    const text = window.__visibleText!(el).replace(/\s+/g, '')
     for (const ch of text) {
       counter.__wordUpdates = 0
       const t0 = performance.now()
@@ -183,7 +185,7 @@ test('10000-word test stays windowed and O(1) per keystroke', async ({ page }) =
     for (let w = 0; w < 30; w++) {
       const el = activeEl()
       if (!el) break
-      const text = (el.textContent ?? '').replace(/\s+/g, '')
+      const text = window.__visibleText!(el).replace(/\s+/g, '')
       for (const ch of text) {
         counter.__wordUpdates = 0
         const t0 = performance.now()
@@ -369,7 +371,7 @@ test('active word never reaches the third visible line across many line jumps', 
     for (let w = 0; w < 90; w++) {
       const el = activeEl()
       if (!el) break
-      const text = (el.textContent ?? '').replace(/\s+/g, '')
+      const text = window.__visibleText!(el).replace(/\s+/g, '')
       for (const ch of text) {
         ins(ch)
         await raf()
@@ -470,7 +472,7 @@ test('active word wrapped mid-word by extra characters is pulled back off the th
     while (!lastOnSecondLine() && guard < 200) {
       const el = activeEl()
       if (!el) break
-      const text = (el.textContent ?? '').replace(/\s+/g, '')
+      const text = window.__visibleText!(el).replace(/\s+/g, '')
       for (const ch of text) {
         ins(ch)
         await raf()
@@ -482,7 +484,7 @@ test('active word wrapped mid-word by extra characters is pulled back off the th
     const positioned = lastOnSecondLine()
 
     // Type the word's own letters, then EXTRA characters (no commit) to widen + wrap it.
-    const target = (activeEl()?.textContent ?? '').replace(/\s+/g, '')
+    const target = window.__visibleText!(activeEl()).replace(/\s+/g, '')
     for (const ch of target) {
       ins(ch)
       await raf()
@@ -579,7 +581,7 @@ test('replay field honors the DOM corridor and line-position invariant', async (
   const layout = await page.evaluate(() => {
     const root = (document.querySelector('.game__host') as HTMLElement).shadowRoot as ShadowRoot
     const words = Array.from(root.querySelectorAll<HTMLElement>('.word'))
-    const lengths = new Set(words.map((w) => (w.textContent ?? '').replace(/\s+/g, '').length))
+    const lengths = new Set(words.map((w) => window.__visibleText!(w).replace(/\s+/g, '').length))
     const tops = new Set(words.map((w) => w.offsetTop))
     return { widths: lengths.size, length: [...lengths][0], lines: tops.size, words: words.length }
   })
@@ -596,7 +598,7 @@ test('replay field honors the DOM corridor and line-position invariant', async (
     const raf = () => new Promise<void>((r) => requestAnimationFrame(() => r()))
     const activeText = () => {
       const a = root()?.querySelector<HTMLElement>('.word.active')
-      return a ? (a.textContent ?? '').replace(/\s+/g, '') : null
+      return a ? window.__visibleText!(a).replace(/\s+/g, '') : null
     }
     const ins = (ch: string) =>
       input.dispatchEvent(
@@ -745,7 +747,7 @@ test('match screen: 1 local + 4 ghosts at 10k words keeps keystroke budget and b
     for (let w = 0; w < 15; w++) {
       const el = activeEl()
       if (!el) break
-      const text = (el.textContent ?? '').replace(/\s+/g, '')
+      const text = window.__visibleText!(el).replace(/\s+/g, '')
       for (const ch of text) {
         counter.__wordUpdates = 0
         const t0 = performance.now()
@@ -894,7 +896,7 @@ test('live score HUD updates in O(1) nodes and never shifts the field', async ({
     for (let w = 0; w < 2; w++) {
       const el = activeEl()
       if (!el) break
-      const text = (el.textContent ?? '').replace(/\s+/g, '')
+      const text = window.__visibleText!(el).replace(/\s+/g, '')
       for (const ch of text) {
         ins(ch)
         typed++

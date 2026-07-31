@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test'
 import { stubDictionaries } from './fixtures/dictionaries'
+import { installVisibleText } from './support/visible-text'
+
+test.beforeEach(async ({ page }) => {
+  await installVisibleText(page)
+})
 
 /**
  * Full lobby → match → results loop over the in-page LoopbackTransport
@@ -110,7 +115,7 @@ test('loopback lobby: create → bot joins → race → standings → re-ready',
     for (let w = 0; w < 20; w++) {
       const el = activeEl()
       if (!el) break
-      const text = (el.textContent ?? '').replace(/\s+/g, '')
+      const text = window.__visibleText!(el).replace(/\s+/g, '')
       for (const ch of text) {
         ins(ch)
         await raf()

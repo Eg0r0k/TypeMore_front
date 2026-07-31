@@ -95,6 +95,7 @@
           :flashlight="config.flashlight"
           :caret-style="config.caretStyle"
           :smooth-caret="config.smoothCaret"
+          :canary-seed="fieldCanarySeed"
         />
       </Transition>
 
@@ -345,6 +346,21 @@
   // exact RUNS.md payload at finish; the two mod halves come from the run's own
   // snapshot (`getReplayData`), so payload and replay can never disagree.
   const runMeta = ref<{ seed: number; dictHash: string; lang: string } | null>(null)
+
+  /**
+   * The seed the field's display canaries are scheduled from — the SAME seed
+   * the submit payload carries, so the server can recompute the schedule. It
+   * covers quote runs too: a quote's words ignore the seed, but the canary
+   * stream is independent of generation and the seed still travels in the
+   * submission. `null` while racing: the race host set the session up from the
+   * record's setup and `runMeta` still describes the PREVIOUS solo run — a
+   * stale schedule would be worse than none (and the record's text is already
+   * public to the racer via the results screen anyway). A repeat (`onRepeat`)
+   * keeps the original seed with the original words, which is exactly right.
+   */
+  const fieldCanarySeed = computed<number | null>(() =>
+    race.racing ? null : (runMeta.value?.seed ?? null)
+  )
 
   // The last solo setup (config + words + generation), kept so the results
   // screen's "restart" can replay the very same text. Declaration is NOT kept:

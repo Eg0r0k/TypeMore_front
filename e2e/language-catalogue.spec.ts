@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { stubDictionaries } from './fixtures/dictionaries'
+import { installVisibleText } from './support/visible-text'
 
 /**
  * The language picker at the size the catalogue actually is.
@@ -15,6 +16,7 @@ import { stubDictionaries } from './fixtures/dictionaries'
  * to resolve a key to a hash, fetch that body, and generate words from it.
  */
 test.beforeEach(async ({ page }) => {
+  await installVisibleText(page)
   await stubDictionaries(page, { full: true })
 })
 
@@ -96,12 +98,10 @@ test('selecting an exotic language starts a run on it', async ({ page }) => {
     () =>
       (document.querySelector('.game__host')?.shadowRoot?.querySelectorAll('.word').length ?? 0) > 0
   )
-  const firstWord = await page.evaluate(
-    () =>
-      document
-        .querySelector('.game__host')
-        ?.shadowRoot?.querySelector('.word')
-        ?.textContent?.trim() ?? ''
+  const firstWord = await page.evaluate(() =>
+    window
+      .__visibleText!(document.querySelector('.game__host')?.shadowRoot?.querySelector('.word'))
+      .trim()
   )
   expect(firstWord).toMatch(/^zu\d+$/)
 })

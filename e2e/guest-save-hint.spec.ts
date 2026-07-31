@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test'
 import { stubDictionaries } from './fixtures/dictionaries'
+import { installVisibleText } from './support/visible-text'
+
+test.beforeEach(async ({ page }) => {
+  await installVisibleText(page)
+})
 
 /**
  * Guest save-hint gate (functional, NOT a perf budget). A signed-out visitor who
@@ -68,7 +73,7 @@ test('guest who finishes a ranked run sees the sign-in-to-save hint', async ({ p
     for (let w = 0; w < 20; w++) {
       const el = activeEl()
       if (!el) break
-      const text = (el.textContent ?? '').replace(/\s+/g, '')
+      const text = window.__visibleText!(el).replace(/\s+/g, '')
       for (const ch of text) {
         ins(ch)
         await raf()

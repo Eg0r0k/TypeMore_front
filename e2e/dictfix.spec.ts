@@ -1,6 +1,11 @@
 import { expect, test, type Page } from '@playwright/test'
 import { dictVersion } from '@typemore/core'
 import { stubDictionaries } from './fixtures/dictionaries'
+import { installVisibleText } from './support/visible-text'
+
+test.beforeEach(async ({ page }) => {
+  await installVisibleText(page)
+})
 
 /**
  * The dictionary/quote loading contract, end to end (docs/DICTFIX_LOG.md).
@@ -47,7 +52,7 @@ const fieldWords = (page: Page): Promise<string[]> =>
   page.evaluate(() =>
     Array.from(
       document.querySelector('.game__host')?.shadowRoot?.querySelectorAll('.word') ?? []
-    ).map((w) => (w.textContent ?? '').replace(/\s+/g, ''))
+    ).map((w) => window.__visibleText!(w).replace(/\s+/g, ''))
   )
 
 const acceptCookies = async (page: Page): Promise<void> => {

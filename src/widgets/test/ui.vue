@@ -66,7 +66,8 @@
             typedFor(item.index),
             item.index === store.wordIndex,
             item.index < store.wordIndex,
-            store.blind
+            store.blind,
+            item.canaryKey
           ]"
         >
           <TestWord
@@ -75,6 +76,7 @@
             :active="item.index === store.wordIndex"
             :committed="item.index < store.wordIndex"
             :blind="store.blind"
+            :canary="item.canary"
           />
           <div v-if="item.breaksLine" class="line-break" aria-hidden="true"></div>
         </template>
@@ -90,6 +92,7 @@
 
   import { TestWord } from '@/features/test/word'
   import { TestInput } from '@/features/test/input'
+  import { type Canary, canaryAt } from '@typemore/core'
   import { wordBreaksLine, wordsHaveNewline, wordsHaveTab } from '@entities/game'
   import type { GameSession, GameView } from '@entities/game'
   import { useCaret } from '@/shared/lib/hooks/useCaret'
@@ -120,29 +123,49 @@
     shadowMode?: 'open' | 'closed'
     /** Replay/ghost mode: render the store's state but mount no input adapter. */
     viewOnly?: boolean
+    /**
+     * Input lockout (match countdown): the field stays live — words, ghosts,
+     * focus hint suppressed — but no input adapter is mounted, so keystrokes
+     * produce neither state changes nor sound feedback. When it flips back off
+     * the adapter mounts AND arms itself, so the first real keystroke types.
+     */
+    inputDisabled?: boolean
     /** Racing-style opponent carets rendered inside this field (ghost cars on the local track). */
     ghosts?: readonly TestGhostCaret[]
     /** Caret shape; `off` renders no caret at all. Driven by app config from the page. */
     caretStyle?: CaretStyle
     /** How far the caret interpolates between letters; `off` snaps. */
     smoothCaret?: SmoothCaret
+    /**
+     * The run's seed, when the page wants display canaries (@typemore/core
+     * canary.ts) woven into the rendered words. `null` (the default) renders a
+     * clean field — replays, ghosts, tests and custom runs stay canary-free —
+     * and a `viewOnly` field ignores the prop unconditionally: it renders
+     * someone ELSE's run, whose canary schedule belongs to their seed and
+     * whose text is already public.
+     */
+    canarySeed?: number | null
   }
   const props = withDefaults(defineProps<Props>(), {
     isRightToLeft: false,
     tape: false,
     viewOnly: false,
+    inputDisabled: false,
     shadowMode: import.meta.env.PROD ? 'closed' : 'open',
     fading: false,
     flashlight: false,
     caretStyle: 'default',
-    smoothCaret: 'medium'
+    smoothCaret: 'medium',
+    canarySeed: null
   })
 
   const store = props.store
   // A non-viewOnly field REQUIRES an input-capable session (the local player).
   // Ghost/replay callers always pass viewOnly, so the cast never observes a pure
   // GameView; the type system can't tie the two props together across a template.
-  const session = computed(() => (props.viewOnly ? null : (props.store as GameSession)))
+  const session = computed(() =>
+    props.viewOnly || props.inputDisabled ? null : (props.store as GameSession)
+  )
   /**
    * A field with no words is not a game: the session was never set up (the
    * dictionary failed to load, or the page has not generated words yet). Mount
@@ -187,16 +210,41 @@
     invalidate: invalidateGhosts
   } = useGhostCarets(wordsRef, ghostList, windowStart)
 
+  // The seed the canary schedule reads: the page's, unless this field is a
+  // viewOnly surface (replays/ghosts render other people's runs — see the prop).
+  const canarySeed = computed(() => (props.viewOnly ? null : (props.canarySeed ?? null)))
+
   // Windowed (recycled) slice keyed by ABSOLUTE index — bounded node count for 10k words.
   // `breaksLine` rides along so a code/quote word that ends a line gets its
   // full-width breaker sibling (see .line-break in game-styles); tape mode is one
   // nowrap row, so it never breaks.
+  //
+  // `canary` is computed here — per WINDOWED word, not per keystroke: the object
+  // itself is fresh on every recompute, so what v-memo watches is `canaryKey`, a
+  // primitive that survives recomputes (Object.is over a fresh object would void
+  // the memo and re-render every word on every commit). The key must be in the
+  // memo array: a restart can reuse the same word at the same index under a NEW
+  // seed, and word+typed+flags would all compare equal — only the canary moved.
   const windowItems = computed(() => {
     const words = store.words
+    const seed = canarySeed.value
     const to = Math.min(words.length, store.wordIndex + WINDOW_AHEAD)
-    const items: { word: string; index: number; breaksLine: boolean }[] = []
+    const items: {
+      word: string
+      index: number
+      breaksLine: boolean
+      canary: Canary | null
+      canaryKey: string
+    }[] = []
     for (let i = windowStart.value; i < to; i++) {
-      items.push({ word: words[i], index: i, breaksLine: !props.tape && wordBreaksLine(words[i]) })
+      const canary = seed === null ? null : canaryAt(seed, i, words[i])
+      items.push({
+        word: words[i],
+        index: i,
+        breaksLine: !props.tape && wordBreaksLine(words[i]),
+        canary,
+        canaryKey: canary === null ? '' : `${canary.slot}:${canary.grapheme}`
+      })
     }
     return items
   })
@@ -237,7 +285,9 @@
    * real editable element (chat, search) and anything typed while a dialog is open.
    */
   const typingFocused = ref(false)
-  const showFocusHint = computed(() => !props.viewOnly && hasWords.value && !typingFocused.value)
+  const showFocusHint = computed(
+    () => session.value !== null && hasWords.value && !typingFocused.value
+  )
 
   // Tab and Enter are typing keys only for a word list that carries them (code
   // snippets, quotes) — mirrors monkeytype's `wordsHaveTab()` / `wordsHaveNewline()`
@@ -262,7 +312,7 @@
   const modalIsOpen = (): boolean => document.querySelector('[role="dialog"]') !== null
 
   useEventListener(document, 'keydown', (event: KeyboardEvent) => {
-    if (props.viewOnly || !hasWords.value || typingFocused.value) return
+    if (session.value === null || !hasWords.value || typingFocused.value) return
     if (event.ctrlKey || event.metaKey || event.altKey) return
     if (event.key === 'Escape') return
     // Printable (one grapheme), the correction key, or a layout key this run
@@ -360,6 +410,14 @@
      */
     if (index < windowStart.value) resetWindow()
     void applyGeometry()
+  })
+  // The match field arms LATE: during the countdown `inputDisabled` keeps the
+  // adapter unmounted, and the session appears only on GO. Focus it the moment
+  // it exists — otherwise the first real keystroke is spent re-arming the field.
+  watch(session, async (now) => {
+    if (now === null || !hasWords.value || modalIsOpen()) return
+    await nextTick()
+    focusInput()
   })
   // A window shift (line jump) moves every rendered word — re-anchor the ghosts.
   watch(windowStart, () => void applyGhostGeometry())

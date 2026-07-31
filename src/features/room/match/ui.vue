@@ -94,14 +94,22 @@
         never passed here. All three are self-handicaps: they hide information,
         so there is nothing to guard against.
       -->
+      <!--
+        `input-disabled` during the countdown: the store already drops input
+        before GO, but the adapter's side effects (click/error sounds) would
+        still fire on every keystroke. Locking the field out keeps the 3-2-1
+        silent; on GO the field re-arms itself so the first keystroke types.
+      -->
       <Test
         v-if="session.selfView"
         :store="session.selfView"
         :ghosts="ghosts"
+        :input-disabled="session.phase === 'countdown'"
         :fading="config.fading"
         :flashlight="config.flashlight"
         :caret-style="config.caretStyle"
         :smooth-caret="config.smoothCaret"
+        :canary-seed="session.matchSeed"
       />
       <!--
         Live standings (self included), ranked by points, under the field's

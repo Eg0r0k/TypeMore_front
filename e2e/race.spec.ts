@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { stubDictionary, stubLeaderboards, stubReplay } from './fixtures/leaderboards'
+import { installVisibleText } from './support/visible-text'
 
 /**
  * The race-vs-run rework (C10): a race action anywhere seats the ghost on the
@@ -16,6 +17,7 @@ import { stubDictionary, stubLeaderboards, stubReplay } from './fixtures/leaderb
  */
 
 test.beforeEach(async ({ page }) => {
+  await installVisibleText(page)
   await page.addInitScript(() => {
     window.localStorage.setItem('cookieConsentGiven', 'true')
   })
@@ -47,7 +49,7 @@ const typeRun = (page: Page) =>
     for (let w = 0; w < 40; w++) {
       const active = root.querySelector<HTMLElement>('.word.active')
       if (!active) break
-      const text = (active.textContent ?? '').replace(/\s+/g, '')
+      const text = window.__visibleText!(active).replace(/\s+/g, '')
       for (const ch of text) {
         ins(ch)
         await sleep(30)

@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test'
 import { stubDictionaries } from './fixtures/dictionaries'
+import { installVisibleText } from './support/visible-text'
+
+test.beforeEach(async ({ page }) => {
+  await installVisibleText(page)
+})
 
 /**
  * A room racing a QUOTE, end to end over the loopback transport.
@@ -85,7 +90,7 @@ test('a room can race a quote: the id travels, the text is fetched per seat', as
   const words = await page.evaluate(() =>
     Array.from(
       document.querySelector('.game__host')?.shadowRoot?.querySelectorAll('.word') ?? []
-    ).map((word) => (word.textContent ?? '').replace(/\s+/g, ''))
+    ).map((word) => window.__visibleText!(word).replace(/\s+/g, ''))
   )
   expect(words).toEqual(TEXT.split(' '))
 

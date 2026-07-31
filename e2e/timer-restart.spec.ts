@@ -1,5 +1,10 @@
 import { expect, test, type Page } from '@playwright/test'
 import { stubDictionaries } from './fixtures/dictionaries'
+import { installVisibleText } from './support/visible-text'
+
+test.beforeEach(async ({ page }) => {
+  await installVisibleText(page)
+})
 
 /**
  * Regression: a TIMED run restarted via Ctrl+Enter must still finish.
@@ -19,7 +24,7 @@ async function typeActiveWord(page: Page): Promise<void> {
     const raf = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
     const el = root.querySelector<HTMLElement>('.word.active')
     if (!el) return
-    const text = (el.textContent ?? '').replace(/\s+/g, '')
+    const text = window.__visibleText!(el).replace(/\s+/g, '')
     for (const ch of text) {
       input.dispatchEvent(
         new InputEvent('beforeinput', {

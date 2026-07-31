@@ -1,6 +1,11 @@
 import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
 import { stubDictionaries } from './fixtures/dictionaries'
+import { installVisibleText } from './support/visible-text'
+
+test.beforeEach(async ({ page }) => {
+  await installVisibleText(page)
+})
 
 /**
  * Code-quote layout, on the exact text from the owner's report.
@@ -69,7 +74,7 @@ async function linesOf(page: Page): Promise<string[]> {
     for (const box of root.querySelectorAll<HTMLElement>('.word')) {
       const top = Math.round(box.getBoundingClientRect().top)
       const bucket = byTop.get(top) ?? []
-      bucket.push((box.textContent ?? '').replace(/\s+/g, ''))
+      bucket.push(window.__visibleText!(box).replace(/\s+/g, ''))
       byTop.set(top, bucket)
     }
     return [...byTop.entries()].sort((a, b) => a[0] - b[0]).map(([, texts]) => texts.join(''))
@@ -92,7 +97,7 @@ test('every newline glyph ends its visual line, and the tab is a real indent', a
 
     // A box whose text ends in the newline glyph must be the last one on its line.
     const newlineBoxesThatAreNotLast = boxes.filter((box, i) => {
-      if (!(box.textContent ?? '').endsWith('↵')) return false
+      if (!window.__visibleText!(box).endsWith('↵')) return false
       const next = boxes[i + 1]
       return next !== undefined && top(next) === top(box)
     }).length
@@ -111,7 +116,7 @@ test('every newline glyph ends its visual line, and the tab is a real indent', a
       // A target that opens with a tab must open its line: nothing to its left.
       indentedNotAtLineStart: boxes.filter(
         (box, i) =>
-          (box.textContent ?? '').startsWith('→') && i > 0 && top(boxes[i - 1]) === top(box)
+          window.__visibleText!(box).startsWith('→') && i > 0 && top(boxes[i - 1]) === top(box)
       ).length
     }
   })

@@ -357,6 +357,14 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
   const lastError = ref<{ code: ErrorCode; message: string } | null>(null)
   const phase = ref<MatchPhase>('idle')
   const countdownMsLeft = ref<number | null>(null)
+  /**
+   * The server's 32-bit match seed (PROTOCOL.md §4 `countdown.seed`), held for
+   * the match surface: the field schedules its display canaries from it. Set
+   * the moment the countdown frame lands — quote matches carry one too, and
+   * the canary schedule is generation-independent, so it applies to both text
+   * paths. `null` outside a match.
+   */
+  const matchSeed = ref<number | null>(null)
   const matchError = ref<MatchError | null>(null)
   const standings = ref<StandingRow[] | null>(null)
   /** Δ3: why the server ended the match — the results screen may surface it. */
@@ -681,6 +689,7 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     peersRev.value += 1
     countdownFrame = null
     matchId = null
+    matchSeed.value = null
     forfeitedMatchId = null
     reloadForfeit.value = false
     matchWords = []
@@ -754,6 +763,11 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
   }
 
   function onRoomState(frame: RoomStateFrame): void {
+    // The chat lives with the ROOM, not with the connection: a different code
+    // is a different lobby, and the old one's history must not follow the
+    // player there. (Leaving already nulls `room`, so a re-join — even to the
+    // same code — starts clean too.)
+    if (room.value?.code !== frame.code) chatLog.value = []
     room.value = frame
     const self = frame.players.find((player) => player.playerId === selfId.value)
     if (self !== undefined) selfNick = self.nick
@@ -874,6 +888,7 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     const token = matchToken
     countdownFrame = frame
     matchId = frame.matchId
+    matchSeed.value = frame.seed
     matchError.value = null
     standings.value = null
     phase.value = 'countdown'
@@ -1521,6 +1536,7 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     phase,
     afkProgress,
     countdownMsLeft,
+    matchSeed,
     matchError,
     selfView,
     selfHud,
