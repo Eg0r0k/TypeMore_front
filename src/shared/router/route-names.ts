@@ -9,6 +9,7 @@ export const ROUTE_NAMES = {
   SERVERS: 'servers',
   ROOM: 'room',
   PROFILE: 'profile',
+  USER: 'user',
   ERROR: 'error',
   MATCH: 'match',
   BOARDS: 'boards',

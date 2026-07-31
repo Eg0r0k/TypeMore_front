@@ -40,3 +40,11 @@ export interface EmailAddInput {
 export interface PasswordSetInput {
   password: string
 }
+/**
+ * PATCH /me/settings — a PARTIAL body by contract: each switch moves only when
+ * present, so flipping one never races (or has to know) the other.
+ */
+export interface SettingsInput {
+  profilePublic?: boolean
+  keyboardPublic?: boolean
+}

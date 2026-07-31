@@ -37,6 +37,15 @@ export function useMatchResults() {
   const freemodsOf = (playerId: string): Freemods =>
     session.room?.players.find((seat) => seat.playerId === playerId)?.freemods ?? FALLBACK_FREEMODS
 
+  /**
+   * Whether a seat belongs to a REGISTERED account — what gates its nick
+   * becoming a profile link. Read off the roster's `isGuest`; a seat no longer
+   * in the roster answers `undefined`, which the table treats as a guest: a
+   * link is never guessed.
+   */
+  const isGuestOf = (playerId: string): boolean | undefined =>
+    session.room?.players.find((seat) => seat.playerId === playerId)?.isGuest
+
   const mode = computed(() => session.room?.settings.mode ?? 'time')
 
   /** The result screen is up for a seat that is out, or for the whole match. */
@@ -109,6 +118,7 @@ export function useMatchResults() {
       playerId: peer.playerId,
       nick: peer.nick,
       isSelf: false,
+      isGuest: isGuestOf(peer.playerId),
       status: peer.status,
       wpm: peer.metrics.wpm,
       acc: peer.metrics.acc,
@@ -126,6 +136,7 @@ export function useMatchResults() {
         playerId: selfId,
         nick: session.room?.players.find((seat) => seat.playerId === selfId)?.nick ?? '',
         isSelf: true,
+        isGuest: isGuestOf(selfId),
         status: forfeited ? 'dnf' : 'eliminated',
         wpm: run?.metrics.wpm,
         raw: run?.metrics.raw,
@@ -152,11 +163,14 @@ export function useMatchResults() {
     if (final === null) return liveRows.value
     // The store folds a full `Metrics` per seat but publishes only wpm and acc,
     // so raw and the char breakdown are blank for opponents. Ours is right here.
+    // isGuest is decorated HERE (not in the store's fold): it is a rendering
+    // concern of the nick cell, resolved off the roster like freemods are.
     const run = selfRun.value
-    if (run === null) return final
-    return final.map((row) =>
-      row.isSelf ? { ...row, raw: run.metrics.raw, chars: run.metrics.chars } : row
-    )
+    return final.map((row) => ({
+      ...row,
+      isGuest: isGuestOf(row.playerId),
+      ...(row.isSelf && run !== null ? { raw: run.metrics.raw, chars: run.metrics.chars } : {})
+    }))
   })
 
   /** Non-terminal seats — a graced disconnect is still racing server-side. */

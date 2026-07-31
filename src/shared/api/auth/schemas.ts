@@ -20,7 +20,15 @@ export const UserSchema = v.object({
    * Defaulted rather than required so a server that predates the field, and the
    * flow responses that are not about moderation, both still parse.
    */
-  restricted: v.optional(v.boolean(), false)
+  restricted: v.optional(v.boolean(), false),
+  /**
+   * The account's two privacy switches (backend `docs/PROFILE.md`, "Public
+   * profiles"). Defaults mirror the SERVER's migration defaults — open profile,
+   * private keyboard portrait — so a server that predates the fields parses to
+   * the same truth it enforces.
+   */
+  profilePublic: v.optional(v.boolean(), true),
+  keyboardPublic: v.optional(v.boolean(), false)
 })
 export type User = v.InferOutput<typeof UserSchema>
 

@@ -102,6 +102,7 @@ export default {
       sound: 'sound',
       caret: 'caret',
       appearance: 'appearance',
+      account: 'account',
       danger: 'danger zone'
     },
     value: {
@@ -208,6 +209,21 @@ export default {
       label: 'cookie preferences',
       description: 'Review which cookies this site is allowed to store.',
       open: 'open'
+    },
+    account: {
+      signin: 'Sign in to manage your account’s privacy settings.',
+      error: 'Could not save the setting — check your connection and try it again.'
+    },
+    profilePublic: {
+      label: 'public profile',
+      description:
+        'Off, your profile page shows other players only your nick and “profile closed” — no stats, records, history or keyboard portrait. Your leaderboard entries stay visible and watchable either way: a ranked run is a public result.'
+    },
+    keyboardPublic: {
+      label: 'show keyboard portrait to others',
+      description:
+        'Your per-key error rates and timings are a behavioural fingerprint, so they stay private unless you turn this on. Only affects visitors of your profile page — you always see your own portrait.',
+      closedNote: 'Your profile is closed, which already hides the portrait from everyone.'
     }
   },
   auth: {
@@ -540,6 +556,8 @@ export default {
     /** Row affordance — the whole row is the control, this is its accessible name. */
     watch: 'watch {player}’s run',
     race: 'race {player}’s run',
+    /** The nick inside a row is a real link to that player's profile page. */
+    profileOf: 'open {player}’s profile',
     /** The hover actions' visible titles. */
     actions: { watch: 'watch replay', race: 'race' },
     you: 'you',
@@ -700,6 +718,15 @@ export default {
     notFound: 'that run is not available',
     error: 'could not build this race',
     again: 'race again'
+  },
+  /** /u/{name} — another player's profile page and its three server-decided states. */
+  user: {
+    notFound: 'no player is called “{name}”',
+    goHome: 'back to typing',
+    /** The whole-profile state: the page is real, its owner keeps it closed. */
+    closed: 'this profile is closed by its owner',
+    /** One section's state on an otherwise open profile. */
+    portraitClosed: 'the keyboard portrait is kept private by its owner'
   },
   replay: {
     /** Stage 1 — the run's metadata. */

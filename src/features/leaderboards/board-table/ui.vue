@@ -80,7 +80,25 @@
                 <span :class="{ 'sr-only': entry.rank === 1 }">{{ entry.rank }}</span>
               </span>
               <span class="flex min-w-0 items-baseline gap-2" data-testid="boards-player">
-                <span class="truncate">{{ entry.displayName }}</span>
+                <!-- The nick is a real link to the player's profile page —
+                     new-tab and middle-click behave like any link — while the
+                     row's own click stays "watch this run". stop: the link
+                     must not also fire the row. A closed profile still has
+                     this page; it renders its closed state there. One's OWN
+                     nick opens /profile — the full page, not the preview. -->
+                <RouterLink
+                  :to="
+                    entry.userId === selfUserId
+                      ? routeLocation.profile()
+                      : routeLocation.user(entry.displayName)
+                  "
+                  class="truncate underline-offset-2 hover:underline focus-visible:underline"
+                  data-testid="boards-profile-link"
+                  :aria-label="t('boards.profileOf', { player: entry.displayName })"
+                  @click.stop
+                >
+                  {{ entry.displayName }}
+                </RouterLink>
                 <span v-if="entry.userId === selfUserId" class="ml-1.5 text-[0.7rem] text-main">
                   {{ t('boards.you') }}
                 </span>
@@ -183,10 +201,11 @@
 
 <script setup lang="ts">
   import { nextTick, onUnmounted, ref, toRef, useTemplateRef } from 'vue'
-  import { useRouter } from 'vue-router'
+  import { RouterLink, useRouter } from 'vue-router'
   import { useI18n } from 'vue-i18n'
   import type { BoardEntry } from '@shared/api'
   import { ROUTE_NAMES } from '@/app/router/route-names'
+  import { routeLocation } from '@/shared/router'
   import IconCrown from '~icons/tabler/crown'
   import IconMedal from '~icons/tabler/medal'
   import IconEye from '~icons/tabler/eye'

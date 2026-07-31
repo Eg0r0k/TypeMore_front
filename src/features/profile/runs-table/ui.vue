@@ -110,6 +110,11 @@
               <!-- Icon actions, the app's one pair: play = watch the replay,
                    swords = race this run's ghost. The words live in the title
                    and in aria-label, so the column stays a column. -->
+              <!-- The replay button follows the SERVER's answer, not a client
+                   guess: an own-feed row is watchable when accepted; a public
+                   row exists only because the server already serves it. The
+                   race action is the owner's own — a read-only (public) table
+                   renders none. -->
               <div v-if="run.status === 'accepted'" class="flex gap-1">
                 <Button
                   color="shadow"
@@ -122,6 +127,7 @@
                   <IconWatch />
                 </Button>
                 <Button
+                  v-if="!readonly"
                   color="shadow"
                   size="icon-sm"
                   :title="t('profile.runs.race')"
@@ -156,7 +162,13 @@
   import { onMounted, ref } from 'vue'
   import { useI18n } from 'vue-i18n'
 
-  import { queryClient, runsQueryOptions, type RunSummary } from '@shared/api'
+  import {
+    publicProfileRunsQueryOptions,
+    queryClient,
+    runsQueryOptions,
+    type PublicRun,
+    type RunSummary
+  } from '@shared/api'
   import { GameModIcons, type GameModsLike } from '@/entities/game'
   import { formatExactInstant, formatLongDate, formatTimeOfDay } from '@/shared/lib/helpers/datetime'
   import { groupThousands } from '@/shared/lib/helpers/numbers'
@@ -169,22 +181,40 @@
   import QuoteCell from './quote-cell.vue'
 
   /**
-   * The profile's runs table over the OWN runs feed: keyset load-more (the
-   * backend page stays keyset by contract), cells fed by the summaries'
-   * derived cells — grade/consistency/chars/mods/quoteId arrive lifted from
-   * the documents, so the table never parses a setup snapshot.
+   * The profile's runs table: keyset load-more (the backend page stays keyset
+   * by contract), cells fed by the summaries' derived cells —
+   * grade/consistency/chars/mods/quoteId arrive lifted from the documents, so
+   * the table never parses a setup snapshot.
+   *
+   * Two feeds, one table. Without `user` it renders the OWN runs feed
+   * (/runs); with `user` it renders that player's PUBLIC history
+   * (/users/{name}/runs) — the server-side allowlist rows, which carry every
+   * cell this table shows and none of the private half. `readonly` drops the
+   * race action (a public page offers no race).
    */
+  const props = defineProps<{
+    /** Render another player's public history instead of the own feed. */
+    user?: string
+    /** Hide the race action — the read-only (public) presentation. */
+    readonly?: boolean
+  }>()
   defineEmits<{ race: [runId: string]; watch: [runId: string] }>()
   const { t, locale } = useI18n()
 
-  const rows = ref<RunSummary[]>([])
+  /** A row of either feed — the public row is a strict subset in cells used here. */
+  type RunRow = RunSummary | PublicRun
+
+  const rows = ref<RunRow[]>([])
   const nextCursor = ref<string | undefined>(undefined)
   const state = ref<'loading' | 'ready' | 'error'>('loading')
 
   async function fetchPage(cursor?: string): Promise<void> {
     state.value = 'loading'
     try {
-      const page = await queryClient.fetchQuery(runsQueryOptions(cursor))
+      const page =
+        props.user === undefined
+          ? await queryClient.fetchQuery(runsQueryOptions(cursor))
+          : await queryClient.fetchQuery(publicProfileRunsQueryOptions(props.user, cursor))
       rows.value = cursor === undefined ? [...page.runs] : [...rows.value, ...page.runs]
       nextCursor.value = page.nextCursor
       state.value = 'ready'
@@ -197,7 +227,7 @@
   const loadMore = (): void => void fetchPage(nextCursor.value)
   onMounted(reload)
 
-  const modeDetail = (run: RunSummary): string => {
+  const modeDetail = (run: RunRow): string => {
     if (run.durationMs !== null && run.durationMs !== undefined)
       return `time ${run.durationMs / 1000}s`
     if (run.wordCount !== null && run.wordCount !== undefined) return `${run.wordCount} words`
@@ -205,21 +235,21 @@
   }
 
   /** Server numbers only — the table shows what the verdict verified. */
-  const metricsOf = (run: RunSummary): { wpm?: number; raw?: number; accuracy?: number } => {
+  const metricsOf = (run: RunRow): { wpm?: number; raw?: number; accuracy?: number } => {
     const metrics = run.serverMetrics
     return metrics !== null && metrics !== undefined
       ? (metrics as { wpm?: number; raw?: number; accuracy?: number })
       : {}
   }
-  const serverWpm = (run: RunSummary): string => {
+  const serverWpm = (run: RunRow): string => {
     const wpm = metricsOf(run).wpm
     return typeof wpm === 'number' ? speed(wpm) : '—'
   }
-  const serverRaw = (run: RunSummary): string => {
+  const serverRaw = (run: RunRow): string => {
     const raw = metricsOf(run).raw
     return typeof raw === 'number' ? speed(raw) : '—'
   }
-  const serverAcc = (run: RunSummary): string => {
+  const serverAcc = (run: RunRow): string => {
     const acc = metricsOf(run).accuracy
     return typeof acc === 'number' ? percent(acc) : '—'
   }
@@ -241,13 +271,13 @@
     }
     return undefined
   }
-  const points = (run: RunSummary): string => {
+  const points = (run: RunRow): string => {
     const value = scoreOf(run.serverScore)
     return value === undefined ? '' : groupThousands(value)
   }
 
   /** The mods slice, narrowed for the shared icon chips; null when absent. */
-  const modsOf = (run: RunSummary): GameModsLike | null =>
+  const modsOf = (run: RunRow): GameModsLike | null =>
     (run.mods ?? null) as GameModsLike | null
 
   /** Date and clock as two lines ("29 июля 2026" / "00:11"); the cell keeps the exact instant as a title. */

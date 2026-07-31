@@ -117,7 +117,9 @@ beforeEach(async () => {
     routes: [
       { path: '/boards', name: ROUTE_NAMES.BOARDS, component: { template: '<div />' } },
       { path: '/replay/:runId', name: ROUTE_NAMES.REPLAY, component: { template: '<div />' } },
-      { path: '/race/:runId', name: ROUTE_NAMES.RACE, component: { template: '<div />' } }
+      { path: '/race/:runId', name: ROUTE_NAMES.RACE, component: { template: '<div />' } },
+      { path: '/profile', name: ROUTE_NAMES.PROFILE, component: { template: '<div />' } },
+      { path: '/u/:name', name: ROUTE_NAMES.USER, component: { template: '<div />' } }
     ]
   })
   await router.push('/boards')
@@ -287,6 +289,31 @@ describe('board table', () => {
 
     expect(players[0]).not.toContain(i18n.global.t('boards.you'))
     expect(players[1]).toContain(i18n.global.t('boards.you'))
+
+    wrapper.unmount()
+  })
+
+  it('links every nick to its profile page — one’s own to /profile — without hijacking the row', async () => {
+    h.page.mockResolvedValue(
+      page([
+        entry({ rank: 1, userId: 'them', displayName: 'Ada', runId: 'r1' }),
+        entry({ rank: 2, userId: 'me', displayName: 'myself', runId: 'r2' })
+      ])
+    )
+
+    const wrapper = await mountTable({ bucket: BUCKET, selfUserId: 'me' })
+    const links = wrapper.findAll('[data-testid="boards-profile-link"]')
+    expect(links).toHaveLength(2)
+    // A stranger's nick → their public page; the caller's own → /profile. The
+    // link exists for EVERY row — a closed profile still has a page, it just
+    // renders its closed state there (the boundary the backend pins).
+    expect(links[0].attributes('href')).toBe('/u/Ada')
+    expect(links[1].attributes('href')).toBe('/profile')
+
+    // Clicking the nick navigates to the profile, NOT to the row's replay.
+    await links[0].trigger('click')
+    await settle()
+    expect(router.currentRoute.value.path).toBe('/u/Ada')
 
     wrapper.unmount()
   })

@@ -115,7 +115,11 @@ beforeEach(async () => {
       { path: '/', name: ROUTE_NAMES.HOME, component: { template: '<div />' } },
       { path: '/login', name: ROUTE_NAMES.LOGIN, component: { template: '<div />' } },
       { path: '/boards', name: ROUTE_NAMES.BOARDS, component: { template: '<div />' } },
-      { path: '/replay/:runId', name: ROUTE_NAMES.REPLAY, component: { template: '<div />' } }
+      { path: '/replay/:runId', name: ROUTE_NAMES.REPLAY, component: { template: '<div />' } },
+      // Every nick in a row is a profile link now: the self row's to /profile,
+      // the table's to /u/{name}.
+      { path: '/profile', name: ROUTE_NAMES.PROFILE, component: { template: '<div />' } },
+      { path: '/u/:name', name: ROUTE_NAMES.USER, component: { template: '<div />' } }
     ]
   })
   await router.push('/boards')

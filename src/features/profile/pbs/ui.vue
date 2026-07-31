@@ -46,9 +46,13 @@
         </span>
 
         <!-- The app's one action pair, in the app's one icon-button size —
-               the words live in title/aria-label, so the card stays small. -->
+               the words live in title/aria-label, so the card stays small.
+               Read-only (a public profile) keeps watch and drops race: racing
+               is the viewer's action against a run the server serves, and the
+               public page deliberately offers none. -->
         <div class="flex shrink-0 gap-0.5">
           <Button
+            v-if="!readonly"
             color="shadow"
             size="icon-sm"
             :title="t('profile.pbs.race')"
@@ -91,7 +95,7 @@
    * SMALL: a personal best is a glance ("time 15s · 103 wpm, SS"), not a report,
    * so a full board of buckets fits one screen instead of a column of banners.
    */
-  defineProps<{ pbs: readonly ProfilePB[] }>()
+  defineProps<{ pbs: readonly ProfilePB[]; readonly?: boolean }>()
   defineEmits<{ race: [runId: string]; watch: [runId: string] }>()
   const { t, locale } = useI18n()
 

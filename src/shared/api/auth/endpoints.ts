@@ -9,6 +9,7 @@ import type {
   PasswordSetInput,
   RegisterInput,
   ResendVerificationInput,
+  SettingsInput,
   VerifyInput
 } from './types'
 
@@ -55,6 +56,14 @@ export const passwordSet = async (input: PasswordSetInput): Promise<void> => {
 }
 
 export const me = (): Promise<User> => request('/me', UserSchema)
+
+/**
+ * The account's privacy switches (backend `docs/PROFILE.md`, "Public
+ * profiles"). Partial body; answers with the same user view `/me` serves, so
+ * the caller's next "what is the state now" is already in hand.
+ */
+export const updateSettings = (input: SettingsInput): Promise<User> =>
+  request('/me/settings', UserSchema, { method: 'PATCH', body: input })
 
 export const linkStart = (provider: OAuthProvider): Promise<LinkStart> =>
   request(`/auth/link/${provider}/start`, LinkStartSchema, { method: 'POST' })

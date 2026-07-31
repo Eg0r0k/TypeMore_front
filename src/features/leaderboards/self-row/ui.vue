@@ -14,7 +14,15 @@
         #{{ entry.rank }}
       </span>
       <span class="flex min-w-0 items-baseline gap-2">
-        <span class="truncate">{{ entry.displayName }}</span>
+        <!-- Your own nick opens YOUR profile page (/profile) — the full,
+             session-scoped one, not the public preview. -->
+        <RouterLink
+          :to="routeLocation.profile()"
+          class="truncate underline-offset-2 hover:underline focus-visible:underline"
+          data-testid="boards-self-profile-link"
+        >
+          {{ entry.displayName }}
+        </RouterLink>
         <span
           v-if="percent !== null"
           class="shrink-0 rounded bg-main px-2 py-px text-[0.7rem] text-bg"

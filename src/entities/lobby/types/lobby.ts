@@ -60,6 +60,12 @@ export interface StandingRow {
   nick: string
   isSelf: boolean
   /**
+   * Whether this seat is a guest (no account, no profile page). Decorated from
+   * the room roster (`RoomPlayer.isGuest`) by the results model; absent means
+   * "unknown" and is treated as a guest — a profile link must never be guessed.
+   */
+  isGuest?: boolean
+  /**
    * Final rows carry the WIRE status — an eliminated player finished on the wire, so `failReason` is
    * what actually happened. A `dnf` is no longer only a missed finish window: in `words` mode the
    * server also dnf's a seat whose AFK share (see {@link StandingRow.afkShare}) crosses its

@@ -21,6 +21,7 @@ export * from './leaderboards'
 export * from './quotes'
 export * from './rooms'
 export * from './profile'
+export * from './users'
 
 export { queryClient } from './query-client'
 export { API_SCOPE } from './keys'

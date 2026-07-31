@@ -4,6 +4,7 @@ import IconKeyboard from '~icons/tabler/keyboard'
 import IconVolume from '~icons/tabler/volume'
 import IconCursorText from '~icons/tabler/cursor-text'
 import IconPalette from '~icons/tabler/palette'
+import IconShieldLock from '~icons/tabler/shield-lock'
 import IconAlertTriangle from '~icons/tabler/alert-triangle'
 
 /**
@@ -14,7 +15,7 @@ import IconAlertTriangle from '~icons/tabler/alert-triangle'
  * in their section — a generic control renderer would buy nothing and cost
  * every future setting a detour through an abstraction.
  */
-export type CategoryId = 'input' | 'sound' | 'caret' | 'appearance' | 'danger'
+export type CategoryId = 'input' | 'sound' | 'caret' | 'appearance' | 'account' | 'danger'
 
 export type SettingId =
   | 'freedomMode'
@@ -31,6 +32,8 @@ export type SettingId =
   | 'background'
   | 'theme'
   | 'colors'
+  | 'profilePublic'
+  | 'keyboardPublic'
   | 'data'
   | 'reset'
   | 'cookies'
@@ -54,6 +57,9 @@ export const CATEGORIES: readonly CategoryMeta[] = [
   { id: 'sound', icon: IconVolume },
   { id: 'caret', icon: IconCursorText },
   { id: 'appearance', icon: IconPalette },
+  // Account: the SERVER-persisted switches (profile privacy). Everything else
+  // in this dialog is a local preference; these two travel with the account.
+  { id: 'account', icon: IconShieldLock },
   { id: 'danger', icon: IconAlertTriangle }
 ]
 
@@ -72,6 +78,16 @@ export const SETTINGS: readonly SettingMeta[] = [
   { id: 'background', category: 'appearance', keywords: ['image', 'wallpaper', 'picture'] },
   { id: 'theme', category: 'appearance', keywords: ['colors', 'preset', 'dark', 'light'] },
   { id: 'colors', category: 'appearance', keywords: ['palette', 'custom', 'hex'] },
+  {
+    id: 'profilePublic',
+    category: 'account',
+    keywords: ['privacy', 'private', 'public', 'profile', 'закрыт', 'приватность']
+  },
+  {
+    id: 'keyboardPublic',
+    category: 'account',
+    keywords: ['privacy', 'heatmap', 'portrait', 'keyboard', 'biometric', 'клавиатура']
+  },
   { id: 'data', category: 'danger', keywords: ['json', 'backup', 'import', 'export'] },
   { id: 'reset', category: 'danger', keywords: ['default', 'defaults', 'wipe', 'restore'] },
   { id: 'cookies', category: 'danger', keywords: ['consent', 'privacy', 'gdpr'] }

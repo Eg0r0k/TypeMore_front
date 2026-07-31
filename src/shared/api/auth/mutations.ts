@@ -9,6 +9,7 @@ import {
   passwordSet,
   register,
   resendVerification,
+  updateSettings,
   verify
 } from './endpoints'
 import { authKeys } from './keys'
@@ -21,6 +22,7 @@ import type {
   PasswordSetInput,
   RegisterInput,
   ResendVerificationInput,
+  SettingsInput,
   VerifyInput
 } from './types'
 
@@ -79,3 +81,16 @@ export const usePasswordSetMutation = () =>
 
 export const useLinkStartMutation = () =>
   useMutation({ mutationFn: (provider: OAuthProvider) => linkStart(provider) })
+
+/**
+ * The privacy switches. The response IS the fresh user view, so it is written
+ * straight into the `me` cache — no refetch round-trip for a state the server
+ * just told us.
+ */
+export const useUpdateSettingsMutation = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: SettingsInput) => updateSettings(input),
+    onSuccess: (user) => qc.setQueryData(authKeys.me(), user)
+  })
+}

@@ -13,7 +13,8 @@ export {
   usePasswordResetConfirmMutation,
   useEmailAddMutation,
   usePasswordSetMutation,
-  useLinkStartMutation
+  useLinkStartMutation,
+  useUpdateSettingsMutation
 } from './mutations'
 
 export type { User, LinkStart } from './schemas'
@@ -26,5 +27,6 @@ export type {
   PasswordResetRequestInput,
   PasswordResetConfirmInput,
   EmailAddInput,
-  PasswordSetInput
+  PasswordSetInput,
+  SettingsInput
 } from './types'

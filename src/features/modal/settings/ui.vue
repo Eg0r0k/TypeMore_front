@@ -63,6 +63,7 @@
                 <AppearanceSection />
                 <ThemeSection />
               </template>
+              <AccountSection v-else-if="category === 'account'" />
               <DangerSection v-else />
             </div>
           </template>
@@ -105,6 +106,7 @@
     type CategoryId,
     type SettingId
   } from './model/registry'
+  import AccountSection from './parts/AccountSection.vue'
   import AppearanceSection from './parts/AppearanceSection.vue'
   import CaretSection from './parts/CaretSection.vue'
   import DangerSection from './parts/DangerSection.vue'

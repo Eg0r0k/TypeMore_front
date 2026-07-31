@@ -17,5 +17,7 @@ export const routeLocation = {
     ...(bucket === undefined ? {} : { query: { bucket } })
   }),
   room: (): RouteLocationRaw => ({ name: ROUTE_NAMES.ROOM }),
-  profile: (): RouteLocationRaw => ({ name: ROUTE_NAMES.PROFILE })
+  profile: (): RouteLocationRaw => ({ name: ROUTE_NAMES.PROFILE }),
+  /** Another player's public profile, by display name (`/u/{name}`). */
+  user: (name: string): RouteLocationRaw => ({ name: ROUTE_NAMES.USER, params: { name } })
 } as const

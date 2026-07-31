@@ -85,7 +85,21 @@
             >
               <td class="standings__rank">{{ row.rank }}</td>
               <td class="whitespace-nowrap">
-                {{ row.nick }}
+                <!-- A REGISTERED player's nick links to their profile page —
+                     guests have no accounts and no profiles, so their nicks
+                     stay plain text. Registration is read off the room roster
+                     (RoomPlayer.isGuest); a seat no longer in the roster is
+                     treated as a guest rather than guessed at. One's own nick
+                     opens /profile. -->
+                <RouterLink
+                  v-if="profileLinkOf(row) !== null"
+                  :to="profileLinkOf(row)!"
+                  class="underline-offset-2 hover:underline focus-visible:underline"
+                  data-testid="standings-profile-link"
+                >
+                  {{ row.nick }}
+                </RouterLink>
+                <template v-else>{{ row.nick }}</template>
                 <span v-if="row.isSelf" class="ml-1.5 text-xs text-main">
                   {{ t('room.results.you') }}
                 </span>
@@ -144,9 +158,12 @@
 
 <script setup lang="ts">
   import { computed } from 'vue'
+  import { RouterLink } from 'vue-router'
+  import type { RouteLocationRaw } from 'vue-router'
   import { useI18n } from 'vue-i18n'
   import clsx from 'clsx'
   import type { CharCounts } from '@typemore/core'
+  import { routeLocation } from '@/shared/router'
   import { FreemodChips } from '@/entities/lobby'
   import type { StandingRow } from '@/entities/lobby'
   import type { OutcomeReason } from '@/entities/match'
@@ -204,6 +221,17 @@
 
   /** A match has no next test to load and no replay screen to open. */
   const MATCH_ACTIONS: readonly ResultsAction[] = ['screenshot']
+
+  /**
+   * Where a row's nick leads: your own registered nick to /profile, another
+   * registered player's to their /u/{name} page, a guest's (or a seat whose
+   * registration is unknown) nowhere. `isGuest === false` is the only value
+   * that earns a link — the fail-closed reading of an optional flag.
+   */
+  const profileLinkOf = (row: StandingRow): RouteLocationRaw | null => {
+    if (row.isGuest !== false) return null
+    return row.isSelf ? routeLocation.profile() : routeLocation.user(row.nick)
+  }
 
   /**
    * The BEM names stay as state markers (the row states are what the specs
