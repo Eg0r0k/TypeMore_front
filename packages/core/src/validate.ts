@@ -18,7 +18,8 @@ import {
   sortEvents
 } from './events'
 import type { CoreConfig, CoreContext, GameState } from './game-core'
-import { foldLog, minSpeedFailInstant, settle } from './game-core'
+import { bufferOf, foldLog, initialStateOf, minSpeedFailInstant, reduce, settle } from './game-core'
+import { CANARY_CODEPOINTS, canaryAt } from './canary'
 import type { Dictionary, GenerationConfig } from './words'
 import { generateWords, makeSeedContext } from './words'
 import type { Metrics } from './stats'
@@ -62,6 +63,17 @@ export interface ValidateLogInput {
   readonly configSnapshot: ConfigSnapshot
   readonly log: EventLog
   readonly thresholds?: Partial<PlausibilityThresholds>
+  /**
+   * Arm the canary detectors (canary.ts) for this run. DEFAULT `false`, and the
+   * default is a load-bearing contract: a disarmed validateLog is bit-identical
+   * to the pre-canary validateLog — same flags, same order, same report — so
+   * every stored run, golden vector and re-judgement predating the canary
+   * render deploy reconstructs exactly. The CALLER decides per run (the server
+   * gates on the run's creation instant vs. the canary epoch); arming a run
+   * whose client never rendered canaries would score coincidental early
+   * commits as evidence, which is why this can never default to `true`.
+   */
+  readonly canariesArmed?: boolean
 }
 
 export type FlagCode =
@@ -74,6 +86,10 @@ export type FlagCode =
   | 'afk-heavy'
   | 'trailing-afk'
   | 'unpaired-keyup'
+  /** An `insert` carried an invisible canary codepoint — direct scrape evidence. */
+  | 'canary-grapheme'
+  /** Commits repeatedly landing exactly on seed-scheduled canary offsets. */
+  | 'canary-commit'
 
 export interface ScoredFlag {
   readonly code: FlagCode
@@ -327,6 +343,80 @@ export function validateLog(input: ValidateLogInput): Result<ValidationReport, V
         score: runMs > 0 ? Math.min(1, tailMs / runMs) : 1,
         detail: `${Math.round(tailMs / 1000)}s idle after the last keystroke`
       })
+    }
+  }
+
+  // (9) Canary detectors — ONLY when the caller armed them for this run (see
+  // `canariesArmed`; disarmed is bit-identical to the pre-canary validator).
+  // Appended after every legacy flag so an armed report is the disarmed report
+  // plus a suffix — nothing existing moves.
+  if (input.canariesArmed === true) {
+    // (9a) Direct: an `insert` carrying any invisible-operator codepoint. No
+    // positional condition — no keyboard, layout or IME produces these, paste
+    // is already its own flag, so one occurrence is evidence by itself
+    // (zero-variance class: score 1 regardless of count).
+    let canaryInserts = 0
+    for (const event of stateEvents) {
+      if (event.kind !== 'insert') continue
+      for (const char of event.text) {
+        if (CANARY_CODEPOINTS.has(char)) {
+          canaryInserts++
+          break
+        }
+      }
+    }
+    if (canaryInserts > 0) {
+      flags.push({
+        code: 'canary-grapheme',
+        score: 1,
+        detail: `${canaryInserts} insert event(s) carry an invisible canary codepoint`
+      })
+    }
+
+    // (9b) Positional: commits landing EXACTLY on the seed-scheduled canary
+    // offset of the word they commit. One is a coincidence a sloppy human can
+    // produce (a mid-word double-space); three-plus at seed-derived positions
+    // is a scraper feeding the rendered text back through the input adapter.
+    //
+    // The pass re-folds the state events through the SAME `reduce`/`settle`
+    // the replay used, reading the active buffer length BEFORE each commit is
+    // applied — no bespoke caret tracker that could drift from the reducer.
+    // `foldLog` already succeeded above, so this fold cannot fail; if it
+    // somehow does, the detector is silently skipped — the verdict is long
+    // decided, and a plausibility flag is never worth failing the pipeline.
+    //
+    // Skipped under nospace by construction: a nospace log carries no commit
+    // events at all (the structural gate above enforced it), so the fold
+    // would be pure cost for a detector that can never fire.
+    if (!config.nospace) {
+      let hits = 0
+      let aborted = false
+      try {
+        let replayState = initialStateOf(ctx)
+        for (const event of stateEvents) {
+          replayState = settle(ctx, replayState, event.t)
+          if (event.kind === 'commit') {
+            const index = replayState.wordIndex
+            const canary = canaryAt(input.seed, index, ctx.words[index] ?? '')
+            if (canary !== null && bufferOf(replayState, index).length === canary.slot) hits++
+          }
+          const next = reduce(ctx, replayState, event)
+          if (next.isErr()) {
+            aborted = true
+            break
+          }
+          replayState = next.value
+        }
+      } catch {
+        aborted = true
+      }
+      if (!aborted && hits >= 3) {
+        flags.push({
+          code: 'canary-commit',
+          score: Math.min(1, (hits - 2) * 0.25),
+          detail: `${hits} commit(s) landed exactly on a seed-scheduled canary offset`
+        })
+      }
     }
   }
 
