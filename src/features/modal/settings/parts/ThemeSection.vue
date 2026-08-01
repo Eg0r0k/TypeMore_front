@@ -1,9 +1,13 @@
 <template>
   <div class="settings-section">
     <SettingRow id="theme">
-      <Button color="main-outline" size="s" @click="nav?.openThemes()">
-        {{ t('settings.theme.open') }}
-      </Button>
+      <SettingIconButton
+        color="main-outline"
+        :label="t('settings.theme.open')"
+        @click="nav?.openThemes()"
+      >
+        <IconBrush />
+      </SettingIconButton>
     </SettingRow>
 
     <!-- `wide`: the background cluster (url + two buttons + a fit group + two
@@ -26,12 +30,17 @@
             @keydown.enter="commitUrl"
             @blur="commitUrl"
           />
-          <Button color="gray" size="s" @click="pickLocal">
-            {{ t('settings.background.useLocal') }}
-          </Button>
-          <Button v-if="hasBackground" color="error-outline" size="s" @click="clearBackground">
-            {{ t('settings.background.clear') }}
-          </Button>
+          <SettingIconButton :label="t('settings.background.useLocal')" @click="pickLocal">
+            <IconPhotoUp />
+          </SettingIconButton>
+          <SettingIconButton
+            v-if="hasBackground"
+            color="error-outline"
+            :label="t('settings.background.clear')"
+            @click="clearBackground"
+          >
+            <IconX />
+          </SettingIconButton>
         </div>
 
         <input
@@ -71,7 +80,9 @@
           />
           <Typography size="xxs" color="sub" tag-name="span">{{ label(color) }}</Typography>
         </label>
-        <Button color="gray" size="s" @click="copyTheme">{{ t('settings.colors.copy') }}</Button>
+        <SettingIconButton :label="t('settings.colors.copy')" @click="copyTheme">
+          <IconCopy />
+        </SettingIconButton>
       </div>
     </SettingRow>
   </div>
@@ -81,6 +92,10 @@
   import { computed, inject, ref, useTemplateRef, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
   import { useDebounceFn } from '@vueuse/core'
+  import IconBrush from '~icons/tabler/brush'
+  import IconCopy from '~icons/tabler/copy'
+  import IconPhotoUp from '~icons/tabler/photo-up'
+  import IconX from '~icons/tabler/x'
 
   import { useConfigStore } from '@/entities/config'
   import { narrowTo } from '@/shared/lib/helpers/narrow'
@@ -89,11 +104,11 @@
   import { readImageFile } from '@/shared/lib/helpers/image'
   import { useThemes } from '@/shared/lib/hooks/useThemes'
   import { validateConfig } from '@/shared/lib/helpers/validation'
-  import { Button } from '@/shared/ui/button'
   import { toast } from '@/shared/ui/sonner'
   import { TextInput } from '@/shared/ui/input'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
   import { Typography } from '@/shared/ui/typography'
+  import SettingIconButton from './SettingIconButton.vue'
   import SettingRow from './SettingRow.vue'
 
   /** The seven custom properties every theme defines (see `shared/api/themes`). */

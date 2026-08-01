@@ -1,10 +1,12 @@
 <template>
   <div class="settings-section">
     <SettingRow id="data">
-      <Button color="gray" size="s" @click="exportSettings">
-        {{ t('settings.data.export') }}
-      </Button>
-      <Button color="gray" size="s" @click="pickFile">{{ t('settings.data.import') }}</Button>
+      <SettingIconButton :label="t('settings.data.export')" @click="exportSettings">
+        <IconDownload />
+      </SettingIconButton>
+      <SettingIconButton :label="t('settings.data.import')" @click="pickFile">
+        <IconUpload />
+      </SettingIconButton>
       <input
         ref="fileRef"
         class="danger__file"
@@ -29,9 +31,15 @@
     </SettingRow>
 
     <SettingRow id="cookies">
-      <Button color="main-outline" size="s" @click="nav?.openCookies()">
-        {{ t('settings.cookies.open') }}
-      </Button>
+      <!-- A drill-in, not a verb: the row's label already names the destination,
+           so the chevron is the only new information the caption carried. -->
+      <SettingIconButton
+        color="main-outline"
+        :label="t('settings.cookies.open')"
+        @click="nav?.openCookies()"
+      >
+        <IconChevronRight />
+      </SettingIconButton>
     </SettingRow>
   </div>
 </template>
@@ -39,6 +47,9 @@
 <script setup lang="ts">
   import { inject, ref, useTemplateRef } from 'vue'
   import { useI18n } from 'vue-i18n'
+  import IconChevronRight from '~icons/tabler/chevron-right'
+  import IconDownload from '~icons/tabler/download'
+  import IconUpload from '~icons/tabler/upload'
 
   import { useConfigStore } from '@/entities/config'
   import { SETTINGS_NAV } from '../model/registry'
@@ -46,6 +57,7 @@
   import type { Config } from '@/shared/constants/type'
   import { Button } from '@/shared/ui/button'
   import { toast } from '@/shared/ui/sonner'
+  import SettingIconButton from './SettingIconButton.vue'
   import SettingRow from './SettingRow.vue'
 
   /**
