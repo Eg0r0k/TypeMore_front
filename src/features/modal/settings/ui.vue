@@ -39,38 +39,55 @@
         </aside>
 
         <section class="settings-dialog__pane bg-background">
-          <template v-if="visibleCategories.length">
-            <div
-              v-for="category in visibleCategories"
-              :key="category"
-              class="settings-dialog__group"
-            >
-              <Typography
-                v-if="searching"
-                size="s"
-                color="main"
-                tag-name="p"
-                class="settings-dialog__group-title"
+          <!--
+            A real heading, and the reason the pane can have a normal right
+            padding: the dialog's close button is pinned to the content's
+            top-right corner, so SOMETHING has to yield that corner. It used to
+            be paid for with a 48px right gutter on the whole pane, which pulled
+            every control off the edge it was supposed to align to. Now the
+            heading row yields it once, and the scrolling body below is padded
+            evenly. Kept outside the scroller so it cannot slide under the button.
+          -->
+          <header class="settings-dialog__head">
+            <Typography size="m" color="primary" tag-name="h2">
+              {{ searching ? t('settings.title') : t(`settings.category.${activeCategory}`) }}
+            </Typography>
+          </header>
+
+          <div class="settings-dialog__body">
+            <template v-if="visibleCategories.length">
+              <div
+                v-for="category in visibleCategories"
+                :key="category"
+                class="settings-dialog__group"
               >
-                {{ t(`settings.category.${category}`) }}
-              </Typography>
+                <Typography
+                  v-if="searching"
+                  size="s"
+                  color="main"
+                  tag-name="p"
+                  class="settings-dialog__group-title"
+                >
+                  {{ t(`settings.category.${category}`) }}
+                </Typography>
 
-              <InputSection v-if="category === 'input'" />
-              <SoundSection v-else-if="category === 'sound'" />
-              <CaretSection v-else-if="category === 'caret'" />
-              <!-- Appearance owns the theme rows too: one "how it looks" tab. -->
-              <template v-else-if="category === 'appearance'">
-                <AppearanceSection />
-                <ThemeSection />
-              </template>
-              <AccountSection v-else-if="category === 'account'" />
-              <DangerSection v-else />
-            </div>
-          </template>
+                <InputSection v-if="category === 'input'" />
+                <SoundSection v-else-if="category === 'sound'" />
+                <CaretSection v-else-if="category === 'caret'" />
+                <!-- Appearance owns the theme rows too: one "how it looks" tab. -->
+                <template v-else-if="category === 'appearance'">
+                  <AppearanceSection />
+                  <ThemeSection />
+                </template>
+                <AccountSection v-else-if="category === 'account'" />
+                <DangerSection v-else />
+              </div>
+            </template>
 
-          <Typography v-else size="m" color="sub" tag-name="p">
-            {{ t('settings.empty', { query }) }}
-          </Typography>
+            <Typography v-else size="m" color="sub" tag-name="p">
+              {{ t('settings.empty', { query }) }}
+            </Typography>
+          </div>
         </section>
       </div>
     </DialogContent>
@@ -291,14 +308,31 @@
      * The control rail, declared ONCE for the whole pane: every SettingRow
      * resolves its control column to this width, which is what makes the
      * controls line up across rows AND across sections (appearance renders two
-     * of them). Wide enough that the reset row's confirm pair still fits on one
-     * line; the labels beside it have 380px+ left, and the descriptions span the
-     * full row regardless, so widening the rail costs no measure.
+     * of them).
      */
     --setting-control-width: 220px;
+    --settings-pane-gutter: 24px;
 
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
     min-width: 0;
-    padding: 28px 48px 24px 20px;
+  }
+
+  // Right padding clears the dialog's close button; the body below does not
+  // have to, which is the whole point of splitting them.
+  .settings-dialog__head {
+    padding: 18px 52px 12px var(--settings-pane-gutter);
+
+    // The same hairline the rows separate themselves with, so it reads as the
+    // top of that rhythm rather than added chrome — and it tells you where the
+    // scrolling body starts, since a control clipped at an unmarked edge just
+    // looks broken.
+    border-bottom: 1px solid var(--sub-alt-color);
+  }
+
+  .settings-dialog__body {
+    min-width: 0;
+    padding: 4px var(--settings-pane-gutter) 24px;
     overflow-y: auto;
   }
 
