@@ -107,8 +107,10 @@ describe('settings — account privacy switches', () => {
 
     const keyboardSwitch = wrapper.find('[data-testid="settings-keyboard-public"]')
     expect(keyboardSwitch.attributes('disabled')).toBeDefined()
-    expect(wrapper.find('[data-testid="settings-keyboard-public-note"]').text()).toContain(
-      'already hides the portrait'
+    // Against the message, not a copy of it: the point is that the row explains
+    // WHY it is disabled, and rewording the note should not fail this test.
+    expect(wrapper.find('[data-testid="settings-keyboard-public-note"]').text()).toBe(
+      en.settings.keyboardPublic.closedNote
     )
 
     // Disabled means disabled: a click PATCHes nothing.

@@ -112,12 +112,12 @@ export default {
     },
     uiLanguage: {
       label: 'interface language',
-      description: 'Language of the interface. System follows your browser.',
+      description: 'System follows your browser.',
       system: 'system'
     },
     reset: {
       label: 'reset settings',
-      description: 'Restore every setting to its default. This cannot be undone.',
+      description: 'Back to defaults. Cannot be undone.',
       action: 'reset',
       confirm: 'reset everything?',
       cancel: 'cancel',
@@ -125,39 +125,37 @@ export default {
     },
     freedomMode: {
       label: 'freedom mode',
-      description: 'Allows you to delete any word, even if it was typed correctly.'
+      description: 'Backspace into words you already typed correctly.'
     },
     stopOnError: {
       label: 'stop on error',
-      description:
-        'Letter stops input on a wrong letter; word holds you on the word until every mistake is fixed.',
+      description: 'Freeze on a wrong letter, or hold the word until it is clean.',
       off: 'off',
       word: 'word',
       letter: 'letter'
     },
     quickEnd: {
       label: 'quick end',
-      description:
-        'Words mode only: the test ends on the last typed word, even with an error — no trailing space needed.'
+      description: 'Words mode: finish on the last word, no trailing space.'
     },
     soundVolume: {
       label: 'sound volume',
-      description: 'Change the volume of the sound effects.'
+      description: 'Loudness of the sound effects.'
     },
     soundOnClick: {
       label: 'play sound on click',
-      description: 'Plays a short sound when you press a key.'
+      description: 'A short sound on every keystroke.'
     },
     smoothCaret: {
       label: 'smooth caret',
-      description: 'The caret will move smoothly between letters and words.',
+      description: 'How fast the caret glides between letters.',
       slow: 'slow',
       medium: 'medium',
       fast: 'fast'
     },
     caretStyle: {
       label: 'caret style',
-      description: 'Change the style of the caret during the test.',
+      description: 'Shape of the caret during a test.',
       default: 'default',
       block: 'block',
       outline: 'outline',
@@ -165,9 +163,8 @@ export default {
     },
     background: {
       label: 'custom background',
-      description:
-        'An image url or a local file (the local one wins). Cover fills the screen, contain shows the whole image, max stretches it corner to corner.',
-      note: 'The local image is stored in your browser’s local storage and is never uploaded to the server — clearing that storage or switching browser loses it.',
+      description: 'An image url or a local file — the local one wins.',
+      note: 'A local file stays in this browser and is never uploaded.',
       url: 'image url',
       urlPlaceholder: 'https://example.com/image.png',
       useLocal: 'use local image',
@@ -185,22 +182,22 @@ export default {
     },
     theme: {
       label: 'theme',
-      description: 'Pick a colour preset or build a fully custom look.',
+      description: 'A ready-made palette, or your own.',
       open: 'browse themes'
     },
     colors: {
       label: 'custom colors',
-      description: 'Tweak the active palette live. Copy exports it as theme JSON.',
+      description: 'Edit the active palette live, or copy it as theme JSON.',
       copy: 'copy',
       copied: 'theme copied to the clipboard',
       copyFailed: 'could not copy the theme'
     },
-    fontSize: { label: 'font size', description: 'Size of the text during the test.' },
-    fontFamily: { label: 'font family', description: 'Typeface used for the test text.' },
-    showFps: { label: 'show fps', description: 'Show a frame-rate counter while typing.' },
+    fontSize: { label: 'font size', description: 'Size of the test text.' },
+    fontFamily: { label: 'font family', description: 'Typeface of the test text.' },
+    showFps: { label: 'show fps', description: 'A frame-rate counter while you type.' },
     data: {
       label: 'settings file',
-      description: 'Import or export all your settings as JSON.',
+      description: 'Every setting, as a JSON file.',
       export: 'export',
       import: 'import',
       imported: 'settings imported',
@@ -208,7 +205,7 @@ export default {
     },
     cookies: {
       label: 'cookie preferences',
-      description: 'Review which cookies this site is allowed to store.',
+      description: 'What this site is allowed to store.',
       open: 'open'
     },
     account: {
@@ -217,14 +214,12 @@ export default {
     },
     profilePublic: {
       label: 'public profile',
-      description:
-        'Off, your profile page shows other players only your nick and “profile closed” — no stats, records, history or keyboard portrait. Your leaderboard entries stay visible and watchable either way: a ranked run is a public result.'
+      description: 'Off, visitors see only your nick. Leaderboard runs stay public either way.'
     },
     keyboardPublic: {
       label: 'show keyboard portrait to others',
-      description:
-        'Your per-key error rates and timings are a behavioural fingerprint, so they stay private unless you turn this on. Only affects visitors of your profile page — you always see your own portrait.',
-      closedNote: 'Your profile is closed, which already hides the portrait from everyone.'
+      description: 'Per-key timings are a fingerprint, so they are private until you share them.',
+      closedNote: 'Your profile is closed — already hidden from everyone.'
     }
   },
   auth: {
