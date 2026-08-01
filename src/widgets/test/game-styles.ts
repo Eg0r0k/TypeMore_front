@@ -150,6 +150,19 @@ export const WORDS_SHADOW_STYLES = `
 /* Missed: muted, NOT a red error — only the word underline signals the error. */
 .missed { color: var(--sub-color); }
 
+/* An IME's in-flight character (monkeytype's "dead" letter). Underlined because
+   that is the platform convention for composing text everywhere else a person
+   types — the browser's own composition underline, which we lose by owning the
+   rendering. No new colour: it inherits whatever correctness class it already
+   carries, so a composed character that already matches reads as correct and one
+   that does not reads as untyped, which is exactly what it is until the session
+   ends. */
+.letter--dead {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.15em;
+}
+
 /* Tab / newline glyphs (monkeytype's tabChar/nlChar): a real letter box the
    caret can measure, drawn faint so the code text stays readable. Correctness
    colours above still win — a mistyped newline must read as an error. */

@@ -10,6 +10,7 @@
       :store="session"
       @focus="typingFocused = true"
       @blur="typingFocused = false"
+      @composition="composingText = $event"
     />
     <div v-if="showFocusHint" class="game__focus-hint" aria-hidden="true">
       press any key to type
@@ -67,7 +68,8 @@
             item.index === store.wordIndex,
             item.index < store.wordIndex,
             store.blind,
-            item.canaryKey
+            item.canaryKey,
+            composingFor(item.index)
           ]"
         >
           <TestWord
@@ -77,6 +79,7 @@
             :committed="item.index < store.wordIndex"
             :blind="store.blind"
             :canary="item.canary"
+            :composing="composingFor(item.index)"
           />
           <div v-if="item.breaksLine" class="line-break" aria-hidden="true"></div>
         </template>
@@ -181,6 +184,18 @@
   const shadowContainer = ref<HTMLElement | null>(null)
 
   const typedFor = (i: number): string => store.snapshot.input[i] ?? ''
+
+  /**
+   * Text the IME is composing, published by the input adapter. Deliberately a
+   * FIELD-LOCAL ref and not part of `GameView`: it is never in the log, never in
+   * the reducer and never scored — until the session ends the player has typed
+   * nothing — so putting it on the session would oblige every ghost, replay and
+   * test double to carry a value none of them can ever have. It reaches exactly
+   * one word, the active one, which is also what keeps the memo below honest.
+   */
+  const composingText = ref('')
+  const composingFor = (i: number): string => (i === store.wordIndex ? composingText.value : '')
+
   const wordIndexRef = computed(() => store.wordIndex)
   const caretIndexRef = computed(() => store.snapshot.input[store.wordIndex]?.length ?? 0)
 
