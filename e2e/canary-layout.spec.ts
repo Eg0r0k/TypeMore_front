@@ -21,7 +21,15 @@ const CASES: { label: string; word: string; dir: 'ltr' | 'rtl'; slot: number }[]
   { label: 'LTR latin', word: 'question', dir: 'ltr', slot: 5 },
   { label: 'LTR cyrillic', word: 'привет', dir: 'ltr', slot: 2 },
   { label: 'RTL arabic', word: 'مرحبا', dir: 'rtl', slot: 3 },
-  { label: 'RTL hebrew', word: 'שלום', dir: 'rtl', slot: 2 }
+  { label: 'RTL hebrew', word: 'שלום', dir: 'rtl', slot: 2 },
+  // CJK: full-width glyphs, and the fallback font that carries them is not the
+  // one that carries latin. A default-ignorable codepoint has to shape to zero
+  // width THERE too — and these are also the scripts whose words most often sit
+  // under the canary's 4-character floor, so the few that clear it must render
+  // exactly like their canary-free twin.
+  { label: 'CJK hangul', word: '한글입력', dir: 'ltr', slot: 2 },
+  { label: 'CJK hanzi', word: '房子窗户', dir: 'ltr', slot: 3 },
+  { label: 'CJK kana', word: 'にんげん', dir: 'ltr', slot: 1 }
 ]
 const GRAPHEMES: { label: string; grapheme: string }[] = [
   { label: 'U+200B', grapheme: '\u200b' },
