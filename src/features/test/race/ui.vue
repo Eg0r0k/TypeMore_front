@@ -115,6 +115,9 @@
       numbers: generation.numbers,
       randomCase: generation.randomCase,
       reverse: generation.reverse,
+      // Optional in the core, so a record set before lazy existed reads as off
+      // rather than as `undefined` in a boolean toggle.
+      lazy: generation.lazy === true,
       nospace: config.nospace,
       difficulty: config.difficulty,
       minWpm: config.minWpm

@@ -10,6 +10,7 @@ export default {
     nospace: 'без пробелов',
     blind: 'вслепую',
     reverse: 'реверс',
+    lazy: 'без диакритики',
     fading: 'затухание',
     flashlight: 'фонарик',
     minSpeed: 'мин. скорость',

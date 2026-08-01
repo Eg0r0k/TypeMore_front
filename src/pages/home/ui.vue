@@ -569,6 +569,10 @@
       numbers: config.numbers,
       randomCase: config.randomCase,
       reverse: config.reverse,
+      lazy: config.lazy,
+      // The canonical key, NOT `dictionary.name` — that is the human catalogue
+      // label ('CSS (code)'), and the accent pack is keyed by 'german_1k'.
+      language: config.language,
       nospace: config.nospace,
       difficulty: config.difficulty,
       minWpm: config.minWpm,
@@ -630,6 +634,7 @@
       config.nospace,
       config.difficulty,
       config.reverse,
+      config.lazy,
       config.minWpm,
       config.freedomMode,
       config.stopOnError,

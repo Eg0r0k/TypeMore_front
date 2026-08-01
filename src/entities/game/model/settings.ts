@@ -33,6 +33,14 @@ export interface GameSettings {
   readonly randomCase: boolean
   /** Reverse mod: mirror every generated word. */
   readonly reverse: boolean
+  /** Lazy mode: strip the diacritics from every generated word. */
+  readonly lazy?: boolean
+  /**
+   * Canonical dictionary key (`russian`, `german_1k`). Reaches the core only to
+   * select the lazy accent pack — the human catalogue name must not be sent
+   * here, and neither must the BCP-47 tag.
+   */
+  readonly language?: string
   // Reducer snapshot (→ CoreConfig).
   readonly nospace: boolean
   readonly difficulty: Difficulty
@@ -78,6 +86,8 @@ export function toCoreSetup(settings: GameSettings): CoreSetup {
     numbers,
     randomCase,
     reverse,
+    lazy,
+    language,
     nospace,
     difficulty,
     minWpm,
@@ -110,6 +120,8 @@ export function toCoreSetup(settings: GameSettings): CoreSetup {
       numbers,
       randomCase,
       reverse,
+      lazy,
+      language,
       rawTokens,
       textSource
     }

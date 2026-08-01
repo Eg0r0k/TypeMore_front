@@ -27,6 +27,7 @@ export default {
   difficulty: 'normal',
   blind: false,
   reverse: false,
+  lazy: false,
   quoteGroup: 'all',
   minWpm: 0,
   fading: false,

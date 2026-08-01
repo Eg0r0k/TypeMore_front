@@ -108,6 +108,7 @@ describe('optionsFor(context) — an option renders only where it is declared', 
       'numbers',
       'randomCase',
       'reverse',
+      'lazy',
       'difficulty',
       'minWpm',
       'nospace',
@@ -154,8 +155,11 @@ describe('optionsFor(context) — an option renders only where it is declared', 
         !o.contexts.roomSettings &&
         !o.contexts.freemod
     )
-    // The input-behaviour trio and the visual mods.
+    // Lazy mode, the input-behaviour trio and the visual mods. Lazy is solo-only
+    // because `RoomSettings.textMods` has no field for it: until the protocol
+    // grows one, a lazy seat would type a different text from its neighbours.
     expect(keysOf(soloOnly)).toEqual([
+      'lazy',
       'freedomMode',
       'stopOnError',
       'quickEnd',
@@ -235,7 +239,9 @@ describe('PROTOCOL.md §5 — the registry maps to the wire, it does not reshape
 })
 
 describe('constraints — quote disables the word-affecting mods', () => {
-  const WORD_AFFECTING = ['punctuation', 'numbers', 'randomCase', 'reverse'] as const
+  // Lazy is not scored, but it rewrites generated words the same way the four
+  // mods do, so a verbatim source disables it for the same reason.
+  const WORD_AFFECTING = ['punctuation', 'numbers', 'randomCase', 'reverse', 'lazy'] as const
 
   it('reports fixed text for a quote and not for a seeded mode', () => {
     expect(emitsFixedText(soloCtx(ConfigModes.Quote))).toBe(true)
@@ -243,7 +249,7 @@ describe('constraints — quote disables the word-affecting mods', () => {
     expect(emitsFixedText(soloCtx(ConfigModes.Time))).toBe(false)
   })
 
-  it('disables exactly the four word-affecting mods, with a reason', () => {
+  it('disables exactly the word-affecting options, with a reason', () => {
     const quote = soloCtx(ConfigModes.Quote)
     const disabled = GAME_OPTIONS.filter((o) => disabledReason(o, quote) !== null)
     expect(keysOf(disabled)).toEqual([...WORD_AFFECTING])

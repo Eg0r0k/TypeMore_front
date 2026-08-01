@@ -66,6 +66,7 @@ const validators: Record<keyof Config, ValidatorFn> = {
     'Invalid difficulty',
   blind: (value) => typeof value === 'boolean' || 'Blind must be a boolean',
   reverse: (value) => typeof value === 'boolean' || 'Reverse must be a boolean',
+  lazy: (value) => typeof value === 'boolean' || 'Lazy mode must be a boolean',
   quoteGroup: (value) =>
     (typeof value === 'string' && ['all', 'short', 'medium', 'long', 'thicc'].includes(value)) ||
     'Invalid quote length',

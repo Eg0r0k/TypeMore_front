@@ -37,6 +37,7 @@ export const RACE_SNAPSHOT_KEYS = [
   'numbers',
   'randomCase',
   'reverse',
+  'lazy',
   'nospace',
   'difficulty',
   'minWpm',

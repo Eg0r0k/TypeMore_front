@@ -348,6 +348,26 @@ export const GAME_OPTIONS = [
     dependsOn: ['mode'],
     disabledWhen: wordAffecting
   }),
+  option({
+    key: 'lazy',
+    slot: 'generation',
+    control: { kind: 'boolean' },
+    contexts: {
+      solo: true,
+      settingsModal: false,
+      // Absent from a room: the shared map is defined by `RoomSettings.textMods`,
+      // and lazy has no field there. Adding one is a protocol change, and until
+      // it exists a lazy seat would generate a different text from its
+      // neighbours — the one failure a shared seed exists to prevent.
+      roomSettings: false,
+      freemod: false,
+      roomLocal: false
+    },
+    i18nKey: 'game.lazy',
+    defaultValue: D.lazy,
+    dependsOn: ['mode'],
+    disabledWhen: wordAffecting
+  }),
 
   // ── Freemods (core; per-seat on the wire, never room-wide) ────────────────
   option({
@@ -564,6 +584,7 @@ export type GameOptionKey =
   | 'numbers'
   | 'randomCase'
   | 'reverse'
+  | 'lazy'
   | 'difficulty'
   | 'minWpm'
   | 'nospace'

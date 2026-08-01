@@ -86,7 +86,9 @@ const GenerationConfigSchema = v.looseObject({
   numbers: v.boolean(),
   randomCase: v.boolean(),
   reverse: v.boolean(),
-  rawTokens: v.optional(v.boolean())
+  rawTokens: v.optional(v.boolean()),
+  lazy: v.optional(v.boolean()),
+  language: v.optional(v.string())
 })
 
 /**

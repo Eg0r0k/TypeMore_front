@@ -24,6 +24,10 @@
  *    focus reticle.
  *  - `reverse` → `flip-horizontal`, a mirror, because the mod mirrors each word
  *    rather than reordering the list (`reverseWord` in shared/core).
+ *  - `lazy` → `zzz`, the option's NAME rather than its mechanism. Nothing in the
+ *    set draws "a letter minus its diacritic" legibly at 16px, and the three
+ *    letter-shaped glyphs already in use (`abc`, `letter-case-toggle`,
+ *    `numbers`) would make a fourth one unreadable in the row.
  *  - `minWpm` → `gauge`: a floor on speed, not a timer.
  */
 import type { Component } from 'vue'
@@ -46,6 +50,7 @@ import IconRulerMeasure from '~icons/tabler/ruler-measure'
 import IconBackspace from '~icons/tabler/backspace'
 import IconHandStop from '~icons/tabler/hand-stop'
 import IconTrackNext from '~icons/tabler/player-track-next'
+import IconZzz from '~icons/tabler/zzz'
 
 import type { GameOptionKey } from './registry'
 
@@ -62,6 +67,7 @@ export const OPTION_ICONS: Record<GameOptionKey, Component> = {
   numbers: IconNumbers,
   randomCase: IconLetterCase,
   reverse: IconFlipHorizontal,
+  lazy: IconZzz,
   // Freemods
   difficulty: IconFlame,
   minWpm: IconGauge,

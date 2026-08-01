@@ -55,6 +55,12 @@ export interface Config {
   difficulty: Difficulty
   /** Reverse mod (generation): mirror every word. Core-bound — rebuilds on change. */
   reverse: boolean
+  /**
+   * Lazy mode (generation): type every word without its diacritics — `épée`
+   * becomes `epee`, `ёж` becomes `еж`. Core-bound; not a scored mod, because it
+   * makes a run easier rather than harder.
+   */
+  lazy: boolean
   /** Quote mode: length band the random draw is filtered to. Core-bound. */
   quoteGroup: QuoteGroup
   /** MinSpeed floor in net WPM (0 = off). Core-bound — rebuilds on change. */

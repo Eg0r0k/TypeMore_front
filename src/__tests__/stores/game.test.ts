@@ -10,7 +10,7 @@ import {
   DEFAULT_MAX_EXTRA_CHARS
 } from '@typemore/core'
 import type { TimerWorkerLike } from '@shared/lib/hooks/useGameTimer'
-import { releaseGameStore, toCoreSetup, useGameStore } from '@entities/game'
+import { plannedMultiplier, releaseGameStore, toCoreSetup, useGameStore } from '@entities/game'
 
 const wordsConfig: CoreConfig = {
   mode: 'words',
@@ -227,6 +227,42 @@ describe('toCoreSetup', () => {
     expect(generation.length).toBe(50)
     expect(generation.punctuation).toBe(true)
     expect(generation.randomCase).toBe(true)
+  })
+
+  it('threads lazy mode and its language key into the seed context', () => {
+    const { generation } = toCoreSetup({
+      mode: 'words',
+      time: 15,
+      words: 50,
+      punctuation: false,
+      numbers: false,
+      randomCase: false,
+      nospace: false,
+      difficulty: 'normal',
+      lazy: true,
+      language: 'german_1k'
+    })
+    // Both fields travel in the generation config, never the reducer snapshot:
+    // lazy rewrites the TARGETS, and nothing about input handling sees it.
+    expect(generation.lazy).toBe(true)
+    expect(generation.language).toBe('german_1k')
+  })
+
+  it('pays no multiplier for lazy mode — it makes a run easier, not harder', () => {
+    const settings = {
+      mode: 'words',
+      time: 15,
+      words: 50,
+      punctuation: false,
+      numbers: false,
+      randomCase: false,
+      nospace: false,
+      difficulty: 'normal'
+    } as const
+    const declaration = { blind: false, fading: false, flashlight: false }
+    expect(plannedMultiplier({ ...settings, lazy: true }, declaration)).toBe(
+      plannedMultiplier(settings, declaration)
+    )
   })
 })
 

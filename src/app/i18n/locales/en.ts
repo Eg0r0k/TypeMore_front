@@ -11,6 +11,7 @@ export default {
     nospace: 'no space',
     blind: 'blind',
     reverse: 'reverse',
+    lazy: 'lazy',
     fading: 'fading',
     flashlight: 'flashlight',
     minSpeed: 'min speed',
