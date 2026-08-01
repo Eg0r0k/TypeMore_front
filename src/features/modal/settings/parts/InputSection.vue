@@ -9,12 +9,16 @@
     </SettingRow>
 
     <SettingRow id="stopOnError">
+      <!-- Three options, so it stays a segmented group: all of them are visible
+           at once and it still fits the row's control rail. Stretched to that
+           rail so it lines up with the dropdowns and sliders in other rows. -->
       <ToggleGroup
+        class="w-full"
         :model-value="config.stopOnError"
         :aria-label="t('settings.stopOnError.label')"
         @update:model-value="onStopOnError"
       >
-        <ToggleGroupItem v-for="value in STOP_ON_ERROR" :key="value" :value="value">
+        <ToggleGroupItem v-for="value in STOP_ON_ERROR" :key="value" class="flex-1" :value="value">
           {{ value === 'off' ? t('settings.value.off') : t(`settings.stopOnError.${value}`) }}
         </ToggleGroupItem>
       </ToggleGroup>

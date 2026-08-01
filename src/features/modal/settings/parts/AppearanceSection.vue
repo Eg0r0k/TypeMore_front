@@ -1,22 +1,17 @@
 <template>
   <div class="settings-section">
     <SettingRow id="uiLanguage">
-      <Select :model-value="language" @update:model-value="onUiLanguage">
-        <SelectTrigger class="w-44" :aria-label="t('settings.uiLanguage.label')">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="system">{{ t('settings.uiLanguage.system') }}</SelectItem>
-          <SelectItem v-for="locale in SUPPORTED_LOCALES" :key="locale" :value="locale">
-            {{ LOCALE_NATIVE[locale] }}
-          </SelectItem>
-        </SelectContent>
-      </Select>
+      <SettingSelect
+        :model-value="language"
+        :options="languageOptions"
+        :label="t('settings.uiLanguage.label')"
+        @update="onUiLanguage"
+      />
     </SettingRow>
 
     <SettingRow id="fontFamily">
       <Combobox
-        class="w-44"
+        class="w-full"
         :options="[...FONT_FAMILIES]"
         :model-value="config.fontFamily"
         :placeholder="config.fontFamily"
@@ -26,7 +21,7 @@
 
     <SettingRow id="fontSize">
       <Slider
-        class="w-44"
+        class="min-w-0 flex-1"
         :model-value="[config.fontSize]"
         :min="FONT_SIZE_MIN"
         :max="FONT_SIZE_MAX"
@@ -34,7 +29,14 @@
         :aria-label="t('settings.fontSize.label')"
         @update:model-value="onFontSize"
       />
-      <Typography size="xs" color="sub" tag-name="span">{{ config.fontSize }}px</Typography>
+      <Typography
+        size="xs"
+        color="sub"
+        tag-name="span"
+        class="w-10 shrink-0 text-right tabular-nums"
+      >
+        {{ config.fontSize }}px
+      </Typography>
     </SettingRow>
 
     <SettingRow id="showFps">
@@ -48,6 +50,7 @@
 </template>
 
 <script setup lang="ts">
+  import { computed } from 'vue'
   import { useI18n } from 'vue-i18n'
 
   import { useConfigStore } from '@/entities/config'
@@ -61,11 +64,11 @@
   import { narrowTo } from '@/shared/lib/helpers/narrow'
   import { useUiLanguage } from '@/shared/lib/hooks/useUiLanguage'
   import { Combobox } from '@/shared/ui/combobox'
-  import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
   import { Slider } from '@/shared/ui/slider'
   import { Switch } from '@/shared/ui/switch'
   import { Typography } from '@/shared/ui/typography'
   import SettingRow from './SettingRow.vue'
+  import SettingSelect, { type SettingOption } from './SettingSelect.vue'
 
   /** Endonyms: a language is always listed in its own words. */
   const LOCALE_NATIVE: Record<string, string> = { en: 'English', ru: 'Русский' }
@@ -80,6 +83,13 @@
   const configStore = useConfigStore()
   const config = configStore.config
   const { language, setLanguage } = useUiLanguage()
+
+  const languageOptions = computed<SettingOption[]>(() =>
+    UI_LANGUAGES.map((value) => ({
+      value,
+      label: value === 'system' ? t('settings.uiLanguage.system') : (LOCALE_NATIVE[value] ?? value)
+    }))
+  )
 
   const onUiLanguage = (value: unknown): void => {
     const lang = narrowTo(UI_LANGUAGES, value)

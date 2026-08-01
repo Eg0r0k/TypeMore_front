@@ -6,7 +6,10 @@
       </Button>
     </SettingRow>
 
-    <SettingRow id="background">
+    <!-- `wide`: the background cluster (url + two buttons + a fit group + two
+         status lines) is a small layout of its own, not a control that belongs
+         in the row's narrow rail. -->
+    <SettingRow id="background" wide>
       <template #note>
         <Typography size="xxs" color="sub" tag-name="p">
           {{ t('settings.background.note') }}
@@ -56,7 +59,7 @@
       </div>
     </SettingRow>
 
-    <SettingRow id="colors">
+    <SettingRow id="colors" wide>
       <div class="colors">
         <label v-for="color in COLOR_VARS" :key="color" class="colors__swatch">
           <input
@@ -205,16 +208,14 @@
     flex-direction: column;
   }
 
+  // Full-width `wide` block, so it stacks from the start edge at every size —
+  // it used to flip to `flex-end` to hug the old right-aligned control column.
   .background {
     display: flex;
     flex-direction: column;
     gap: 10px;
     align-items: flex-start;
     width: 100%;
-
-    @media (width >= 640px) {
-      align-items: flex-end;
-    }
   }
 
   .background__row {

@@ -287,6 +287,16 @@
   }
 
   .settings-dialog__pane {
+    /*
+     * The control rail, declared ONCE for the whole pane: every SettingRow
+     * resolves its control column to this width, which is what makes the
+     * controls line up across rows AND across sections (appearance renders two
+     * of them). Wide enough that the reset row's confirm pair still fits on one
+     * line; the labels beside it have 380px+ left, and the descriptions span the
+     * full row regardless, so widening the rail costs no measure.
+     */
+    --setting-control-width: 220px;
+
     min-width: 0;
     padding: 28px 48px 24px 20px;
     overflow-y: auto;

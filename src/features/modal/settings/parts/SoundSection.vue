@@ -2,7 +2,7 @@
   <div class="settings-section">
     <SettingRow id="soundVolume">
       <Slider
-        class="w-44"
+        class="min-w-0 flex-1"
         :model-value="[config.soundVolume]"
         :min="0"
         :max="1"
@@ -10,21 +10,23 @@
         :aria-label="t('settings.soundVolume.label')"
         @update:model-value="onVolume"
       />
-      <Typography size="xs" color="sub" tag-name="span">{{ volumePercent }}</Typography>
+      <Typography
+        size="xs"
+        color="sub"
+        tag-name="span"
+        class="w-10 shrink-0 text-right tabular-nums"
+      >
+        {{ volumePercent }}
+      </Typography>
     </SettingRow>
 
     <SettingRow id="soundOnClick">
-      <Select :model-value="activePack" @update:model-value="onPack">
-        <SelectTrigger class="w-44" :aria-label="t('settings.soundOnClick.label')">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="off">{{ t('settings.value.off') }}</SelectItem>
-          <SelectItem v-for="pack in SOUND_PACKS" :key="pack.id" :value="pack.id">
-            {{ pack.label }}
-          </SelectItem>
-        </SelectContent>
-      </Select>
+      <SettingSelect
+        :model-value="activePack"
+        :options="packOptions"
+        :label="t('settings.soundOnClick.label')"
+        @update="onPack"
+      />
     </SettingRow>
   </div>
 </template>
@@ -35,10 +37,10 @@
 
   import { useConfigStore } from '@/entities/config'
   import { SOUND_PACKS } from '@/shared/constants/sound-packs'
-  import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
   import { Slider } from '@/shared/ui/slider'
   import { Typography } from '@/shared/ui/typography'
   import SettingRow from './SettingRow.vue'
+  import SettingSelect, { type SettingOption } from './SettingSelect.vue'
 
   /**
    * `playSound` + `soundSet` are one decision for the player ("what do I hear on
@@ -51,6 +53,11 @@
 
   const volumePercent = computed(() => `${Math.round(config.soundVolume * 100)}%`)
   const activePack = computed(() => (config.playSound ? config.soundSet : 'off'))
+
+  const packOptions = computed<SettingOption[]>(() => [
+    { value: 'off', label: t('settings.value.off') },
+    ...SOUND_PACKS.map((pack) => ({ value: pack.id, label: pack.label }))
+  ])
 
   const onVolume = (value: number[] | undefined): void => {
     const next = value?.[0]
