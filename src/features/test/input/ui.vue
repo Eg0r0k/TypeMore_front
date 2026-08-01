@@ -9,6 +9,9 @@
     spellcheck="false"
     :rows="1"
     @beforeinput="onBeforeInput"
+    @compositionstart="onCompositionStart"
+    @compositionupdate="onCompositionUpdate"
+    @compositionend="onCompositionEnd"
     @keydown="onKeydown"
     @keyup="onKeyup"
     @paste="onPaste"
@@ -31,18 +34,53 @@
    * every mutation is prevented and translated into a core event, so the reducer
    * state is the only truth.
    *
+   * THE ONE EXCEPTION, AND IT IS NOT OPTIONAL: while an IME composition session
+   * is open the textarea is a temporary scratch buffer, force-cleared on
+   * `compositionend`. `preventDefault()` on `insertCompositionText` is ignored by
+   * every engine, so the DOM mutates whether we consent or not; the choice is
+   * between reconciling that and pretending it does not happen. Pretending is
+   * what produced the mobile bug — Android drives PLAIN LATIN through
+   * composition, so a tap on a keyboard suggestion typed nothing into the store,
+   * left the word judged wrong, and stranded the suggestion's trailing space in
+   * the textarea as an invisible character. The scratch buffer is never read:
+   * what reaches the store is `compositionend`'s own `data`.
+   *
    * Contract:
    *  - `insert` carries strictly ONE grapheme per keystroke; any multi-character
    *    input (autocomplete, mobile suggestion) is routed through `replace`.
    *  - Paste → `preventDefault` + `replace` with `source: 'paste'`.
-   *  - IME composition is UNSUPPORTED for now: composition events never emit an
-   *    insert (blocked here); wiring composed text through `replace` is future work.
+   *  - A composition session dispatches NOTHING while it runs and EXACTLY ONE
+   *    `replace(..., 'ime')` when it ends. Granularity is therefore the session,
+   *    which on Android is about one word: per-character timing inside a composed
+   *    word is coarsened, and that is an accepted v1 limitation — diffing
+   *    `compositionupdate` to synthesise keystrokes would invent timings the
+   *    player never produced.
    *  - No async, no side-effecting store getters on this path — stamp + dispatch only.
    */
   const props = defineProps<{ store: GameSession }>()
   const store = props.store
 
+  const emit = defineEmits<{
+    (event: 'focus'): void
+    (event: 'blur'): void
+    /**
+     * The text an IME is currently composing, '' when no session is open. The
+     * field renders it over the active word; it is NOT game state — it never
+     * reaches the store, the log or the reducer, because until the session ends
+     * the player has not typed anything.
+     */
+    (event: 'composition', text: string): void
+  }>()
+
   const inputRef = ref<HTMLTextAreaElement | null>(null)
+
+  /** In-flight composed text. Deduped so a repeated update costs no render. */
+  const compositionText = ref('')
+  const setCompositionText = (text: string): void => {
+    if (compositionText.value === text) return
+    compositionText.value = text
+    emit('composition', text)
+  }
 
   const caretPos = (): number => store.snapshot.input[store.wordIndex]?.length ?? 0
 
@@ -135,6 +173,114 @@
     store.commit()
   }
 
+  // ── IME composition ────────────────────────────────────────────────────────
+
+  /** A session is open: `compositionstart` arrived and nothing has settled it. */
+  let composing = false
+  /**
+   * Caret position when the session opened. The buffer cannot move while a
+   * session runs (we dispatch nothing), so this equals the caret at the end —
+   * but the range is what a composition REPLACES, and saying so costs one field
+   * and survives anything that ever does dispatch mid-session.
+   */
+  let compositionAnchor = 0
+  /**
+   * This session already produced its `replace`. Set by whichever end runs
+   * first — ours (quick-end) or the browser's — so the second one is a no-op.
+   * Without it, quick-end doubles every last word in the log.
+   */
+  let compositionSettled = false
+
+  /** Drop whatever the browser wrote into the scratch buffer during a session. */
+  const clearScratch = (): void => {
+    const element = inputRef.value
+    if (element !== null && element.value !== '') element.value = ''
+  }
+
+  /**
+   * Apply composed text to `[from, to)` as ONE `replace`, then let any trailing
+   * space take the ordinary separator path.
+   *
+   * The split is what keeps a mobile suggestion honest. Android commits `hello `
+   * — word plus separator in one string — and storing that verbatim would put a
+   * space INSIDE the word buffer, where it is a character the target does not
+   * have: the word reads wrong and the space is the "invisible character" the
+   * player then has to backspace away. Routed through `separateOrTypeSpace` it
+   * commits the word instead, or types itself when the target really does expect
+   * a space there.
+   */
+  const applyComposedText = (from: number, to: number, text: string): void => {
+    const graphemes = [...text]
+    let end = graphemes.length
+    while (end > 0 && isSpaceGrapheme(graphemes[end - 1])) end--
+    const body = graphemes.slice(0, end).join('')
+    if (body !== '') store.replace(from, to, body, 'ime')
+    // Each trailing space separates in its own right, exactly as pressing it would.
+    for (const space of graphemes.slice(end)) separateOrTypeSpace(space)
+  }
+
+  /**
+   * Settle the session. Called by the browser's `compositionend` and by
+   * quick-end; the first caller wins and the second only cleans up.
+   *
+   * Empty `data` is a CANCELLED composition (Escape, candidate window dismissed)
+   * — nothing was typed, so nothing is logged.
+   */
+  const endComposition = (data: string): void => {
+    composing = false
+    setCompositionText('')
+    clearScratch()
+    if (compositionSettled) return
+    compositionSettled = true
+    if (data === '') return
+    const to = caretPos()
+    applyComposedText(Math.min(compositionAnchor, to), to, data)
+  }
+
+  const onCompositionStart = (): void => {
+    composing = true
+    compositionSettled = false
+    compositionAnchor = caretPos()
+    setCompositionText('')
+  }
+
+  /**
+   * `data` is the WHOLE composed string so far, never a delta — a Japanese
+   * candidate swap replaces `いえ` with `家` outright — so it is assigned, not
+   * appended.
+   */
+  const onCompositionUpdate = (event: CompositionEvent): void => {
+    if (!composing) return
+    const data = event.data ?? ''
+    setCompositionText(data)
+    quickEnd(data)
+  }
+
+  const onCompositionEnd = (event: CompositionEvent): void => {
+    endComposition(event.data ?? '')
+  }
+
+  /**
+   * Close the session ourselves once the LAST word is complete (monkeytype's
+   * composition quick end, `input/listeners/input.ts`). An IME holds its session
+   * open until the player types past it or confirms; on the final word there is
+   * nothing left to type, so the run would sit finished-but-unsettled waiting for
+   * a keystroke that never comes.
+   *
+   * Settled directly rather than by dispatching a synthetic `CompositionEvent`:
+   * a synthetic event is untrusted, so no IME reacts to it either way, and the
+   * direct call is one code path instead of two. The browser's own
+   * `compositionend` still arrives afterwards and is absorbed by
+   * `compositionSettled`.
+   */
+  const quickEnd = (data: string): void => {
+    if (store.wordIndex < store.words.length - 1) return
+    const target = store.words[store.wordIndex] ?? ''
+    const buffer = store.snapshot.input[store.wordIndex] ?? ''
+    if (buffer + data !== target) return
+    endComposition(data)
+  }
+
   /**
    * Log v2 keystroke telemetry: the PHYSICAL key stream (`KeyboardEvent.code`),
    * captured alongside the text path through the same stamping pipeline, so a
@@ -187,6 +333,29 @@
   const onBeforeInput = (event: InputEvent): void => {
     const type = event.inputType
 
+    // Composition. NOT cancelled while `isComposing` — the engines ignore that
+    // anyway, and fighting it is what desynced the buffer from the DOM. The one
+    // composition-typed event worth cancelling is the stray Firefox fires after
+    // the session is over (and the trailing `insertFromComposition` Chrome emits
+    // on the same edge): the session is already settled, so letting it through
+    // would only refill the scratch buffer we just cleared.
+    if (type === 'insertCompositionText' || type === 'insertFromComposition') {
+      if (!event.isComposing) {
+        event.preventDefault()
+        clearScratch()
+      }
+      return
+    }
+
+    // A suggestion or autocorrect applied OUTSIDE a session: the browser hands
+    // over the whole replacement in one event. It rewrites the word under the
+    // caret, which is exactly this word's buffer, so the range is the buffer.
+    if (type === 'insertReplacementText') {
+      event.preventDefault()
+      applyComposedText(0, caretPos(), event.data ?? '')
+      return
+    }
+
     if (type === 'insertText') {
       event.preventDefault()
       const data = event.data ?? ''
@@ -233,8 +402,6 @@
     const text = event.clipboardData?.getData('text') ?? ''
     if (text.length > 0) store.replace(caretPos(), caretPos(), text, 'paste')
   }
-
-  const emit = defineEmits<{ (event: 'focus'): void; (event: 'blur'): void }>()
 
   /**
    * `preventScroll` matters: this element is a 1px box parked in the layout, and
