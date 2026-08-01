@@ -105,10 +105,13 @@
         :store="session.selfView"
         :ghosts="ghosts"
         :input-disabled="session.phase === 'countdown'"
+        :is-right-to-left="isRightToLeft"
         :fading="config.fading"
         :flashlight="config.flashlight"
         :caret-style="config.caretStyle"
         :smooth-caret="config.smoothCaret"
+        :font-size="config.fontSize"
+        :font-family="config.fontFamily"
         :canary-seed="session.matchSeed"
       />
       <!--
@@ -126,8 +129,9 @@
 </template>
 
 <script setup lang="ts">
-  import { computed } from 'vue'
+  import { computed, ref, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
+  import { loadDictionaryBody } from '@/shared/api'
   import { useMatchSessionStore } from '@/entities/match'
   import { useConfigStore } from '@/entities/config/model/store'
   import { TestProgress } from '@/features/test/progress'
@@ -146,6 +150,33 @@
   const { t } = useI18n()
   const session = useMatchSessionStore()
   const config = useConfigStore().config
+
+  /**
+   * Text direction for the match's language.
+   *
+   * The room had NO direction at all, so every RTL corpus — 22 of the published
+   * ones — played left-to-right online while the same language read correctly
+   * in solo. The flag lives on the dictionary BODY (`rightToleft`), and
+   * `loadMatchDictionary` drops it on the way to the core's `Dictionary`, which
+   * is right: direction is presentation, and the core has no business knowing
+   * it. So the surface that presents asks for it, and the ask is free — the
+   * match already fetched this body, and the query is immutable-cached.
+   */
+  const isRightToLeft = ref(false)
+  watch(
+    () => session.room?.settings.lang ?? '',
+    async (lang) => {
+      if (lang === '') return
+      try {
+        isRightToLeft.value = (await loadDictionaryBody(lang)).rightToleft === true
+      } catch {
+        // A body this surface cannot read is not this surface's problem to
+        // report — the match already failed louder if it could not load it.
+        isRightToLeft.value = false
+      }
+    },
+    { immediate: true }
+  )
 
   /** The meter surfaces halfway to the kick (≈6 s of silence). */
   const IDLE_METER_SHOW = 0.5
