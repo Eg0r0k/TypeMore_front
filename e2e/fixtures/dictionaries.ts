@@ -213,6 +213,8 @@ export interface ExtraDictionary {
   readonly name: string
   readonly dictHash: string
   readonly words: readonly string[]
+  /** Served on the BODY, not the catalogue row — 22 of the real corpora set it. */
+  readonly rightToleft?: boolean
 }
 
 /**
@@ -232,11 +234,13 @@ export async function stubDictionaries(
   const words: Record<string, string[]> = { ...WORDS }
   const hashes: Record<string, string> = { ...HASHES }
   const names: Record<string, string> = { ...NAMES }
+  const rtl: Record<string, boolean> = {}
 
   for (const row of opts.extra ?? []) {
     words[row.lang] = [...row.words]
     hashes[row.lang] = row.dictHash
     names[row.lang] = row.name
+    if (row.rightToleft === true) rtl[row.lang] = true
   }
 
   if (opts.full === true) {
@@ -277,7 +281,11 @@ export async function stubDictionaries(
       status: 200,
       contentType: 'application/json',
       headers: { 'cache-control': 'public, max-age=31536000, immutable' },
-      body: JSON.stringify({ name: lang, words: words[lang] })
+      body: JSON.stringify({
+        name: lang,
+        words: words[lang],
+        ...(rtl[lang] === true ? { rightToleft: true } : {})
+      })
     })
   })
 }

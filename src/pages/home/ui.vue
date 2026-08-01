@@ -95,6 +95,8 @@
           :flashlight="config.flashlight"
           :caret-style="config.caretStyle"
           :smooth-caret="config.smoothCaret"
+          :font-size="config.fontSize"
+          :font-family="config.fontFamily"
           :canary-seed="fieldCanarySeed"
         />
       </Transition>

@@ -72,6 +72,18 @@ export const WORDS_SHADOW_STYLES = `
   height: 2px;
 }
 
+/* RTL: the measured x is the INSERTION POINT, which in mirrored text is the
+   cell's right edge (useCaret) — but a caret is still drawn rightwards from its
+   own left edge, because transform and left are physical, not logical. The thin
+   bar is 2px and sits on the boundary either way; the three full-cell styles
+   have to be pulled back by their own width or they would fill the cell BEFORE
+   the one they mark. (No backticks in this file: it is one template literal.) */
+.game__words--rtl .game__caret--block,
+.game__words--rtl .game__caret--outline,
+.game__words--rtl .game__caret--underline {
+  margin-left: calc(-1 * max(var(--tm-caret-w, 2px), 2px));
+}
+
 /* Ghost (opponent) carets — racing "ghost cars" inside the local field. Sub-
    colored + translucent so the primary local caret always reads first; the
    tiny nick label hugs the bar and never intercepts the pointer.

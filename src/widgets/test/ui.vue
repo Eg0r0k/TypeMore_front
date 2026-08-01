@@ -30,7 +30,12 @@
       <div
         ref="wordsRef"
         class="game__words"
-        :class="{ 'game__words--tape': tape, 'tm-fading': fading, 'tm-flashlight': flashlight }"
+        :class="{
+          'game__words--tape': tape,
+          'game__words--rtl': isRightToLeft,
+          'tm-fading': fading,
+          'tm-flashlight': flashlight
+        }"
         :style="[wordsStyle, modStyle]"
       >
         <div
@@ -142,6 +147,17 @@
     inputDisabled?: boolean
     /** Racing-style opponent carets rendered inside this field (ghost cars on the local track). */
     ghosts?: readonly TestGhostCaret[]
+    /**
+     * The run's type metrics, threaded in for ONE reason: to know when to
+     * re-measure. The field does not apply them — `--tm-font-size` and `--font`
+     * are global custom properties set on the document root — but changing
+     * either moves every letter without touching the caret index, the word text
+     * or the viewport's own box, so nothing else in the field can see it happen.
+     * The symptom was a caret that kept its old size until the next keystroke
+     * re-measured it for unrelated reasons.
+     */
+    fontSize?: number
+    fontFamily?: string
     /** Caret shape; `off` renders no caret at all. Driven by app config from the page. */
     caretStyle?: CaretStyle
     /** How far the caret interpolates between letters; `off` snaps. */
@@ -409,6 +425,14 @@
   })
 
   useResizeObserver(viewportRef, () => {
+    void applyGeometry()
+    void applyGhostGeometry()
+  })
+
+  // Type metrics changed. The resize observer above cannot stand in for this:
+  // the viewport is a FIXED 160px box (three rows), so growing the font moves
+  // every letter inside it without resizing it, and nothing fires.
+  watch([() => props.fontSize, () => props.fontFamily], () => {
     void applyGeometry()
     void applyGhostGeometry()
   })
