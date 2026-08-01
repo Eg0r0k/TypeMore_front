@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { Check, ChevronsUpDown } from '@lucide/vue'
-  import { ref } from 'vue'
+  import { ref, type HTMLAttributes } from 'vue'
   import { cn } from '@/shared/lib/utils'
   import {
     Command,
@@ -18,6 +18,12 @@
       placeholder?: string
       searchPlaceholder?: string
       disabled?: boolean
+      /**
+       * Applied to the TRIGGER, not to the root: `Popover` is a renderless
+       * component, so a class landing on it reached no element at all and a
+       * sizing class like `w-full` was silently dropped.
+       */
+      class?: HTMLAttributes['class']
     }>(),
     {
       placeholder: 'Select...',
@@ -47,7 +53,8 @@
         :class="
           cn(
             'bg-sub-alt border border-sub rounded-md transition-tm focus-ring flex h-9 w-full items-center justify-between gap-2 px-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50',
-            model ? 'text-text' : 'text-sub'
+            model ? 'text-text' : 'text-sub',
+            props.class
           )
         "
       >
