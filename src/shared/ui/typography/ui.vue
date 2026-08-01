@@ -9,23 +9,19 @@
 </template>
 
 <script setup lang="ts">
-  import clsx from 'clsx'
-  import { computed } from 'vue'
-  // xxxl  49px
-  // xxl   39px
-  // xl    31px
-  // l     25px
-  // m     20px
-  // s     16px
-  // xs    13px
-  // xxs   10px
+  import { computed, type HTMLAttributes } from 'vue'
+
+  import { cn } from '@/shared/lib/utils'
+  import { typographyVariants, type TypographyVariants } from './variants'
+
   interface Props {
     isBold?: boolean
     tagName?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'a'
-    size?: 'xxxl' | 'xxl' | 'xl' | 'l' | 'm' | 's' | 'xs' | 'xxs'
-    color?: 'unset' | 'primary' | 'error' | 'main' | 'extra-error' | 'sub'
+    size?: NonNullable<TypographyVariants['size']>
+    color?: NonNullable<TypographyVariants['color']>
     decoration?: 'underline'
     href?: string
+    class?: HTMLAttributes['class']
   }
   const props = withDefaults(defineProps<Props>(), {
     color: 'unset',
@@ -34,100 +30,21 @@
     size: 's'
   })
 
+  /**
+   * Composed through `cn` (tailwind-merge), not string concatenation: a caller
+   * passing `class="text-xs"` then WINS over the size variant instead of racing
+   * it on stylesheet order — which is exactly what the old scoped-BEM version
+   * could not do.
+   */
   const classes = computed(() =>
-    clsx('typography', {
-      [`typography--color-${props.color}`]: props.color,
-      [`typography--size-${props.size}`]: props.size,
-      [`typography--decoration-${props.decoration}`]: props.decoration,
-      bold: props.isBold,
-      [`tag--${props.tagName}`]: props.tagName
-    })
+    cn(
+      typographyVariants({
+        size: props.size,
+        color: props.color,
+        decoration: props.decoration,
+        isBold: props.isBold
+      }),
+      props.class
+    )
   )
 </script>
-
-<style lang="scss" scoped>
-  .typography {
-    --typography-size-xxxl: 49px;
-    --typography-size-xxl: 39px;
-    --typography-size-xl: 31px;
-    --typography-size-l: 25px;
-    --typography-size-m: 20px;
-    --typography-size-s: 16px;
-    --typography-size-xs: 13px;
-    --typography-size-xxs: 10px;
-
-    margin-top: 0;
-    font-style: normal;
-    cursor: default;
-
-    &.bold {
-      font-weight: 700;
-    }
-
-    &--decoration {
-      &-underline {
-        text-decoration: underline;
-      }
-    }
-
-    &--color {
-      &-sub {
-        color: var(--sub-color);
-      }
-
-      &-primary {
-        color: var(--text-color);
-      }
-
-      &-none {
-        color: unset;
-      }
-
-      &-error {
-        color: var(--error-color);
-      }
-
-      &-main {
-        color: var(--main-color);
-      }
-
-      &-extra-error {
-        color: var(--error-extra-color);
-      }
-    }
-
-    &--size- {
-      &xxxl {
-        font-size: var(--typography-size-xxxl);
-      }
-
-      &xxl {
-        font-size: var(--typography-size-xxl);
-      }
-
-      &xl {
-        font-size: var(--typography-size-xl);
-      }
-
-      &l {
-        font-size: var(--typography-size-l);
-      }
-
-      &m {
-        font-size: var(--typography-size-m);
-      }
-
-      &s {
-        font-size: var(--typography-size-s);
-      }
-
-      &xs {
-        font-size: var(--typography-size-xs);
-      }
-
-      &xxs {
-        font-size: var(--typography-size-xxs);
-      }
-    }
-  }
-</style>

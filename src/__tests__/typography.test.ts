@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
-import { Typography } from '@/shared/ui/typography'
+import { Typography, type TypographyVariants } from '@/shared/ui/typography'
 describe('Typography', () => {
   it('renders default paragraph element', () => {
     const wrapper = mount(Typography)
@@ -25,53 +25,69 @@ describe('Typography', () => {
       expect(wrapper.find(tag).exists()).to.equal(true)
     })
   })
-  it('applies correct class size', () => {
-    const sizes: Array<'xxxl' | 'xxl' | 'xl' | 'l' | 'm' | 's' | 'xs' | 'xxs'> = [
-      'l',
-      'm',
-      's',
-      'xl',
-      'xs',
-      'xxl',
-      'xxs',
-      'xxxl'
-    ]
-    sizes.forEach((size) => {
+  // The size/colour props resolve to TAILWIND tokens, not to a private
+  // `--typography-size-*` scale — that is the whole point of the token bridge in
+  // `app/tailwind.css`, so the mapping is what these tests pin.
+  it('maps every size onto its Tailwind step', () => {
+    const sizes: Record<NonNullable<TypographyVariants['size']>, string> = {
+      xxs: 'text-xs',
+      xs: 'text-sm',
+      s: 'text-base',
+      m: 'text-xl',
+      l: 'text-2xl',
+      xl: 'text-3xl',
+      xxl: 'text-4xl',
+      xxxl: 'text-5xl'
+    }
+    for (const [size, expected] of Object.entries(sizes)) {
       const wrapper = mount(Typography, {
-        props: {
-          size: size
-        }
+        props: { size: size as NonNullable<TypographyVariants['size']> }
       })
-      expect(wrapper.classes()).to.include(`typography--size-${size}`)
-    })
+      expect(wrapper.classes(), size).to.include(expected)
+    }
   })
-  it('applies correct color class', () => {
-    const colors: Array<'unset' | 'primary' | 'error' | 'main' | 'extra-error' | 'sub'> = [
-      'unset',
-      'primary',
-      'error',
-      'main',
-      'extra-error',
-      'sub'
-    ]
-    colors.forEach((color) => {
+  it('maps every colour onto its palette token', () => {
+    const colors: Record<NonNullable<TypographyVariants['color']>, string | null> = {
+      unset: null,
+      primary: 'text-text',
+      sub: 'text-sub',
+      main: 'text-main',
+      error: 'text-error',
+      'extra-error': 'text-error-extra'
+    }
+    for (const [color, expected] of Object.entries(colors)) {
       const wrapper = mount(Typography, {
-        props: { color }
+        props: { color: color as NonNullable<TypographyVariants['color']> }
       })
-      expect(wrapper.classes()).to.include(`typography--color-${color}`)
-    })
+      // `unset` inherits: it must add no colour token at all (the size token,
+      // which shares the `text-` prefix, still has to be there).
+      if (expected === null) {
+        const painted = ['text-text', 'text-sub', 'text-main', 'text-error', 'text-error-extra']
+        expect(wrapper.classes().filter((c) => painted.includes(c))).to.deep.equal([])
+      } else {
+        expect(wrapper.classes(), color).to.include(expected)
+      }
+    }
   })
   it('applies bold class when isBold prop is true', () => {
     const wrapper = mount(Typography, {
       props: { isBold: true }
     })
-    expect(wrapper.classes()).to.include('bold')
+    expect(wrapper.classes()).to.include('font-bold')
   })
   it('applies underline decoration class', () => {
     const wrapper = mount(Typography, {
       props: { decoration: 'underline' }
     })
-    expect(wrapper.classes()).to.include('typography--decoration-underline')
+    expect(wrapper.classes()).to.include('underline')
+  })
+  // tailwind-merge, not concatenation: the caller's size must beat the variant's.
+  it('lets a caller class override the size token', () => {
+    const wrapper = mount(Typography, {
+      props: { size: 'xxxl', class: 'text-sm' }
+    })
+    expect(wrapper.classes()).to.include('text-sm')
+    expect(wrapper.classes()).to.not.include('text-5xl')
   })
   it('renders slot content', () => {
     const wrapper = mount(Typography, {
@@ -107,11 +123,10 @@ describe('Typography', () => {
       }
     })
     const classes = wrapper.classes()
-    expect(classes).to.include('typography')
-    expect(classes).to.include('typography--color-primary')
-    expect(classes).to.include('typography--size-xl')
-    expect(classes).to.include('typography--decoration-underline')
-    expect(classes).to.include('bold')
-    expect(classes).to.include('tag--h1')
+    expect(classes).to.include('text-text')
+    expect(classes).to.include('text-3xl')
+    expect(classes).to.include('underline')
+    expect(classes).to.include('font-bold')
+    expect(wrapper.element.tagName).to.equal('H1')
   })
 })
