@@ -133,6 +133,38 @@ test.describe('composition on a real engine', () => {
     await cdp.detach()
   })
 
+  /**
+   * The readout under the field, and the layout rule that pays for it: it is
+   * out of the flow, so opening a session cannot move the words. monkeytype
+   * reserves a permanent empty band instead — this asserts we owe neither.
+   */
+  test('the composed text is spelled out below without moving the words', async ({ page }) => {
+    await openKoreanRun(page)
+    const wordsTop = () =>
+      page.evaluate(
+        () =>
+          document
+            .querySelector('.game__host')
+            ?.shadowRoot?.querySelector('.word')
+            ?.getBoundingClientRect().top ?? -1
+      )
+
+    const before = await wordsTop()
+    expect(before).toBeGreaterThan(0)
+
+    const cdp = await page.context().newCDPSession(page)
+    await cdp.send('Input.imeSetComposition', { text: 'ㅎ', selectionStart: 1, selectionEnd: 1 })
+
+    await expect(page.locator('.game__composition')).toHaveText('ㅎ')
+    expect(await wordsTop()).toBe(before)
+
+    await cdp.send('Input.imeSetComposition', { text: '', selectionStart: 0, selectionEnd: 0 })
+    await cdp.detach()
+
+    await expect(page.locator('.game__composition')).toHaveCount(0)
+    expect(await wordsTop()).toBe(before)
+  })
+
   test('an abandoned composition types nothing', async ({ page }) => {
     await openKoreanRun(page)
 

@@ -174,6 +174,50 @@ describe('field — the adapter publishes composition to the active word only', 
     wrapper.unmount()
   })
 
+  it('spells the composed text out under the field', async () => {
+    const { wrapper } = await mountField(['한글', '입력'])
+    const textarea = textareaOf(wrapper)
+    expect(wrapper.find('.game__composition').exists()).toBe(false)
+
+    playStep(textarea, { kind: 'compositionstart', data: '' })
+    playStep(textarea, { kind: 'compositionupdate', data: 'ㅎ' })
+    await nextTick()
+
+    const panel = wrapper.find('.game__composition')
+    expect(panel.text()).toBe('ㅎ')
+    // The IME announces its own candidate window; echoing it would double up.
+    expect(panel.attributes('aria-hidden')).toBe('true')
+    wrapper.unmount()
+  })
+
+  it('follows the composition and disappears with it', async () => {
+    const { wrapper } = await mountField(['한글', '입력'])
+    const textarea = textareaOf(wrapper)
+    playStep(textarea, { kind: 'compositionstart', data: '' })
+    playStep(textarea, { kind: 'compositionupdate', data: 'ㅎ' })
+    await nextTick()
+    playStep(textarea, { kind: 'compositionupdate', data: '한' })
+    await nextTick()
+    expect(wrapper.find('.game__composition').text()).toBe('한')
+
+    playStep(textarea, { kind: 'compositionend', data: '한' })
+    await nextTick()
+    expect(wrapper.find('.game__composition').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('shows the unresolved buffer a pinyin or romaji stage is still in', async () => {
+    // The case the readout exists for: at this point the word itself is showing
+    // six latin letters over two hanzi, and only the panel is readable.
+    const { wrapper } = await mountField(['房子', '窗户'])
+    const textarea = textareaOf(wrapper)
+    playStep(textarea, { kind: 'compositionstart', data: '' })
+    playStep(textarea, { kind: 'compositionupdate', data: 'fangzi' })
+    await nextTick()
+    expect(wrapper.find('.game__composition').text()).toBe('fangzi')
+    wrapper.unmount()
+  })
+
   it('costs no render at all when an update repeats the same text', async () => {
     const { wrapper } = await mountField(['한글', '입력'])
     const textarea = textareaOf(wrapper)

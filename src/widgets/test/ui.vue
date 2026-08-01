@@ -18,6 +18,13 @@
     <div ref="viewportRef" class="game__viewport w-full">
       <div ref="hostRef" class="game__host"></div>
     </div>
+    <!-- The IME's in-flight text, spelled out under the field (monkeytype's
+         `compositionDisplay: "below"`). Hidden from assistive tech: the platform
+         IME announces its own candidate window, and echoing it here would say
+         everything twice. -->
+    <div v-if="composingText !== ''" class="game__composition" aria-hidden="true">
+      {{ composingText }}
+    </div>
 
     <Teleport v-if="shadowContainer" :to="shadowContainer">
       <div
@@ -484,6 +491,34 @@
     // 2px underline slot, no vertical margin (see game-styles.ts).
     height: 160px;
     overflow: hidden;
+  }
+
+  // The composed-text readout, under the words.
+  //
+  // ABSOLUTE, like the focus hint above — and that is the whole design. A panel
+  // that joined the flow would appear the instant a session opened and vanish
+  // when it closed, shoving everything below it twice per word; monkeytype pays
+  // for that by keeping a literal space in the element forever
+  // (`setCompositionText(" ")` on every restart and on the config switch), which
+  // reserves a permanently empty band the size of a line of text. Taking it out
+  // of the flow costs neither: nothing moves, and nothing is reserved.
+  //
+  // It reads at the field's own type size because the point is legibility —
+  // three hangul jamo assembling into one syllable, or a pinyin buffer that has
+  // not resolved yet, are unreadable at UI size.
+  .game__composition {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    z-index: 5;
+    margin-top: 0.5rem;
+    font-size: var(--tm-font-size, 32px);
+    line-height: 1.4em;
+    color: var(--sub-color);
+    text-align: center;
+    pointer-events: none;
+    user-select: none;
   }
 
   .game__host {
