@@ -18,6 +18,8 @@
 
 import { Result, err, ok } from 'neverthrow'
 
+import { replaceAccents } from './accents'
+
 export interface Dictionary {
   readonly name: string
   readonly bcp47: string
@@ -100,6 +102,33 @@ export interface GenerationConfig {
    * optional `CoreConfig` fields).
    */
   readonly rawTokens?: boolean
+  /**
+   * Lazy mode: strip the diacritics from every generated word (`épée` → `epee`,
+   * `straße` → `strasse`, `ёж` → `еж`). A GENERATION transform — the target
+   * itself is the plain form, so nothing about input handling, the event log or
+   * scoring knows this option exists.
+   *
+   * Optional with a legacy default of `false`, the same contract `rawTokens`
+   * has: a config snapshot written before this field existed reconstructs the
+   * old word list exactly, so `EVENT_LOG_VERSION` is unaffected.
+   *
+   * Not scored. The four word-affecting mods multiply because they make a run
+   * harder; lazy makes it easier, so it pays nothing and takes nothing away.
+   */
+  readonly lazy?: boolean
+  /**
+   * The CANONICAL dictionary key (`russian`, `german_1k`, `code_css`) — never
+   * the human catalogue name (`CSS (code)`) and never the BCP-47 tag.
+   *
+   * Read for exactly one purpose: selecting the lazy-mode accent pack, which is
+   * per-language (German spells `ä` as `ae`, Serbian `đ` as `dj`). It therefore
+   * influences generated output and belongs in the seed context by the invariant
+   * above — but ONLY through `lazy`, and with `lazy` off it changes nothing.
+   *
+   * Optional for the same legacy reason: absent means the common accent table
+   * with no language overrides.
+   */
+  readonly language?: string
   /**
    * Where the targets come from. ABSENT MEANS `seeded` — that is what keeps
    * `EVENT_LOG_VERSION` at 1: every log, golden vector and stored config
@@ -261,10 +290,18 @@ function randomInt(rng: () => number, max: number): number {
  *   2. randomCase   — randomize the case of every character
  *   3. capitalization — force the sentence-start word's first letter upper
  *   4. punctuation  — append a trailing mark
- * A 5th transform — reverse (Reverse mod) — is applied by `generateWords` to the
- * decorated word AFTER sentence-boundary detection, so it consumes no PRNG and
- * does not shift capitalization: reverse-on targets are exact mirrors of
- * reverse-off targets at the same seed.
+ * Two further transforms — lazy (accent stripping) then reverse (Reverse mod) —
+ * are applied by `generateWords` to the decorated word AFTER sentence-boundary
+ * detection, so they consume no PRNG and do not shift capitalization:
+ * reverse-on targets are exact mirrors of reverse-off targets at the same seed,
+ * and a lazy run's word list is aligned word-for-word with the same seed's
+ * non-lazy list.
+ *
+ * WHY LAZY RUNS HERE AND NOT ON THE DICTIONARY TOKEN. `randomCase` above draws
+ * once PER CHARACTER, so stripping accents first — where `ß` becomes the two
+ * characters `ss` — would consume a different number of draws and every word
+ * after it would differ. Stripping after `decorate` leaves PRNG consumption
+ * identical, which is the same property that makes reverse an exact mirror.
  */
 function decorate(
   word: string,
@@ -378,6 +415,10 @@ export function generateWords(
   // Raw tokens: the dictionary IS the text (code). No transform runs, so the
   // only PRNG draw per word is the index one — still fully deterministic.
   const raw = emitsRawTokens(context.generation)
+  // Lazy is gated by the same predicate the other transforms are: a verbatim
+  // source (code tokens, a quote) means the text is the author's, and rewriting
+  // an accent inside it would be exactly the edit `rawTokens` exists to forbid.
+  const lazy = !raw && context.generation.lazy === true
   const words: string[] = []
   let prevIndex = -1
   let capitalizeNext = !raw && context.generation.punctuation // start of a sentence
@@ -394,10 +435,14 @@ export function generateWords(
       continue
     }
     const decorated = decorate(base, context.generation, rng, capitalizeNext)
-    // Transform 5 (reverse): mirror the decorated word for output only. Sentence
-    // detection below still reads `decorated`, so PRNG/capitalization are identical
-    // to a reverse-off run at the same seed (exact mirror; see the transform-order note).
-    words.push(context.generation.reverse ? reverseWord(decorated) : decorated)
+    // Transforms 5–6 (lazy, then reverse), for OUTPUT only. Sentence detection
+    // below still reads `decorated`, so PRNG/capitalization are identical to a
+    // run with both off at the same seed (see the transform-order note). Lazy
+    // precedes reverse so a mirrored word is the mirror of what lazy produced,
+    // rather than a mirror the accent matcher would then read backwards.
+    let out = lazy ? replaceAccents(decorated, context.generation.language) : decorated
+    if (context.generation.reverse) out = reverseWord(out)
+    words.push(out)
     // Next word is capitalized when this one ended a sentence.
     capitalizeNext =
       context.generation.punctuation && SENTENCE_END.includes(decorated[decorated.length - 1] ?? '')

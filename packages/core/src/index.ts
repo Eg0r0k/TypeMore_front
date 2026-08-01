@@ -14,6 +14,7 @@
 export * from './events'
 export * from './version'
 export * from './normalize'
+export * from './accents'
 export * from './canary'
 export * from './words'
 export * from './game-core'

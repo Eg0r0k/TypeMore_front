@@ -94,10 +94,20 @@ export interface Normalizer {
   normalize(typed: string, expected: string | undefined, language?: string): string
 }
 
+/**
+ * A dictionary key matches a language NAME: exactly, or as one of its sized
+ * variants (`russian` covers `russian_1k`, never `russiannot`).
+ *
+ * Exported because `accents.ts` resolves its language packs by the same rule —
+ * two copies of "is this the Russian dictionary" would be free to disagree the
+ * first time either grew a case.
+ */
+export const languageMatches = (name: string, language: string | undefined): boolean =>
+  language !== undefined && (language === name || language.startsWith(`${name}_`))
+
 const appliesTo = (group: EquivalenceGroup, language: string | undefined): boolean => {
   if (group.languages === undefined) return true
-  if (language === undefined) return false
-  return group.languages.some((name) => language === name || language.startsWith(`${name}_`))
+  return group.languages.some((name) => languageMatches(name, language))
 }
 
 /** Compile a registry into the per-keystroke functions (char → groups lookup). */
