@@ -167,6 +167,29 @@
   }
 }
 
+/*
+ * An inline link inside a sentence — the "create one" in "no account? create
+ * one". Each of the six auth pages had declared this same rule locally as
+ * `.auth__link`; it lives here so a link in running text looks the same
+ * wherever it appears.
+ *
+ * `from-font` for both thickness and position because the UI face is
+ * monospaced: a synthesised underline sits on top of the descenders in
+ * JetBrainsMono, and the metrics the font ships put it below them.
+ */
+@utility link-main {
+  color: var(--main-color);
+  text-decoration-line: underline;
+  text-decoration-thickness: from-font;
+  text-underline-position: from-font;
+
+  @apply transition-tm focus-ring rounded-sm;
+
+  &:hover {
+    color: var(--text-color);
+  }
+}
+
 /* Keycap (kbd) surface for the tooltip kbd variant (mirrors the global kbd). */
 @utility kbd-cap {
   display: inline-block;
