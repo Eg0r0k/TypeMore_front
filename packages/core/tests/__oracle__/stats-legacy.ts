@@ -172,6 +172,26 @@ function consistency(bursts: readonly number[]): number {
   return kogasa(Math.sqrt(variance) / mean)
 }
 
+/** Characters a run EARNED: whole correct words plus their separators. */
+function netCharsFor(ctx: CoreContext, state: GameState): number {
+  const committed = Math.min(state.wordIndex, ctx.words.length)
+  const finishedByCount =
+    state.phase === 'finished' && ctx.config.mode !== 'time' && ctx.config.mode !== 'free'
+  let credited = 0
+  for (let i = 0; i < committed; i++) {
+    const target = ctx.words[i] ?? ''
+    if ((state.input[i] ?? '') !== target) continue
+    credited += target.length
+    if (!endsLine(target) && !(finishedByCount && i === committed - 1)) credited += 1
+  }
+  if (state.wordIndex < ctx.words.length) {
+    const target = ctx.words[state.wordIndex] ?? ''
+    const buffer = state.input[state.wordIndex] ?? ''
+    if (buffer.length > 0 && target.startsWith(buffer)) credited += buffer.length
+  }
+  return credited
+}
+
 /**
  * Compute all metrics from the log. `endMs` is the instant to measure up to
  * (use `finishedAt` for final results, the current tick instant for live UI).
@@ -186,7 +206,10 @@ function computeMetrics(ctx: CoreContext, events: readonly GameEvent[], endMs: M
   const durationSec = startedAt === null ? 0 : Math.max(0, (end - startedAt) / 1000)
   const minutes = durationSec / 60
 
-  const netChars = chars.correct + spaces
+  // Net: only words that came out right pay (see `netCharsOf` in game-core).
+  // Written out here from scratch rather than imported — an oracle that calls
+  // the thing it checks checks nothing.
+  const netChars = netCharsFor(ctx, analysis.finalState)
   const rawChars = chars.correct + chars.incorrect + chars.extra + spaces
   return {
     wpm: minutes > 0 ? netChars / 5 / minutes : 0,
@@ -212,11 +235,23 @@ function wpmOverTime(ctx: CoreContext, events: readonly GameEvent[], endMs: Ms):
     analysis.finalState.phase === 'finished' &&
     ctx.config.mode !== 'time' &&
     ctx.config.mode !== 'free'
-  const spaceTimes: number[] = []
+  // The cumulative line is NET, paid per correct WORD at the instant it was
+  // committed; a wrong word pays nothing at all.
+  const credits: { t: number; chars: number }[] = []
   for (let i = 0; i < analysis.commitTimes.length; i++) {
-    if (finishedByCount && i === analysis.commitTimes.length - 1) continue
-    if (endsLine(ctx.words[i] ?? '')) continue
-    spaceTimes.push(analysis.commitTimes[i])
+    const target = ctx.words[i] ?? ''
+    if ((analysis.finalState.input[i] ?? '') !== target) continue
+    let chars = target.length
+    if (!endsLine(target) && !(finishedByCount && i === analysis.commitTimes.length - 1)) chars++
+    credits.push({ t: analysis.commitTimes[i], chars })
+  }
+  const activeIndex = analysis.finalState.wordIndex
+  if (activeIndex < ctx.words.length) {
+    const target = ctx.words[activeIndex] ?? ''
+    const buffer = analysis.finalState.input[activeIndex] ?? ''
+    if (buffer.length > 0 && target.startsWith(buffer)) {
+      credits.push({ t: end, chars: buffer.length })
+    }
   }
   const points: TimelinePoint[] = []
   for (let s = 1; s <= seconds; s++) {
@@ -230,11 +265,9 @@ function wpmOverTime(ctx: CoreContext, events: readonly GameEvent[], endMs: Ms):
     // the one ENDING at the finish (clamped at the run's start), not the sliver.
     const tail = checkpoint < bucketEnd
     const rateStart = Math.max(startedAt, checkpoint - 1000)
-    let correctSoFar = 0
     let rawInWindow = 0
     let errorsInBucket = 0
     for (const key of analysis.keystrokes) {
-      if (key.t <= checkpoint && key.correct) correctSoFar++
       // Errors stay bucket-local: they are a count, not a rate, and the windows
       // of the last two points overlap.
       if (key.t >= bucketStart && key.t < bucketEnd && !key.correct) errorsInBucket++
@@ -242,13 +275,13 @@ function wpmOverTime(ctx: CoreContext, events: readonly GameEvent[], endMs: Ms):
       const inWindow = tail ? key.t >= rateStart : key.t >= bucketStart && key.t < bucketEnd
       if (inWindow) rawInWindow++
     }
-    let spacesSoFar = 0
-    for (const t of spaceTimes) if (t <= checkpoint) spacesSoFar++
+    let netSoFar = 0
+    for (const credit of credits) if (credit.t <= checkpoint) netSoFar += credit.chars
     const elapsedMin = (checkpoint - startedAt) / 60000
     const rateMin = (checkpoint - rateStart) / 60000
     points.push({
       second: s,
-      wpm: elapsedMin > 0 ? (correctSoFar + spacesSoFar) / 5 / elapsedMin : 0,
+      wpm: elapsedMin > 0 ? netSoFar / 5 / elapsedMin : 0,
       raw: rateMin > 0 ? rawInWindow / 5 / rateMin : 0,
       errors: errorsInBucket
     })

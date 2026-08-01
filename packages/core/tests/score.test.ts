@@ -344,10 +344,16 @@ describe('scoreV2 zero-mods regression (property): total === scoreV1 exactly', (
 
 /**
  * Compatibility proof for the `\n` separator rule: for any word list WITHOUT a
- * newline — i.e. every dictionary published so far — the new accounting must be
- * bit-identical to the pre-change formula, which is spelled out here as the
- * oracle. This is what justifies shipping the rule with no `SCORE_VERSION` /
- * `EVENT_LOG_VERSION` bump: no stored run's numbers can move.
+ * newline — i.e. every dictionary published so far — separator COUNTING must be
+ * bit-identical to the pre-change formula, spelled out here as the oracle.
+ *
+ * Scope note, added when net WPM changed. This block covers `separatorsOf` and
+ * `metrics.spaces`, which are unchanged and still mean "separators the run
+ * typed". It deliberately no longer asserts anything about `netCharsOf`: net is
+ * now "what the run EARNED" — whole correct words and their separators — and
+ * that number is expected to move for any run that mistyped a word. The claim
+ * this block still makes is the narrow one it was written for: the `\n` rule
+ * moves nothing on a newline-free dictionary.
  */
 describe("separator rule regression (property): no '\\n' => pre-change numbers", () => {
   const SEEDS = Array.from({ length: 40 }, (_, i) => i + 1)
@@ -368,7 +374,12 @@ describe("separator rule regression (property): no '\\n' => pre-change numbers",
 
     expect(separatorsOf(ctx, state)).toBe(legacySpaces(ctx, state))
     expect(metrics.spaces).toBe(legacySpaces(ctx, state))
-    expect(netCharsOf(ctx, state)).toBe(metrics.chars.correct + legacySpaces(ctx, state))
+    // Net is a different question and has its own oracle below: it can only
+    // ever be at most what the old formula credited, because it credits a
+    // SUBSET — whole correct words instead of every lucky letter.
+    expect(netCharsOf(ctx, state)).toBeLessThanOrEqual(
+      metrics.chars.correct + legacySpaces(ctx, state)
+    )
   })
 
   it.each(SEEDS.slice(0, 20))('time mode (seed %i)', (seed) => {

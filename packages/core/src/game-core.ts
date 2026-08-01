@@ -198,7 +198,7 @@ interface StateCore {
   readonly version: number
   /** Committed words that are not `endsLine` — `separatorsOf` before the count-finish adjustment. */
   readonly sep: number
-  /** Correct characters across the committed words — `netCharsOf`'s committed half. */
+  /** Net-WPM credit from the committed words (chars + separator, correct words only). */
   readonly correct: number
   /** Target characters across the committed words — `targetCharsOf`'s committed half. */
   readonly target: number
@@ -314,11 +314,45 @@ function writeCore(core: StateCore, index: number, value: string): StateCore {
 }
 
 /** Characters of `typed` that match `target` position for position. */
-function matchingChars(target: string, typed: string): number {
-  const shared = target.length < typed.length ? target.length : typed.length
-  let correct = 0
-  for (let k = 0; k < shared; k++) if (typed[k] === target[k]) correct++
-  return correct
+/**
+ * Characters a COMMITTED word credits to net WPM: all of them when the word was
+ * typed exactly, none otherwise.
+ *
+ * Net speed is measured in words, not in lucky letters. Crediting the matching
+ * characters of a wrong word meant a run could bank speed for text it never
+ * produced — type `hellp` for `hello`, or `xxxxx` and a space, and four or five
+ * characters landed in the net total for a word the player did not type. Fast
+ * inaccurate typing therefore posted a net WPM that no amount of it could have
+ * earned, which is exactly what `raw` is for and exactly what `wpm` is not.
+ *
+ * This is monkeytype's rule (`utils/strings.ts` `countChars` → `correctWord`,
+ * consumed by their `wpmHistory`): a character counts toward net only when it
+ * belongs to a word that came out right.
+ */
+function creditedChars(target: string, typed: string): number {
+  return typed === target ? target.length : 0
+}
+
+/**
+ * What a committed word contributes to net WPM: its characters AND its
+ * separator, or nothing at all.
+ *
+ * The separator rides along for the same reason the characters do. monkeytype
+ * keeps the trailing space INSIDE the word (`textWithCommit`), so a wrong word
+ * forfeits its space automatically; our separators are counted apart from the
+ * words, so the rule has to be stated. Without it, spacing through a run of
+ * garbage still banked one character per word — the same "speed for text I never
+ * typed" the character rule exists to stop, just slower.
+ *
+ * A word that ends its own line typed its separator as a `\n` character, which
+ * is already one of its characters — crediting another would count it twice.
+ * The count-finish correction (the final word of a counted run has no trailing
+ * space) is state-dependent and is applied by `netCharsOf` at read time, exactly
+ * as `separatorsOf` does it.
+ */
+function netCreditOf(target: string, typed: string): number {
+  if (typed !== target) return 0
+  return target.length + (endsLine(target) ? 0 : 1)
 }
 
 /**
@@ -351,7 +385,7 @@ function commitBuffers(ctx: CoreContext, buffers: Buffers, index: number, typed:
     store: core.store,
     version: core.version,
     sep: core.sep + (endsLine(word) ? 0 : 1),
-    correct: core.correct + matchingChars(word, typed),
+    correct: core.correct + netCreditOf(word, typed),
     target: core.target + word.length,
     cache: core.cache
   }
@@ -371,7 +405,7 @@ function uncommitBuffers(
     store: core.store,
     version: core.version,
     sep: core.sep - (endsLine(word) ? 0 : 1),
-    correct: core.correct - matchingChars(word, typed),
+    correct: core.correct - netCreditOf(word, typed),
     target: core.target - word.length,
     cache: core.cache
   }
@@ -494,40 +528,61 @@ export function separatorsOf(ctx: CoreContext, state: GameState): number {
 }
 
 /**
- * Net chars for WPM — correct characters (committed words + the current buffer)
- * plus the separators of `separatorsOf`. Mirrors `stats.getChars` (correct +
- * spaces) exactly; the character half is kept here (not imported from stats) so
- * game-core stays at the bottom of the dependency graph.
- * `core.equivalence`/minspeed tests pin the match.
+ * Net chars for WPM: what every word that came out RIGHT is worth
+ * (`netCreditOf` — its characters and its separator), plus partial credit for
+ * the word still being typed.
+ *
+ * Note what is NOT here: `separatorsOf`. That counts the separators a run
+ * TYPED, which is what `raw` and the results breakdown want; net wants the ones
+ * it EARNED.
+ *
+ * THE single definition — `stats.metricsFrom` and `stats.timelineFrom` both read
+ * it, so the headline number, the chart's last point and the MinSpeed floor can
+ * never disagree about what a run was worth.
+ *
+ * PARTIAL CREDIT, and why only here. The active word is not finished, so
+ * "did it come out right" has no answer yet; the honest reading is "right so
+ * far", which is `target.startsWith(buffer)`. A buffer that has already gone
+ * wrong credits nothing and will credit nothing when it commits either, so the
+ * number never walks backwards. This is monkeytype's `creditPartial`, which they
+ * apply to the last word for exactly this reason.
  */
 export function netCharsOf(ctx: CoreContext, state: GameState): number {
   const core = coreOf(state)
   const incremental = core !== undefined && core.store.words === ctx.words
-  let correct = 0
+  let credited = 0
   if (incremental) {
     // The committed half is carried on the state — see the PURITY BOUNDARY note.
     // Recomputing it here is what made a MinSpeed run quadratic: `settle` asks
     // for it on every single event.
-    correct = (core as StateCore).correct
+    credited = (core as StateCore).correct
   } else {
     const committed = Math.min(state.wordIndex, ctx.words.length)
     const input = state.input
     for (let i = 0; i < committed; i++) {
-      const target = ctx.words[i] ?? ''
-      const typed = input[i] ?? ''
-      const n = Math.min(target.length, typed.length)
-      for (let k = 0; k < n; k++) if (typed[k] === target[k]) correct++
+      credited += netCreditOf(ctx.words[i] ?? '', input[i] ?? '')
     }
+  }
+  // The count-finish correction, mirroring `separatorsOf`: the final word of a
+  // counted run has no trailing space, so the separator its credit optimistically
+  // included was never typed. Only a word that EARNED one can lose one.
+  const committed = Math.min(state.wordIndex, ctx.words.length)
+  const finishedByCount =
+    state.phase === 'finished' && ctx.config.mode !== 'time' && ctx.config.mode !== 'free'
+  if (finishedByCount && committed > 0) {
+    const last = committed - 1
+    const target = ctx.words[last] ?? ''
+    const typed = incremental ? bufferOf(state, last) : (state.input[last] ?? '')
+    if (typed === target && !endsLine(target)) credited -= 1
   }
   if (state.wordIndex < ctx.words.length) {
     const target = ctx.words[state.wordIndex] ?? ''
     const buffer = incremental
       ? bufferOf(state, state.wordIndex)
       : (state.input[state.wordIndex] ?? '')
-    const n = Math.min(target.length, buffer.length)
-    for (let k = 0; k < n; k++) if (buffer[k] === target[k]) correct++
+    if (buffer.length > 0 && target.startsWith(buffer)) credited += buffer.length
   }
-  return correct + separatorsOf(ctx, state)
+  return credited
 }
 
 /**

@@ -112,22 +112,34 @@ function separatorsOf(ctx: CoreContext, state: GameState): number {
  * game-core stays at the bottom of the dependency graph.
  * `core.equivalence`/minspeed tests pin the match.
  */
+/**
+ * Net chars, written out the naive way: walk every word, credit the ones that
+ * came out right, add partial credit for the buffer in flight.
+ *
+ * This oracle exists to prove the INCREMENTAL counters carried on the state
+ * reproduce a from-scratch computation. It is deliberately the slow, obvious
+ * version — the moment it starts sharing code with the thing it checks, it stops
+ * checking anything.
+ */
 function netCharsOf(ctx: CoreContext, state: GameState): number {
   const committed = Math.min(state.wordIndex, ctx.words.length)
-  let correct = 0
+  const finishedByCount =
+    state.phase === 'finished' && ctx.config.mode !== 'time' && ctx.config.mode !== 'free'
+  let credited = 0
   for (let i = 0; i < committed; i++) {
     const target = ctx.words[i] ?? ''
-    const typed = state.input[i] ?? ''
-    const n = Math.min(target.length, typed.length)
-    for (let k = 0; k < n; k++) if (typed[k] === target[k]) correct++
+    if ((state.input[i] ?? '') !== target) continue
+    credited += target.length
+    // Its separator, unless the word typed one as its own `\n`, or it is the
+    // final word of a counted run and no space was ever typed after it.
+    if (!endsLine(target) && !(finishedByCount && i === committed - 1)) credited += 1
   }
   if (state.wordIndex < ctx.words.length) {
     const target = ctx.words[state.wordIndex] ?? ''
     const buffer = state.input[state.wordIndex] ?? ''
-    const n = Math.min(target.length, buffer.length)
-    for (let k = 0; k < n; k++) if (buffer[k] === target[k]) correct++
+    if (buffer.length > 0 && target.startsWith(buffer)) credited += buffer.length
   }
-  return correct + separatorsOf(ctx, state)
+  return credited
 }
 
 /**

@@ -16,6 +16,7 @@ import {
   bufferOf,
   endsLine,
   initialStateOf,
+  netCharsOf,
   reduce,
   separatorsOf,
   settle
@@ -29,7 +30,13 @@ export interface CharCounts {
 }
 
 export interface Metrics {
-  /** Net words per minute: correct characters + committed spaces. */
+  /**
+   * Net words per minute: only words that came out RIGHT pay — their characters
+   * and their separator (`netCharsOf`), plus partial credit for the word still
+   * being typed. A word with one wrong letter is worth nothing here, and worth
+   * everything in `raw`; that difference IS the difference between the two
+   * numbers.
+   */
   readonly wpm: number
   /** Raw words per minute: all produced characters, correct or not. */
   readonly raw: number
@@ -306,7 +313,11 @@ export function metricsFrom(ctx: CoreContext, analysis: LogAnalysis, endMs: Ms):
   const durationSec = startedAt === null ? 0 : Math.max(0, (end - startedAt) / 1000)
   const minutes = durationSec / 60
 
-  const netChars = chars.correct + spaces
+  // Net comes from the ONE definition in game-core: only words that came out
+  // right pay, so `chars.correct` — which counts lucky letters inside wrong
+  // words — is deliberately not the input here. It still is for `raw`, which is
+  // exactly the number that should count everything the player produced.
+  const netChars = netCharsOf(ctx, analysis.finalState)
   const rawChars = chars.correct + chars.incorrect + chars.extra + spaces
   return {
     wpm: minutes > 0 ? netChars / 5 / minutes : 0,
@@ -352,18 +363,41 @@ export function timelineFrom(ctx: CoreContext, analysis: LogAnalysis, endMs: Ms)
   const end = analysis.finalState.finishedAt ?? endMs
   const seconds = Math.ceil(Math.max(0, (end - startedAt) / 1000))
   if (seconds <= 0) return []
+  // The cumulative line is NET, so it is paid out per WORD, at the instant the
+  // word was committed — not per correct keystroke. A word that came out wrong
+  // pays nothing, which is the whole point (`netCharsOf`), and a keystream-based
+  // curve cannot express that: it would have to un-credit letters when the word
+  // it was in turned out to be wrong.
+  //
   // Mirror `separatorsOf`: a count-finished test's final word has no trailing
   // space, and a word that ends its own line already typed its separator as a
-  // `\n` character — neither contributes a separator to the cumulative wpm.
+  // `\n` character — neither earns a separator.
   const finishedByCount =
     analysis.finalState.phase === 'finished' &&
     ctx.config.mode !== 'time' &&
     ctx.config.mode !== 'free'
-  const spaceTimes: number[] = []
+  const input = analysis.finalState.input
+  const creditTimes: number[] = []
+  const creditChars: number[] = []
   for (let i = 0; i < analysis.commitTimes.length; i++) {
-    if (finishedByCount && i === analysis.commitTimes.length - 1) continue
-    if (endsLine(ctx.words[i] ?? '')) continue
-    spaceTimes.push(analysis.commitTimes[i])
+    const target = ctx.words[i] ?? ''
+    if ((input[i] ?? '') !== target) continue
+    let credit = target.length
+    if (!endsLine(target) && !(finishedByCount && i === analysis.commitTimes.length - 1)) credit++
+    creditTimes.push(analysis.commitTimes[i])
+    creditChars.push(credit)
+  }
+  // Partial credit for the word still in the buffer, banked at the run's end —
+  // the same allowance `netCharsOf` gives it, landing on the last checkpoint so
+  // the final point equals the summary wpm exactly.
+  const activeIndex = analysis.finalState.wordIndex
+  if (activeIndex < ctx.words.length) {
+    const target = ctx.words[activeIndex] ?? ''
+    const buffer = input[activeIndex] ?? ''
+    if (buffer.length > 0 && target.startsWith(buffer)) {
+      creditTimes.push(end)
+      creditChars.push(buffer.length)
+    }
   }
 
   // Every query below is a range over the same second grid, so bucket once and
@@ -377,33 +411,25 @@ export function timelineFrom(ctx: CoreContext, analysis: LogAnalysis, endMs: Ms)
   // `byCheckpoint[s]` = events with `t <= start + s·1000`, as a prefix sum.
   const rawInBucket = new Float64Array(seconds + 2)
   const errorsInBucket = new Float64Array(seconds + 2)
-  const correctByCheckpoint = new Float64Array(seconds + 2)
   for (let k = 0; k < keyTimes.length; k++) {
     const offset = keyTimes[k] - startedAt
-    if (offset >= 0) {
-      const bucket = Math.floor(offset / 1000) + 1
-      if (bucket <= seconds) {
-        rawInBucket[bucket]++
-        if (!keyCorrect[k]) errorsInBucket[bucket]++
-      }
-    }
-    if (keyCorrect[k]) {
-      // `t <= start + s·1000` first holds at `s = ceil(offset / 1000)`; a key at or
-      // before the start instant is inside every checkpoint.
-      const from = offset <= 0 ? 0 : Math.ceil(offset / 1000)
-      if (from <= seconds) correctByCheckpoint[from]++
+    if (offset < 0) continue
+    const bucket = Math.floor(offset / 1000) + 1
+    if (bucket <= seconds) {
+      rawInBucket[bucket]++
+      if (!keyCorrect[k]) errorsInBucket[bucket]++
     }
   }
-  const spacesByCheckpoint = new Float64Array(seconds + 2)
-  for (const t of spaceTimes) {
-    const offset = t - startedAt
+  // `netByCheckpoint[s]` = credit banked at or before `start + s·1000`.
+  const netByCheckpoint = new Float64Array(seconds + 2)
+  for (let i = 0; i < creditTimes.length; i++) {
+    const offset = creditTimes[i] - startedAt
+    // `t <= start + s·1000` first holds at `s = ceil(offset / 1000)`; credit at
+    // or before the start instant is inside every checkpoint.
     const from = offset <= 0 ? 0 : Math.ceil(offset / 1000)
-    if (from <= seconds) spacesByCheckpoint[from]++
+    if (from <= seconds) netByCheckpoint[from] += creditChars[i]
   }
-  for (let s = 1; s <= seconds; s++) {
-    correctByCheckpoint[s] += correctByCheckpoint[s - 1]
-    spacesByCheckpoint[s] += spacesByCheckpoint[s - 1]
-  }
+  for (let s = 1; s <= seconds; s++) netByCheckpoint[s] += netByCheckpoint[s - 1]
 
   const points: TimelinePoint[] = []
   for (let s = 1; s <= seconds; s++) {
@@ -417,24 +443,20 @@ export function timelineFrom(ctx: CoreContext, analysis: LogAnalysis, endMs: Ms)
     // the one ENDING at the finish (clamped at the run's start), not the sliver.
     const tail = checkpoint < bucketEnd
     const rateStart = Math.max(startedAt, checkpoint - 1000)
-    let correctSoFar: number
+    let netSoFar: number
     let rawInWindow: number
     let errors: number
-    let spacesSoFar: number
     if (s < seconds) {
-      correctSoFar = correctByCheckpoint[s]
+      netSoFar = netByCheckpoint[s]
       rawInWindow = rawInBucket[s]
       errors = errorsInBucket[s]
-      spacesSoFar = spacesByCheckpoint[s]
     } else {
-      correctSoFar = 0
+      netSoFar = 0
       rawInWindow = 0
       errors = 0
-      spacesSoFar = 0
       for (let k = 0; k < keyTimes.length; k++) {
         const t = keyTimes[k]
         const correct = keyCorrect[k]
-        if (t <= checkpoint && correct) correctSoFar++
         // Errors stay bucket-local: they are a count, not a rate, and the windows
         // of the last two points overlap.
         if (t >= bucketStart && t < bucketEnd && !correct) errors++
@@ -442,13 +464,15 @@ export function timelineFrom(ctx: CoreContext, analysis: LogAnalysis, endMs: Ms)
         const inWindow = tail ? t >= rateStart : t >= bucketStart && t < bucketEnd
         if (inWindow) rawInWindow++
       }
-      for (const t of spaceTimes) if (t <= checkpoint) spacesSoFar++
+      for (let i = 0; i < creditTimes.length; i++) {
+        if (creditTimes[i] <= checkpoint) netSoFar += creditChars[i]
+      }
     }
     const elapsedMin = (checkpoint - startedAt) / 60000
     const rateMin = (checkpoint - rateStart) / 60000
     points.push({
       second: s,
-      wpm: elapsedMin > 0 ? (correctSoFar + spacesSoFar) / 5 / elapsedMin : 0,
+      wpm: elapsedMin > 0 ? netSoFar / 5 / elapsedMin : 0,
       raw: rateMin > 0 ? rawInWindow / 5 / rateMin : 0,
       errors
     })

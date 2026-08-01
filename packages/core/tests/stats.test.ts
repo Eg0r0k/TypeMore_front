@@ -352,3 +352,93 @@ describe('afkOf — whole one-second idle buckets', () => {
     expect(afkStatsOf(core)).toEqual({ afkMs: 27_000, buckets: 27 })
   })
 })
+
+/**
+ * Net WPM pays for WORDS, not for lucky letters.
+ *
+ * The bug this pins: typing fast and wrong, spacing through the mistakes, posted
+ * a net WPM that no amount of that could have earned. Every character that
+ * happened to land in the right place inside a wrong word was banked, and so was
+ * the separator after it, so a run of pure garbage still climbed. `raw` is the
+ * number that counts everything produced; `wpm` is the number that counts what
+ * came out right, and until now the two only differed by a rounding error.
+ */
+describe('net wpm credits only correct words', () => {
+  const at = (words: string[], typed: string[], msPerChar = 100) => {
+    const events: GameEvent[] = []
+    let seq = 1
+    let t = 0
+    for (const word of typed) {
+      for (const char of word) {
+        events.push(insertEvent(seq++, t, char))
+        t += msPerChar
+      }
+      events.push(commitEvent(seq++, t))
+    }
+    return computeMetrics(ctxOf(words), events, asMs(t))
+  }
+
+  it('pays nothing for a word spaced through wholly wrong', () => {
+    const metrics = at(['hello'], ['xxxxx'])
+    expect(metrics.wpm).toBe(0)
+    // …while raw still reports everything that was produced.
+    expect(metrics.raw).toBeGreaterThan(0)
+  })
+
+  it('pays nothing for a word that is one letter off', () => {
+    // The old formula banked four of these five characters plus the separator.
+    const metrics = at(['hello'], ['hellp'])
+    expect(metrics.wpm).toBe(0)
+    expect(metrics.chars.correct).toBe(4)
+  })
+
+  it('pays the whole word, separator included, when it comes out right', () => {
+    const metrics = at(['hello', 'world'], ['hello', 'world'])
+    // 'hello' + its space + 'world'; the final word of a counted run typed no
+    // trailing space, so it earns none.
+    expect(metrics.wpm).toBeCloseTo(11 / 5 / (metrics.durationSec / 60), 9)
+  })
+
+  it('does not let a wrong word drag a correct one down', () => {
+    const both = at(['hello', 'world'], ['hello', 'xxxxx'])
+    const alone = at(['hello', 'world'], ['hello', 'world'])
+    expect(both.wpm).toBeGreaterThan(0)
+    expect(both.wpm).toBeLessThan(alone.wpm)
+  })
+
+  it('gives partial credit to the word still being typed, while it is still right', () => {
+    const right = computeMetrics(
+      ctxOf(['hello']),
+      [insertEvent(1, 0, 'h'), insertEvent(2, 100, 'e')],
+      asMs(200)
+    )
+    const wrong = computeMetrics(
+      ctxOf(['hello']),
+      [insertEvent(1, 0, 'h'), insertEvent(2, 100, 'x')],
+      asMs(200)
+    )
+    expect(right.wpm).toBeGreaterThan(0)
+    // Already off the rails: it will credit nothing when it commits either, so
+    // it credits nothing now — the number never walks backwards.
+    expect(wrong.wpm).toBe(0)
+  })
+
+  it("the chart's last point still equals the headline number", () => {
+    const words = ['hello', 'world', 'again']
+    const typed = ['hello', 'xxxxx', 'again']
+    const events: GameEvent[] = []
+    let seq = 1
+    let t = 0
+    for (const word of typed) {
+      for (const char of word) {
+        events.push(insertEvent(seq++, t, char))
+        t += 100
+      }
+      events.push(commitEvent(seq++, t))
+    }
+    const end = asMs(t)
+    const metrics = computeMetrics(ctxOf(words), events, end)
+    const timeline = wpmOverTime(ctxOf(words), events, end)
+    expect(timeline.at(-1)?.wpm).toBeCloseTo(metrics.wpm, 9)
+  })
+})
