@@ -1,32 +1,30 @@
 <template>
-  <div class="auth__wrapper">
-    <div class="auth">
-      <div class="auth__header">
-        <Typography color="main" tag-name="h2" size="xl">{{ t('auth.callback.title') }}</Typography>
-      </div>
+  <AuthLayout :title="t('auth.callback.title')">
+    <Typography v-if="state === 'pending'" color="primary" size="s" role="status">
+      {{ t('auth.callback.pending') }}
+    </Typography>
+    <Typography v-else color="error" size="s" role="alert">
+      {{ t('auth.callback.failed') }}
+    </Typography>
 
-      <Typography v-if="state === 'pending'" color="primary" size="s" role="status">
-        {{ t('auth.callback.pending') }}
-      </Typography>
-      <Typography v-else color="error" size="s" role="alert">
-        {{ t('auth.callback.failed') }}
-      </Typography>
-
-      <Typography v-if="state === 'failed'" tag-name="p" color="sub" size="xs">
-        <RouterLink class="auth__link" :to="routeLocation.login()">
+    <template v-if="state === 'failed'" #footer>
+      <Typography tag-name="p" color="sub" size="xs">
+        <Link class="link-main" :to="routeLocation.login()">
           {{ t('auth.callback.toLogin') }}
-        </RouterLink>
+        </Link>
       </Typography>
-    </div>
-  </div>
+    </template>
+  </AuthLayout>
 </template>
 
 <script setup lang="ts">
   import { onMounted, ref } from 'vue'
-  import { RouterLink, useRoute, useRouter } from 'vue-router'
+  import { useRoute, useRouter } from 'vue-router'
   import { useI18n } from 'vue-i18n'
   import { useQueryClient } from '@tanstack/vue-query'
   import { Typography } from '@shared/ui/typography'
+  import { Link } from '@shared/ui/link'
+  import { AuthLayout } from '@/features/layouts/auth'
   import { authKeys, meQueryOptions } from '@shared/api'
   import { useAuthStore } from '@/entities/auth'
   import { routeLocation } from '@/shared/router'
@@ -64,28 +62,3 @@
     }
   })
 </script>
-
-<style scoped lang="scss">
-  .auth {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    width: min(360px, 100%);
-    margin: 0 auto;
-    text-align: center;
-
-    &__wrapper {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px 16px;
-    }
-
-    &__link {
-      color: var(--main-color);
-      text-decoration: underline;
-      text-decoration-thickness: from-font;
-      text-underline-position: from-font;
-    }
-  }
-</style>

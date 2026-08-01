@@ -225,6 +225,8 @@ export default {
   auth: {
     common: {
       email: 'Email',
+      emailPlaceholder: "you{'@'}example.com",
+      newPassword: 'New password',
       password: 'Password',
       displayName: 'Display name',
       showPassword: 'Show password',
@@ -237,6 +239,7 @@ export default {
     },
     login: {
       title: 'Login',
+      subtitle: 'Sign in to save your results and appear on the leaderboards.',
       submit: 'Login',
       github: 'Continue with GitHub',
       google: 'Continue with Google',
@@ -247,6 +250,7 @@ export default {
     },
     register: {
       title: 'Create account',
+      subtitle: 'Takes a minute. Your runs start counting from the next test.',
       submit: 'Create account',
       hasAccount: 'Have an account?',
       login: 'Log in',
@@ -281,6 +285,7 @@ export default {
     },
     resetConfirm: {
       title: 'Set a new password',
+      subtitle: 'Pick something you have not used here before.',
       submit: 'Update password',
       success: 'Your password has been updated. You can now log in.',
       failed: 'This reset link is invalid or has expired.',

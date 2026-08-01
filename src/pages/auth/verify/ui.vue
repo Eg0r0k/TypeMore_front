@@ -1,71 +1,73 @@
 <template>
-  <div class="auth__wrapper">
-    <div class="auth">
-      <div class="auth__header">
-        <Typography color="main" tag-name="h2" size="xl">{{ t('auth.verify.title') }}</Typography>
-      </div>
+  <AuthLayout :title="t('auth.verify.title')">
+    <Typography v-if="state === 'pending'" color="primary" size="s" role="status">
+      {{ t('auth.verify.pending') }}
+    </Typography>
+    <Typography v-else-if="state === 'success'" color="primary" size="s" role="status">
+      {{ t('auth.verify.success') }}
+    </Typography>
+    <Typography v-else-if="state === 'missing'" color="error" size="s" role="alert">
+      {{ t('auth.verify.missingToken') }}
+    </Typography>
+    <Typography v-else color="error" size="s" role="alert">
+      {{ t('auth.verify.failed') }}
+    </Typography>
 
-      <Typography v-if="state === 'pending'" color="primary" size="s" role="status">
-        {{ t('auth.verify.pending') }}
-      </Typography>
-      <Typography v-else-if="state === 'success'" color="primary" size="s" role="status">
-        {{ t('auth.verify.success') }}
-      </Typography>
-      <Typography v-else-if="state === 'missing'" color="error" size="s" role="alert">
-        {{ t('auth.verify.missingToken') }}
-      </Typography>
-      <Typography v-else color="error" size="s" role="alert">
-        {{ t('auth.verify.failed') }}
+    <!-- A dead or absent link is the only state a new one can help with. -->
+    <template v-if="state === 'failed' || state === 'missing'">
+      <!-- Anti-enumeration: the same copy shows whether or not the email exists. -->
+      <Typography v-if="resent" color="primary" size="s" role="status">
+        {{ t('auth.verify.resendSent') }}
       </Typography>
 
-      <!-- A dead or absent link is the only state a new one can help with. -->
-      <template v-if="state === 'failed' || state === 'missing'">
-        <!-- Anti-enumeration: the same copy shows whether or not the email exists. -->
-        <Typography v-if="resent" color="primary" size="s" role="status">
-          {{ t('auth.verify.resendSent') }}
+      <Form v-else class="flex flex-col gap-2" autocomplete="off" @submit="onResend()">
+        <!-- Above the field it introduces, and spaced off it: inside the field
+             stack it was one more line in a column of labels. -->
+        <Typography class="mb-1" color="sub" size="xs">
+          {{ t('auth.verify.resendDescription') }}
         </Typography>
 
-        <Form v-else class="auth__body" autocomplete="off" @submit="onResend()">
-          <Typography color="sub" size="xs">{{ t('auth.verify.resendDescription') }}</Typography>
+        <TextInput
+          v-bind="emailProps"
+          v-model="email"
+          type="email"
+          autocomplete="email"
+          name="email"
+          :has-error-space="true"
+          :error-message="errors.email"
+          :label="t('auth.common.email')"
+          :placeholder="t('auth.common.emailPlaceholder')"
+        />
 
-          <TextInput
-            v-bind="emailProps"
-            v-model="email"
-            type="email"
-            autocomplete="email"
-            name="email"
-            :has-error-space="true"
-            :error-message="errors.email"
-            :label="t('auth.common.email')"
-            :placeholder="t('auth.common.email')"
-          />
+        <TurnstileField
+          ref="captcha"
+          v-model="turnstileToken"
+          :error-message="errors.turnstileToken"
+        />
 
-          <TurnstileField
-            ref="captcha"
-            v-model="turnstileToken"
-            :error-message="errors.turnstileToken"
-          />
+        <Typography v-if="submitError" color="error" size="xs" role="alert">
+          {{ submitError }}
+        </Typography>
 
-          <Typography v-if="submitError" color="error" size="xs" role="alert">
-            {{ submitError }}
-          </Typography>
+        <Button class="mt-2" type="submit" :disabled="isPending">
+          {{ t('auth.verify.resendSubmit') }}
+        </Button>
+      </Form>
+    </template>
 
-          <Button type="submit" :disabled="isPending">{{ t('auth.verify.resendSubmit') }}</Button>
-        </Form>
-      </template>
-
-      <Typography v-if="state !== 'pending'" tag-name="p" color="sub" size="xs">
-        <RouterLink class="auth__link" :to="routeLocation.login()">
+    <template v-if="state !== 'pending'" #footer>
+      <Typography tag-name="p" color="sub" size="xs">
+        <Link class="link-main" :to="routeLocation.login()">
           {{ t('auth.verify.toLogin') }}
-        </RouterLink>
+        </Link>
       </Typography>
-    </div>
-  </div>
+    </template>
+  </AuthLayout>
 </template>
 
 <script setup lang="ts">
   import { onMounted, ref, useTemplateRef } from 'vue'
-  import { RouterLink, useRoute } from 'vue-router'
+  import { useRoute } from 'vue-router'
   import { useI18n } from 'vue-i18n'
   import { Form, useForm } from 'vee-validate'
   import { toTypedSchema } from '@vee-validate/valibot'
@@ -73,6 +75,8 @@
   import { Typography } from '@shared/ui/typography'
   import { TextInput } from '@shared/ui/input'
   import { Button } from '@shared/ui/button'
+  import { Link } from '@shared/ui/link'
+  import { AuthLayout } from '@/features/layouts/auth'
   import { useResendVerificationMutation, useVerifyMutation } from '@shared/api'
   import {
     TurnstileField,
@@ -152,35 +156,3 @@
     resent.value = true
   })
 </script>
-
-<style scoped lang="scss">
-  .auth {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    width: min(360px, 100%);
-    margin: 0 auto;
-    text-align: center;
-
-    &__wrapper {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px 16px;
-    }
-
-    &__body {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      text-align: left;
-    }
-
-    &__link {
-      color: var(--main-color);
-      text-decoration: underline;
-      text-decoration-thickness: from-font;
-      text-underline-position: from-font;
-    }
-  }
-</style>

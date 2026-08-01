@@ -215,6 +215,8 @@ export default {
   auth: {
     common: {
       email: 'Почта',
+      emailPlaceholder: "you{'@'}example.com",
+      newPassword: 'Новый пароль',
       password: 'Пароль',
       displayName: 'Отображаемое имя',
       showPassword: 'Показать пароль',
@@ -227,6 +229,7 @@ export default {
     },
     login: {
       title: 'Вход',
+      subtitle: 'Войдите, чтобы результаты сохранялись и попадали в лидерборды.',
       submit: 'Войти',
       github: 'Продолжить через GitHub',
       google: 'Продолжить через Google',
@@ -237,6 +240,7 @@ export default {
     },
     register: {
       title: 'Создать аккаунт',
+      subtitle: 'Займёт минуту. Заезды начнут считаться со следующего теста.',
       submit: 'Создать аккаунт',
       hasAccount: 'Уже есть аккаунт?',
       login: 'Войти',
@@ -271,6 +275,7 @@ export default {
     },
     resetConfirm: {
       title: 'Новый пароль',
+      subtitle: 'Выберите тот, которым здесь ещё не пользовались.',
       submit: 'Обновить пароль',
       success: 'Пароль обновлён. Теперь можно войти.',
       failed: 'Эта ссылка для сброса недействительна или устарела.',

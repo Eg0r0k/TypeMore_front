@@ -1,56 +1,58 @@
 <template>
-  <div class="auth__wrapper">
-    <div class="auth">
-      <div class="auth__header">
-        <Typography color="main" tag-name="h2" size="xl">{{ t('auth.reset.title') }}</Typography>
-      </div>
+  <!--
+    The description was a loose line inside the body; as the layout's `subtitle`
+    it sits under the heading where every other page in the flow puts its
+    supporting line. Dropped once the form is gone — the success copy below is
+    then the whole message.
+  -->
+  <AuthLayout
+    :title="t('auth.reset.title')"
+    :subtitle="submitted ? undefined : t('auth.reset.description')"
+  >
+    <!-- Anti-enumeration: the same copy shows whether or not the email exists. -->
+    <Typography v-if="submitted" color="primary" size="s" role="status">
+      {{ t('auth.reset.sent') }}
+    </Typography>
 
-      <!-- Anti-enumeration: the same copy shows whether or not the email exists. -->
-      <Typography v-if="submitted" color="primary" size="s" role="status">
-        {{ t('auth.reset.sent') }}
+    <Form v-else class="flex flex-col gap-2" autocomplete="off" @submit="onSubmit()">
+      <TextInput
+        v-bind="emailProps"
+        v-model="email"
+        type="email"
+        autocomplete="email"
+        name="email"
+        :has-error-space="true"
+        :error-message="errors.email"
+        :label="t('auth.common.email')"
+        :placeholder="t('auth.common.emailPlaceholder')"
+      />
+      <TurnstileField
+        ref="captcha"
+        v-model="turnstileToken"
+        :error-message="errors.turnstileToken"
+      />
+
+      <Typography v-if="submitError" color="error" size="xs" role="alert">
+        {{ submitError }}
       </Typography>
 
-      <template v-else>
-        <Typography color="sub" size="xs">{{ t('auth.reset.description') }}</Typography>
+      <Button class="mt-2" type="submit" :disabled="isPending">
+        {{ t('auth.reset.submit') }}
+      </Button>
+    </Form>
 
-        <Form class="auth__body" autocomplete="off" @submit="onSubmit()">
-          <TextInput
-            v-bind="emailProps"
-            v-model="email"
-            type="email"
-            autocomplete="email"
-            name="email"
-            :has-error-space="true"
-            :error-message="errors.email"
-            :label="t('auth.common.email')"
-            :placeholder="t('auth.common.email')"
-          />
-          <TurnstileField
-            ref="captcha"
-            v-model="turnstileToken"
-            :error-message="errors.turnstileToken"
-          />
-
-          <Typography v-if="submitError" color="error" size="xs" role="alert">
-            {{ submitError }}
-          </Typography>
-
-          <Button type="submit" :disabled="isPending">{{ t('auth.reset.submit') }}</Button>
-        </Form>
-      </template>
-
+    <template #footer>
       <Typography tag-name="p" color="sub" size="xs">
-        <RouterLink class="auth__link" :to="routeLocation.login()">
+        <Link class="link-main" :to="routeLocation.login()">
           {{ t('auth.reset.backToLogin') }}
-        </RouterLink>
+        </Link>
       </Typography>
-    </div>
-  </div>
+    </template>
+  </AuthLayout>
 </template>
 
 <script setup lang="ts">
   import { ref, useTemplateRef } from 'vue'
-  import { RouterLink } from 'vue-router'
   import { useI18n } from 'vue-i18n'
   import { Form, useForm } from 'vee-validate'
   import { toTypedSchema } from '@vee-validate/valibot'
@@ -58,6 +60,8 @@
   import { Typography } from '@shared/ui/typography'
   import { TextInput } from '@shared/ui/input'
   import { Button } from '@shared/ui/button'
+  import { Link } from '@shared/ui/link'
+  import { AuthLayout } from '@/features/layouts/auth'
   import { usePasswordResetRequestMutation } from '@shared/api'
   import {
     TurnstileField,
@@ -116,33 +120,3 @@
     submitted.value = true
   })
 </script>
-
-<style scoped lang="scss">
-  .auth {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    width: min(360px, 100%);
-    margin: 0 auto;
-
-    &__wrapper {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px 16px;
-    }
-
-    &__body {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    &__link {
-      color: var(--main-color);
-      text-decoration: underline;
-      text-decoration-thickness: from-font;
-      text-underline-position: from-font;
-    }
-  }
-</style>
