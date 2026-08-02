@@ -11,15 +11,14 @@
     </ul>
     <div class="navigation__controls controls">
       <Button
-        tabindex="0"
-        class="controls__alert"
         size="icon-sm"
         color="shadow"
-        button-label="Open alerts"
+        :aria-label="$t('settings.title')"
+        :title="$t('settings.title')"
+        @click="settingsOpen = true"
       >
-        <IconBell class="size-6" />
+        <IconSettings class="size-6" aria-hidden="true" />
       </Button>
-
       <DropdownMenu v-if="isAuth">
         <DropdownMenuTrigger as-child>
           <Button color="shadow" size="s" class="controls__user" :button-label="displayName">
@@ -46,6 +45,7 @@
         </Link>
       </Button>
     </div>
+    <SettingsModal v-model:open="settingsOpen" />
   </nav>
 </template>
 
@@ -61,9 +61,10 @@
     DropdownMenuItem
   } from '@/shared/ui/dropdown-menu'
   import type { HeaderLink } from './types/links'
-  import IconBell from '~icons/tabler/bell'
+  import IconSettings from '~icons/tabler/settings'
   import IconChartBar from '~icons/tabler/chart-bar'
   import IconUser from '~icons/tabler/user'
+  import { SettingsModal } from '@/features/modal/settings'
 
   import { computed, ref } from 'vue'
   import { storeToRefs } from 'pinia'
@@ -89,6 +90,7 @@
   const { mutate: logout } = useLogoutMutation()
 
   const onProfile = (): void => void router.push(routeLocation.profile())
+  const settingsOpen = ref(false)
 
   const onLogout = (): void => {
     logout(undefined, {
