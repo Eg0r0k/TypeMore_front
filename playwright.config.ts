@@ -16,7 +16,24 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:5178',
     headless: true
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    /*
+     * Firefox, for the chat only. The chat field is a `contenteditable` and its
+     * emoji are `<img>` elements, and that combination is where the engines
+     * actually differ — `plaintext-only` support, how a BROKEN image renders its
+     * alt, and whether an image is inline. Every one of those has bitten this
+     * file, and none of them shows up in chromium.
+     *
+     * Deliberately not the whole suite: the perf budgets are calibrated against
+     * one engine, and running them twice would halve the machine they measure on.
+     */
+    {
+      name: 'firefox',
+      testMatch: /chat-emoji\.spec\.ts/,
+      use: { ...devices['Desktop Firefox'] }
+    }
+  ],
   webServer: {
     command: 'pnpm exec vite --port 5178 --host 127.0.0.1',
     url: 'http://127.0.0.1:5178',

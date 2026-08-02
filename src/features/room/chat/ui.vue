@@ -39,31 +39,83 @@
       </button>
     </div>
     <div class="chat__input">
-      <div v-if="showSuggestion" class="chat__emoji-suggestion">
-        <div
-          v-for="(suggestion, index) in filteredSuggestions.slice(0, 3)"
-          :key="index"
-          class="suggestion"
-          :class="{ 'suggestion--active': index === activeIndex }"
-          @click="selectSuggestion(suggestion)"
+      <!--
+        ONE control: the field owns the surface and the focus ring, and the
+        button lives inside it. `InputGroup` is what makes that a single box
+        rather than an input with something parked beside it.
+      -->
+      <InputGroup class="chat__field">
+        <ChatInput
+          ref="chatInput"
+          v-model="inputValue"
+          :max-length="MAX_MESSAGE"
+          :placeholder="t('room.chat.placeholder')"
+          @submit="sendMessage"
+        />
+        <InputGroupAddon align="inline-end">
+          <!-- Shown only once the cap is in sight. A counter that is always
+               there is one more thing to read on every message; one that
+               appears at the end is the warning it is meant to be. -->
+          <span
+            v-if="remaining <= COUNTER_FROM"
+            class="chat__counter"
+            :class="{ 'chat__counter--full': remaining === 0 }"
+            data-testid="chat-counter"
+            aria-live="polite"
+          >
+            {{ remaining }}
+          </span>
+          <!-- The desktop's picker. On a phone the same button opens the tray
+               below instead, so the popover is held closed there. -->
+          <Popover :open="popoverOpen" @update:open="pickerOpen = $event">
+            <PopoverAnchor as-child>
+              <InputGroupButton
+                :class="{ 'text-text': pickerOpen }"
+                :aria-label="t('room.chat.emoji')"
+                :aria-expanded="pickerOpen"
+                :title="t('room.chat.emoji')"
+                data-testid="chat-emoji-button"
+                @click="pickerOpen = !pickerOpen"
+              >
+                <IconMood aria-hidden="true" />
+              </InputGroupButton>
+            </PopoverAnchor>
+            <PopoverContent side="top" align="end" class="w-auto p-2">
+              <EmojiPicker @select="insertEmoji" />
+            </PopoverContent>
+          </Popover>
+        </InputGroupAddon>
+      </InputGroup>
+
+      <!--
+        The phone's picker is a TRAY, not a panel under the field: it comes up
+        from the bottom edge of the screen and holds it, the way the system
+        keyboard it stands in for does. A popover pinned under an input that is
+        itself near the bottom of a small screen is neither one nor the other.
+      -->
+      <Sheet v-if="isCompact" :open="pickerOpen" @update:open="pickerOpen = $event">
+        <SheetContent
+          side="bottom"
+          class="max-h-[70vh]"
+          data-testid="chat-emoji-sheet"
+          @open-auto-focus.prevent
         >
-          <div class="suggestion__icon">
-            <img draggable="false" :src="suggestion.icon" alt="" />
-          </div>
-          <Typography size="xs">{{ suggestion.text }}</Typography>
-        </div>
-      </div>
-      <TextInput
-        ref="chatInput"
-        v-model="inputValue"
-        v-max-chars="200"
-        :class="inputClasses"
-        :placeholder="t('room.chat.placeholder')"
-        @keydown.enter="sendMessage"
-        @keydown="handleKeyDown"
-      />
-      <Typography v-if="rateLimited" class="chat__rate-limited" size="xs" color="error">
-        {{ t('room.chat.rateLimited') }}
+          <SheetTitle class="sr-only">{{ t('room.chat.emojiPicker') }}</SheetTitle>
+          <SheetDescription class="sr-only">{{ t('room.chat.emojiSearch') }}</SheetDescription>
+          <EmojiPicker :columns="8" @select="insertEmoji" />
+        </SheetContent>
+      </Sheet>
+
+      <!-- What the server said about the message you just tried to send. -->
+      <Typography
+        v-if="sendError"
+        class="chat__error"
+        size="xs"
+        color="error"
+        role="alert"
+        data-testid="chat-error"
+      >
+        {{ sendError }}
       </Typography>
     </div>
   </div>
@@ -72,15 +124,20 @@
 <script setup lang="ts">
   import type { ChatEntry, RoomPlayer } from '@/entities/lobby'
   import { useMatchSessionStore } from '@/entities/match'
-  import type { TextInputComponent } from '@/shared/directives/utils'
-  import { emojis, parseEmojis } from '@/shared/lib/helpers/emoji'
-  import { TextInput } from '@/shared/ui/input'
+  import { parseEmojis, type Emoji } from '@/shared/lib/helpers/emoji'
+  import { InputGroup, InputGroupAddon, InputGroupButton } from '@/shared/ui/input-group'
+  import { Popover, PopoverAnchor, PopoverContent } from '@/shared/ui/popover'
+  import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/shared/ui/sheet'
   import { Typography } from '@/shared/ui/typography'
   import { VirtualScrollable } from '@/shared/ui/virtualScrollable'
-  import { watchThrottled } from '@vueuse/core'
+  import { useMediaQuery } from '@vueuse/core'
   import { useI18n } from 'vue-i18n'
   import clsx from 'clsx'
-  import { computed, nextTick, onMounted, ref, watch } from 'vue'
+  import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+  import IconMood from '~icons/tabler/mood-smile'
+
+  import ChatInput from './chat-input.vue'
+  import EmojiPicker from './emoji-picker.vue'
 
   /**
    * Lobby chat over the session store's chatLog. Player text goes through
@@ -92,10 +149,37 @@
   const { t } = useI18n()
   const session = useMatchSessionStore()
 
-  const activeIndex = ref(0)
-  const showSuggestion = ref(false)
   const inputValue = ref('')
-  const searchPattern = /:(\w*)$/
+
+  /**
+   * The picker replaced a `:`-triggered dropdown. The TOKEN it inserts is the
+   * same `:name:` the wire has always carried — only the way you reach it
+   * changed, from typing a colon and hoping to a button that shows you what
+   * there is.
+   *
+   * Below `md` there is no room for a popover over a chat that is already the
+   * width of the screen, so the same component renders under the input instead.
+   */
+  const pickerOpen = ref(false)
+  const isCompact = useMediaQuery('(max-width: 767px)')
+  const popoverOpen = computed(() => pickerOpen.value && !isCompact.value)
+
+  // Leaving the phone layout with the inline picker open would otherwise pop it
+  // straight back as a popover.
+  watch(isCompact, () => (pickerOpen.value = false))
+
+  /**
+   * The editor owns the caret and the DOM, so insertion is its job: this only
+   * says WHAT to insert and then closes the picker.
+   *
+   * Closed on pick, and deliberately: the focus goes straight back to the
+   * message so you can keep typing, and a popover left open while the focus has
+   * gone is one the next click closes by accident.
+   */
+  const insertEmoji = (emoji: Emoji): void => {
+    chatInput.value?.insert(emoji)
+    pickerOpen.value = false
+  }
 
   /** Row height estimate; single-line rows, the virtualizer measures wrapped ones. */
   const MESSAGE_HEIGHT = 28
@@ -110,7 +194,12 @@
   }
 
   const messagesContainer = ref<VirtualList | null>(null)
-  const chatInput = ref<TextInputComponent | null>(null)
+  /** The editor's exposed API — see `chat-input.vue`. */
+  const chatInput = ref<{
+    insert: (emoji: Emoji) => void
+    focus: () => void
+    clear: () => void
+  } | null>(null)
 
   const keyAt = (index: number) => session.chatLog[index]?.id ?? index
 
@@ -125,13 +214,67 @@
     session.room?.players.find((player: RoomPlayer) => player.playerId === entry.from)?.nick ??
     entry.from.slice(0, 8)
 
-  const rateLimited = computed(() => session.lastError?.code === 'rate_limited')
+  // ── the message cap ───────────────────────────────────────────────────────
+  /** PROTOCOL.md §3 `chat_send`: the server refuses anything longer. */
+  const MAX_MESSAGE = 200
+  /** How much room is left before the counter is worth showing. */
+  const COUNTER_FROM = 40
+
+  const remaining = computed(() => MAX_MESSAGE - inputValue.value.length)
+
+  // ── what the server said ──────────────────────────────────────────────────
+  /**
+   * Errors the server sends back about a message you just tried to post — the
+   * chat rate limit above all, which is what you hit by sending too fast and
+   * which was previously invisible: the old line only ever rendered
+   * `rate_limited`, only while `lastError` still happened to hold it, and never
+   * went away again.
+   *
+   * `lastError` is the session's LAST error from anywhere, and the protocol
+   * carries no correlation id, so attribution is by time: an error that lands
+   * within a moment of our own send is ours. The same approach the join-code
+   * modal takes, for the same missing field.
+   */
+  const sendError = ref<string | null>(null)
+  let sentAt = 0
+  let clearTimer = 0
+
+  const ERROR_KEYS: Readonly<Record<string, string>> = {
+    rate_limited: 'room.chat.error.rateLimited',
+    not_in_room: 'room.chat.error.notInRoom',
+    forbidden: 'room.chat.error.forbidden',
+    bad_message: 'room.chat.error.badMessage',
+    internal: 'room.chat.error.internal'
+  }
+
+  const showError = (code: string, fallback: string): void => {
+    const key = ERROR_KEYS[code]
+    // The server's own message when this app has no words for the code: a raw
+    // string beats saying nothing, and a new code must not fall silent.
+    sendError.value = key ? t(key) : fallback
+    window.clearTimeout(clearTimer)
+    clearTimer = window.setTimeout(() => (sendError.value = null), 5000)
+  }
+
+  watch(
+    () => session.lastError,
+    (error) => {
+      if (!error) return
+      if (Date.now() - sentAt > 3000) return
+      showError(error.code, error.message)
+    }
+  )
+
+  onUnmounted(() => window.clearTimeout(clearTimer))
 
   const sendMessage = () => {
     const text = inputValue.value.trim()
     if (!text) return
+    if (text.length > MAX_MESSAGE) return
+    sendError.value = null
+    sentAt = Date.now()
     session.sendChat(text)
-    inputValue.value = ''
+    chatInput.value?.clear()
     // Sending re-pins the view: your own message (it arrives as a server echo)
     // must always come into view, wherever the chat was scrolled.
     pinned.value = true
@@ -139,60 +282,6 @@
     scrollToBottom()
   }
 
-  const isCursorImmediatelyAfterClosedTag = (text: string) => /:\w+:$/.test(text)
-
-  const inputClasses = computed(() =>
-    clsx({
-      'chat__input--flat': showSuggestion.value,
-      'chat__input--tag': !showSuggestion.value
-    })
-  )
-
-  const suggestions = ref([...emojis])
-
-  const filteredSuggestions = computed(() => {
-    const match = inputValue.value.match(searchPattern)
-    const query = match ? match[1].toLowerCase() : ''
-    return suggestions.value.filter((suggestion) => suggestion.value.toLowerCase().includes(query))
-  })
-
-  watchThrottled(
-    inputValue,
-    (newValue) => {
-      const isValidPattern = searchPattern.test(newValue)
-      const cursorNotAfterClosedTag = !isCursorImmediatelyAfterClosedTag(newValue)
-      showSuggestion.value = isValidPattern && cursorNotAfterClosedTag
-    },
-    { throttle: 200 }
-  )
-
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (!showSuggestion.value) return
-    const visibleSuggestions = filteredSuggestions.value.slice(0, 3)
-    switch (event.key) {
-      case 'ArrowUp':
-        event.preventDefault()
-        activeIndex.value =
-          (activeIndex.value - 1 + visibleSuggestions.length) % visibleSuggestions.length
-        break
-      case 'ArrowDown':
-        event.preventDefault()
-        activeIndex.value = (activeIndex.value + 1) % visibleSuggestions.length
-        break
-      case 'Tab':
-        if (showSuggestion.value) {
-          event.preventDefault()
-          selectSuggestion(visibleSuggestions[activeIndex.value])
-        }
-        break
-    }
-  }
-
-  const selectSuggestion = (suggestion: { value: string }) => {
-    inputValue.value = inputValue.value.replace(searchPattern, `:${suggestion.value}:`)
-    showSuggestion.value = false
-    activeIndex.value = 0
-  }
   // ── scroll pinning ────────────────────────────────────────────────────────
   /**
    * The view auto-follows new messages ONLY while it is pinned to the bottom.
@@ -254,10 +343,6 @@
   onMounted(() => scrollToBottom('auto'))
 </script>
 <style lang="scss" scoped>
-  :deep(.chat__input--flat) {
-    border-radius: 0 0 var(--border-radius) var(--border-radius) !important;
-  }
-
   .message {
     // Padding, not margin: the virtualizer sizes rows by their border box,
     // and a margin would fall outside the measured height.
@@ -305,34 +390,6 @@
     }
   }
 
-  .suggestion {
-    display: grid;
-    grid-template-columns: 1.25em 1fr;
-    gap: 1em;
-    padding: 0.5em 1em;
-    transition: var(--transition-duration);
-
-    &--active {
-      background-color: var(--text-color);
-      color: var(--bg-color);
-    }
-
-    &:first-child {
-      border-radius: var(--border-radius) var(--border-radius) 0 0;
-    }
-
-    &__icon {
-      width: 1.25rem;
-      height: 1.25rem;
-
-      & img {
-        user-select: none;
-        width: 100%;
-        height: auto;
-      }
-    }
-  }
-
   .chat {
     display: flex;
     flex-direction: column;
@@ -373,22 +430,30 @@
       position: relative;
     }
 
-    &__rate-limited {
+    // The phone's picker: its own card under the field, not floating over it.
+    &__picker {
+      margin-top: 0.375rem;
+      padding: 0.5rem;
+      background-color: var(--sub-alt-color);
+      border: 1px solid var(--sub-color);
+      border-radius: var(--border-radius, 0.375rem);
+    }
+
+    &__error {
       display: block;
       margin-top: 0.25rem;
     }
 
-    &__emoji-suggestion {
-      position: absolute;
-      top: 0;
-      right: 0;
-      left: 0;
-      display: flex;
-      width: 100%;
-      background-color: var(--sub-alt-color);
-      border-radius: var(--border-radius) var(--border-radius) 0 0;
-      transform: translateY(-100%);
-      flex-direction: column;
+    // Inside the field, beside the emoji button: a number, not a sentence.
+    &__counter {
+      font-size: 0.75rem;
+      font-variant-numeric: tabular-nums;
+      color: var(--sub-color);
+      user-select: none;
+
+      &--full {
+        color: var(--error-color);
+      }
     }
 
     // Compound with the component's own class to outweigh its
