@@ -363,11 +363,29 @@ export function timelineFrom(ctx: CoreContext, analysis: LogAnalysis, endMs: Ms)
   const end = analysis.finalState.finishedAt ?? endMs
   const seconds = Math.ceil(Math.max(0, (end - startedAt) / 1000))
   if (seconds <= 0) return []
-  // The cumulative line is NET, so it is paid out per WORD, at the instant the
-  // word was committed — not per correct keystroke. A word that came out wrong
-  // pays nothing, which is the whole point (`netCharsOf`), and a keystream-based
-  // curve cannot express that: it would have to un-credit letters when the word
-  // it was in turned out to be wrong.
+  // The cumulative line is NET, but it cannot be paid out only at the instants
+  // words were COMMITTED. A word takes over a second to type at any ordinary
+  // speed, so the first commit lands after the first checkpoint, and a curve
+  // paid in those lumps opens on `0 wpm` for every run where it does — the
+  // player typing perfectly for a second and being told they typed nothing.
+  //
+  // So credit is paid per CORRECT keystroke, at the instant it was struck, and
+  // each commit then settles the difference between what the keystream has
+  // already paid for that word and what the word is actually worth: the whole
+  // word plus its separator if it came out right, NOTHING if it did not. The
+  // settlement is a credit like any other, so it can be negative — a word that
+  // goes wrong takes back the letters that looked right on the way in, exactly
+  // where the truth about it arrived. That is the un-crediting a keystream
+  // curve needs, and it is also what monkeytype's chart does, which recomputes
+  // each boundary from scratch and so drops the same letters at the same place.
+  //
+  // Note this is FINER than the headline number, deliberately. `netCharsOf`
+  // credits the word in hand all-or-nothing (`target.startsWith(buffer)`), so
+  // one wrong letter zeroes it; on the first word, with nothing else banked,
+  // that is the whole reading. The headline must stay that way — it is what
+  // gets submitted, and the backend recomputes it from the same log — but a
+  // chart has room to say "two letters were right, then one was not" instead of
+  // drawing it as a run that had not started.
   //
   // Mirror `separatorsOf`: a count-finished test's final word has no trailing
   // space, and a word that ends its own line already typed its separator as a
@@ -379,24 +397,44 @@ export function timelineFrom(ctx: CoreContext, analysis: LogAnalysis, endMs: Ms)
   const input = analysis.finalState.input
   const creditTimes: number[] = []
   const creditChars: number[] = []
+  // What the keystream has paid each word so far, so its commit can settle up.
+  const paidPerWord = new Float64Array(ctx.words.length)
+  for (let k = 0; k < analysis.keyTimes.length; k++) {
+    if (!analysis.keyCorrect[k]) continue
+    const word = analysis.keyWordIndex[k]
+    if (word < 0 || word >= ctx.words.length) continue
+    // Correctness is frozen at the position the character landed, so a typo
+    // that was backspaced and retyped pays once, for the retyped character —
+    // the running total tracks the correct prefix rather than the keypresses.
+    creditTimes.push(analysis.keyTimes[k])
+    creditChars.push(1)
+    paidPerWord[word]++
+  }
   for (let i = 0; i < analysis.commitTimes.length; i++) {
     const target = ctx.words[i] ?? ''
-    if ((input[i] ?? '') !== target) continue
-    let credit = target.length
-    if (!endsLine(target) && !(finishedByCount && i === analysis.commitTimes.length - 1)) credit++
-    creditTimes.push(analysis.commitTimes[i])
-    creditChars.push(credit)
+    let worth = 0
+    if ((input[i] ?? '') === target) {
+      worth = target.length
+      if (!endsLine(target) && !(finishedByCount && i === analysis.commitTimes.length - 1)) worth++
+    }
+    const settlement = worth - (paidPerWord[i] ?? 0)
+    if (settlement !== 0) {
+      creditTimes.push(analysis.commitTimes[i])
+      creditChars.push(settlement)
+    }
   }
-  // Partial credit for the word still in the buffer, banked at the run's end —
-  // the same allowance `netCharsOf` gives it, landing on the last checkpoint so
-  // the final point equals the summary wpm exactly.
+  // The word still in the buffer never commits, so it settles at the run's end
+  // instead — against `netCharsOf`'s all-or-nothing allowance, landing on the
+  // last checkpoint so the final point equals the summary wpm exactly.
   const activeIndex = analysis.finalState.wordIndex
   if (activeIndex < ctx.words.length) {
     const target = ctx.words[activeIndex] ?? ''
     const buffer = input[activeIndex] ?? ''
-    if (buffer.length > 0 && target.startsWith(buffer)) {
+    const worth = buffer.length > 0 && target.startsWith(buffer) ? buffer.length : 0
+    const settlement = worth - (paidPerWord[activeIndex] ?? 0)
+    if (settlement !== 0) {
       creditTimes.push(end)
-      creditChars.push(buffer.length)
+      creditChars.push(settlement)
     }
   }
 

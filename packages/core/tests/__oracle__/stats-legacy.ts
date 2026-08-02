@@ -40,8 +40,15 @@ interface Analysis {
   readonly totalKeys: number
   readonly wordFirstT: readonly (number | undefined)[]
   readonly wordLastT: readonly (number | undefined)[]
-  /** Every inserted keystroke with its timestamp and frozen correctness. */
-  readonly keystrokes: readonly { readonly t: number; readonly correct: boolean }[]
+  /**
+   * Every inserted keystroke with its timestamp, frozen correctness, and the
+   * word it landed in.
+   */
+  readonly keystrokes: readonly {
+    readonly t: number
+    readonly correct: boolean
+    readonly wordIndex: number
+  }[]
   /** Timestamp of each committed word separator (one per word advance). */
   readonly commitTimes: readonly number[]
 }
@@ -57,7 +64,7 @@ function analyze(ctx: CoreContext, events: readonly GameEvent[]): Analysis {
   let totalKeys = 0
   const wordFirstT: (number | undefined)[] = []
   const wordLastT: (number | undefined)[] = []
-  const keystrokes: { t: number; correct: boolean }[] = []
+  const keystrokes: { t: number; correct: boolean; wordIndex: number }[] = []
   const commitTimes: number[] = []
 
   for (const event of sortEvents(events)) {
@@ -73,7 +80,7 @@ function analyze(ctx: CoreContext, events: readonly GameEvent[]): Analysis {
         totalKeys++
         const correct = pos < target.length && target[pos] === event.text[k]
         if (correct) correctKeys++
-        keystrokes.push({ t: event.t, correct })
+        keystrokes.push({ t: event.t, correct, wordIndex })
       }
       if (wordFirstT[wordIndex] === undefined) wordFirstT[wordIndex] = event.t
       wordLastT[wordIndex] = event.t
@@ -235,23 +242,39 @@ function wpmOverTime(ctx: CoreContext, events: readonly GameEvent[], endMs: Ms):
     analysis.finalState.phase === 'finished' &&
     ctx.config.mode !== 'time' &&
     ctx.config.mode !== 'free'
-  // The cumulative line is NET, paid per correct WORD at the instant it was
-  // committed; a wrong word pays nothing at all.
+  // The cumulative line is NET, paid per CORRECT KEYSTROKE at the instant it
+  // was struck — a curve paid only at word commits opens on nothing, because no
+  // word commits inside the first second at any ordinary speed. Each commit
+  // then settles up: the word is worth all of itself plus its separator if it
+  // came out right and nothing at all if it did not, so a word that goes wrong
+  // takes its letters back exactly where that became true.
   const credits: { t: number; chars: number }[] = []
+  const paidPerWord: number[] = []
+  for (const key of analysis.keystrokes) {
+    if (!key.correct) continue
+    if (key.wordIndex < 0 || key.wordIndex >= ctx.words.length) continue
+    credits.push({ t: key.t, chars: 1 })
+    paidPerWord[key.wordIndex] = (paidPerWord[key.wordIndex] ?? 0) + 1
+  }
   for (let i = 0; i < analysis.commitTimes.length; i++) {
     const target = ctx.words[i] ?? ''
-    if ((analysis.finalState.input[i] ?? '') !== target) continue
-    let chars = target.length
-    if (!endsLine(target) && !(finishedByCount && i === analysis.commitTimes.length - 1)) chars++
-    credits.push({ t: analysis.commitTimes[i], chars })
+    let worth = 0
+    if ((analysis.finalState.input[i] ?? '') === target) {
+      worth = target.length
+      if (!endsLine(target) && !(finishedByCount && i === analysis.commitTimes.length - 1)) worth++
+    }
+    const settlement = worth - (paidPerWord[i] ?? 0)
+    if (settlement !== 0) credits.push({ t: analysis.commitTimes[i], chars: settlement })
   }
+  // The word still in the buffer never commits, so it settles at the run's end
+  // instead, against the same all-or-nothing allowance `netCharsFor` gives it.
   const activeIndex = analysis.finalState.wordIndex
   if (activeIndex < ctx.words.length) {
     const target = ctx.words[activeIndex] ?? ''
     const buffer = analysis.finalState.input[activeIndex] ?? ''
-    if (buffer.length > 0 && target.startsWith(buffer)) {
-      credits.push({ t: end, chars: buffer.length })
-    }
+    const worth = buffer.length > 0 && target.startsWith(buffer) ? buffer.length : 0
+    const settlement = worth - (paidPerWord[activeIndex] ?? 0)
+    if (settlement !== 0) credits.push({ t: end, chars: settlement })
   }
   const points: TimelinePoint[] = []
   for (let s = 1; s <= seconds; s++) {

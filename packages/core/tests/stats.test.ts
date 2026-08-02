@@ -423,6 +423,71 @@ describe('net wpm credits only correct words', () => {
     expect(wrong.wpm).toBe(0)
   })
 
+  /**
+   * The chart used to be paid in lumps, one per COMMITTED word. A word takes
+   * more than a second to type at any ordinary speed, so the first lump landed
+   * after the first checkpoint and every such run opened on `0 wpm` — the
+   * player had typed a second of perfectly correct text and the chart said they
+   * had typed nothing.
+   */
+  describe('the chart opens on what was actually typed', () => {
+    // 'hello' at 300ms per character: the word does not commit until 1.5s, so
+    // the first checkpoint has no committed word to be paid by.
+    const typedSlowly: GameEvent[] = [
+      insertEvent(1, 0, 'h'),
+      insertEvent(2, 300, 'e'),
+      insertEvent(3, 600, 'l'),
+      insertEvent(4, 900, 'l'),
+      insertEvent(5, 1200, 'o'),
+      commitEvent(6, 1500),
+      insertEvent(7, 1800, 'w')
+    ]
+
+    it('pays the first second the letters struck inside it', () => {
+      const timeline = wpmOverTime(ctxOf(['hello', 'world']), typedSlowly, asMs(1800))
+      // Four characters by the one-second mark — 'o' is struck at 1.2s.
+      expect(timeline[0]?.wpm).toBeCloseTo(4 / 5 / (1 / 60), 9)
+    })
+
+    it('reads two right letters as two, not as a run that never started', () => {
+      // The reported case: two correct letters, then a wrong one, on the first
+      // word. The headline number zeroes here — a buffer off the rails credits
+      // nothing (`netCharsOf`) — but the chart has room to say what was right.
+      const timeline = wpmOverTime(
+        ctxOf(['hello', 'world']),
+        [
+          insertEvent(1, 0, 'h'),
+          insertEvent(2, 200, 'e'),
+          insertEvent(3, 400, 'x'),
+          commitEvent(4, 1200),
+          insertEvent(5, 1400, 'w')
+        ],
+        asMs(2000)
+      )
+      expect(timeline[0]?.wpm).toBeCloseTo(2 / 5 / (1 / 60), 9)
+    })
+
+    it('takes the letters back where the word turned out wrong', () => {
+      // 'hellp': four characters land in the right place on the way in, and the
+      // word is worth nothing the moment it commits. The curve must fall there
+      // rather than bank letters no word earned.
+      const typed: GameEvent[] = [
+        insertEvent(1, 0, 'h'),
+        insertEvent(2, 200, 'e'),
+        insertEvent(3, 400, 'l'),
+        insertEvent(4, 600, 'l'),
+        insertEvent(5, 800, 'p'),
+        commitEvent(6, 1200),
+        insertEvent(7, 1400, 'w')
+      ]
+      const timeline = wpmOverTime(ctxOf(['hello', 'world']), typed, asMs(2000))
+      expect(timeline[0]?.wpm).toBeCloseTo(4 / 5 / (1 / 60), 9)
+      // Second 2: the wrong word has paid its four letters back, leaving only
+      // the 'w' of the word in hand.
+      expect(timeline[1]?.wpm).toBeCloseTo(1 / 5 / (2 / 60), 9)
+    })
+  })
+
   it("the chart's last point still equals the headline number", () => {
     const words = ['hello', 'world', 'again']
     const typed = ['hello', 'xxxxx', 'again']
