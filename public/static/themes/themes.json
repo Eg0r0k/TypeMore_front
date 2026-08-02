@@ -149,7 +149,7 @@
     "--error-color": "#ff4c4c",
     "--error-extra-color": "#993434"
   },
-   {
+  {
     "name": "Maiamy",
     "--bg-color": "#f35588",
     "--main-color": "#00fff7",
@@ -249,7 +249,6 @@
     "--error-color": "#ff4c4c",
     "--error-extra-color": "#993434"
   },
-
   {
     "name": "0_6",
     "--bg-color": "#1f1f1f",
@@ -260,7 +259,6 @@
     "--error-color": "#ff3030",
     "--error-extra-color": "#a82828"
   },
-
   {
     "name": "0_9",
     "--bg-color": "#141414",
@@ -301,7 +299,6 @@
     "--error-color": "#e84118",
     "--error-extra-color": "#c23616"
   },
-  
   {
     "name": "2_0",
     "--bg-color": "#212121",
@@ -421,7 +418,7 @@
     "--text-color": "#87adff",
     "--error-color": "#ca4754",
     "--error-extra-color": "#7e2a33"
-  }, 
+  },
   {
     "name": "monokai",
     "--bg-color": "#272822",
@@ -430,6 +427,126 @@
     "--sub-alt-color": "#1f201b",
     "--text-color": "#e2e2dc",
     "--error-color": "#f92672",
-    "--error-extra-color":"#fd971f"
+    "--error-extra-color": "#fd971f"
+  },
+  {
+    "name": "Paper Mill",
+    "--bg-color": "#f4f0e6",
+    "--main-color": "#2f4bbf",
+    "--sub-color": "#7d7565",
+    "--sub-alt-color": "#e6e0cf",
+    "--text-color": "#22201a",
+    "--error-color": "#b02a2a",
+    "--error-extra-color": "#7c1c1c"
+  },
+  {
+    "name": "Porcelain",
+    "--bg-color": "#eef1f5",
+    "--main-color": "#0e6f68",
+    "--sub-color": "#6d7a8c",
+    "--sub-alt-color": "#dde3ea",
+    "--text-color": "#1b2733",
+    "--error-color": "#b4232a",
+    "--error-extra-color": "#7c1519"
+  },
+  {
+    "name": "Apricot Jam",
+    "--bg-color": "#fff3e2",
+    "--main-color": "#c2410c",
+    "--sub-color": "#96653c",
+    "--sub-alt-color": "#ffe3c2",
+    "--text-color": "#40260f",
+    "--error-color": "#a3123a",
+    "--error-extra-color": "#6d0c26"
+  },
+  {
+    "name": "Matcha Latte",
+    "--bg-color": "#f0f4e8",
+    "--main-color": "#3f6212",
+    "--sub-color": "#67785a",
+    "--sub-alt-color": "#e0e8d2",
+    "--text-color": "#22301c",
+    "--error-color": "#a83232",
+    "--error-extra-color": "#70201f"
+  },
+  {
+    "name": "Cotton Candy",
+    "--bg-color": "#fbeef6",
+    "--main-color": "#7c3aed",
+    "--sub-color": "#8d6285",
+    "--sub-alt-color": "#f3dcec",
+    "--text-color": "#3a1f38",
+    "--error-color": "#c2185b",
+    "--error-extra-color": "#821338"
+  },
+  {
+    "name": "Fjordlight",
+    "--bg-color": "#2e3440",
+    "--main-color": "#7fd8ec",
+    "--sub-color": "#949aa5",
+    "--sub-alt-color": "#272c36",
+    "--text-color": "#eceff4",
+    "--error-color": "#e06c75",
+    "--error-extra-color": "#984049"
+  },
+  {
+    "name": "Copper Wire",
+    "--bg-color": "#191512",
+    "--main-color": "#e08b3e",
+    "--sub-color": "#8a7a68",
+    "--sub-alt-color": "#221c17",
+    "--text-color": "#f0e6dc",
+    "--error-color": "#e05252",
+    "--error-extra-color": "#8f2f2f"
+  },
+  {
+    "name": "Deep Sea Glass",
+    "--bg-color": "#0c1d24",
+    "--main-color": "#34d1bf",
+    "--sub-color": "#6f9199",
+    "--sub-alt-color": "#081419",
+    "--text-color": "#e2f4f4",
+    "--error-color": "#ff6b6b",
+    "--error-extra-color": "#9e3540"
+  },
+  {
+    "name": "Amber Terminal",
+    "--bg-color": "#0d0b06",
+    "--main-color": "#ffb000",
+    "--sub-color": "#8a6f31",
+    "--sub-alt-color": "#16120a",
+    "--text-color": "#f5c96b",
+    "--error-color": "#ff5f3d",
+    "--error-extra-color": "#a03418"
+  },
+  {
+    "name": "Bubblegum Static",
+    "--bg-color": "#1d1425",
+    "--main-color": "#e879f9",
+    "--sub-color": "#8b769a",
+    "--sub-alt-color": "#150e1c",
+    "--text-color": "#f2e6f7",
+    "--error-color": "#ff5c5c",
+    "--error-extra-color": "#a83a4a"
+  },
+  {
+    "name": "Moss Agate",
+    "--bg-color": "#161a12",
+    "--main-color": "#c3d94e",
+    "--sub-color": "#7b8867",
+    "--sub-alt-color": "#1e2419",
+    "--text-color": "#e8ecd9",
+    "--error-color": "#e2725b",
+    "--error-extra-color": "#8f3f2e"
+  },
+  {
+    "name": "Solar Flare",
+    "--bg-color": "#10162b",
+    "--main-color": "#ffd12e",
+    "--sub-color": "#7784ad",
+    "--sub-alt-color": "#0a0f20",
+    "--text-color": "#f2f4ff",
+    "--error-color": "#ff5a5f",
+    "--error-extra-color": "#a02f36"
   }
 ]
