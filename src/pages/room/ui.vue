@@ -67,11 +67,12 @@
 </template>
 
 <script setup lang="ts">
-  import { watch } from 'vue'
+  import { onUnmounted, watch, watchEffect } from 'vue'
   import { useRouter } from 'vue-router'
   import { useI18n } from 'vue-i18n'
   import { routeLocation } from '@/app/router/route-locations'
   import { useMatchSessionStore } from '@/entities/match'
+  import { useScreenStore } from '@/entities/screen'
   import { RoomChat } from '@/features/room/chat'
   import { RoomConfig, RoomIdentity } from '@/features/room/config'
   import { RoomControls } from '@/features/room/controls'
@@ -102,6 +103,20 @@
       if (!room) void router.replace(routeLocation.servers())
     }
   )
+
+  /**
+   * The same signal the solo screen raises, and the reason it lives in a store
+   * rather than on the page: a match IS a run, so the shell's chrome fades and
+   * the pointer goes, and neither the header nor the footer can see a session
+   * store from outside the router view.
+   *
+   * `running` only. The lobby before it and the results after it are both
+   * screens you navigate FROM — taking the header away there would take away
+   * the way out.
+   */
+  const screen = useScreenStore()
+  watchEffect(() => screen.setTyping(session.phase === 'running'))
+  onUnmounted(() => screen.setTyping(false))
 </script>
 
 <style lang="scss" scoped>

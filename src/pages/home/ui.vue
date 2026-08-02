@@ -117,7 +117,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+  import { computed, onMounted, onUnmounted, ref, watch, watchEffect } from 'vue'
   import { useEventListener } from '@vueuse/core'
   import { useI18n } from 'vue-i18n'
 
@@ -139,6 +139,7 @@
     useGameStore
   } from '@entities/game'
   import { useRaceStore } from '@entities/race'
+  import { useScreenStore } from '@/entities/screen'
   import { RaceHost } from '@/features/test/race'
   import { useConfigStore } from '@/entities/config/model/store'
   import {
@@ -476,6 +477,17 @@
 
   useEventListener(window, 'pagehide', abandonIfRunning)
   onUnmounted(abandonIfRunning)
+
+  /**
+   * Tell the SHELL a run is under way. It is what fades the header chrome and
+   * the footer out and hides the pointer — none of which this page owns, and
+   * none of which can read a page's game store from outside the router view.
+   * Cleared on unmount so leaving mid-run does not strand the app with its
+   * chrome invisible.
+   */
+  const screen = useScreenStore()
+  watchEffect(() => screen.setTyping(isRunning.value))
+  onUnmounted(() => screen.setTyping(false))
 
   function onSignIn(): void {
     void router.push('/login')

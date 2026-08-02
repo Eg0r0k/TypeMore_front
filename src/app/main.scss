@@ -91,6 +91,19 @@ html.is-tauri {
   }
 }
 
+/*
+ * The pointer, gone while a run is under way (see `features/layouts/main`,
+ * which stamps and clears this class). `!important` and the universal selector
+ * together, because this has to beat every `cursor:` any component sets on
+ * itself — a `cursor: pointer` in a scoped block carries a data attribute and
+ * would otherwise outrank a plain class here. A global cursor override is
+ * precisely the case `!important` exists for.
+ */
+html.is-typing,
+html.is-typing * {
+  cursor: none !important;
+}
+
 // Global styles for elements
 kbd {
   color: var(--text-color);

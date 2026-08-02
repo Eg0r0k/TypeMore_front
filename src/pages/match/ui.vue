@@ -43,12 +43,13 @@
 </template>
 
 <script lang="ts" setup>
-  import { onUnmounted, onMounted, ref } from 'vue'
+  import { onMounted, onUnmounted, ref, watchEffect } from 'vue'
   import { useRoute } from 'vue-router'
 
   import { Test } from '@/widgets/test'
   import { addLoopbackBot, useMatchSessionStore } from '@entities/match'
   import { useConfigStore } from '@/entities/config'
+  import { useScreenStore } from '@/entities/screen'
   import { loadDictionaryBody } from '@shared/api'
   import { type Dictionary, dictVersion, mulberry32 } from '@typemore/core'
   import { LoopbackServer, LoopbackTransport } from '@shared/match-transport'
@@ -66,6 +67,7 @@
    */
   const session = useMatchSessionStore()
   const config = useConfigStore().config
+  const screen = useScreenStore()
   const route = useRoute()
 
   const isRightToLeft = ref(false)
@@ -156,9 +158,18 @@
     rafId = requestAnimationFrame(frame)
   })
 
+  /**
+   * The same signal the solo screen raises, for the same reason: a match IS a
+   * run, so the shell's chrome gets out of the way and the pointer goes. Not
+   * `results` — once the match is over the header and the footer are how you
+   * leave, so they have to be there.
+   */
+  watchEffect(() => screen.setTyping(session.phase === 'running'))
+
   onUnmounted(() => {
     alive = false
     if (rafId) cancelAnimationFrame(rafId)
+    screen.setTyping(false)
     session.dispose()
   })
 </script>

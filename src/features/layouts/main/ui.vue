@@ -16,16 +16,59 @@
 </template>
 
 <script lang="ts" setup>
+  import { defineAsyncComponent, onUnmounted, ref, watch, watchEffect } from 'vue'
+  import { useEventListener } from '@vueuse/core'
+
   import { useConfigStore } from '@/entities/config'
+  import { useScreenStore } from '@/entities/screen'
   import { BackgroundImage } from '@/features/home/background'
 
   import { Footer } from '@/widgets/footer'
   import { Header } from '@/widgets/header'
   import { Toaster } from '@/shared/ui/sonner'
-  import { defineAsyncComponent } from 'vue'
 
   const asyncFpsIndecator = defineAsyncComponent(() => import('@widgets/fps/ui.vue'))
   const configStore = useConfigStore()
+  const screen = useScreenStore()
+
+  /**
+   * The pointer, while a run is under way.
+   *
+   * Hidden, because an arrow parked over the words is one more thing in the way
+   * of reading them — but hidden the way a video player hides it, not
+   * permanently: moving the mouse brings it straight back, and the next
+   * keystroke takes it away again. A cursor you cannot find is worse than one
+   * you did not want, and "restart" is a button.
+   *
+   * On the root element rather than a component, because the rule has to reach
+   * everything — including the field's own shadow DOM and anything portalled to
+   * `body`.
+   */
+  const pointerVisible = ref(true)
+
+  watch(
+    () => screen.isTyping,
+    (typing) => {
+      pointerVisible.value = !typing
+    }
+  )
+  useEventListener(window, 'mousemove', () => {
+    pointerVisible.value = true
+  })
+  useEventListener(window, 'keydown', () => {
+    // Same value written on every keystroke after the first, so this settles
+    // into a no-op rather than touching the DOM on the typing hot path.
+    if (screen.isTyping) pointerVisible.value = false
+  })
+
+  watchEffect(() => {
+    document.documentElement.classList.toggle(
+      'is-typing',
+      screen.isTyping && !pointerVisible.value
+    )
+  })
+
+  onUnmounted(() => document.documentElement.classList.remove('is-typing'))
 </script>
 
 <style lang="scss" scoped>
@@ -49,7 +92,7 @@
     max-width: 1532px;
     min-height: 100vh;
     margin: 0 auto;
-    padding: 26px 0 0 0;
+    padding: 26px 14px 0 14px;
     background-size: cover;
   }
 

@@ -1,5 +1,11 @@
 <template>
-  <footer class="footer">
+  <!-- All of it, unlike the header: there is nothing down here that a run needs.
+       Fades rather than unmounts so the page keeps its height. -->
+  <footer
+    class="footer transition-opacity duration-200 ease-out motion-reduce:transition-none"
+    :class="{ 'opacity-0': screen.isTyping }"
+    :inert="screen.isTyping"
+  >
     <div class="footer__top">
       <div class="key-tip">
         <kbd>Ctrl</kbd>
@@ -12,31 +18,18 @@
       <div class="footer__left">
         <FooterLinks :links="navLinks" />
       </div>
-      <div class="footer__right">
-        <Button
-          size="icon-sm"
-          color="shadow"
-          :aria-label="$t('settings.title')"
-          :title="$t('settings.title')"
-          @click="settingsOpen = true"
-        >
-          <IconSettings class="size-6" aria-hidden="true" />
-        </Button>
-      </div>
+      <div class="footer__right"></div>
     </div>
-    <SettingsModal v-model:open="settingsOpen" />
   </footer>
 </template>
 
 <script lang="ts" setup>
-  import { Button } from '@/shared/ui/button'
   import { FooterLinks } from '@/features/footer/links'
+  import { useScreenStore } from '@/entities/screen'
   import { FOOTER_LINKS } from '../footer/model/const/values'
-  import { ref } from 'vue'
-  import IconSettings from '~icons/tabler/settings'
-  import { SettingsModal } from '@/features/modal/settings'
+
   const navLinks = FOOTER_LINKS
-  const settingsOpen = ref(false)
+  const screen = useScreenStore()
 </script>
 
 <style lang="scss" scoped>
