@@ -1,6 +1,6 @@
 import type { Config } from '@/shared/constants/type'
 import { isSupportedLocale } from '@/shared/lib/i18n/locale'
-import { SOUND_PACKS } from '@/shared/constants/sound-packs'
+import { isKnownErrorSoundPack, isKnownSoundPack } from '@/shared/constants/sound-packs'
 
 type ValidatorFn = (value: unknown) => boolean | string
 
@@ -50,9 +50,11 @@ const validators: Record<keyof Config, ValidatorFn> = {
   soundVolume: (value) =>
     (typeof value === 'number' && value >= 0 && value <= 1.0) ||
     'Sound volume must be between 0 and 1.0',
-  soundSet: (value) =>
-    (typeof value === 'string' && SOUND_PACKS.some((pack) => pack.id === value)) ||
-    'Invalid sound set',
+  // Through the resolver's own predicate, so a config written before the packs
+  // were renamed still validates — `getSoundPack` maps those ids to the same
+  // samples, and rejecting them here would quietly reset the choice instead.
+  soundSet: (value) => isKnownSoundPack(value) || 'Invalid sound set',
+  errorSoundSet: (value) => isKnownErrorSoundPack(value) || 'Invalid error sound set',
   fontSize: (value) =>
     (typeof value === 'number' && value > 0) || 'Font size must be a positive number',
   fontFamily: (value) =>

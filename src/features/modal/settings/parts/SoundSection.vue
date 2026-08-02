@@ -28,6 +28,17 @@
         @update="onPack"
       />
     </SettingRow>
+
+    <!-- Only once something is audible at all: an error-sample picker under a
+         muted keyboard is a control with nothing behind it. -->
+    <SettingRow v-if="config.playSound" id="soundOnError">
+      <SettingSelect
+        :model-value="config.errorSoundSet"
+        :options="errorOptions"
+        :label="t('settings.soundOnError.label')"
+        @update="onErrorPack"
+      />
+    </SettingRow>
   </div>
 </template>
 
@@ -36,7 +47,7 @@
   import { useI18n } from 'vue-i18n'
 
   import { useConfigStore } from '@/entities/config'
-  import { SOUND_PACKS } from '@/shared/constants/sound-packs'
+  import { ERROR_SOUND_PACKS, SOUND_PACKS } from '@/shared/constants/sound-packs'
   import { Slider } from '@/shared/ui/slider'
   import { Typography } from '@/shared/ui/typography'
   import SettingRow from './SettingRow.vue'
@@ -59,6 +70,10 @@
     ...SOUND_PACKS.map((pack) => ({ value: pack.id, label: pack.label }))
   ])
 
+  const errorOptions = computed<SettingOption[]>(() =>
+    ERROR_SOUND_PACKS.map((pack) => ({ value: pack.id, label: pack.label }))
+  )
+
   const onVolume = (value: number[] | undefined): void => {
     const next = value?.[0]
     if (next !== undefined) configStore.setConfig('soundVolume', next)
@@ -72,6 +87,10 @@
     }
     configStore.setConfig('soundSet', value)
     configStore.setConfig('playSound', true)
+  }
+
+  const onErrorPack = (value: unknown): void => {
+    if (typeof value === 'string') configStore.setConfig('errorSoundSet', value)
   }
 </script>
 

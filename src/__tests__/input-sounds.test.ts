@@ -23,7 +23,7 @@ vi.mock('@/shared/lib/hooks/useSounds', () => ({
     playRandomClickSound: sounds.click,
     playErrorSound: sounds.error,
     setClickSounds: vi.fn(),
-    setErrorSound: vi.fn(),
+    setErrorSounds: vi.fn(),
     setVolume: vi.fn()
   })
 }))

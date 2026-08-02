@@ -37,6 +37,7 @@ const APP_ONLY_KEYS = [
   'backgroundSize',
   'caretStyle',
   'devTools',
+  'errorSoundSet',
   'fontFamily',
   'fontSize',
   'paceCaret',

@@ -1,5 +1,5 @@
 import type { Config } from './type'
-import { DEFAULT_SOUND_PACK } from './sound-packs'
+import { DEFAULT_ERROR_SOUND_PACK, DEFAULT_SOUND_PACK } from './sound-packs'
 
 export default {
   devTools: false,
@@ -7,7 +7,7 @@ export default {
   time: 10,
   // The words shadow styles are drawn against 32px (see game-styles.ts).
   fontSize: 32,
-  fontFamily: 'Hack',
+  fontFamily: 'Mononoki',
   language: 'russian',
   uiLanguage: 'system',
   showKeyboard: false,
@@ -20,6 +20,7 @@ export default {
   playSound: true,
   soundVolume: 0.5,
   soundSet: DEFAULT_SOUND_PACK,
+  errorSoundSet: DEFAULT_ERROR_SOUND_PACK,
   punctuation: false,
   numbers: false,
   randomCase: false,

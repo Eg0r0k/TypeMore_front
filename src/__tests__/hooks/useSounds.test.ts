@@ -1,185 +1,129 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { ref } from 'vue'
+/**
+ * Keystroke audio is a POOL of sample slots whose urls are swapped, not a set of
+ * instances that is rebuilt per pack.
+ *
+ * That is not a style preference. `useSound` builds its Howl inside
+ * `onMounted`, so an instance created after the component has mounted never
+ * gets one and is mute forever — which is exactly what changing the pack used
+ * to do. These tests pin the shape that cannot regress into it: a fixed number
+ * of slots, created once, reacting to url refs.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { ref, unref, type Ref } from 'vue'
+
 import { useSounds } from '@/shared/lib/hooks/useSounds'
 import { useSound } from '@vueuse/sound'
 
-const createBaseSoundMock = () => ({
-  play: vi.fn(),
-  stop: vi.fn(),
-  pause: vi.fn(),
-  isPlaying: ref(false),
-  duration: ref(1000),
-  sound: ref(new Audio())
-})
+/** Every url ref handed to `useSound`, in slot order. */
+const urls: Ref<string>[] = []
+
 vi.mock('@vueuse/sound', () => ({
-  useSound: vi.fn().mockImplementation(() => createBaseSoundMock())
+  useSound: vi.fn((url: Ref<string>) => {
+    urls.push(url)
+    return {
+      play: vi.fn(),
+      stop: vi.fn(),
+      pause: vi.fn(),
+      isPlaying: ref(false),
+      duration: ref(1000),
+      sound: ref(null)
+    }
+  })
 }))
 
-vi.mock('@/shared/lib/helpers/arrays', () => ({
-  RandomElementFromArray: vi.fn((arr) => arr[0])
+const mockConfig = { soundVolume: 0.5, playSound: true }
+vi.mock('@/entities/config', () => ({
+  useConfigStore: vi.fn(() => ({ config: mockConfig }))
 }))
 
-const mockConfig = {
-  soundVolume: 0.5
-}
+const KEY_SLOTS = 10
+const ERROR_SLOTS = 2
 
-vi.mock('@/entities/config/model/store', () => ({
-  useConfigStore: vi.fn(() => ({
-    config: mockConfig
-  }))
-}))
+const keys = ['/k/1.wav', '/k/2.wav', '/k/3.wav']
+const errors = ['/e/1.wav', '/e/2.wav']
+
+/** The urls the key slots currently resolve to. */
+const keyUrls = (): string[] => urls.slice(0, KEY_SLOTS).map((u) => unref(u))
+const errorUrls = (): string[] => urls.slice(KEY_SLOTS).map((u) => unref(u))
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  urls.length = 0
+  mockConfig.soundVolume = 0.5
+  mockConfig.playSound = true
+})
 
 describe('useSounds', () => {
-  const mockClickSounds = ['/click1.mp3', '/click2.mp3']
-  const mockErrorSound = '/error.mp3'
-  let sounds: ReturnType<typeof useSounds>
+  it('creates one slot per possible sample, once', () => {
+    useSounds(keys, errors)
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockConfig.soundVolume = 0.5
+    expect(vi.mocked(useSound)).toHaveBeenCalledTimes(KEY_SLOTS + ERROR_SLOTS)
+    expect(vi.mocked(useSound).mock.calls[0]?.[1]).toMatchObject({ interrupt: true })
   })
 
-  describe('initialization', () => {
-    it('should initialize with provided click sounds', () => {
-      sounds = useSounds(mockClickSounds)
-      expect(useSound).toHaveBeenCalledWith(mockClickSounds[0], expect.any(Object))
-      expect(useSound).toHaveBeenCalledWith(mockClickSounds[1], expect.any(Object))
-    })
+  it('gives each slot the matching sample, and never an empty src', () => {
+    useSounds(keys, errors)
 
-    it('should initialize with provided error sound', () => {
-      sounds = useSounds([], mockErrorSound)
-      expect(useSound).toHaveBeenCalledWith(mockErrorSound, expect.any(Object))
-    })
-
-    it('should initialize with empty sounds', () => {
-      const mockUseSound = vi.fn()
-      vi.mocked(useSound).mockImplementation(mockUseSound)
-      sounds = useSounds([], '')
-      expect(mockUseSound).not.toHaveBeenCalled()
-    })
+    // The pack has three samples; the other seven slots hold the last real one
+    // rather than '', which howler reports as a failed load.
+    expect(keyUrls().slice(0, 3)).toEqual(keys)
+    expect(new Set(keyUrls().slice(3))).toEqual(new Set(['/k/3.wav']))
+    expect(errorUrls()).toEqual(errors)
+    expect(keyUrls().every((u) => u !== '')).toBe(true)
   })
 
-  describe('volume control', () => {
-    it('should set volume correctly', () => {
-      const soundMock = createBaseSoundMock()
-      vi.mocked(useSound).mockImplementation(() => soundMock)
+  it('switches packs by rewriting the urls, NOT by building more slots', () => {
+    const sounds = useSounds(keys, errors)
+    const built = vi.mocked(useSound).mock.calls.length
 
-      sounds = useSounds(mockClickSounds)
-      const newVolume = 0.8
-      sounds.setVolume(newVolume)
-      expect(mockConfig.soundVolume).toBe(newVolume)
-    })
+    sounds.setClickSounds(['/n/1.wav', '/n/2.wav'])
+    sounds.setErrorSounds(['/n/e.wav'])
+
+    expect(vi.mocked(useSound)).toHaveBeenCalledTimes(built)
+    expect(keyUrls().slice(0, 2)).toEqual(['/n/1.wav', '/n/2.wav'])
+    expect(new Set(keyUrls().slice(2))).toEqual(new Set(['/n/2.wav']))
+    expect(new Set(errorUrls())).toEqual(new Set(['/n/e.wav']))
   })
 
-  describe('sound playback', () => {
-    //TODO: Rewrite this tests becouse its depents with ConfigStore setting: playSound
+  it('plays nothing at all while sound is off', () => {
+    const sounds = useSounds(keys, errors)
+    const plays = vi.mocked(useSound).mock.results.map((r) => r.value.play)
 
-    // it('should play error sound when available', () => {
-    //   const mockPlay = vi.fn()
-    //   const soundMock = createBaseSoundMock()
-    //   soundMock.play = mockPlay
-    //   vi.mocked(useSound).mockImplementation(() => soundMock)
+    mockConfig.playSound = false
+    sounds.playRandomClickSound()
+    sounds.playErrorSound()
 
-    //   sounds = useSounds([], mockErrorSound)
-    //   sounds.playErrorSound()
-    //   expect(mockPlay).toHaveBeenCalled()
-    // })
-
-    it('should not throw when playing error sound if not available', () => {
-      sounds = useSounds([], '')
-      expect(() => sounds.playErrorSound()).not.toThrow()
-    })
-    //TODO: Rewrite this tests becouse its depents with ConfigStore setting: playSound
-    // it('should play random click sound when available', () => {
-    //   const mockPlay = vi.fn()
-    //   const soundMock = createBaseSoundMock()
-    //   soundMock.play = mockPlay
-    //   vi.mocked(useSound).mockImplementation(() => soundMock)
-
-    //   sounds = useSounds(mockClickSounds)
-    //   sounds.playRandomClickSound()
-    //   expect(mockPlay).toHaveBeenCalled()
-    // })
-
-    it('should handle empty click sounds array gracefully', () => {
-      const soundMock = createBaseSoundMock()
-      vi.mocked(useSound).mockImplementation(() => soundMock)
-
-      sounds = useSounds([])
-      expect(() => sounds.playRandomClickSound()).not.toThrow()
-    })
+    expect(plays.some((play) => play.mock.calls.length > 0)).toBe(false)
   })
 
-  describe('sound management', () => {
-    it('should set new click sounds', () => {
-      const newClickSounds = ['/new-click1.mp3', '/new-click2.mp3']
-      const soundMock = createBaseSoundMock()
-      vi.mocked(useSound).mockImplementation(() => soundMock)
+  it('plays one sample of the pack — and only one', () => {
+    const sounds = useSounds(keys, errors)
+    const plays = vi.mocked(useSound).mock.results.map((r) => r.value.play)
 
-      sounds = useSounds([])
-      sounds.setClickSounds(newClickSounds)
-      expect(useSound).toHaveBeenCalledWith(newClickSounds[0], expect.any(Object))
-      expect(useSound).toHaveBeenCalledWith(newClickSounds[1], expect.any(Object))
-    })
+    sounds.playRandomClickSound()
 
-    it('should set new error sound', () => {
-      const newErrorSound = '/new-error.mp3'
-      const soundMock = createBaseSoundMock()
-      vi.mocked(useSound).mockImplementation(() => soundMock)
-
-      sounds = useSounds([])
-      sounds.setErrorSound(newErrorSound)
-      expect(useSound).toHaveBeenCalledWith(newErrorSound, expect.any(Object))
-    })
+    const played = plays.filter((play) => play.mock.calls.length > 0)
+    expect(played).toHaveLength(1)
+    // Never a slot past the end of the pack: those hold a duplicate url, and
+    // hitting them would skew the randomisation towards the last sample.
+    expect(plays.slice(0, keys.length).some((play) => play.mock.calls.length > 0)).toBe(true)
   })
 
-  describe('sound instance creation', () => {
-    it('should create sound instance with correct volume', () => {
-      const volume = 0.7
-      mockConfig.soundVolume = volume
-      const soundMock = createBaseSoundMock()
-      vi.mocked(useSound).mockImplementation(() => soundMock)
+  it('survives a pack with no samples', () => {
+    const sounds = useSounds([], [])
 
-      sounds = useSounds(mockClickSounds)
-      expect(useSound).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          volume: expect.any(Object),
-          interrupt: true
-        })
-      )
-    })
-
-    it('should create sound instances with interrupt option', () => {
-      const soundMock = createBaseSoundMock()
-      vi.mocked(useSound).mockImplementation(() => soundMock)
-
-      sounds = useSounds(mockClickSounds)
-      expect(useSound).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          interrupt: true
-        })
-      )
-    })
+    expect(() => sounds.playRandomClickSound()).not.toThrow()
+    expect(() => sounds.playErrorSound()).not.toThrow()
   })
 
-  describe('error handling', () => {
-    it('should handle invalid sound paths gracefully', () => {
-      const soundMock = createBaseSoundMock()
-      vi.mocked(useSound).mockImplementation(() => soundMock)
+  it('writes the volume through to the config', () => {
+    const sounds = useSounds(keys, errors)
 
-      sounds = useSounds([])
-      expect(() => sounds.setErrorSound('')).not.toThrow()
-    })
+    sounds.setVolume(0.8)
+    expect(mockConfig.soundVolume).toBe(0.8)
 
-    it('should handle invalid volume values', () => {
-      const soundMock = createBaseSoundMock()
-      vi.mocked(useSound).mockImplementation(() => soundMock)
-
-      sounds = useSounds([])
-      expect(() => sounds.setVolume(-1)).not.toThrow()
-      expect(() => sounds.setVolume(2)).not.toThrow()
-    })
+    // Out-of-range values are the caller's problem, not a crash here.
+    expect(() => sounds.setVolume(-1)).not.toThrow()
+    expect(() => sounds.setVolume(2)).not.toThrow()
   })
 })

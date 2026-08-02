@@ -23,6 +23,7 @@ export type SettingId =
   | 'quickEnd'
   | 'soundVolume'
   | 'soundOnClick'
+  | 'soundOnError'
   | 'smoothCaret'
   | 'caretStyle'
   | 'uiLanguage'
@@ -68,7 +69,8 @@ export const SETTINGS: readonly SettingMeta[] = [
   { id: 'stopOnError', category: 'input', keywords: ['mistake', 'strict'] },
   { id: 'quickEnd', category: 'input', keywords: ['finish', 'last word'] },
   { id: 'soundVolume', category: 'sound', keywords: ['loud', 'mute'] },
-  { id: 'soundOnClick', category: 'sound', keywords: ['click', 'pack', 'typing'] },
+  { id: 'soundOnClick', category: 'sound', keywords: ['click', 'pack', 'typing', 'keyboard'] },
+  { id: 'soundOnError', category: 'sound', keywords: ['mistake', 'wrong', 'typo'] },
   { id: 'smoothCaret', category: 'caret', keywords: ['cursor', 'animation'] },
   { id: 'caretStyle', category: 'caret', keywords: ['cursor', 'block', 'underline'] },
   { id: 'uiLanguage', category: 'appearance', keywords: ['locale', 'russian', 'english', 'язык'] },

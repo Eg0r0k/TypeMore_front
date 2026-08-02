@@ -44,7 +44,9 @@ export interface Config {
   playSound: boolean
   showKeyboard: boolean
   soundVolume: number
+  /** Key-press sample set; `errorSoundSet` is chosen independently of it. */
   soundSet: string
+  errorSoundSet: string
   fontSize: number
   fontFamily: string
   // Game options threaded to the core (see toCoreSetup). `blind` is view-only.

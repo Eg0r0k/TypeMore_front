@@ -1,30 +1,28 @@
-import { ref, watch, type Ref } from 'vue'
+import { computed, ref, watch, type Ref } from 'vue'
 import { useSound } from '@vueuse/sound'
 import { useConfigStore } from '@/entities/config'
-import { RandomElementFromArray } from '../helpers/arrays'
 
-interface SoundInstance {
-  play: () => void
-  stop: (id?: number) => void
-  pause: (id?: number) => void
-  isPlaying: boolean
-  duration: number | null
-}
+/**
+ * Keystroke audio: a pool of sample slots whose URLs are swapped, never a pool
+ * that is rebuilt.
+ *
+ * That distinction is the whole design. `useSound` builds its Howl inside
+ * `onMounted`, so an instance created AFTER the component has mounted never
+ * gets one and is silently mute forever — which is what the previous version
+ * did on every pack change, and why changing the pack used to need a remount to
+ * take effect. Here every slot is created once during setup with a reactive
+ * url, and switching packs writes the urls: `useSound`'s own watcher rebuilds
+ * the Howl, and howler's global cache means a sample decoded once is not
+ * decoded again.
+ *
+ * The pools are sized to the largest pack (see `sound-packs.ts`). A slot past
+ * the end of the current pack is never played AND never left with an empty
+ * `src`, which howler treats as a load failure.
+ */
+const KEY_SLOTS = 10
+const ERROR_SLOTS = 2
 
-function createSoundInstance(soundPath: string, volume: Ref<number>): SoundInstance {
-  // @vueuse/sound's ComposableOptions collides `volume` with Howl's `volume: number`,
-  // yielding an impossible `MaybeRef<number> & number` type. unref() handles the Ref at runtime.
-  const sound = useSound(soundPath, { volume: volume as unknown as number, interrupt: true })
-  return {
-    play: sound.play,
-    stop: sound.stop,
-    pause: sound.pause,
-    isPlaying: sound.isPlaying.value,
-    duration: sound.duration.value
-  }
-}
-
-export function useSounds(initialClickSounds: string[] = [], initialErrorSound: string = '') {
+export function useSounds(clickPaths: readonly string[], errorPaths: readonly string[]) {
   const { config } = useConfigStore()
   const volume = ref(config.soundVolume)
   // Keep the howler volume (watched by @vueuse/sound via unref) in sync with the
@@ -36,44 +34,58 @@ export function useSounds(initialClickSounds: string[] = [], initialErrorSound: 
     }
   )
 
-  const createSoundInstances = (soundPaths: string[]) =>
-    soundPaths.map((soundPath) => createSoundInstance(soundPath, volume))
+  const clickUrls = ref<string[]>([...clickPaths])
+  const errorUrls = ref<string[]>([...errorPaths])
 
-  const clickSounds: Ref<SoundInstance[]> = ref(createSoundInstances(initialClickSounds))
-  const errorSound: Ref<SoundInstance | null> = ref(
-    initialErrorSound ? createSoundInstance(initialErrorSound, volume) : null
-  )
+  const pool = (urls: Ref<string[]>, slots: number) =>
+    Array.from({ length: slots }, (_, index) =>
+      useSound(
+        computed(() => urls.value[index] ?? urls.value[urls.value.length - 1] ?? ''),
+        // @vueuse/sound's ComposableOptions collides `volume` with Howl's
+        // `volume: number`, yielding an impossible `MaybeRef<number> & number`.
+        // unref() handles the Ref at runtime.
+        { volume: volume as unknown as number, interrupt: true }
+      )
+    )
 
-  const setVolume = (val: number): void => {
-    config.soundVolume = val
-    volume.value = val
+  const clicks = pool(clickUrls, KEY_SLOTS)
+  const errors = pool(errorUrls, ERROR_SLOTS)
+
+  /** Plays one of the pack's samples at random — a repeated sample stops sounding like a key. */
+  const playFrom = (slots: ReturnType<typeof pool>, urls: Ref<string[]>): void => {
+    const available = Math.min(urls.value.length, slots.length)
+    if (available <= 0) return
+    slots[Math.floor(Math.random() * available)]?.play()
   }
 
-  const playErrorSound = (): void => {
-    if (errorSound.value && config.playSound) {
-      errorSound.value.play()
-    }
+  const setVolume = (value: number): void => {
+    config.soundVolume = value
+    volume.value = value
   }
 
-  const setClickSounds = (newClickSounds: string[]): void => {
-    clickSounds.value = createSoundInstances(newClickSounds)
+  const setClickSounds = (paths: readonly string[]): void => {
+    clickUrls.value = [...paths]
+  }
+
+  const setErrorSounds = (paths: readonly string[]): void => {
+    errorUrls.value = [...paths]
   }
 
   const playRandomClickSound = (): void => {
     if (!config.playSound) return
-    const randomSound = RandomElementFromArray(clickSounds.value)
-    randomSound?.play()
+    playFrom(clicks, clickUrls)
   }
 
-  const setErrorSound = (newErrorSound: string): void => {
-    errorSound.value = createSoundInstance(newErrorSound, volume)
+  const playErrorSound = (): void => {
+    if (!config.playSound) return
+    playFrom(errors, errorUrls)
   }
 
   return {
     setVolume,
-    playRandomClickSound,
-    playErrorSound,
     setClickSounds,
-    setErrorSound
+    setErrorSounds,
+    playRandomClickSound,
+    playErrorSound
   }
 }

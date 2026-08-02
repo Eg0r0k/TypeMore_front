@@ -612,6 +612,7 @@ export type AppOnlyConfigKey =
   | 'showKeyboard'
   | 'soundVolume'
   | 'soundSet'
+  | 'errorSoundSet'
   | 'fontSize'
   | 'fontFamily'
   | 'smoothCaret'

@@ -21,13 +21,17 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, ref } from 'vue'
+  import { computed, ref, watch } from 'vue'
 
   import { wordsHaveTab, type GameSession } from '@entities/game'
   import { isSpaceGrapheme, normalizeGrapheme } from '@typemore/core'
   import { useSounds } from '@/shared/lib/hooks/useSounds'
   import { useConfigStore } from '@/entities/config'
-  import { getSoundPack } from '@/shared/constants/sound-packs'
+  import {
+    getErrorSoundPack,
+    getSoundPack,
+    samplesOf
+  } from '@/shared/constants/sound-packs'
 
   /**
    * Hidden keystroke-capture surface. The DOM value is NEVER the source of truth:
@@ -84,15 +88,27 @@
 
   const caretPos = (): number => store.snapshot.input[store.wordIndex]?.length ?? 0
 
-  // Audio feedback. The pack's click samples play on a correct grapheme, the
-  // error sample on a wrong one; both gated by `config.playSound` inside the
+  // Audio feedback. The key pack's samples play on a correct grapheme, the
+  // error pack's on a wrong one; both gated by `config.playSound` inside the
   // hook. Correctness of a single keystroke is trivially the typed grapheme vs
   // the expected one at the caret, so it's read here, not in the store/core.
-  // The pack is bound at mount: changing it in settings applies on the next
-  // visit to the typing screen (this adapter remounts on route change).
   const config = useConfigStore().config
-  const pack = getSoundPack(config.soundSet)
-  const { playRandomClickSound, playErrorSound } = useSounds([...pack.click], pack.error)
+  const { playRandomClickSound, playErrorSound, setClickSounds, setErrorSounds } = useSounds(
+    samplesOf(getSoundPack(config.soundSet), 'keys'),
+    samplesOf(getErrorSoundPack(config.errorSoundSet), 'error')
+  )
+
+  // Rebound on every change, not bound once at mount. There are twenty packs
+  // now, and a picker you cannot hear until you navigate away and back is a
+  // picker nobody will get through.
+  watch(
+    () => config.soundSet,
+    (id) => setClickSounds(samplesOf(getSoundPack(id), 'keys'))
+  )
+  watch(
+    () => config.errorSoundSet,
+    (id) => setErrorSounds(samplesOf(getErrorSoundPack(id), 'error'))
+  )
 
   const playKeyFeedback = (grapheme: string): void => {
     // Blind hides correctness, and the sounds are part of the view: the error
