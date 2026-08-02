@@ -43,8 +43,20 @@
         --error-extra-color: #791717;
       }
 
-      #app {
+      /*
+        On BODY, not on #app, and that is not a detail. A background on #app is
+        an opaque box painted in the "block backgrounds" step, which comes AFTER
+        negative-z-index descendants — so it covered the custom background image
+        (`.custom-background`, z-index: -1) completely, and no z-index on the
+        image could have won. A background on body has no box of its own: it
+        propagates to the canvas and is painted underneath everything.
+
+        It stays inline so the first paint is already the right colour, before
+        main.scss has loaded.
+      */
+      body {
         background-color: var(--bg-color);
+        transition: background-color 0.25s ease;
       }
       .hidden {
         visibility: hidden;
@@ -107,17 +119,19 @@
       </div>
     </noscript>
 
+    <!--
+      No background here. #app is an ancestor of the custom background layer
+      (`.custom-background`, z-index: -1), and an ancestor's background is
+      painted AFTER its negative-z-index descendants — so a colour on this
+      element hid the player's image outright, and no z-index on the image could
+      have won. The colour and its theme-change fade live on `body` (see the
+      stylesheet above), whose background propagates to the canvas and is
+      therefore painted below everything.
+    -->
     <div
       id="app"
       class="hidden"
-      style="
-        background-color: var(--bg-color);
-        display: flex;
-        transition:
-          background 0.25s ease 0s,
-          transform 0.05s ease 0s;
-        justify-content: center;
-      "
+      style="display: flex; transition: transform 0.05s ease 0s; justify-content: center"
     ></div>
 
     <script type="module" src="/src/main.ts"></script>
