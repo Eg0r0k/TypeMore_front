@@ -146,6 +146,10 @@ export default {
       label: 'play sound on click',
       description: 'A short sound on every keystroke.'
     },
+    soundOnError: {
+      label: 'play sound on error',
+      description: 'What you hear instead when the key was the wrong one.'
+    },
     smoothCaret: {
       label: 'smooth caret',
       description: 'How fast the caret glides between letters.',
@@ -237,6 +241,37 @@ export default {
       required: 'Complete the captcha to continue.',
       failed: 'Captcha check failed. Please try again.'
     },
+    /**
+     * One message per server error code (see `entities/auth/model/errors.ts`).
+     * Each one says what happened AND what to do about it — a code that no
+     * retry can fix must not be worded as though retrying might.
+     */
+    error: {
+      generic: 'Something went wrong. Please try again.',
+      accountExistsUseLinking:
+        'That email already belongs to an account. Sign in with it, then link this provider from your account.',
+      providerAlreadyLinked:
+        'That provider account is already linked to an account. Sign in with it directly instead.',
+      invalidState: 'The sign-in attempt expired before it finished. Start it again.',
+      oauthDenied: 'The sign-in was cancelled at the provider.',
+      oauthFailed: 'The provider did not finish the sign-in. Try again in a moment.',
+      unknownProvider: 'That sign-in provider is not available.',
+      invalidCredentials: 'Invalid email or password.',
+      emailNotVerified: 'Verify your email address before signing in.',
+      nameTaken: 'That display name is already taken.',
+      invalidToken: 'This link is invalid, expired, or has already been used.',
+      emailAlreadySet: 'This account already has an email address.',
+      passwordAlreadySet: 'A password is already set. Use the reset flow to change it.',
+      noVerifiedEmail: 'Add and verify an email address before setting a password.',
+      rateLimited: 'Too many attempts. Wait a moment and try again.',
+      overloaded: 'The server is busy right now. Try again in a few seconds.',
+      forbiddenOrigin: 'This request was blocked. Open the site directly and try again.',
+      unauthorized: 'Your session has ended. Sign in again.',
+      badRequest: 'Something in that request was not accepted. Check the fields and try again.',
+      internal: 'The server hit an unexpected error. Please try again.',
+      /** Shown small under a failure, so a bug report can name what happened. */
+      code: 'code: {code}'
+    },
     login: {
       title: 'Login',
       subtitle: 'Sign in to save your results and appear on the leaderboards.',
@@ -246,6 +281,8 @@ export default {
       noAccount: 'No account?',
       createOne: 'Create one',
       forgotPassword: 'Forgot password?',
+      /** Offered inline when the sign-in failed on an unverified address. */
+      resendVerification: 'Send a new verification link',
       failed: 'Invalid email or password.'
     },
     register: {
@@ -256,7 +293,6 @@ export default {
       login: 'Log in',
       success: 'Account created. Check your email to verify your address.',
       nameTaken: 'That display name is already taken.',
-      accountExists: 'An account with this email already exists.',
       failed: 'Could not create your account. Please try again.'
     },
     verify: {
@@ -272,6 +308,8 @@ export default {
     },
     callback: {
       title: 'Signing you in',
+      /** The heading once the flow has stopped — see the note in the page. */
+      failedTitle: 'Sign-in stopped',
       pending: 'Finishing sign-in…',
       failed: 'Sign-in could not be completed. Please try again.',
       toLogin: 'Back to login'
@@ -436,7 +474,23 @@ export default {
     },
     chat: {
       placeholder: 'Send a message',
-      rateLimited: 'sending too fast — message dropped',
+      /** The button beside the input, and the grid it opens. */
+      emoji: 'emoji',
+      emojiPicker: 'pick an emoji',
+      emojiSearch: 'search emoji',
+      emojiClear: 'clear the search',
+      emojiEmpty: 'nothing matches',
+      /**
+       * What the server said about a message you tried to send. The rate limit
+       * is the one you will actually meet — PROTOCOL.md §3, burst 5 per 2s.
+       */
+      error: {
+        rateLimited: 'Sending too fast — slow down.',
+        notInRoom: 'You are not in this room any more.',
+        forbidden: 'You are not allowed to send that here.',
+        badMessage: 'That message was rejected.',
+        internal: 'The server could not take that message. Try again.'
+      },
       newMessages: 'new messages'
     },
     match: {
