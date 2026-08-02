@@ -317,7 +317,7 @@ describe('RoomResults — standings table', () => {
     const wrapper = mountTable(rows, 'words')
 
     const statuses = wrapper.findAll('[data-testid="standings-status"]')
-    expect(statuses[2].text()).toBe('dnf · afk 62%')
+    expect(statuses[2].text()).toBe('dnf (afk 62%)')
   })
 
   it('a finisher with a meaningful afk share still gets the percentage', () => {
@@ -325,7 +325,9 @@ describe('RoomResults — standings table', () => {
     rows[0] = { ...rows[0], afkShare: 0.084 }
     const wrapper = mountTable(rows, 'words')
 
-    expect(wrapper.findAll('[data-testid="standings-status"]')[0].text()).toBe('finished · afk 8%')
+    expect(wrapper.findAll('[data-testid="standings-status"]')[0].text()).toBe(
+      'finished (afk 8%)'
+    )
   })
 
   /** Below the display floor the share is bucket noise, not a story. */

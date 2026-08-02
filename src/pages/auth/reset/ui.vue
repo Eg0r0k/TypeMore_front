@@ -1,15 +1,8 @@
 <template>
-  <!--
-    The description was a loose line inside the body; as the layout's `subtitle`
-    it sits under the heading where every other page in the flow puts its
-    supporting line. Dropped once the form is gone — the success copy below is
-    then the whole message.
-  -->
   <AuthLayout
     :title="t('auth.reset.title')"
     :subtitle="submitted ? undefined : t('auth.reset.description')"
   >
-    <!-- Anti-enumeration: the same copy shows whether or not the email exists. -->
     <Typography v-if="submitted" color="primary" size="s" role="status">
       {{ t('auth.reset.sent') }}
     </Typography>

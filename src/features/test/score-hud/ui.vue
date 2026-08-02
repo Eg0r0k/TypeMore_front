@@ -5,7 +5,7 @@
     </span>
     <span class="score-hud__score">{{ displayScore }}</span>
     <span ref="comboRef" class="score-hud__combo">{{ combo }} &times;{{ displayMultiplier }}</span>
-    <span class="score-hud__speed">{{ displayWpm }} wpm · {{ displayRaw }} raw</span>
+    <span class="score-hud__speed">{{ displayWpm }} wpm / {{ displayRaw }} raw</span>
   </div>
 </template>
 
@@ -101,7 +101,7 @@
 
     &__speed {
       font-size: 13px;
-      color: var(--sub-color);
+      color: var(--main-color);
     }
   }
 </style>

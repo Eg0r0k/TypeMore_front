@@ -99,7 +99,11 @@
                 >
                   {{ row.nick }}
                 </RouterLink>
-                <template v-else>{{ row.nick }}</template>
+                <template v-else>
+                  <span class="text-foreground">
+                    {{ row.nick }}
+                  </span>
+                </template>
                 <span v-if="row.isSelf" class="ml-1.5 text-xs text-main">
                   {{ t('room.results.you') }}
                 </span>
@@ -109,7 +113,9 @@
                    pairing the solo stats row uses. -->
               <td data-testid="standings-wpm">
                 <template v-if="row.wpm !== undefined">
-                  {{ Math.round(row.wpm) }}
+                  <span class="text-main font-bold">
+                    {{ Math.round(row.wpm) }}
+                  </span>
                   <span v-if="row.raw !== undefined" class="text-sub">
                     /
                     {{ Math.round(row.raw) }}
@@ -117,7 +123,7 @@
                 </template>
                 <template v-else>—</template>
               </td>
-              <td>{{ formatAcc(row.acc) }}</td>
+              <td class="text-foreground!">{{ formatAcc(row.acc) }}</td>
               <td data-testid="standings-chars">{{ formatChars(row.chars) }}</td>
               <td data-testid="standings-amount">{{ formatAmount(row) }}</td>
               <!-- The status is a LABEL, and a label stays label-coloured even
@@ -291,7 +297,7 @@
         ? t(`room.results.status.${row.status}`)
         : `${t('room.results.status.eliminated')} · ${t(`room.results.failReason.${failReason}`)}`
     const afk = afkLabel(row)
-    return afk === '' ? base : `${base} · ${afk}`
+    return afk === '' ? base : `${base} (${afk})`
   }
 
   const formatAcc = (acc: number | undefined): string => {

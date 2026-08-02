@@ -89,7 +89,5 @@
     flex-direction: column;
     gap: 8px;
     align-items: center;
-    padding-top: 20px;
-    border-top: 1px solid var(--sub-alt-color);
   }
 </style>

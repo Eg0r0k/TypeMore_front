@@ -73,7 +73,6 @@
 
     &__above {
       grid-area: above;
-      justify-content: flex-end;
     }
 
     &__field {
