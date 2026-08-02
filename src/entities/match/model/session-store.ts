@@ -50,6 +50,7 @@ import {
   scoreV2OfLog,
   settle
 } from '@typemore/core'
+import { liveMeasureAt } from '@shared/lib/helpers/live-window'
 import {
   type ChatFrame,
   type ChatKind,
@@ -1324,7 +1325,10 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
         if (failAt !== null) finalState = settle(ctx, finalState, failAt)
       }
       const lastT = log.length > 0 ? log[log.length - 1].t : asMs(0)
-      const end = finalState?.finishedAt ?? lastT
+      // A row for a seat that is STILL RACING is a live reading, and measuring
+      // it to that seat's last event opens the same zero-wide window the local
+      // HUD had. A finished seat measures to its own instant, untouched.
+      const end = finalState?.finishedAt ?? liveMeasureAt(finalState?.startedAt ?? null, lastT)
       const metrics = computeMetrics(ctx, log, end)
       const score =
         log.length > 0 && scoreGen !== null

@@ -74,6 +74,7 @@ import {
 } from '@typemore/core'
 import { type GameTimer, type TimerWorkerLike, useGameTimer } from '@shared/lib/hooks/useGameTimer'
 import { detectLogVersion } from '@shared/lib/log-version'
+import { liveMeasureAt } from '@shared/lib/helpers/live-window'
 
 export interface GameSetup {
   readonly config: CoreConfig
@@ -196,7 +197,9 @@ function createGameStore(storeId: string) {
       const state = snapshot.value
       const now = liveNow.value
       if (!core) return ZERO_METRICS
-      return metricsOf(core, state.finishedAt ?? now)
+      // Live readings hold a one-second floor under the denominator; a finished
+      // run measures to its own instant. See `liveMeasureAt`.
+      return metricsOf(core, state.finishedAt ?? liveMeasureAt(state.startedAt, now))
     })
     const timeline = computed<TimelinePoint[]>(() => {
       const state = snapshot.value

@@ -44,6 +44,7 @@ import {
   sortEvents
 } from '@typemore/core'
 import type { GameSetup, GameView } from '@entities/game'
+import { liveMeasureAt } from '@shared/lib/helpers/live-window'
 
 export const DEFAULT_GHOST_DELAY_MS = 250
 
@@ -100,8 +101,13 @@ export class GhostDriver {
 
     this.metrics = computed(() => {
       // Touch both reactive deps, then recompute purely from the log.
-      void this.snapshotRef.value
-      return metricsOf(this.core, this.displayNowRef.value)
+      const state = this.snapshotRef.value
+      // A ghost's speed is a live reading like the local player's, and starts
+      // in the same zero-wide window on its first relayed event.
+      return metricsOf(
+        this.core,
+        state.finishedAt ?? liveMeasureAt(state.startedAt, this.displayNowRef.value)
+      )
     })
 
     this.score = computed(() => {
