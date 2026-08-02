@@ -78,6 +78,7 @@
   import { Link } from '@shared/ui/link'
   import { AuthLayout } from '@/features/layouts/auth'
   import { usePasswordResetConfirmMutation } from '@shared/api'
+  import { apiErrorKey } from '@/entities/auth'
   import { routeLocation } from '@/shared/router'
 
   const { t } = useI18n()
@@ -121,8 +122,12 @@
     try {
       await mutateAsync({ token, password: values.password })
       done.value = true
-    } catch {
-      submitError.value = t('auth.resetConfirm.failed')
+    } catch (error) {
+      // A dead link is the common case and keeps this page's own wording; a
+      // rate limit or the hashing-capacity 503 is not a dead link, and telling
+      // someone to request a new one would waste the perfectly good one they
+      // are holding.
+      submitError.value = t(apiErrorKey(error, 'auth.resetConfirm.failed'))
     }
   })
 </script>

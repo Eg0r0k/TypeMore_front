@@ -1,11 +1,5 @@
 <template>
   <AuthLayout :title="t('auth.login.title')" :subtitle="t('auth.login.subtitle')">
-    <!--
-      `gap-2` between fields, not the body's 20px: each field already RESERVES a
-      line for its error (`has-error-space`), so the visual gap is that reserved
-      line plus this one. Stacking 20px on top of it spread three controls over
-      the height of five.
-    -->
     <Form class="flex flex-col gap-2" autocomplete="off" @submit="onSubmit()">
       <TextInput
         v-bind="emailProps"
@@ -19,11 +13,6 @@
         :placeholder="t('auth.common.emailPlaceholder')"
       />
 
-      <!--
-        No placeholder: it repeated the label word for word, which says nothing
-        twice and leaves the field looking filled when it is empty. The email
-        field keeps one because a format example is real information.
-      -->
       <TextInput
         v-bind="passwordProps"
         v-model="password"
@@ -51,6 +40,12 @@
 
       <Typography v-if="submitError" color="error" size="xs" role="alert">
         {{ submitError }}
+        <!-- The one login failure with a way out of it: the verify page is
+             where a fresh link is requested, so the message that names the
+             problem also carries the fix. -->
+        <Link v-if="needsVerification" class="link-main" :to="routeLocation.verify()">
+          {{ t('auth.login.resendVerification') }}
+        </Link>
       </Typography>
 
       <Button class="mt-2" type="submit" :disabled="isPending">
@@ -58,12 +53,6 @@
       </Button>
     </Form>
 
-    <!--
-      A labelled rule, not a floating word: "or" alone in the middle of a column
-      of full-width buttons reads as another, smaller option rather than as the
-      boundary between two ways of signing in. `aria-hidden` — it is a picture of
-      a separation the reading order already has.
-    -->
     <div class="flex items-center gap-3" aria-hidden="true">
       <span class="bg-sub-alt h-px flex-1"></span>
       <Typography color="sub" size="xxs">{{ t('auth.common.or') }}</Typography>
@@ -113,7 +102,8 @@
   import { Button } from '@shared/ui/button'
   import { Link } from '@shared/ui/link'
   import { AuthLayout } from '@/features/layouts/auth'
-  import { oauthStartUrl, useLoginMutation, type OAuthProvider } from '@shared/api'
+  import { isApiError, oauthStartUrl, useLoginMutation, type OAuthProvider } from '@shared/api'
+  import { apiErrorKey } from '@/entities/auth'
   import { routeLocation } from '@/shared/router'
 
   const { t } = useI18n()
@@ -146,16 +136,32 @@
 
   const visiblePassword = ref(false)
   const submitError = ref('')
+  /** Set when the sign-in failed only because the address is unverified. */
+  const needsVerification = ref(false)
 
   const { mutateAsync, isPending } = useLoginMutation()
 
   const onSubmit = handleSubmit(async (values) => {
     submitError.value = ''
+    needsVerification.value = false
     try {
       await mutateAsync({ email: values.email, password: values.password })
       await router.push(routeLocation.home())
-    } catch {
-      submitError.value = t('auth.login.failed')
+    } catch (error) {
+      /*
+       * Not every login failure is a wrong password, and saying so when it is
+       * not sends the reader to check a password that was correct. The server
+       * distinguishes an unverified address (403 email_not_verified, which the
+       * reader can act on — and only ever answered once the password was
+       * PROVEN correct, so it leaks nothing), a rate limit, and a hashing-
+       * capacity 503 that really does clear on a retry.
+       *
+       * `invalid_credentials` stays deliberately vague: it is the one answer
+       * the server gives for both an unknown email and a wrong password, and
+       * pulling those apart is exactly what it refuses to do.
+       */
+      submitError.value = t(apiErrorKey(error, 'auth.error.generic'))
+      needsVerification.value = isApiError(error) && error.code === 'email_not_verified'
     }
   })
 

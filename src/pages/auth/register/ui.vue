@@ -90,7 +90,8 @@
   import { Button } from '@shared/ui/button'
   import { Link } from '@shared/ui/link'
   import { AuthLayout } from '@/features/layouts/auth'
-  import { isApiError, useRegisterMutation } from '@shared/api'
+  import { useRegisterMutation } from '@shared/api'
+  import { apiErrorKey } from '@/entities/auth'
   import {
     TurnstileField,
     captchaBody,
@@ -163,13 +164,18 @@
       if (isCaptchaError(error)) {
         captcha.value?.reset()
         submitError.value = t('auth.captcha.failed')
-      } else if (isApiError(error) && error.code === 'name_taken') {
-        submitError.value = t('auth.register.nameTaken')
-      } else if (isApiError(error) && error.code === 'account_exists') {
-        submitError.value = t('auth.register.accountExists')
-      } else {
-        submitError.value = t('auth.register.failed')
+        return
       }
+      /*
+       * Through the shared table, which is keyed by the codes the server
+       * actually sends. It used to test for `account_exists` — a code that does
+       * not exist: registration deliberately answers a taken email with the
+       * SAME success as a new one (anti-enumeration), so the only conflict it
+       * can report is `name_taken`, and every other outcome (a rate limit, the
+       * hashing-capacity 503, a rejected field) was collapsing into "could not
+       * create your account, please try again".
+       */
+      submitError.value = t(apiErrorKey(error, 'auth.register.failed'))
     }
   })
 </script>

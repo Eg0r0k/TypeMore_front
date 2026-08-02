@@ -9,12 +9,14 @@
     <Typography v-else-if="state === 'missing'" color="error" size="s" role="alert">
       {{ t('auth.verify.missingToken') }}
     </Typography>
-    <Typography v-else color="error" size="s" role="alert">
-      {{ t('auth.verify.failed') }}
+    <Typography v-else color="error" size="s" role="alert" data-testid="verify-error">
+      {{ t(failureKey) }}
     </Typography>
 
-    <!-- A dead or absent link is the only state a new one can help with. -->
-    <template v-if="state === 'failed' || state === 'missing'">
+    <!-- A dead or absent link is the only state a new one can help with — and
+         `resendable` is what keeps the form away from the failure a new link
+         would hit in exactly the same way. -->
+    <template v-if="(state === 'failed' && resendable) || state === 'missing'">
       <!-- Anti-enumeration: the same copy shows whether or not the email exists. -->
       <Typography v-if="resent" color="primary" size="s" role="status">
         {{ t('auth.verify.resendSent') }}
@@ -77,7 +79,8 @@
   import { Button } from '@shared/ui/button'
   import { Link } from '@shared/ui/link'
   import { AuthLayout } from '@/features/layouts/auth'
-  import { useResendVerificationMutation, useVerifyMutation } from '@shared/api'
+  import { isApiError, useResendVerificationMutation, useVerifyMutation } from '@shared/api'
+  import { apiErrorKey } from '@/entities/auth'
   import {
     TurnstileField,
     captchaBody,
@@ -92,6 +95,10 @@
 
   type VerifyState = 'pending' | 'success' | 'failed' | 'missing'
   const state = ref<VerifyState>('pending')
+  /** What the failure says — the server's code when it named one. */
+  const failureKey = ref('auth.verify.failed')
+  /** Whether a fresh link could plausibly succeed where this one did not. */
+  const resendable = ref(true)
 
   const { mutateAsync } = useVerifyMutation()
 
@@ -105,7 +112,16 @@
     try {
       await mutateAsync({ token })
       state.value = 'success'
-    } catch {
+    } catch (error) {
+      /*
+       * Usually a dead link (`invalid_token`), and the page's own copy says so.
+       * But it can also be `account_exists_use_linking`: someone else verified
+       * this address first, so the token is perfectly valid and a new one would
+       * fail the same way. Calling that "expired" sends the reader in a circle
+       * through the resend form below.
+       */
+      failureKey.value = apiErrorKey(error, 'auth.verify.failed')
+      resendable.value = !isApiError(error) || error.code === 'invalid_token'
       state.value = 'failed'
     }
   })
