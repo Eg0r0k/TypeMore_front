@@ -18,7 +18,11 @@
         :score="self.score"
         :active-mods="self.activeMods"
         :afk-ms="self.afkMs"
-        :actions="MATCH_ACTIONS"
+        :actions="matchActions"
+        :disabled-actions="disabledActions"
+        @re-ready="emit('reReady')"
+        @lobby="emit('lobby')"
+        @leave="emit('leave')"
       />
     </div>
 
@@ -136,8 +140,16 @@
         </table>
       </div>
 
-      <div class="flex flex-wrap gap-3">
-        <!-- A rematch is only on offer once the match has actually ended. -->
+      <!--
+        No button row down here any more: `re-ready`, `back to lobby` and
+        `leave` moved into the result's own action row at the top, as icons with
+        tooltips. They were the thing you do NEXT sitting at the bottom of a
+        scrollable table, which is the last place a reader looks.
+
+        The one case that still needs them here is a seat with no run to show:
+        there is no results view above to carry them.
+      -->
+      <div v-if="!self" class="flex flex-wrap gap-3">
         <Button
           v-if="!live"
           data-testid="re-ready-button"
@@ -146,11 +158,6 @@
         >
           {{ t('room.results.reReady') }}
         </Button>
-        <!--
-          Back to the lobby WITHOUT giving the seat up: `re-ready` says "again,
-          now", this says "I am staying, just not yet" — the room's settings and
-          everyone in it are still there.
-        -->
         <Button v-if="!live" color="gray" data-testid="back-to-lobby-button" @click="emit('lobby')">
           {{ t('room.results.backToLobby') }}
         </Button>
@@ -225,8 +232,25 @@
 
   const { t } = useI18n()
 
-  /** A match has no next test to load and no replay screen to open. */
-  const MATCH_ACTIONS: readonly ResultsAction[] = ['screenshot']
+  /**
+   * A match has no next test to load and no replay screen to open, so the row
+   * carries the ROOM's actions instead: ready again, back to the lobby, and out.
+   *
+   * While the match is still running and this seat is merely out, neither of the
+   * first two exists yet — there is nothing to be ready for until it ends — so
+   * the only thing on offer is leaving.
+   */
+  const matchActions = computed<readonly ResultsAction[]>(() =>
+    props.live ? ['screenshot', 'leave'] : ['re-ready', 'lobby', 'screenshot', 'leave']
+  )
+
+  /**
+   * Rendered but refused. A dropped connection cannot carry a re-ready, and
+   * hiding the button would read as "there is no rematch" rather than "not now".
+   */
+  const disabledActions = computed<readonly ResultsAction[]>(() =>
+    props.connectionLost ? ['re-ready'] : []
+  )
 
   /**
    * Where a row's nick leads: your own registered nick to /profile, another

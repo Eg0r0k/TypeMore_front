@@ -185,7 +185,8 @@
             color="shadow"
             size="icon"
             :aria-label="action.label"
-            :data-testid="`results-${action.key}`"
+            :disabled="action.disabled"
+            :data-testid="action.testId"
             @click="action.run"
           >
             <component :is="action.icon" class="size-6" />
@@ -289,6 +290,9 @@
   import IconRepeat from '~icons/tabler/repeat'
   import IconRestart from '~icons/tabler/refresh'
   import IconCamera from '~icons/tabler/camera-filled'
+  import IconSwords from '~icons/tabler/swords'
+  import IconUsers from '~icons/tabler/users'
+  import IconDoorExit from '~icons/tabler/door-exit'
   import IconBoard from '~icons/tabler/trophy'
   import { quoteBucketKey } from '@shared/api'
   import { GameModIcons, type GameModsLike } from '@/entities/game'
@@ -339,7 +343,15 @@
    * the same seed played again (the surface decides what that implies — on the
    * home page a repeated text never submits).
    */
-  export type ResultsAction = 'next' | 'restart' | 'race-again' | 'replay' | 'screenshot'
+  export type ResultsAction =
+    | 'next'
+    | 'restart'
+    | 'race-again'
+    | 'replay'
+    | 're-ready'
+    | 'lobby'
+    | 'screenshot'
+    | 'leave'
 
   const props = withDefaults(
     defineProps<{
@@ -380,6 +392,12 @@
       /** Which of the icon actions to offer. Defaults to next/replay/screenshot (the solo run). */
       actions?: readonly ResultsAction[]
       /**
+       * Actions to render but refuse. A rematch with a dropped connection is
+       * the case: hiding the button would read as "there is no rematch", and
+       * the tooltip still says what it is.
+       */
+      disabledActions?: readonly ResultsAction[]
+      /**
        * Per-word history of the run (`wordHistory`, shared/core). Present ⇒ an
        * extra toggle in the actions row expands the input-history block: the
        * words as typed, hover burst speeds, the heatmap, and the copy actions.
@@ -396,7 +414,8 @@
       repeated: false,
       // Inline rather than a shared const: `withDefaults` is hoisted out of
       // setup(), so it cannot reference anything declared in this block.
-      actions: () => ['next', 'replay', 'screenshot'] as const
+      actions: () => ['next', 'replay', 'screenshot'] as const,
+      disabledActions: () => [] as const
     }
   )
 
@@ -407,6 +426,12 @@
     (event: 'next'): void
     (event: 'restart'): void
     (event: 'raceAgain'): void
+    /** Room only: ready up for another match in the same room. */
+    (event: 'reReady'): void
+    /** Room only: back to the lobby, keeping the seat. */
+    (event: 'lobby'): void
+    /** Room only: give the seat up. */
+    (event: 'leave'): void
   }>()
 
   const { t } = useI18n()
@@ -467,14 +492,48 @@
         label: t('results.watchReplay'),
         run: () => emit('replay')
       },
+      /*
+       * The room's three. They used to be a row of worded buttons under the
+       * standings table, which put the thing you do next at the bottom of a
+       * long scroll; as icons they sit with the other post-run actions, where
+       * the eye already is. The tooltip carries the words the button lost.
+       */
+      {
+        key: 're-ready' as const,
+        icon: IconSwords,
+        label: t('room.results.reReady'),
+        testId: 're-ready-button',
+        run: () => emit('reReady')
+      },
+      {
+        key: 'lobby' as const,
+        icon: IconUsers,
+        label: t('room.results.backToLobby'),
+        testId: 'back-to-lobby-button',
+        run: () => emit('lobby')
+      },
       {
         key: 'screenshot' as const,
         icon: IconCamera,
         label: t('results.copyScreenshot'),
         run: onScreenshot
+      },
+      // Last, always: it is the one that ends the evening.
+      {
+        key: 'leave' as const,
+        icon: IconDoorExit,
+        label: t('room.leave'),
+        testId: 'leave-button',
+        run: () => emit('leave')
       }
     ]
-    return catalogue.filter((action) => props.actions.includes(action.key))
+    return catalogue
+      .filter((action) => props.actions.includes(action.key))
+      .map((action) => ({
+        ...action,
+        testId: 'testId' in action ? action.testId : `results-${action.key}`,
+        disabled: props.disabledActions.includes(action.key)
+      }))
   })
 
   const reason = computed(() => {
