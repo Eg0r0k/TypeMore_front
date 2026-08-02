@@ -18,6 +18,12 @@ export default {
     minSpeedOff: 'off',
     /** Accessible name of the settings bar's text-mod toggle group. */
     textMods: 'text modifiers',
+    /**
+     * The phone's stand-in for the config bar: below `sm` the three zones do
+     * not fit side by side, so one button opens them in a modal.
+     */
+    testSettings: 'test settings',
+    testSettingsHint: 'Choose what the run is made of: the text mods, the mode, and its amount.',
     language: 'language',
     difficulty: { label: 'difficulty', normal: 'normal', expert: 'expert', master: 'master' },
     quote: {

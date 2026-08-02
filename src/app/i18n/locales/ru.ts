@@ -16,6 +16,8 @@ export default {
     minSpeed: 'мин. скорость',
     minSpeedOff: 'выкл',
     textMods: 'текстовые моды',
+    testSettings: 'настройки теста',
+    testSettingsHint: 'Выберите, из чего собран забег: моды текста, режим и его объём.',
     language: 'язык',
     difficulty: { label: 'сложность', normal: 'обычная', expert: 'эксперт', master: 'мастер' },
     quote: {

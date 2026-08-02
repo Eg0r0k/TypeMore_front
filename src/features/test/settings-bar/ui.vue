@@ -95,6 +95,21 @@
     </div>
 
     <!--
+      The phone's whole config: one button, the same settings behind it. The
+      three zones above need ~700px side by side, and squeezed they wrap into
+      stacked rows that re-centre on every mode switch.
+    -->
+    <button
+      type="button"
+      class="settings-bar__mobile"
+      data-testid="mobile-test-settings"
+      @click="openMobile"
+    >
+      <IconAdjustments aria-hidden="true" />
+      {{ t('game.testSettings') }}
+    </button>
+
+    <!--
       Everything that does NOT shape the text, on one line in the order it is
       read: the view mods first (no space, blind, fading, flashlight), then what
       the text IS (the language), then how it is paced, then how it is graded.
@@ -180,6 +195,11 @@
       :model-value="config.language"
       @update:model-value="onLanguage"
     />
+
+    <!-- Mounted only once it has been asked for: it sets up a second set of
+         registry computeds, and the bar stays mounted (hidden) for the whole of
+         every run, so a desktop reader would pay for a surface they never open. -->
+    <MobileTestConfig v-if="mobileEverOpened" v-model:open="mobileOpen" />
   </div>
 </template>
 
@@ -212,6 +232,9 @@
   import { LanguageModal } from '@/features/modal/language'
   import { PacePicker } from '@/features/test/pace'
   import { useLanguageNames } from '@/shared/lib/hooks/useLanguageNames'
+  import IconAdjustments from '~icons/tabler/adjustments-horizontal'
+
+  import MobileTestConfig from './mobile.vue'
 
   /**
    * Solo settings above the typing field, laid out as monkeytype's: a bar of
@@ -395,6 +418,14 @@
   }
 
   const languageOpen = ref(false)
+
+  const mobileOpen = ref(false)
+  /** Latches on the first open — the mount gate for the modal. */
+  const mobileEverOpened = ref(false)
+  const openMobile = (): void => {
+    mobileEverOpened.value = true
+    mobileOpen.value = true
+  }
   const onLanguage = (value: string): void => {
     void configStore.setLanguage(value)
   }
@@ -456,15 +487,48 @@
      * which is worse than three tidy lines.
      */
     &__primary {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 0.5rem;
+      display: none;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 0.75rem;
       place-items: center;
       width: 100%;
 
       @media (width >= 640px) {
-        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-        gap: 0.75rem;
+        display: grid;
+      }
+    }
+
+    // The phone's config trigger — the row's stand-in below `sm`.
+    &__mobile {
+      display: inline-flex;
+      gap: 0.5rem;
+      align-items: center;
+      padding: 0.375rem 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--sub-color);
+      cursor: pointer;
+      background-color: var(--sub-alt-color);
+      border-radius: var(--border-radius, 0.375rem);
+      transition: color var(--transition-duration, 0.125s) linear;
+
+      &:hover {
+        color: var(--text-color);
+      }
+
+      &:focus-visible {
+        outline: none;
+        box-shadow:
+          0 0 0 1.5px var(--bg-color),
+          0 0 0 3px var(--text-color);
+      }
+
+      :deep(svg) {
+        width: 1rem;
+        height: 1rem;
+      }
+
+      @media (width >= 640px) {
+        display: none;
       }
     }
 
