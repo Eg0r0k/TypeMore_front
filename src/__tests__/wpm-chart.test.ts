@@ -55,4 +55,16 @@ describe('WpmChart', () => {
     await svg.trigger('pointerleave')
     expect(wrapper.find('.wpm-chart__tooltip').exists()).toBe(false)
   })
+
+  it('fills the raw series down to the axis, and only when there is an area', () => {
+    const area = mountChart().find('.wpm-chart__area--raw').attributes('d')
+
+    // The curve, then down to the baseline, back along it, closed.
+    expect(area).toMatch(/^M [\d.]+ [\d.]+ C .* L [\d.]+ \d+ L [\d.]+ \d+ Z$/)
+
+    // One point is a dot, not a shape: an area there would be an invisible
+    // zero-width sliver, so the element stays out of the DOM.
+    const single = mountChart([{ second: 1, wpm: 30, raw: 30, errors: 0 }])
+    expect(single.find('.wpm-chart__area--raw').exists()).toBe(false)
+  })
 })

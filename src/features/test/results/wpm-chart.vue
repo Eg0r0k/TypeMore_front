@@ -64,6 +64,16 @@
         </text>
       </g>
 
+      <!--
+        `raw` is the INSTANTANEOUS series — how fast each single second was — so
+        filling it down to the axis turns it into the run's own terrain. It is
+        also what makes the `wpm` line legible: a 2px accent line reads far
+        better over a soft mass than over an empty grid, and that line is what
+        this screen is opened for. The fill is the raw series' own colour, so
+        nothing here is coloured as something it is not.
+      -->
+      <path v-if="rawArea" class="wpm-chart__area wpm-chart__area--raw" :d="rawArea" />
+
       <!-- series -->
       <path class="wpm-chart__line wpm-chart__line--raw" :d="rawPath" />
       <path class="wpm-chart__line wpm-chart__line--wpm" :d="wpmPath" />
@@ -72,6 +82,13 @@
           <line x1="-4" y1="-4" x2="4" y2="4" />
           <line x1="-4" y1="4" x2="4" y2="-4" />
         </g>
+      </g>
+
+      <!-- Where the cumulative line settled: the run's own average, and the
+           number the summary reports. -->
+      <g v-if="average" class="wpm-chart__average">
+        <line :x1="PAD.left" :x2="width - PAD.right" :y1="average.y" :y2="average.y" />
+        <text :x="PAD.left + 4" :y="average.y - 5">avg {{ average.value }}</text>
       </g>
 
       <!-- hover crosshair -->
@@ -128,8 +145,13 @@
   /**
    * WPM-over-time chart for the results screen. Pure view: it charts a
    * `TimelinePoint[]` (itself a pure function of the log — see stats.ts) so a
-   * replay of the same log draws the same graph. Two line series (net wpm + raw)
-   * plus error markers on a secondary axis.
+   * replay of the same log draws the same graph. Two line series — the
+   * cumulative net wpm and the instantaneous raw, the latter filled down to the
+   * axis — plus error markers on a secondary axis and the run's average.
+   *
+   * The fill is there for the wpm line's sake: it is the number the screen is
+   * read for, and a 2px accent line over an empty grid is a thinner mark than it
+   * deserves. Over the raw terrain it reads immediately.
    *
    * SVG, not canvas, and deliberately: every colour is a CSS custom property
    * (`--main-color`, `--sub-color`, `--error-color`) applied through the scoped
@@ -261,6 +283,31 @@
     )
   )
 
+  const baselineY = PAD.top + plotHeight
+
+  /**
+   * The raw curve closed down to the axis. A single point has no area to fill —
+   * a `Z` back to its own coordinate would be an invisible zero-width sliver,
+   * and the empty string is what keeps the element out of the DOM entirely.
+   */
+  const rawArea = computed(() => {
+    if (count.value < 2) return ''
+    const right = xAt(count.value - 1).toFixed(2)
+    const left = xAt(0).toFixed(2)
+    return `${rawPath.value} L ${right} ${baselineY} L ${left} ${baselineY} Z`
+  })
+
+  /**
+   * The run's average — the last cumulative point, which IS the summary's own
+   * wpm. One horizontal line saying "this is the number you got", so the early
+   * part of the curve can be read as above or below it.
+   */
+  const average = computed(() => {
+    const last = points.value[count.value - 1]
+    if (!last || count.value < 2) return null
+    return { value: Math.round(last.wpm), y: yOf(last.wpm) }
+  })
+
   const errorMarks = computed(() =>
     points.value
       .map((point, index) => ({ point, index }))
@@ -331,6 +378,36 @@
 
     &__axis--title text {
       font-size: 11px;
+    }
+
+    /*
+     * The raw series' terrain. A WASH, not a second weight of line: the two
+     * lines are what carry meaning, and this is the ground they are read
+     * against. `sub` at 14% is dark enough on every theme to read as mass and
+     * light enough that the 1.5px raw line on top of it is still its own edge —
+     * the fill wears its own series' colour, so it can never be mistaken for a
+     * third measurement.
+     */
+    &__area {
+      stroke: none;
+
+      &--raw {
+        fill: var(--sub-color);
+        fill-opacity: 0.17;
+      }
+    }
+
+    &__average {
+      line {
+        stroke: var(--sub-color);
+        stroke-dasharray: 6 4;
+        stroke-width: 1;
+      }
+
+      text {
+        font-size: 10px;
+        fill: var(--sub-color);
+      }
     }
 
     &__line {

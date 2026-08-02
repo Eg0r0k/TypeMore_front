@@ -1,31 +1,39 @@
 <template>
   <div class="empty"></div>
-  <div ref="rootRef" class="results">
+  <div ref="rootRef" class="results mx-auto flex w-full flex-col gap-3">
     <!--
       The verdict beside the shape of the run: the grade is what a glance is for,
-      the score is the number that is compared, and the chart is the story. Both
-      columns are declared here so the stats row below can line its first cell up
-      with the grade — one grid, one left edge.
+      the score is the number that is compared, and the chart is the story.
+
+      From `md` the verdict is a column whose width (`--results-verdict`) is
+      shared with the stats grid below, so the first stat lines up UNDER the
+      grade instead of merely starting near it. Below `md` there is no room for
+      two columns: the verdict lays itself out as a row over the chart, and the
+      two grids stop sharing an edge because there is no edge left to share.
     -->
-    <div class="results__main">
-      <div class="results__verdict">
+    <div
+      class="grid items-center gap-4 md:grid-cols-[var(--results-verdict)_minmax(0,1fr)] md:gap-0"
+    >
+      <div
+        class="flex min-w-0 flex-row flex-wrap items-baseline justify-center gap-x-8 gap-y-2 md:flex-col md:items-stretch md:justify-start md:gap-2"
+      >
         <!-- What the run was played under, before a single key: the mods as
              the shared icon chips (tooltips carry the words) — the same glyphs
              the settings bar, the boards and the profile use. Renders nothing
              when the run was plain. -->
-        <GameModIcons :mods="summaryMods" />
+        <GameModIcons :mods="summaryMods" class="basis-full justify-center md:basis-auto" />
 
         <!-- Grade and combo are one mark, not two facts: the combo hangs off the
              grade's baseline rather than starting a line of its own. -->
-        <div class="results__mark">
+        <div class="flex flex-col items-center">
           <span
-            class="text-9xl relative leading-none font-bold"
+            class="relative text-7xl leading-none font-bold sm:text-8xl md:text-9xl"
             :class="isTopGrade ? 'text-main' : 'text-text'"
           >
             {{ grade }}
             <span
               v-if="comboLabel"
-              class="absolute text-2xl tabular-nums text-primary font-black -top-2 -right-6"
+              class="absolute -top-1 -right-5 text-xl font-black tabular-nums text-primary md:-top-2 md:-right-6 md:text-2xl"
             >
               {{ comboLabel }}
             </span>
@@ -34,9 +42,17 @@
 
         <Tooltip v-if="score">
           <TooltipTrigger as-child>
-            <div class="results__score" data-testid="results-score">
+            <!-- A score has no bound worth designing around, so it is the one
+                 number given room to break rather than to push the chart off
+                 the row. -->
+            <div
+              class="flex min-w-0 cursor-help flex-col gap-0.5 [overflow-wrap:anywhere]"
+              data-testid="results-score"
+            >
               <span class="text-xs text-sub">score</span>
-              <span class="text-main text-4xl leading-tight tabular-nums">{{ scoreText }}</span>
+              <span class="text-main text-3xl font-bold leading-tight tabular-nums sm:text-4xl">
+                {{ scoreText }}
+              </span>
               <span v-if="modLabel" class="text-xs tabular-nums text-sub">{{ modLabel }}</span>
             </div>
           </TooltipTrigger>
@@ -51,7 +67,7 @@
         </Tooltip>
       </div>
 
-      <div class="results__chart">
+      <div class="min-w-0">
         <WpmChart :timeline="timeline" />
       </div>
     </div>
@@ -60,45 +76,56 @@
       One row of everything else, its first cell under the grade. Only `wpm` is
       accented: it is the number the reader came for, and a screen where six
       things shout has nothing left to emphasise with.
+
+      Two columns on a phone, three from `sm`, and one row of auto-fitted cells
+      from `lg` — six 24px numbers do not fit across 360px, and squeezing them
+      there is how a stats row turns into a wall of clipped digits. `lg` and not
+      `md` because of ONE cell: `chars` is four numbers where its neighbours have
+      one, and it is what overflows first when the row is packed.
     -->
-    <dl class="results__stats">
-      <div class="results__stat">
+    <dl
+      class="m-0 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-[var(--results-verdict)_repeat(auto-fit,minmax(6rem,1fr))] lg:gap-x-7"
+    >
+      <div class="flex min-w-0 flex-col gap-0.5">
         <dt class="text-xs text-sub">test type</dt>
         <dd class="m-0 flex flex-col text-sm text-sub">
           <span v-for="line in testType" :key="line">{{ line }}</span>
         </dd>
       </div>
-      <div class="results__stat">
+      <div class="flex min-w-0 flex-col gap-0.5">
         <dt class="text-xs text-sub">wpm / raw</dt>
-        <dd class="m-0 text-2xl/tight tabular-nums">
-          <span class="text-main">{{ Math.round(metrics.wpm) }}</span>
+        <dd class="m-0 text-xl/tight tabular-nums sm:text-2xl/tight">
+          <span class="text-main font-black">{{ Math.round(metrics.wpm) }}</span>
           <span class="text-sub">/{{ Math.round(metrics.raw) }}</span>
         </dd>
       </div>
-      <div class="results__stat">
+      <div class="flex min-w-0 flex-col gap-0.5">
         <dt class="text-xs text-sub">acc</dt>
-        <dd class="m-0 text-2xl/tight tabular-nums">{{ Math.round(metrics.accuracy * 100) }}%</dd>
+        <dd class="m-0 text-xl/tight tabular-nums sm:text-2xl/tight">
+          {{ Math.round(metrics.accuracy * 100) }}%
+        </dd>
       </div>
-      <div class="results__stat">
+      <div class="flex min-w-0 flex-col gap-0.5">
         <dt class="text-xs text-sub">chars</dt>
         <!-- correct / incorrect / extra / missed. The three failure counts are
              sub-coloured rather than red: this is a summary read after the fact,
-             not an alarm going off. -->
-        <dd class="m-0 text-2xl/tight tabular-nums">
+             not an alarm going off. Smaller than its neighbours on purpose — it
+             is four numbers in the space they each use for one. -->
+        <dd class="m-0 text-lg/tight tabular-nums sm:text-xl/tight xl:text-2xl/tight">
           {{ metrics.chars.correct }}/{{ metrics.chars.incorrect }}/{{ metrics.chars.extra }}/{{
             metrics.chars.missed
           }}
         </dd>
       </div>
-      <div class="results__stat">
+      <div class="flex min-w-0 flex-col gap-0.5">
         <dt class="text-xs text-sub">consistency</dt>
-        <dd class="m-0 text-2xl/tight tabular-nums">
+        <dd class="m-0 text-xl/tight tabular-nums sm:text-2xl/tight">
           {{ Math.round(metrics.consistency * 100) }}%
         </dd>
       </div>
-      <div class="results__stat">
+      <div class="flex min-w-0 flex-col gap-0.5">
         <dt class="text-xs text-sub">time</dt>
-        <dd class="m-0 flex flex-col text-2xl/tight tabular-nums">
+        <dd class="m-0 flex flex-col text-xl/tight tabular-nums sm:text-2xl/tight">
           <span>{{ Math.round(metrics.durationSec) }}s</span>
           <!-- Idle time belongs to the duration it ate from: seconds and the
                share of the run window, one quiet line under the number. -->
@@ -109,7 +136,11 @@
       </div>
 
       <!-- Quote runs only: who wrote it, and the one way into its board. -->
-      <div v-if="quoteSource" class="results__stat" data-testid="results-quote-source">
+      <div
+        v-if="quoteSource"
+        class="col-span-full flex min-w-0 flex-col gap-0.5 sm:col-span-2 lg:col-span-1"
+        data-testid="results-quote-source"
+      >
         <dt class="text-xs text-sub">source</dt>
         <dd class="m-0 flex items-center gap-2 text-sm">
           <span class="min-w-0 truncate">{{ quoteSource }}</span>
@@ -198,7 +229,7 @@
 
     <div
       v-if="saveState !== 'idle' && saveState !== 'ineligible'"
-      class="results__save"
+      class="mt-2 flex min-h-6 items-center justify-center"
       data-testid="results-save"
     >
       <button
@@ -542,93 +573,13 @@
 </script>
 
 <style lang="scss" scoped>
+  /*
+   * The layout itself is Tailwind, up in the template. What is left here is the
+   * ONE value two separate grids have to agree on: the verdict column's width.
+   * It is what lines the first stat up under the grade rather than merely near
+   * it, and a shared track cannot be expressed by either grid alone.
+   */
   .results {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
-    margin: 0 auto;
-
-    // The verdict column's width is shared with the stats row below, so the
-    // first stat lines up under the grade instead of merely starting near it.
     --results-verdict: minmax(9rem, 12rem);
-
-    &__main {
-      display: grid;
-      grid-template-columns: var(--results-verdict) minmax(0, 1fr);
-      align-items: center;
-    }
-
-    &__verdict {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      min-width: 0;
-    }
-
-    &__chart {
-      min-width: 0;
-    }
-
-    // Grade and combo read as one mark; the combo is tucked against the grade's
-    // baseline rather than spaced away from it.
-    &__mark {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    // A score has no bound worth designing around, so it is the one number given
-    // room to break rather than to push the chart off the row.
-    &__score {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-      cursor: help;
-      overflow-wrap: anywhere;
-    }
-
-    &__stats {
-      display: grid;
-      grid-template-columns: var(--results-verdict) repeat(auto-fit, minmax(6rem, 1fr));
-      gap: 16px 28px;
-      margin: 0;
-    }
-
-    &__stat {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-    }
-
-    &__save {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 1.5rem;
-      margin-top: 0.5rem;
-    }
-
-    // Narrow: the chart drops under the verdict, and the two grids stop sharing
-    // a first column — there is no room left for them to line up in.
-    @media screen and (width <= 700px) {
-      --results-verdict: minmax(0, 1fr);
-
-      &__main {
-        grid-template-columns: minmax(0, 1fr);
-      }
-
-      &__verdict {
-        flex-direction: row;
-        gap: 24px;
-        align-items: baseline;
-      }
-
-      &__stats {
-        grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
-      }
-    }
   }
 </style>
