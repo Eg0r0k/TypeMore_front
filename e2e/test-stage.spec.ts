@@ -67,6 +67,45 @@ test('nothing in the settings moves the words', async ({ page }) => {
   expect(await settle()).toBe(anchor)
 })
 
+/**
+ * The other axis. The bar used to hold the words still and still jump
+ * SIDEWAYS: the mods group came and went with the mode and the amount group
+ * changed width by 142px between seconds and quote bands, and both dragged the
+ * mode pills along — the control you click most, walking out from under the
+ * cursor as you use it.
+ *
+ * The row is a three-column grid (`1fr auto 1fr`) with equal side tracks, so
+ * the MIDDLE column's centre is the bar's centre whatever the zones beside it
+ * contain. The zones themselves are free to move — they are sized by what is in
+ * them — but the modes are not, and the modes are the control being aimed at.
+ */
+test('nothing in the settings moves the modes sideways', async ({ page }) => {
+  const left = async (selector: string): Promise<number> => {
+    const box = await page.locator(selector).boundingBox()
+    return Math.round(box?.x ?? -1)
+  }
+
+  const modesX = await left('[aria-label="mode"]')
+  expect(modesX).toBeGreaterThan(0)
+
+  const settle = async (): Promise<void> => {
+    // Past the amount card's 200ms width transition.
+    await page.waitForTimeout(400)
+  }
+
+  for (const mode of ['words', 'quote', 'time']) {
+    await page.locator('[aria-label="mode"]').getByText(mode, { exact: true }).click()
+    await settle()
+    expect(await left('[aria-label="mode"]')).toBe(modesX)
+  }
+
+  // The text mods leave the bar in quote mode; that must not move anything
+  // either — they sit at the end of a track that is not sized by its content.
+  await page.getByRole('button', { name: 'punctuation', exact: true }).click()
+  await settle()
+  expect(await left('[aria-label="mode"]')).toBe(modesX)
+})
+
 test('the words stay put when the run starts', async ({ page }) => {
   const before = await wordsTop(page)
   expect(before).toBeGreaterThan(0)

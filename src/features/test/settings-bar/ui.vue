@@ -1,12 +1,57 @@
 <template>
   <div class="settings-bar">
     <!--
-      The bar proper, ordered by use: mode and its amount lead (the pair a
-      player reads and changes most), the text mods follow past the separator.
-      Only what shapes the TEXT lives here, and each group is one ToggleGroup,
-      so the pills and the separator carry the grouping.
+      One line, three zones: the text mods on the left, the MODE in the middle,
+      the mode's amount on the right.
+
+      A three-column grid (`1fr auto 1fr`) rather than a centred flex row,
+      because the mode group has to sit at the bar's true centre and stay there.
+      The zones beside it change width constantly — quote hides all five text
+      mods, and the amount group is 300px of quote bands against 170px of
+      seconds — and in a flex row every one of those changes shifted the control
+      a player touches most. Equal `1fr` sides make the middle column's centre
+      the bar's centre whatever the sides contain, so nothing needs a reserved
+      width and nothing moves. Deliberately no animation on the swap.
+
+      The sides face inward (`end` / `start`), so the three zones stay one tight
+      cluster over the typing field instead of being flung to the page edges.
     -->
-    <div class="settings-bar__row">
+    <div class="settings-bar__primary">
+      <!--
+        Text mods, as glyphs — the same OPTION_ICONS the results screen draws
+        them with, so a mod looks identical where it is chosen and where it is
+        reported. The name (with the reason, when one is disabled) is the
+        tooltip AND the accessible name, so nothing is hover-only.
+
+        Mods that cannot affect the current run (quote's fixed text) leave the
+        bar entirely. A race lock still renders them disabled in place: the
+        record's setup stays readable.
+      -->
+      <div class="settings-bar__zone settings-bar__zone--start h-full">
+        <ToggleGroup
+          v-if="visibleTextMods.length"
+          class="max-sm:flex-wrap max-sm:justify-center"
+          type="multiple"
+          :model-value="activeTextMods"
+          :aria-label="t('game.textMods')"
+          @update:model-value="onTextMods"
+        >
+          <Tooltip v-for="option in visibleTextMods" :key="option.key">
+            <TooltipTrigger as-child>
+              <ToggleGroupItem
+                :value="option.key"
+                class="settings-bar__btn settings-bar__icon-btn data-active:text-primary data-[disabled]:pointer-events-auto"
+                :disabled="reasonOf(option) !== null"
+                :aria-label="t(option.i18nKey)"
+              >
+                <component :is="OPTION_ICONS[option.key]" aria-hidden="true" />
+              </ToggleGroupItem>
+            </TooltipTrigger>
+            <TooltipContent side="top">{{ titleOf(option) }}</TooltipContent>
+          </Tooltip>
+        </ToggleGroup>
+      </div>
+
       <ToggleGroup
         class="max-sm:flex-wrap max-sm:justify-center"
         :model-value="config.mode"
@@ -26,12 +71,10 @@
         </ToggleGroupItem>
       </ToggleGroup>
 
-      <!-- The amount for the current mode: seconds, words, or a quote's length
-           band. The slot's width is RESERVED at the widest variant, so a mode
-           switch moves nothing — the incoming group simply replaces the old
-           one inside the fixed slot. Deliberately no animation here. -->
-      <span v-if="dimension" class="settings-bar__dim">
+      <!-- The amount for the current mode: seconds, words, or a quote's length band. -->
+      <div class="settings-bar__zone settings-bar__zone--end">
         <ToggleGroup
+          v-if="dimension"
           class="max-sm:flex-wrap max-sm:justify-center"
           :model-value="String(config[dimension.key])"
           :aria-label="dimension.ariaLabel"
@@ -48,43 +91,62 @@
             {{ labelOf(dimension, value) }}
           </ToggleGroupItem>
         </ToggleGroup>
-      </span>
-
-      <!-- Text mods that cannot affect the current run (quote's fixed text)
-           leave the bar together with their separator. A race lock still
-           renders them disabled in place: the record's setup stays readable. -->
-      <template v-if="visibleTextMods.length">
-        <span class="settings-bar__sep" aria-hidden="true"></span>
-
-        <ToggleGroup
-          class="max-sm:flex-wrap max-sm:justify-center"
-          type="multiple"
-          :model-value="activeTextMods"
-          :aria-label="t('game.textMods')"
-          @update:model-value="onTextMods"
-        >
-          <ToggleGroupItem
-            v-for="option in visibleTextMods"
-            :key="option.key"
-            :value="option.key"
-            class="settings-bar__btn data-[disabled]:pointer-events-auto"
-            :disabled="reasonOf(option) !== null"
-            :title="titleOf(option)"
-          >
-            <component :is="OPTION_ICONS[option.key]" aria-hidden="true" />
-            {{ t(option.i18nKey) }}
-          </ToggleGroupItem>
-        </ToggleGroup>
-      </template>
+      </div>
     </div>
 
     <!--
-      The notice line (monkeytype's `#testModesNotice`): the settings that do not
-      shape the text, as small grey chips — highlighted when they are not at their
-      default, so the line reads as "what is unusual about this run".
+      Everything that does NOT shape the text, on one line in the order it is
+      read: the view mods first (no space, blind, fading, flashlight), then what
+      the text IS (the language), then how it is paced, then how it is graded.
+      The mods are glyphs like the ones above; difficulty keeps its words because
+      it carries a LEVEL, which no glyph can say, and pace names a strategy.
     -->
-    <div class="settings-bar__notice">
-      <!-- Graded settings (difficulty, speed floor): the values in a small popover. -->
+    <div class="settings-bar__lang-row">
+      <span
+        v-if="repeated || (race.racing && config.mode !== ConfigModes.Quote)"
+        class="settings-bar__repeated"
+        data-testid="race-repeated"
+      >
+        {{ t('game.repeated') }}
+      </span>
+
+      <!-- Flags: one click is the whole interaction, so they need no popover. -->
+      <div class="settings-bar__flags">
+        <Tooltip v-for="option in flagSettings" :key="option.key">
+          <TooltipTrigger as-child>
+            <button
+              type="button"
+              :class="chipClass(config[option.key] === true, true)"
+              :aria-label="t(option.i18nKey)"
+              :aria-pressed="config[option.key] === true"
+              :disabled="raceLock !== null"
+              @click="onFlag(option)"
+            >
+              <component :is="OPTION_ICONS[option.key]" aria-hidden="true" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            {{ raceLock === null ? t(option.i18nKey) : `${t(option.i18nKey)} — ${raceLock}` }}
+          </TooltipContent>
+        </Tooltip>
+      </div>
+      <button
+        type="button"
+        :class="chipClass(true)"
+        data-testid="language-picker"
+        :disabled="raceLock !== null"
+        :title="raceLock ?? undefined"
+        :aria-label="`${t('game.language')}: ${languageName(config.language)}`"
+        @click="languageOpen = true"
+      >
+        <component :is="OPTION_ICONS.language" aria-hidden="true" />
+        {{ languageName(config.language) }}
+      </button>
+      <PacePicker />
+
+      <!-- Graded settings (difficulty): the values in a small popover. Last on
+           the line — it is the only one here that changes how a run is SCORED
+           rather than what it contains. -->
       <Popover v-for="option in gradedSettings" :key="option.key">
         <PopoverTrigger
           :class="chipClass(isCustom(option))"
@@ -111,49 +173,6 @@
           </ToggleGroup>
         </PopoverContent>
       </Popover>
-
-      <!-- Flags: one click is the whole interaction, so they need no popover. -->
-      <button
-        v-for="option in flagSettings"
-        :key="option.key"
-        type="button"
-        :class="chipClass(config[option.key] === true)"
-        :aria-pressed="config[option.key] === true"
-        :disabled="raceLock !== null"
-        :title="raceLock ?? undefined"
-        @click="onFlag(option)"
-      >
-        <component :is="OPTION_ICONS[option.key]" aria-hidden="true" />
-        {{ t(option.i18nKey) }}
-      </button>
-    </div>
-
-    <!-- Last above the field: the language names what is in it. Flanked by the
-         "repeated" mark on the left (a seeded record's text — or a solo run
-         restarted from the results screen — is pre-known: the run is a repeat
-         and never ranks) and the pace selector on the right — the one control
-         a live race does NOT lock, because choosing another pace IS the exit. -->
-    <div class="settings-bar__lang-row">
-      <span
-        v-if="repeated || (race.racing && config.mode !== ConfigModes.Quote)"
-        class="settings-bar__repeated"
-        data-testid="race-repeated"
-      >
-        {{ t('game.repeated') }}
-      </span>
-      <button
-        type="button"
-        :class="chipClass(true)"
-        data-testid="language-picker"
-        :disabled="raceLock !== null"
-        :title="raceLock ?? undefined"
-        :aria-label="`${t('game.language')}: ${languageName(config.language)}`"
-        @click="languageOpen = true"
-      >
-        <component :is="OPTION_ICONS.language" aria-hidden="true" />
-        {{ languageName(config.language) }}
-      </button>
-      <PacePicker />
     </div>
 
     <LanguageModal
@@ -189,6 +208,7 @@
   import { narrowTo } from '@/shared/lib/helpers/narrow'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
   import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
+  import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
   import { LanguageModal } from '@/features/modal/language'
   import { PacePicker } from '@/features/test/pace'
   import { useLanguageNames } from '@/shared/lib/hooks/useLanguageNames'
@@ -303,8 +323,34 @@
   const CHIP =
     'inline-flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs transition-tm focus-ring [&_svg]:size-3.5'
 
-  const chipClass = (active: boolean): string =>
-    clsx(CHIP, active ? 'text-text' : 'text-sub opacity-60 hover:opacity-100')
+  /**
+   * `iconOnly` chips are the view mods, and they are the ONE control here whose
+   * value you can only read from its own appearance — there is no label saying
+   * "on". A text chip could get away with brightening from `sub` to `text`,
+   * because the word beside it is already telling you what it is; a lone glyph
+   * that only brightens says nothing, and the mods row read as uniformly off no
+   * matter what was enabled.
+   *
+   * So an active view mod takes the same filled `main` pill the toggle groups
+   * above it use. One rule across the whole bar: filled blue means on.
+   *
+   * It also widens the glyph and squares the padding — at 3.5 units in a box
+   * sized for text, a lone icon reads as a dropped label rather than a control.
+   */
+  const chipClass = (active: boolean, iconOnly = false): string =>
+    clsx(
+      CHIP,
+      iconOnly
+        ? [
+            'px-1 [&_svg]:size-4',
+            active
+              ? 'bg-main text-bg hover:brightness-110'
+              : 'text-sub hover:bg-sub-alt hover:text-text'
+          ]
+        : active
+          ? 'text-text'
+          : 'text-sub opacity-60 hover:opacity-100'
+    )
 
   /**
    * A gated mod keeps its stored value: a disabled item cannot appear in the
@@ -400,32 +446,62 @@
       justify-content: center;
     }
 
-    &__sep {
-      width: 1px;
-      height: 1.25rem;
-      background-color: var(--sub-color);
-      opacity: 0.25;
+    /*
+     * mods | mode | amount. Equal `1fr` sides put the middle column's centre at
+     * the bar's centre no matter what the sides hold, which is what keeps the
+     * mode group still while the sides change width — no reserved widths needed.
+     *
+     * Below `sm` it becomes three stacked centred rows: side by side the three
+     * zones need ~700px, and squeezing them wraps each group internally instead,
+     * which is worse than three tidy lines.
+     */
+    &__primary {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.5rem;
+      place-items: center;
+      width: 100%;
+
+      @media (width >= 640px) {
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        gap: 0.75rem;
+      }
     }
 
-    // The amount slot: width RESERVED at the widest variant (the quote length
-    // bands), so a mode switch moves NOTHING — the row never re-centres. On
-    // phones the row wraps anyway and the reservation would only waste height.
-    &__dim {
+    // The side zones face INWARD, so the three groups stay one cluster over the
+    // field rather than being pushed out to the page edges.
+    &__zone {
       display: flex;
       justify-content: center;
+
+      @media (width >= 640px) {
+        &--start {
+          justify-content: flex-end;
+        }
+
+        &--end {
+          justify-content: flex-start;
+        }
+      }
     }
 
-    &__notice {
+    &__flags {
+      display: flex;
+      gap: 0.125rem;
+      align-items: center;
+    }
+
+    // Square: a lone glyph in a box padded for a word sits off-centre in it.
+    &__icon-btn {
+      padding-inline: 0.625rem;
+    }
+
+    // The notice line is gone: its flags moved to the head of the row below and
+    // difficulty to its tail, so there is nothing left to lay out.
+    &__lang-row {
       display: flex;
       flex-wrap: wrap;
       gap: 0.25rem 0.75rem;
-      align-items: center;
-      justify-content: center;
-    }
-
-    &__lang-row {
-      display: flex;
-      gap: 0.75rem;
       align-items: center;
       justify-content: center;
     }

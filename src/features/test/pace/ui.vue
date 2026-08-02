@@ -93,11 +93,10 @@
 <script setup lang="ts">
   import { computed, ref } from 'vue'
   import { useI18n } from 'vue-i18n'
-  import clsx from 'clsx'
 
   import { useAuthStore } from '@/entities/auth'
   import { useConfigStore } from '@/entities/config'
-  import { OPTION_ICONS, optionOf, presetsFor } from '@/entities/game'
+  import { noticeChipClass, OPTION_ICONS, optionOf, presetsFor } from '@/entities/game'
   import { useRaceStore } from '@entities/race'
   import { ConsoleModal } from '@/features/modal/console'
   import { Button } from '@/shared/ui/button'
@@ -204,13 +203,11 @@
     configStore.setConfig('minWpm', Number(value))
   }
 
-  /** The bar's chip look; lit while any pace (or a ghost) is on the track. */
+  /**
+   * The notice line's chip look, shared with the language and difficulty chips
+   * beside it; lit while any pace (or a ghost) is on the track.
+   */
   const chipClass = computed(() =>
-    clsx(
-      'inline-flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs transition-tm focus-ring [&_svg]:size-3.5',
-      race.racing || config.paceCaret !== 'off'
-        ? 'text-text'
-        : 'text-sub opacity-60 hover:opacity-100'
-    )
+    noticeChipClass(race.racing || config.paceCaret !== 'off')
   )
 </script>
