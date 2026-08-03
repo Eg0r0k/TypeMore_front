@@ -335,6 +335,7 @@ export default {
     }
   },
   results: {
+    chart: { burstHint: 'пиковая скорость за эту секунду' },
     signIn: 'войдите, чтобы сохранить',
     saving: 'сохранение…',
     savedPending: 'сохранено · ждёт проверки',

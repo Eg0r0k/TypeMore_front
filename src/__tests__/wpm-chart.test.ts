@@ -6,8 +6,10 @@
  */
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
+import { createI18n } from 'vue-i18n'
 
 import type { TimelinePoint } from '@typemore/core'
+import en from '@/app/i18n/locales/en'
 import WpmChart from '@/features/test/results/wpm-chart.vue'
 
 const timeline: TimelinePoint[] = [
@@ -17,8 +19,14 @@ const timeline: TimelinePoint[] = [
   { second: 4, wpm: 66, raw: 71, errors: 1 }
 ]
 
+// The chart's series labels are bare unit names on purpose and stay
+// untranslated; the one PROSE line it carries (what `burst` measures) is not,
+// so the component needs a real locale rather than a stub.
 const mountChart = (points: TimelinePoint[] = timeline) =>
-  mount(WpmChart, { props: { timeline: points } })
+  mount(WpmChart, {
+    props: { timeline: points },
+    global: { plugins: [createI18n({ legacy: false, locale: 'en', messages: { en } })] }
+  })
 
 describe('WpmChart', () => {
   it('draws one curve per series and one marker per error bucket', () => {
@@ -27,6 +35,25 @@ describe('WpmChart', () => {
     expect(wrapper.find('.wpm-chart__line--wpm').attributes('d')).toMatch(/^M [\d.]+ [\d.]+ C /)
     expect(wrapper.find('.wpm-chart__line--raw').attributes('d')).toMatch(/^M [\d.]+ [\d.]+ C /)
     expect(wrapper.findAll('.wpm-chart__errors > g')).toHaveLength(2)
+  })
+
+  // The second series is the speed of ONE second, which is not what the
+  // summary's `raw` is (the whole run over its own duration). Labelling both
+  // `raw` had players reading the gap between them as a bug, so the label says
+  // what the line computes — monkeytype names the identical computation
+  // `burst` — and the tooltip carries one line so the figure is not mistaken
+  // for an average. The FIELD is still `raw`: renaming it is a core change,
+  // queued with the cumulative-raw series for the next bundle release.
+  it('names the per-second series burst, and says what it measures', async () => {
+    const wrapper = mountChart()
+
+    expect(wrapper.get('.wpm-chart__legend').text()).toContain('burst')
+    expect(wrapper.get('.wpm-chart__legend').text()).not.toContain('raw')
+
+    await wrapper.get('svg').trigger('pointermove', { clientX: 10 })
+    const tooltip = wrapper.get('.wpm-chart__tooltip')
+    expect(tooltip.text()).toContain('burst')
+    expect(tooltip.text()).toContain('peak speed for that one second')
   })
 
   it('keeps every colour in CSS, never in the markup', () => {

@@ -111,8 +111,15 @@
       </span>
       <span>
         <i class="wpm-chart__swatch wpm-chart__swatch--raw" />
-        raw {{ hoveredPoint.raw }}
+        burst {{ hoveredPoint.raw }}
       </span>
+      <!--
+        The one line that stops this number being read as an average. It is the
+        speed of THIS second alone, so it sits far above and far below the run's
+        wpm and is meant to: the summary's `raw` is the whole run divided by its
+        own duration, and the two are different questions.
+      -->
+      <span class="wpm-chart__tooltip-hint">{{ t('results.chart.burstHint') }}</span>
       <span v-if="hoveredPoint.errors > 0">
         <i class="wpm-chart__swatch wpm-chart__swatch--errors" />
         errors {{ hoveredPoint.errors }}
@@ -126,7 +133,7 @@
       </span>
       <span>
         <i class="wpm-chart__swatch wpm-chart__swatch--raw" />
-        raw
+        burst
       </span>
       <span>
         <i class="wpm-chart__swatch wpm-chart__swatch--errors" />
@@ -139,6 +146,7 @@
 <script setup lang="ts">
   import { computed, ref, useTemplateRef } from 'vue'
   import { useElementSize } from '@vueuse/core'
+  import { useI18n } from 'vue-i18n'
 
   import type { TimelinePoint } from '@typemore/core'
 
@@ -146,8 +154,27 @@
    * WPM-over-time chart for the results screen. Pure view: it charts a
    * `TimelinePoint[]` (itself a pure function of the log — see stats.ts) so a
    * replay of the same log draws the same graph. Two line series — the
-   * cumulative net wpm and the instantaneous raw, the latter filled down to the
-   * axis — plus error markers on a secondary axis and the run's average.
+   * cumulative net wpm and the instantaneous per-second speed, the latter
+   * filled down to the axis — plus error markers on a secondary axis and the
+   * run's average.
+   *
+   * WHY THE SECOND SERIES IS LABELLED `burst`, over a field still called `raw`.
+   * It is the speed of one second on its own: keystrokes inside that bucket
+   * divided by that bucket. The summary's `raw` is a different number — every
+   * raw character of the run over the run's whole duration — so the line was
+   * never going to land on it, and calling both `raw` had players reading the
+   * gap as a bug. monkeytype draws THREE series and names this exact
+   * computation `burst` (`getBurstHistory`: `insertText` events per interval,
+   * divided by the interval); their `raw` is a cumulative running average that
+   * does land on its summary number, like our wpm line does.
+   *
+   * So this rename makes the label honest, and leaves the chart one series
+   * short of theirs: there is no cumulative `raw` line here yet. Adding one
+   * means touching `timelineFrom`, which lives in the goja bundle — it is
+   * queued for the next core release rather than paid for on its own (one
+   * vendoring, one deploy order, one revalidate). The field on `TimelinePoint`
+   * keeps its name until then, for the same reason: renaming it is a core
+   * change, and this is not.
    *
    * The fill is there for the wpm line's sake: it is the number the screen is
    * read for, and a 2px accent line over an empty grid is a thinner mark than it
@@ -160,6 +187,8 @@
    * colours it read at draw time.
    */
   const props = defineProps<{ timeline: readonly TimelinePoint[] }>()
+
+  const { t } = useI18n()
 
   const HEIGHT = 240
   const PAD = { top: 16, right: 44, bottom: 34, left: 48 } as const
@@ -464,6 +493,15 @@
     }
 
     &__tooltip-title {
+      color: var(--sub-color);
+    }
+
+    // Sits under the burst figure and says what it measures. Muted and a size
+    // down: it explains the number above it, it is not a fourth reading.
+    &__tooltip-hint {
+      max-width: 16ch;
+      font-size: 10px;
+      line-height: 1.3;
       color: var(--sub-color);
     }
 

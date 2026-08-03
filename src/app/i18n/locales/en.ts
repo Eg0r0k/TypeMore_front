@@ -357,6 +357,7 @@ export default {
     }
   },
   results: {
+    chart: { burstHint: 'peak speed for that one second' },
     signIn: 'sign in to save',
     saving: 'saving…',
     savedPending: 'saved · pending validation',
