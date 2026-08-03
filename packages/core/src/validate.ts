@@ -31,6 +31,142 @@ export interface ConfigSnapshot {
   readonly generation: GenerationConfig
 }
 
+/** One point on the speed ceiling: "at this distance, this is the edge". */
+export interface BurstCeilingAnchor {
+  readonly durationSec: number
+  readonly wpm: number
+}
+
+/**
+ * THE speed ceiling, as a function of how long the run lasted — one table, and
+ * the only place these numbers appear.
+ *
+ * WHY IT IS A FUNCTION AT ALL. Sustained speed falls with distance, for the same
+ * reason it does in running: a sprint is not a pace. A single global ceiling is
+ * therefore either too lenient at the long distances or too strict at the short
+ * ones, and the constant 250 it replaces was the first — it let a 336 wpm run
+ * held for a full minute pass while a 251 wpm two-second flurry would not.
+ *
+ * WHERE THE NUMBERS COME FROM. Two sources, and they disagree, so both are
+ * written down rather than one being quietly preferred.
+ *
+ *   The published records are HIGHER than every anchor here. monkeytype's
+ *   all-time English leaderboards are in the 280s at 15 s, the 290s at 30 s and
+ *   the 270s at 60 s, and the current record holder has been reported at 305.
+ *   Judged against those alone, a ceiling would start near 310 and this
+ *   detector would never fire on anything but a machine.
+ *
+ *   The population THIS instance actually has tops out far lower. Over the 127
+ *   runs of the honest export of 2026-08-03: 166.4 wpm at ≤15 s, 88.4 at 30 s,
+ *   96.6 at 60 s, 62.5 beyond. Against that, every anchor below carries between
+ *   1.5× and 2.4× headroom over the fastest honest run at its distance, and
+ *   there is not one honest run within 80 wpm of the 30 s or 60 s anchor.
+ *
+ * The anchors follow the population, and they are set exactly where they are
+ * because of what they have to catch: the confirmed cheating account's four
+ * implausible runs are 282 wpm at 10 s, 212.4 at 30 s, and 336.2 and 373.4 at
+ * 60 s. Catching the 212.4 one is what pins the 30 s anchor below it, and
+ * monotonicity then pins the 60 s anchor below that.
+ *
+ * SO READ THIS BEFORE RAISING THEM. A world-class player — a real one, at the
+ * published record pace — WILL raise this flag here, and because
+ * `sustained_superhuman` bypasses the suspicion threshold, their run will go to
+ * review. That is a deliberate trade for a deployment whose fastest honest run
+ * is 166 wpm: review is a human looking, not a rejection, and on this
+ * population the flag has never once fired on an honest run. It is the wrong
+ * trade for a deployment that has actual record-pace players, and the fix then
+ * is this table, not the detector.
+ */
+export const BURST_CEILING: readonly BurstCeilingAnchor[] = [
+  { durationSec: 15, wpm: 250 },
+  { durationSec: 30, wpm: 210 },
+  { durationSec: 60, wpm: 200 }
+]
+
+/**
+ * The ceiling at a given distance: flat below the first anchor, flat above the
+ * last, linearly interpolated between them.
+ *
+ * CONTINUOUS ON PURPOSE. A step table would mean a run of 29.9 s is judged
+ * against 250 and one of 30.1 s against 210 — a 40 wpm cliff that two identical
+ * typists land on opposite sides of because one of them was a fifth of a second
+ * slower to stop. Interpolating removes the cliff without changing what the
+ * anchors say, and monotonicity is preserved because the anchors are themselves
+ * non-increasing (asserted by the tests, not assumed).
+ */
+export function maxBurstWpmFor(
+  durationSec: number,
+  anchors: readonly BurstCeilingAnchor[] = BURST_CEILING
+): number {
+  if (anchors.length === 0) return Infinity
+  const first = anchors[0]
+  if (!(durationSec > first.durationSec)) return first.wpm
+  for (let i = 1; i < anchors.length; i++) {
+    const prev = anchors[i - 1]
+    const next = anchors[i]
+    if (durationSec <= next.durationSec) {
+      const span = next.durationSec - prev.durationSec
+      if (span <= 0) return next.wpm
+      return prev.wpm + ((durationSec - prev.durationSec) * (next.wpm - prev.wpm)) / span
+    }
+  }
+  return anchors[anchors.length - 1].wpm
+}
+
+/**
+ * The speed at which `superhuman-burst` severity saturates. Deliberately NOT
+ * the ceiling: the ceiling answers "is this run implausible for its distance",
+ * and severity answers "how implausible, in absolute terms" — 400 wpm is the
+ * same phenomenon whether it was held for ten seconds or sixty, and should be
+ * worth the same. Keeping it a constant also means the two runs that already
+ * flagged under the old rule keep the exact severities they had (0.75 and 0.56),
+ * so a revalidate pass moves the runs that were being missed and nothing else.
+ */
+const SUPERHUMAN_SEVERITY_SCALE = 500
+
+const ACCURACY_WEIGHT_FLOOR = 0.25
+const ACCURACY_WEIGHT_EXPONENT = 4
+
+/**
+ * How much a run's accuracy scales its speed severity. Monotone, `f(1) = 1`,
+ * and — the whole point — never zero.
+ *
+ * WHAT THIS REPLACES. The old rule was `wpm > ceiling && accuracy === 1`: a
+ * STRICT equality with one, as a gate. A single mistyped character therefore
+ * switched the only speed-based detector off completely, and with it
+ * `sustained_superhuman`, which cannot fire without it. That is how a 336.2 wpm
+ * run held for a minute was accepted at suspicion 0.0074 while a 282 wpm run of
+ * ten seconds was flagged: the fast one had 99.6% accuracy. It is trivially
+ * gameable — make one deliberate typo — and it also fires or not by luck.
+ *
+ * WHY NOT JUST A LOWER GATE. `accuracy >= 0.98` is the same hole one centimetre
+ * further along: a bot makes two typos instead of one. Any gate on accuracy can
+ * be stepped over, so accuracy stops being a gate at all. Speed alone decides
+ * WHETHER the flag fires; accuracy only scales HOW MUCH it is worth.
+ *
+ * THE SHAPE. `floor + (1 - floor) · accuracy⁴`.
+ *
+ *   The floor exists so the function cannot be driven to zero. A detector that
+ *   can be switched off by being sloppy is the hole this change closes, so
+ *   0.25 is the guarantee that a superhuman speed always counts for something.
+ *   0.25 is also chosen against the arithmetic downstream: the flag's weight is
+ *   0.80 and the review threshold is 1.0, so a floor-severity run contributes
+ *   at most 0.20 and cannot reach review on its own. That is the right pair of
+ *   statements — someone typing 400 wpm at 50% accuracy is mashing keys, which
+ *   is worth noticing and is not proof of a bot.
+ *
+ *   The fourth power puts the curve's resolution where real runs live. Accuracy
+ *   is a compressed scale: everything interesting happens above 0.95, and
+ *   everything below 0.9 is one undifferentiated "made a lot of mistakes".
+ *   Concretely, `f(0.996) = 0.988` — one typo in a minute now costs 1.2% of the
+ *   severity, where the old rule cost 100% of it — while `f(0.9) = 0.74` and
+ *   `f(0.5) = 0.30` still separate a fast accurate run from a fast messy one.
+ */
+export function burstAccuracyWeight(accuracy: number): number {
+  const acc = Math.min(1, Math.max(0, accuracy))
+  return ACCURACY_WEIGHT_FLOOR + (1 - ACCURACY_WEIGHT_FLOOR) * acc ** ACCURACY_WEIGHT_EXPONENT
+}
+
 export interface PlausibilityThresholds {
   /** Inter-keystroke intervals below this (ms) are physically implausible. */
   readonly minKeyIntervalMs: number
@@ -38,8 +174,12 @@ export interface PlausibilityThresholds {
   readonly uniformToleranceMs: number
   /** Uniform-interval fraction at/above this raises the uniform-cadence flag. */
   readonly uniformFlagRatio: number
-  /** Net WPM above this with flawless accuracy is superhuman. */
-  readonly maxBurstWpm: number
+  /**
+   * Net WPM STRICTLY above the ceiling for the run's own duration is
+   * superhuman ({@link BURST_CEILING}). Accuracy is not part of this test — see
+   * {@link burstAccuracyWeight} for what it does instead.
+   */
+  readonly burstCeiling: readonly BurstCeilingAnchor[]
   /** AFK share of the run duration at/above which the run is flagged afk-heavy. */
   readonly afkFlagShare: number
   /** Idle tail (ms) between the last event and the run's end that raises trailing-afk. */
@@ -50,7 +190,7 @@ export const DEFAULT_THRESHOLDS: PlausibilityThresholds = {
   minKeyIntervalMs: 15,
   uniformToleranceMs: 2,
   uniformFlagRatio: 0.9,
-  maxBurstWpm: 250,
+  burstCeiling: BURST_CEILING,
   afkFlagShare: 0.5,
   trailingAfkMs: 10_000
 }
@@ -300,11 +440,19 @@ export function validateLog(input: ValidateLogInput): Result<ValidationReport, V
       flags.push({ code: 'zero-variance', score: 1, detail: 'all keystroke intervals identical' })
     }
   }
-  if (metrics.wpm > thresholds.maxBurstWpm && metrics.accuracy === 1) {
+  // Speed decides WHETHER, accuracy only decides HOW MUCH. `>` and not `>=`:
+  // the ceiling is the last speed that is still allowed, so a run landing
+  // exactly on it is not flagged. (`maxBurstWpmFor`, `burstAccuracyWeight`.)
+  const burstCeiling = maxBurstWpmFor(metrics.durationSec, thresholds.burstCeiling)
+  if (metrics.wpm > burstCeiling) {
     flags.push({
       code: 'superhuman-burst',
-      score: Math.min(1, metrics.wpm / (thresholds.maxBurstWpm * 2)),
-      detail: `${Math.round(metrics.wpm)} wpm at 100% accuracy`
+      score:
+        Math.min(1, metrics.wpm / SUPERHUMAN_SEVERITY_SCALE) *
+        burstAccuracyWeight(metrics.accuracy),
+      detail:
+        `${Math.round(metrics.wpm)} wpm over ${Math.round(metrics.durationSec)}s ` +
+        `(ceiling ${Math.round(burstCeiling)}) at ${Math.round(metrics.accuracy * 100)}% accuracy`
     })
   }
 
