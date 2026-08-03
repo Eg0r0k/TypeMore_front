@@ -66,10 +66,13 @@
       </g>
     </svg>
 
+    <!-- `w-max`: see the note in daily.vue — without it the box squeezes into
+         whatever is left of the figure and the text wraps to a column. -->
     <div
       v-if="hoveredBar"
-      class="pointer-events-none absolute z-1 flex -translate-x-1/2 flex-col gap-0.5 rounded border border-sub bg-bg px-2 py-1.5 text-[11px] text-text"
-      :style="{ left: `${tooltipX}px`, top: `${pad.top}px` }"
+      ref="tooltip"
+      class="pointer-events-none absolute z-1 flex w-max -translate-x-1/2 flex-col gap-0.5 rounded border border-sub bg-bg px-2 py-1.5 text-[11px] text-text"
+      :style="{ left: `${tooltipLeft}px`, top: `${pad.top}px` }"
     >
       <span class="text-sub">{{ hoveredBar.wpm }}–{{ hoveredBar.wpm + 10 }} wpm</span>
       <span>{{ t('profile.charts.tests', { tests: hoveredBar.tests }, hoveredBar.tests) }}</span>
@@ -84,7 +87,7 @@
 
   import type { ProfileHistogram } from '@shared/api'
   import { Typography } from '@/shared/ui/typography'
-  import { clamp } from '@/shared/lib/helpers/numbers'
+  import { useChartTooltip } from '@/shared/lib/hooks/useChartTooltip'
 
   /**
    * Tests per 10-wpm bucket, as SVG bars in the results chart's idiom (see
@@ -168,13 +171,14 @@
   const hovered = ref<number | null>(null)
   const hoveredBar = computed(() => (hovered.value === null ? null : bars.value[hovered.value]))
 
-  /** The tooltip is centred on the bar but never hangs off the figure. */
-  const TOOLTIP_HALF = 55
-  const tooltipX = computed(() => {
-    const bar = hoveredBar.value
-    if (!bar) return 0
-    return clamp(bar.x + bar.width / 2, TOOLTIP_HALF, width.value - TOOLTIP_HALF)
-  })
+  /** Centred on the bar, held inside the figure by its MEASURED width. */
+  const { tooltip, left: tooltipLeft } = useChartTooltip(
+    computed(() => {
+      const bar = hoveredBar.value
+      return bar ? bar.x + bar.width / 2 : 0
+    }),
+    width
+  )
 
   function onPointerMove(event: PointerEvent): void {
     const n = bars.value.length

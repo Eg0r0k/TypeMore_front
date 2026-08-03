@@ -100,10 +100,13 @@
       </g>
     </svg>
 
+    <!-- `w-max`: an absolutely positioned box with no width shrink-to-fits into
+         `container - left`, which crushed it against the right edge. -->
     <div
       v-if="hoveredDay"
-      class="pointer-events-none absolute z-1 flex -translate-x-1/2 flex-col gap-0.5 rounded border border-sub bg-bg px-2 py-1.5 text-[11px] text-text"
-      :style="{ left: `${tooltipX}px`, top: `${pad.top}px` }"
+      ref="tooltip"
+      class="pointer-events-none absolute z-1 flex w-max -translate-x-1/2 flex-col gap-0.5 rounded border border-sub bg-bg px-2 py-1.5 text-[11px] text-text"
+      :style="{ left: `${tooltipLeft}px`, top: `${pad.top}px` }"
     >
       <span class="text-sub">{{ hoveredDay.date }}</span>
       <span>{{ t('profile.charts.time') }} {{ formatDuration(hoveredDay.timeTypingMs) }}</span>
@@ -137,7 +140,7 @@
 
   import type { ProfileTimeseries } from '@shared/api'
   import { Typography } from '@/shared/ui/typography'
-  import { clamp } from '@/shared/lib/helpers/numbers'
+  import { useChartTooltip } from '@/shared/lib/hooks/useChartTooltip'
   import { formatDuration, percent, speed } from '../model/format'
 
   /**
@@ -302,12 +305,11 @@
     return { ...day, value: valueOf(day), x: xAt(hovered.value) }
   })
 
-  /** The tooltip is centred on the cursor but never hangs off the figure. */
-  const TOOLTIP_HALF = 60
-  const tooltipX = computed(() => {
-    const x = hoveredDay.value?.x ?? 0
-    return clamp(x, TOOLTIP_HALF, width.value - TOOLTIP_HALF)
-  })
+  /** Centred on the cursor, held inside the figure by its MEASURED width. */
+  const { tooltip, left: tooltipLeft } = useChartTooltip(
+    computed(() => hoveredDay.value?.x ?? 0),
+    width
+  )
 
   function onPointerMove(event: PointerEvent): void {
     if (count.value === 0) return

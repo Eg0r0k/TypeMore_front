@@ -101,14 +101,20 @@
         <line :x1="hoveredPoint.x" :x2="hoveredPoint.x" :y1="PAD.top" :y2="HEIGHT - PAD.bottom" />
         <circle class="wpm-chart__dot--wpm" :cx="hoveredPoint.x" :cy="hoveredPoint.wpmY" r="3" />
         <circle class="wpm-chart__dot--raw" :cx="hoveredPoint.x" :cy="hoveredPoint.rawY" r="3" />
-        <circle class="wpm-chart__dot--burst" :cx="hoveredPoint.x" :cy="hoveredPoint.burstY" r="3" />
+        <circle
+          class="wpm-chart__dot--burst"
+          :cx="hoveredPoint.x"
+          :cy="hoveredPoint.burstY"
+          r="3"
+        />
       </g>
     </svg>
 
     <div
       v-if="hoveredPoint"
+      ref="tooltip"
       class="wpm-chart__tooltip"
-      :style="{ left: `${hoveredPoint.x}px`, top: `${PAD.top}px` }"
+      :style="{ left: `${tooltipLeft}px`, top: `${PAD.top}px` }"
     >
       <span class="wpm-chart__tooltip-title">{{ hoveredPoint.second }}s</span>
       <span>
@@ -160,6 +166,7 @@
 <script setup lang="ts">
   import { computed, ref, useTemplateRef } from 'vue'
   import { useElementSize } from '@vueuse/core'
+  import { useChartTooltip } from '@/shared/lib/hooks/useChartTooltip'
   import { useI18n } from 'vue-i18n'
 
   import type { TimelinePoint } from '@typemore/core'
@@ -386,6 +393,12 @@
     }
   })
 
+  /** Centred on the point, held inside the figure by its MEASURED width. */
+  const { tooltip, left: tooltipLeft } = useChartTooltip(
+    computed(() => hoveredPoint.value?.x ?? 0),
+    width
+  )
+
   /** Nearest point by x — the old chart's `interaction: { mode: 'index' }`. */
   function onPointerMove(event: PointerEvent): void {
     if (count.value === 0) return
@@ -521,6 +534,11 @@
       position: absolute;
       z-index: 1;
       display: flex;
+
+      // Natural width, always: an absolutely positioned box with no width
+      // shrink-to-fits into `container - left`, which crushed this into a
+      // column against the right edge of the figure (useChartTooltip).
+      width: max-content;
       flex-direction: column;
       gap: 2px;
       padding: 6px 8px;
