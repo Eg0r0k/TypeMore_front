@@ -10,7 +10,13 @@ import { API_SCOPE } from '../keys'
  */
 export const runKeys = {
   all: [...API_SCOPE, 'runs'] as const,
-  list: (cursor?: string) => [...runKeys.all, 'list', cursor ?? null] as const,
+  /**
+   * The page SIZE keys too: the header's sparkline asks for a longer page than
+   * the table's, and two different pages sharing one key would serve whichever
+   * landed first.
+   */
+  list: (cursor?: string, limit?: number) =>
+    [...runKeys.all, 'list', cursor ?? null, limit ?? null] as const,
   detail: (id: string) => [...runKeys.all, 'detail', id] as const,
   replay: (id: string) => [...runKeys.all, 'replay', id] as const,
   replayLog: (id: string) => [...runKeys.all, 'replay', id, 'log'] as const

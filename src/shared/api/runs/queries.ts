@@ -4,10 +4,10 @@ import { runKeys } from './keys'
 
 /** Layer 2 — Runs queryOptions factories. */
 
-export const runsQueryOptions = (cursor?: string) =>
+export const runsQueryOptions = (cursor?: string, limit?: number) =>
   queryOptions({
-    queryKey: runKeys.list(cursor),
-    queryFn: () => listRuns({ cursor })
+    queryKey: runKeys.list(cursor, limit),
+    queryFn: () => listRuns({ cursor, limit })
   })
 
 export const runQueryOptions = (id: string) =>
