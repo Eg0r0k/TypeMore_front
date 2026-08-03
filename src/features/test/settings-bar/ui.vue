@@ -205,51 +205,61 @@
 
 <script lang="ts" setup>
   import { computed, ref, watch } from 'vue'
-  import { useI18n } from 'vue-i18n'
-  import { useQuery } from '@tanstack/vue-query'
   import clsx from 'clsx'
 
-  import { useConfigStore } from '@/entities/config'
-  import { useRaceStore } from '@entities/race'
   import { toast } from '@/shared/ui/sonner'
-  import {
-    OPTION_ICONS,
-    disabledReason,
-    modeIconOf,
-    optionOf,
-    presetsFor,
-    valuesFor,
-    visibleOptionsFor,
-    type ConstraintContext,
-    type GameOption
-  } from '@/entities/game'
-  import { languageHasQuotesQueryOptions } from '@shared/api'
-  import { ConfigModes, type Config } from '@/shared/constants/type'
-  import { narrowTo } from '@/shared/lib/helpers/narrow'
+  import { OPTION_ICONS, modeIconOf } from '@/entities/game'
+  import { ConfigModes } from '@/shared/constants/type'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
   import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
   import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
   import { LanguageModal } from '@/features/modal/language'
   import { PacePicker } from '@/features/test/pace'
-  import { useLanguageNames } from '@/shared/lib/hooks/useLanguageNames'
   import IconAdjustments from '~icons/tabler/adjustments-horizontal'
 
   import MobileTestConfig from './mobile.vue'
+  import { useTestConfig } from './model/use-test-config'
 
   /**
    * Solo settings above the typing field, laid out as monkeytype's: a bar of
    * three groups for everything that shapes the TEXT, and a notice line below it
    * for everything that only changes how the run is scored.
    *
-   * Which options exist, which values they take and when they are unavailable all
-   * come from the game-config registry filtered to the `solo` context — this file
-   * owns the layout and the writes. The split between the two rows is the
-   * registry's own `slot` plus the amount/mode keys the bar draws by name.
+   * Which options exist, which values they take and when they are locked all
+   * come from `useTestConfig` — the SAME composable the mobile modal renders
+   * from, so the two surfaces cannot drift. This file owns only the layout,
+   * the open/close state and the quote-fallback watcher below (a side effect
+   * that must run exactly once, and the bar is the surface that is always
+   * mounted).
    */
-  const { t } = useI18n()
-  const configStore = useConfigStore()
-  const config = configStore.config
-  const { languageName } = useLanguageNames()
+  const {
+    t,
+    config,
+    configStore,
+    race,
+    languageName,
+    modeOption,
+    modeValues,
+    modeReason,
+    raceLock,
+    visibleTextMods,
+    activeTextMods,
+    amountVariants,
+    gradedSettings,
+    flagSettings,
+    quotesAvailable,
+    reasonOf,
+    titleOf,
+    valuesOf,
+    labelOf,
+    isCustom,
+    onTextMods,
+    onFlag,
+    onMode,
+    onDimension,
+    onGraded,
+    onLanguage
+  } = useTestConfig()
 
   /**
    * The page's word: the CURRENT solo run replays a text the player has
@@ -259,89 +269,10 @@
    */
   defineProps<{ repeated?: boolean }>()
 
-  const modeOption = optionOf('mode')
-  const modeValues = computed(() => valuesFor(modeOption, 'solo'))
-
-  /**
-   * Constraint input: the run's intent. No quote is drawn yet at this point.
-   * While the solo screen races a record the whole bar locks through the
-   * registry's own mechanics (`racing` short-circuits every disabledWhen):
-   * the setup on screen is the record's, and changing it IS exiting the race.
-   */
-  const race = useRaceStore()
-  const ctx = computed<ConstraintContext>(() => ({
-    mode: config.mode,
-    ...(race.racing ? { racing: true as const } : {})
-  }))
-  /** The one lock reason every non-registry control shares while racing. */
-  const raceLock = computed<string | null>(() => (race.racing ? t('game.constraint.racing') : null))
-  const soloOptions = computed(() => visibleOptionsFor('solo', ctx.value))
-
-  /** The keys the bar draws itself; everything else in `solo` is a notice chip. */
-  const AMOUNT_KEYS = ['time', 'words', 'quoteGroup']
-  const BAR_KEYS = ['mode', 'language', ...AMOUNT_KEYS]
-
-  const isTextMod = (option: GameOption): boolean =>
-    option.slot === 'generation' && option.control.kind === 'boolean'
-
-  const textMods = computed(() => soloOptions.value.filter(isTextMod))
-  const activeTextMods = computed(() =>
-    textMods.value.filter((option) => config[option.key] === true).map((option) => option.key)
-  )
-
-  /**
-   * The text mods the bar RENDERS. A mod gated by the mode itself (quote's
-   * fixed text — toggling it would change nothing) leaves the bar entirely
-   * instead of sitting greyed out; the constraint context here deliberately
-   * omits `racing`, because a race lock is temporary and the record's setup
-   * must stay readable — those render disabled in place, exactly as before.
-   * Writes still run over the full `textMods` list, so a hidden mod keeps its
-   * stored value the same way a disabled one always has.
-   */
-  const visibleTextMods = computed(() =>
-    textMods.value.filter((option) => disabledReason(option, { mode: config.mode }) === null)
-  )
-
   /** The one amount control the current mode makes visible. */
-  const dimension = computed(() =>
-    soloOptions.value.find((option) => AMOUNT_KEYS.includes(option.key))
+  const dimension = computed(
+    () => amountVariants.value.find((variant) => variant.mode === config.mode)?.option
   )
-
-  const noticeOptions = computed(() =>
-    soloOptions.value.filter((option) => !BAR_KEYS.includes(option.key) && !isTextMod(option))
-  )
-  // `minWpm` is presented inside the pace picker (speed things live together);
-  // the registry option itself is untouched — this is only where it renders.
-  const gradedSettings = computed(() =>
-    noticeOptions.value.filter(
-      (option) => option.control.kind !== 'boolean' && option.key !== 'minWpm'
-    )
-  )
-  const flagSettings = computed(() =>
-    noticeOptions.value.filter((option) => option.control.kind === 'boolean')
-  )
-
-  /** i18n key of why a text mod cannot be toggled right now, or `null`. */
-  const reasonOf = (option: GameOption): string | null => disabledReason(option, ctx.value)
-
-  const titleOf = (option: GameOption): string => {
-    const reason = reasonOf(option)
-    return reason === null ? t(option.i18nKey) : `${t(option.i18nKey)} — ${t(reason)}`
-  }
-
-  /** Values as strings, whichever control the option uses. */
-  const valuesOf = (option: GameOption): readonly string[] =>
-    option.control.kind === 'presets' ? presetsFor(option).map(String) : valuesFor(option, 'solo')
-
-  /** A value's label: an enum's from its i18n prefix, a preset's from the number. */
-  const labelOf = (option: GameOption, value: string): string => {
-    if (option.valueI18nPrefix !== undefined) return t(`${option.valueI18nPrefix}.${value}`)
-    if (option.key === 'minWpm' && value === '0') return t('game.minSpeedOff')
-    return value
-  }
-
-  /** Whether the option is away from its default — the notice line highlights those. */
-  const isCustom = (option: GameOption): boolean => config[option.key] !== option.defaultValue
 
   const CHIP =
     'inline-flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs transition-tm focus-ring [&_svg]:size-3.5'
@@ -375,48 +306,6 @@
           : 'text-sub opacity-60 hover:opacity-100'
     )
 
-  /**
-   * A gated mod keeps its stored value: a disabled item cannot appear in the
-   * incoming selection, and writing that absence back would clear a setting the
-   * player never touched — so leaving a quote restores the mods it greyed out.
-   */
-  const onTextMods = (value: unknown): void => {
-    const next = new Set(Array.isArray(value) ? (value as string[]) : [])
-    for (const option of textMods.value) {
-      if (reasonOf(option) !== null) continue
-      // Through the action, not a raw field write: the store's validator is
-      // the single gate every config write goes through.
-      configStore.setConfig(option.key, next.has(option.key))
-    }
-  }
-
-  const onFlag = (option: GameOption): void => {
-    configStore.setConfig(option.key, config[option.key] !== true)
-  }
-
-  const onMode = (value: unknown): void => {
-    const mode = narrowTo(Object.values(ConfigModes), value)
-    if (mode !== null) configStore.setMode(mode)
-  }
-
-  const onDimension = (option: GameOption, value: unknown): void => {
-    if (value === null || value === undefined || value === '') return
-    if (option.key === 'time') configStore.setTime(Number(value))
-    else if (option.key === 'words') configStore.setWords(Number(value))
-    else configStore.setConfig(option.key as keyof Config, value as never)
-  }
-
-  /**
-   * `setConfig` is generic in the key and a union of keys cannot satisfy that
-   * generic, hence the cast; the validator table still checks the value at
-   * runtime, exactly as it does for every other write.
-   */
-  const onGraded = (option: GameOption, value: unknown): void => {
-    if (value === null || value === undefined || value === '') return
-    const parsed = option.control.kind === 'presets' ? Number(value) : String(value)
-    configStore.setConfig(option.key as keyof Config, parsed as never)
-  }
-
   const languageOpen = ref(false)
 
   const mobileOpen = ref(false)
@@ -426,25 +315,6 @@
     mobileEverOpened.value = true
     mobileOpen.value = true
   }
-  const onLanguage = (value: string): void => {
-    void configStore.setLanguage(value)
-  }
-
-  /**
-   * Whether the chosen language has quotes at all. `undefined` while unknown
-   * (loading, or the request failed) and the unknown case never acts: a network
-   * blip must not rewrite the player's mode.
-   */
-  const { data: quotesAvailable } = useQuery(
-    computed(() => languageHasQuotesQueryOptions(config.language))
-  )
-
-  const modeReason = (value: string): string | null =>
-    raceLock.value !== null
-      ? raceLock.value
-      : value === ConfigModes.Quote && quotesAvailable.value === false
-        ? t('game.quote.none', { lang: languageName(config.language) })
-        : null
 
   /**
    * Only 86 of the catalogue's 430 languages have a quote corpus (QUOTES.md), so
