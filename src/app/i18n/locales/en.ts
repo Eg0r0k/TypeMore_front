@@ -679,6 +679,19 @@ export default {
     statsTitle: 'statistics',
     loading: 'loading…',
     joined: 'joined {date}',
+    /** The header block: identity, meta line, counters, language chips. */
+    identity: {
+      streak: 'streak {current}d · best {best}',
+      /** Not "streak: 0" — a streak nobody has is a fact, not a zero. */
+      noStreak: 'no streak',
+      /** Counter labels; the figure itself is rendered beside them. */
+      runs: 'run | runs',
+      days: 'day here | days here',
+      moreLangs: '{n} more',
+      fewerLangs: 'show less',
+      noRuns: 'no runs yet —',
+      startTyping: 'start typing'
+    },
     testsStarted: 'tests started',
     testsCompleted: 'tests completed',
     restartsPerCompleted: 'restarts per test',

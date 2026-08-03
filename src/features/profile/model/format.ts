@@ -35,6 +35,31 @@ export const speed = (wpm: number): string => {
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
 }
 
+/**
+ * The verified wpm of a page of runs, OLDEST FIRST — the header sparkline's
+ * series.
+ *
+ * Server numbers only, so a run still under review contributes nothing rather
+ * than a client-reported spike; the feeds arrive newest-first, and a line is
+ * read left to right, so the order is flipped here once instead of at every
+ * call site.
+ */
+export function wpmSeries(
+  runs: readonly { serverMetrics?: unknown }[] | undefined,
+  max = 30
+): number[] {
+  if (runs === undefined) return []
+  const series: number[] = []
+  for (const run of runs) {
+    const metrics = run.serverMetrics
+    if (metrics === null || typeof metrics !== 'object') continue
+    const { wpm } = metrics as { wpm?: unknown }
+    if (typeof wpm === 'number' && Number.isFinite(wpm)) series.push(wpm)
+    if (series.length === max) break
+  }
+  return series.reverse()
+}
+
 /** ISO `YYYY-MM-DD` of a Date, in UTC — the grid every profile day bucket uses. */
 export const isoDay = (date: Date): string => date.toISOString().slice(0, 10)
 

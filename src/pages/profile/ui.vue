@@ -39,10 +39,15 @@
         :error="summary.isError.value"
         @retry="summary.refetch"
       >
+        <!-- The header has a shape worth reserving, so it brings its own
+             skeleton instead of the section's plain block. -->
+        <template #skeleton><ProfileIdentitySkeleton /></template>
         <ProfileSummaryCard
           v-if="summary.data.value"
           :summary="summary.data.value"
           part="identity"
+          :recent-wpm="recentWpm"
+          own
         />
       </ProfileSection>
 
@@ -227,13 +232,15 @@
     profileKeyboardQueryOptions,
     profilePBsQueryOptions,
     profileSummaryQueryOptions,
-    profileTimeseriesQueryOptions
+    profileTimeseriesQueryOptions,
+    runsQueryOptions
   } from '@shared/api'
   import { useAuthStore } from '@/entities/auth'
   import {
     ProfileActivity,
     ProfileDailyChart,
     ProfileHistogram,
+    ProfileIdentitySkeleton,
     ProfileKeyboard,
     ProfilePBCards,
     ProfileRunsTable,
@@ -245,7 +252,7 @@
   import { Button } from '@/shared/ui/button'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
   import { Typography } from '@/shared/ui/typography'
-  import { isoDaysAgo } from '@/features/profile/model/format'
+  import { isoDaysAgo, wpmSeries } from '@/features/profile/model/format'
 
   /**
    * /profile — the statistics surface (backend docs/PROFILE.md). Every section
@@ -268,6 +275,17 @@
   const pbs = useQuery(computed(() => gatedBy(profilePBsQueryOptions(), authed.value)))
   const histogram = useQuery(computed(() => gatedBy(profileHistogramQueryOptions(), authed.value)))
   const keyboard = useQuery(computed(() => gatedBy(profileKeyboardQueryOptions(), authed.value)))
+
+  /**
+   * The header's sparkline. Its own page of the run feed — longer than the
+   * table's default page, because the line is about the recent SHAPE and a
+   * dozen points barely have one. Nothing else on the page reads it.
+   */
+  const SPARKLINE_RUNS = 30
+  const recentRuns = useQuery(
+    computed(() => gatedBy(runsQueryOptions(undefined, SPARKLINE_RUNS), authed.value))
+  )
+  const recentWpm = computed(() => wpmSeries(recentRuns.data.value?.runs, SPARKLINE_RUNS))
 
   // ── The range presets: all time / 3 months / month / week / day ────────────
   const RANGE_PRESETS = ['all', '3mo', 'month', 'week', 'day'] as const

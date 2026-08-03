@@ -44,7 +44,15 @@
       class="flex items-center gap-3 rounded-lg bg-sub-alt p-6 sm:p-8"
       data-testid="user-closed"
     >
-      <IconUser class="size-12 shrink-0 text-sub sm:size-14" aria-hidden="true" />
+      <!-- The header payload is all a closed profile answers with, so this is
+           the whole page's picture of the person: name and face. -->
+      <!-- `bg-bg`: this card is itself a sub-alt panel, and the avatar's own
+           surface would otherwise be the same colour as the thing behind it. -->
+      <UserAvatar
+        :name="header.data.value?.name"
+        :src="header.data.value?.avatarUrl"
+        class="size-12 bg-bg sm:size-14"
+      />
       <div class="flex min-w-0 flex-col gap-1">
         <Typography
           class="truncate font-semibold"
@@ -71,7 +79,16 @@
         :error="summary.isError.value"
         @retry="summary.refetch"
       >
-        <ProfileSummaryCard v-if="summary.data.value" :summary="summary.data.value" part="identity" />
+        <template #skeleton><ProfileIdentitySkeleton /></template>
+        <!-- No action in the header here: this is somebody's page as a reader
+             sees it, and the only action /profile offers is the viewer's own
+             settings. -->
+        <ProfileSummaryCard
+          v-if="summary.data.value"
+          :summary="summary.data.value"
+          part="identity"
+          :recent-wpm="recentWpm"
+        />
       </ProfileSection>
 
       <ProfileSection
@@ -91,7 +108,12 @@
         :error="pbs.isError.value"
         @retry="pbs.refetch"
       >
-        <ProfilePBCards v-if="pbs.data.value" :pbs="pbs.data.value.pbs" readonly @watch="toReplay" />
+        <ProfilePBCards
+          v-if="pbs.data.value"
+          :pbs="pbs.data.value.pbs"
+          readonly
+          @watch="toReplay"
+        />
       </ProfileSection>
 
       <ProfileSection
@@ -169,7 +191,6 @@
   import { useRoute, useRouter } from 'vue-router'
   import { useI18n } from 'vue-i18n'
   import IconLock from '~icons/tabler/lock'
-  import IconUser from '~icons/tabler/user-circle'
 
   import {
     isApiError,
@@ -179,6 +200,7 @@
     publicProfilePBsQueryOptions,
     publicProfilePortraitQueryOptions,
     publicProfileQueryOptions,
+    publicProfileRunsQueryOptions,
     publicProfileSummaryQueryOptions,
     publicProfileTimeseriesQueryOptions
   } from '@shared/api'
@@ -187,13 +209,16 @@
     ProfileActivity,
     ProfileDailyChart,
     ProfileHistogram,
+    ProfileIdentitySkeleton,
     ProfileKeyboard,
     ProfilePBCards,
     ProfileRunsTable,
     ProfileSection,
     ProfileSummaryCard
   } from '@/features/profile'
+  import { wpmSeries } from '@/features/profile/model/format'
   import { ROUTE_NAMES, routeLocation } from '@/shared/router'
+  import { UserAvatar } from '@/shared/ui/avatar'
   import { Button } from '@/shared/ui/button'
   import { Typography } from '@/shared/ui/typography'
 
@@ -266,6 +291,15 @@
   const histogram = useQuery(computed(() => gate(publicProfileHistogramQueryOptions(name.value))))
   const timeseries = useQuery(computed(() => gate(publicProfileTimeseriesQueryOptions(name.value))))
   const portrait = useQuery(computed(() => gate(publicProfilePortraitQueryOptions(name.value))))
+
+  /**
+   * The header's sparkline, off the SAME page of the public feed the runs
+   * table below already asks for — one request, two readers. (The public route
+   * takes no page size, so this is the server's default page rather than
+   * /profile's longer one.)
+   */
+  const recentRuns = useQuery(computed(() => gate(publicProfileRunsQueryOptions(name.value))))
+  const recentWpm = computed(() => wpmSeries(recentRuns.data.value?.runs))
 
   /** 403 portrait_closed is a STATE the section renders, not a failure. */
   const portraitClosed = computed(

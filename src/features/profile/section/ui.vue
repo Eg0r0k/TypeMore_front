@@ -8,12 +8,14 @@
       <slot name="head" />
     </header>
 
-    <div
-      v-if="loading"
-      class="min-h-24 animate-pulse rounded-lg bg-sub-alt"
-      :data-testid="`profile-loading-${name}`"
-      aria-hidden="true"
-    />
+    <!-- The first load. A section whose content has a shape worth reserving
+         (the header) passes its own skeleton; everything else gets the plain
+         block, which is what every section had before. -->
+    <div v-if="loading" :data-testid="`profile-loading-${name}`">
+      <slot name="skeleton">
+        <div class="min-h-24 animate-pulse rounded-lg bg-sub-alt" aria-hidden="true" />
+      </slot>
+    </div>
 
     <div
       v-else-if="error"

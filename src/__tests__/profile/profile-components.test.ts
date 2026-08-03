@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils'
+import { createPinia } from 'pinia'
 import { describe, expect, it } from 'vitest'
 import { createI18n } from 'vue-i18n'
 
@@ -16,7 +17,9 @@ import { groupThousands } from '@/shared/lib/helpers/numbers'
 import en from '@/app/i18n/locales/en'
 
 const i18n = createI18n({ legacy: false, locale: 'en', messages: { en } })
-const global = { plugins: [i18n] }
+// The header asks the dialogs store for settings (the dialog itself lives in
+// App.vue), so a mount needs pinia.
+const global = { plugins: [i18n, createPinia()] }
 
 const summary: ProfileSummary = {
   displayName: 'boardsmoke',
@@ -48,7 +51,9 @@ describe('profile summary — counters and the stats grid from a fixture', () =>
     expect(completed).toContain('83%')
     // Time typing is a clock, not prose — a total that only grows reads as one.
     expect(wrapper.find('[data-testid="profile-time-typing"]').text()).toBe('01:02:05')
-    expect(wrapper.find('[data-testid="profile-words-typed"]').text()).toContain(groupThousands(12_345))
+    expect(wrapper.find('[data-testid="profile-words-typed"]').text()).toContain(
+      groupThousands(12_345)
+    )
     expect(wrapper.find('[data-testid="profile-restarts"]').text()).toContain('0.2')
 
     // The grid: speeds at one decimal, fractions as %.

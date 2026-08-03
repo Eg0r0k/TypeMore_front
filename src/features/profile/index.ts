@@ -1,5 +1,7 @@
 export { default as ProfileSection } from './section/ui.vue'
 export { default as ProfileSummaryCard } from './summary/ui.vue'
+/** The header's first-load skeleton — the pages hand it to ProfileSection. */
+export { default as ProfileIdentitySkeleton } from './summary/skeleton.vue'
 export { default as ProfileActivity } from './activity/ui.vue'
 export { default as ProfilePBCards } from './pbs/ui.vue'
 export { default as ProfileHistogram } from './charts/histogram.vue'
