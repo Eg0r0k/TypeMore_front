@@ -16,7 +16,7 @@ export const PROTOCOL_VERSION = 1 as const
 
 // ── Shared shapes (§5) ──────────────────────────────────────────────────────
 
-export const TextModsSchema = v.object({
+const TextModsSchema = v.object({
   punctuation: v.boolean(),
   numbers: v.boolean(),
   randomCase: v.boolean(),
@@ -30,14 +30,14 @@ export type TextMods = v.InferOutput<typeof TextModsSchema>
  * additively with no version bump (§5), so an unknown kind must survive
  * validation and reach the code that can report it rather than fail the frame.
  */
-export const TextSourceSchema = v.looseObject({
+const TextSourceSchema = v.looseObject({
   kind: v.string(),
   /** Present for `kind: 'quote'` — the id `GET /quotes/{id}` resolves. */
   quoteId: v.optional(v.string())
 })
 export type TextSource = v.InferOutput<typeof TextSourceSchema>
 
-export const RoomSettingsSchema = v.object({
+const RoomSettingsSchema = v.object({
   name: v.string(),
   visibility: v.picklist(['open', 'private']),
   mode: v.picklist(['time', 'words', 'quote']),
@@ -53,14 +53,14 @@ export const RoomSettingsSchema = v.object({
 })
 export type RoomSettings = v.InferOutput<typeof RoomSettingsSchema>
 
-export const FreemodsSchema = v.object({
+const FreemodsSchema = v.object({
   difficulty: v.picklist(['normal', 'expert', 'master']),
   minWpm: v.picklist([0, 60, 80, 100]),
   nospace: v.boolean()
 })
 export type Freemods = v.InferOutput<typeof FreemodsSchema>
 
-export const RoomPlayerSchema = v.object({
+const RoomPlayerSchema = v.object({
   playerId: v.string(),
   nick: v.string(),
   isGuest: v.boolean(),
@@ -69,7 +69,7 @@ export const RoomPlayerSchema = v.object({
 })
 export type RoomPlayer = v.InferOutput<typeof RoomPlayerSchema>
 
-export const ERROR_CODES = [
+const ERROR_CODES = [
   'version_mismatch',
   'bad_message',
   'room_not_found',
@@ -82,7 +82,7 @@ export const ERROR_CODES = [
 ] as const
 export type ErrorCode = (typeof ERROR_CODES)[number]
 
-export const PEER_STATUSES = [
+const PEER_STATUSES = [
   'joined',
   'left',
   'disconnected',
@@ -90,9 +90,8 @@ export const PEER_STATUSES = [
   'finished',
   'dnf'
 ] as const
-export type PeerStatus = (typeof PEER_STATUSES)[number]
 
-export const CHAT_KINDS = ['join', 'leave', 'settings_changed', 'host_changed'] as const
+const CHAT_KINDS = ['join', 'leave', 'settings_changed', 'host_changed'] as const
 export type ChatKind = (typeof CHAT_KINDS)[number]
 
 /** Integer Unix-epoch milliseconds (§1 "Timestamps and units"). */
@@ -100,7 +99,7 @@ const unixMs = v.pipe(v.number(), v.integer())
 
 // ── Server → client frames (§4) ─────────────────────────────────────────────
 
-export const HelloOkSchema = v.object({
+const HelloOkSchema = v.object({
   type: v.literal('hello_ok'),
   playerId: v.string(),
   serverVersion: v.number(),
@@ -108,14 +107,14 @@ export const HelloOkSchema = v.object({
 })
 export type HelloOkFrame = v.InferOutput<typeof HelloOkSchema>
 
-export const ErrorFrameSchema = v.object({
+const ErrorFrameSchema = v.object({
   type: v.literal('error'),
   code: v.picklist(ERROR_CODES),
   message: v.string()
 })
 export type ErrorFrame = v.InferOutput<typeof ErrorFrameSchema>
 
-export const NtpPongSchema = v.object({
+const NtpPongSchema = v.object({
   type: v.literal('ntp_pong'),
   t0: unixMs,
   t1: unixMs,
@@ -123,7 +122,7 @@ export const NtpPongSchema = v.object({
 })
 export type NtpPongFrame = v.InferOutput<typeof NtpPongSchema>
 
-export const RoomStateSchema = v.object({
+const RoomStateSchema = v.object({
   type: v.literal('room_state'),
   code: v.string(),
   name: v.string(),
@@ -142,7 +141,7 @@ export const RoomStateSchema = v.object({
 })
 export type RoomStateFrame = v.InferOutput<typeof RoomStateSchema>
 
-export const CountdownSchema = v.object({
+const CountdownSchema = v.object({
   type: v.literal('countdown'),
   matchId: v.string(),
   goAtServerMs: unixMs,
@@ -153,7 +152,7 @@ export const CountdownSchema = v.object({
 })
 export type CountdownFrame = v.InferOutput<typeof CountdownSchema>
 
-export const ChatFrameSchema = v.object({
+const ChatFrameSchema = v.object({
   type: v.literal('chat'),
   /** Sender `playerId`, or `"system"` for server system messages. */
   from: v.string(),
@@ -164,7 +163,7 @@ export const ChatFrameSchema = v.object({
 })
 export type ChatFrame = v.InferOutput<typeof ChatFrameSchema>
 
-export const KickedSchema = v.object({ type: v.literal('kicked') })
+const KickedSchema = v.object({ type: v.literal('kicked') })
 export type KickedFrame = v.InferOutput<typeof KickedSchema>
 
 /**
@@ -172,7 +171,7 @@ export type KickedFrame = v.InferOutput<typeof KickedSchema>
  * runs them through `parseEventBatch` (shared/core) before any consumer sees
  * them — foreign bytes never reach a core unparsed.
  */
-export const PeerBatchSchema = v.object({
+const PeerBatchSchema = v.object({
   type: v.literal('peer_batch'),
   playerId: v.string(),
   /**
@@ -183,9 +182,8 @@ export const PeerBatchSchema = v.object({
   version: v.optional(v.pipe(v.number(), v.integer()), 1),
   events: v.array(v.unknown())
 })
-export type PeerBatchFrame = v.InferOutput<typeof PeerBatchSchema>
 
-export const PeerStatusSchema = v.object({
+const PeerStatusSchema = v.object({
   type: v.literal('peer_status'),
   playerId: v.string(),
   status: v.picklist(PEER_STATUSES)
@@ -193,7 +191,7 @@ export const PeerStatusSchema = v.object({
 export type PeerStatusFrame = v.InferOutput<typeof PeerStatusSchema>
 
 /** Δ3: why the server ended the match (§4 `match_end`). */
-export const MATCH_END_REASONS = ['all_finished', 'deadline', 'finish_window'] as const
+const MATCH_END_REASONS = ['all_finished', 'deadline', 'finish_window'] as const
 export type MatchEndReason = (typeof MATCH_END_REASONS)[number]
 
 /**
@@ -204,7 +202,7 @@ export type MatchEndReason = (typeof MATCH_END_REASONS)[number]
  * are measured from batch ARRIVAL times (one-second receive buckets over the
  * seat's match window), not from anything inside them.
  */
-export const MatchEndResultSchema = v.object({
+const MatchEndResultSchema = v.object({
   playerId: v.string(),
   status: v.picklist(['finished', 'dnf', 'left']),
   finishedAtMs: v.optional(unixMs),
@@ -222,7 +220,7 @@ export type MatchEndResult = v.InferOutput<typeof MatchEndResultSchema>
  * backlog). `results` covers the FULL frozen roster (`countdown.players`),
  * in any order. This is the ONLY match-end signal — clients infer nothing.
  */
-export const MatchEndSchema = v.object({
+const MatchEndSchema = v.object({
   type: v.literal('match_end'),
   matchId: v.string(),
   reason: v.picklist(MATCH_END_REASONS),
@@ -230,7 +228,7 @@ export const MatchEndSchema = v.object({
 })
 export type MatchEndFrame = v.InferOutput<typeof MatchEndSchema>
 
-export const ServerFrameSchema = v.variant('type', [
+const ServerFrameSchema = v.variant('type', [
   HelloOkSchema,
   ErrorFrameSchema,
   NtpPongSchema,
@@ -246,54 +244,44 @@ export type ServerFrame = v.InferOutput<typeof ServerFrameSchema>
 
 // ── Client → server frames (§3) ─────────────────────────────────────────────
 
-export const HelloSchema = v.object({
+const HelloSchema = v.object({
   type: v.literal('hello'),
   protocolVersion: v.number(),
   resumeToken: v.optional(v.string())
 })
 export type HelloFrame = v.InferOutput<typeof HelloSchema>
 
-export const NtpPingSchema = v.object({ type: v.literal('ntp_ping'), t0: unixMs })
-export type NtpPingFrame = v.InferOutput<typeof NtpPingSchema>
+const NtpPingSchema = v.object({ type: v.literal('ntp_ping'), t0: unixMs })
 
-export const CreateRoomSchema = v.object({ type: v.literal('create_room') })
-export type CreateRoomFrame = v.InferOutput<typeof CreateRoomSchema>
+const CreateRoomSchema = v.object({ type: v.literal('create_room') })
 
-export const JoinRoomSchema = v.object({ type: v.literal('join_room'), code: v.string() })
-export type JoinRoomFrame = v.InferOutput<typeof JoinRoomSchema>
+const JoinRoomSchema = v.object({ type: v.literal('join_room'), code: v.string() })
 
 /** Δ1: optional `ready` flag, default true — `{type:'ready',ready:false}` un-readies. */
-export const ReadySchema = v.object({ type: v.literal('ready'), ready: v.optional(v.boolean()) })
-export type ReadyFrame = v.InferOutput<typeof ReadySchema>
+const ReadySchema = v.object({ type: v.literal('ready'), ready: v.optional(v.boolean()) })
 
-export const SettingsUpdateSchema = v.object({
+const SettingsUpdateSchema = v.object({
   type: v.literal('settings_update'),
   settings: RoomSettingsSchema
 })
-export type SettingsUpdateFrame = v.InferOutput<typeof SettingsUpdateSchema>
 
-export const SetFreemodsSchema = v.object({
+const SetFreemodsSchema = v.object({
   type: v.literal('set_freemods'),
   freemods: FreemodsSchema
 })
-export type SetFreemodsFrame = v.InferOutput<typeof SetFreemodsSchema>
 
-export const StartMatchSchema = v.object({ type: v.literal('start_match') })
-export type StartMatchFrame = v.InferOutput<typeof StartMatchSchema>
+const StartMatchSchema = v.object({ type: v.literal('start_match') })
 
-export const KickSchema = v.object({ type: v.literal('kick'), playerId: v.string() })
-export type KickFrame = v.InferOutput<typeof KickSchema>
+const KickSchema = v.object({ type: v.literal('kick'), playerId: v.string() })
 
-export const TransferHostSchema = v.object({
+const TransferHostSchema = v.object({
   type: v.literal('transfer_host'),
   playerId: v.string()
 })
-export type TransferHostFrame = v.InferOutput<typeof TransferHostSchema>
 
-export const ChatSendSchema = v.object({ type: v.literal('chat_send'), text: v.string() })
-export type ChatSendFrame = v.InferOutput<typeof ChatSendSchema>
+const ChatSendSchema = v.object({ type: v.literal('chat_send'), text: v.string() })
 
-export const EventBatchSchema = v.object({
+const EventBatchSchema = v.object({
   type: v.literal('event_batch'),
   matchId: v.string(),
   playerId: v.string(),
@@ -305,20 +293,18 @@ export const EventBatchSchema = v.object({
 })
 export type EventBatchFrame = v.InferOutput<typeof EventBatchSchema>
 
-export const LeaveSchema = v.object({ type: v.literal('leave') })
-export type LeaveFrame = v.InferOutput<typeof LeaveSchema>
+const LeaveSchema = v.object({ type: v.literal('leave') })
 
 /**
  * §3 `finish` — the sender's run is over. `forfeit` says it ended with NO result
  * (a page reload abandoning a run it can no longer produce): the server records
  * that seat `dnf` instead of `finished` and it opens no finish window.
  */
-export const FinishSchema = v.object({
+const FinishSchema = v.object({
   type: v.literal('finish'),
   matchId: v.string(),
   forfeit: v.optional(v.boolean())
 })
-export type FinishFrame = v.InferOutput<typeof FinishSchema>
 
 export const ClientFrameSchema = v.variant('type', [
   HelloSchema,
