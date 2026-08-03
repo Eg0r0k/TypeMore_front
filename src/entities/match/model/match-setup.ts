@@ -16,6 +16,7 @@
 import type { CoreConfig, Dictionary, GenerationConfig, GenerationTextSource } from '@typemore/core'
 import { DEFAULT_MAX_EXTRA_CHARS } from '@typemore/core'
 import type { Freemods, RoomSettings } from '@shared/match-transport'
+import { durationSeconds } from '@shared/lib/helpers/numbers'
 import { loadDictionaryBody, loadQuoteById } from '@shared/api'
 
 /**
@@ -73,7 +74,7 @@ export function matchGeneration(
     length: quote
       ? 0
       : settings.mode === 'time'
-        ? Math.round((settings.durationMs as number) / 1000)
+        ? durationSeconds(settings.durationMs as number)
         : (settings.wordCount as number),
     punctuation: settings.textMods.punctuation,
     numbers: settings.textMods.numbers,

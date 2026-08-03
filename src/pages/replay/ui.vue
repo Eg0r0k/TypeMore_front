@@ -155,6 +155,7 @@
   import { Typography } from '@shared/ui/typography'
   import IconArrowLeft from '~icons/tabler/arrow-left'
   import { formatShortDate } from '@/shared/lib/helpers/datetime'
+  import { durationSeconds } from '@/shared/lib/helpers/numbers'
 
   /**
    * Public replay at `/replay/:runId` — anyone with the link, no session.
@@ -324,7 +325,7 @@
       language: meta.data.value?.lang ?? '',
       difficulty: r.config.difficulty,
       amount:
-        r.config.mode === 'time' ? Math.round(r.config.durationMs / 1000) : r.generation.length,
+        r.config.mode === 'time' ? durationSeconds(r.config.durationMs) : r.generation.length,
       punctuation: r.generation.punctuation,
       numbers: r.generation.numbers,
       randomCase: r.generation.randomCase,

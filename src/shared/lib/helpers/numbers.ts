@@ -31,6 +31,13 @@ export const clamp = (value: number, min: number, max: number): number =>
 export const clamp01 = (value: number): number => clamp(value, 0, 1)
 
 /**
+ * Milliseconds → whole seconds, the way every duration-displaying surface
+ * rounds. One definition so the solo, match and replay paths cannot drift
+ * apart on whether 15 400ms reads as 15 or 16.
+ */
+export const durationSeconds = (ms: number): number => Math.round(ms / 1000)
+
+/**
  * The thousands separator: U+2009 THIN SPACE, not a plain `' '`.
  *
  * Written as an escape ON PURPOSE. It is invisible in source, so a literal

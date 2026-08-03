@@ -11,6 +11,7 @@ import { computed } from 'vue'
 
 import type { ActiveMod, FailReason, Metrics, ScoreResult, TimelinePoint } from '@typemore/core'
 import type { Freemods } from '@shared/match-transport'
+import { durationSeconds } from '@shared/lib/helpers/numbers'
 import { useGameStore } from '@/entities/game'
 import { MATCH_SESSION_STORE_ID, useMatchSessionStore } from '@/entities/match'
 import type { OutcomeReason } from '@/entities/match'
@@ -69,7 +70,7 @@ export function useMatchResults() {
       difficulty: freemods?.difficulty ?? 'normal',
       amount:
         settings?.mode === 'time'
-          ? Math.round((settings.durationMs ?? 0) / 1000)
+          ? durationSeconds(settings.durationMs ?? 0)
           : (settings?.wordCount ?? 0),
       punctuation: settings?.textMods.punctuation ?? false,
       numbers: settings?.textMods.numbers ?? false,

@@ -14,6 +14,7 @@
   import { GhostDriver } from '@entities/match'
   import { useRaceStore, type RaceConfigSnapshot } from '@entities/race'
   import { useReplaySource } from '@/features/replay-view'
+  import { durationSeconds } from '@/shared/lib/helpers/numbers'
   import { toast } from '@/shared/ui/sonner'
   import type { CoreContext } from '@typemore/core'
 
@@ -122,7 +123,7 @@
       difficulty: config.difficulty,
       minWpm: config.minWpm
     }
-    if (generation.mode === 'time') settings.time = Math.round(config.durationMs / 1000)
+    if (generation.mode === 'time') settings.time = durationSeconds(config.durationMs)
     if (generation.mode === 'words') settings.words = generation.length
     return settings
   }
