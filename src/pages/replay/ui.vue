@@ -135,7 +135,12 @@
   import { useQuery } from '@tanstack/vue-query'
 
   import { ReplayPlayer } from '@/features/test/replay'
-  import { type ResultSummary, type ResultsAction, TestResults } from '@/features/test/results'
+  import {
+    type ResultSummary,
+    type ResultsAction,
+    TestResults,
+    summaryAmountOf
+  } from '@/features/test/results'
   import {
     quoteRefOf,
     replayFromApi,
@@ -324,8 +329,15 @@
       mode: r.config.mode,
       language: meta.data.value?.lang ?? '',
       difficulty: r.config.difficulty,
-      amount:
-        r.config.mode === 'time' ? durationSeconds(r.config.durationMs) : r.generation.length,
+      // A quote's generation `length` is deliberately 0 (its targets are its
+      // own bytes) — the reconstructed text carries the honest word count.
+      amount: summaryAmountOf({
+        mode: r.config.mode,
+        isQuote: isQuoteRun.value,
+        seconds: durationSeconds(r.config.durationMs),
+        wordTarget: r.generation.length,
+        quoteWords: r.words.length
+      }),
       punctuation: r.generation.punctuation,
       numbers: r.generation.numbers,
       randomCase: r.generation.randomCase,

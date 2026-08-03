@@ -128,7 +128,12 @@
   import { SettingsBar } from '@/features/test/settings-bar'
   import { ScoreHud } from '@/features/test/score-hud'
   import { TestProgress } from '@/features/test/progress'
-  import { type ResultsAction, type ResultSummary, TestResults } from '@/features/test/results'
+  import {
+    type ResultsAction,
+    type ResultSummary,
+    TestResults,
+    summaryAmountOf
+  } from '@/features/test/results'
   import { usePaceCaret } from '@/features/test/pace'
   import { ReplayPlayer } from '@/features/test/replay'
   import {
@@ -330,14 +335,13 @@
     mode: config.mode,
     language: config.language,
     difficulty: config.difficulty,
-    // A quote's magnitude is the text's own word count, not a configured
-    // preset — the config's `words` would be a number the run never used.
-    amount:
-      activeQuote.value !== null
-        ? game.words.length
-        : config.mode === 'time'
-          ? config.time
-          : config.words,
+    amount: summaryAmountOf({
+      mode: config.mode,
+      isQuote: activeQuote.value !== null,
+      seconds: config.time,
+      wordTarget: config.words,
+      quoteWords: game.words.length
+    }),
     punctuation: config.punctuation,
     numbers: config.numbers,
     randomCase: config.randomCase,

@@ -16,7 +16,7 @@ import { useGameStore } from '@/entities/game'
 import { MATCH_SESSION_STORE_ID, useMatchSessionStore } from '@/entities/match'
 import type { OutcomeReason } from '@/entities/match'
 import type { StandingRow } from '@/entities/lobby'
-import type { ResultSummary } from '@/features/test/results'
+import { summaryAmountOf, type ResultSummary } from '@/features/test/results'
 
 /** Everything the solo results view needs about the local seat's own run. */
 export interface MatchSelfRun {
@@ -68,10 +68,15 @@ export function useMatchResults() {
       mode: settings?.mode ?? 'time',
       language: settings?.lang ?? '',
       difficulty: freemods?.difficulty ?? 'normal',
-      amount:
-        settings?.mode === 'time'
-          ? durationSeconds(settings.durationMs ?? 0)
-          : (settings?.wordCount ?? 0),
+      // For a quote match `wordCount` IS the drawn text's length (protocol §5),
+      // so the quote branch and the words branch happen to read the same field.
+      amount: summaryAmountOf({
+        mode: settings?.mode ?? 'time',
+        isQuote: settings?.mode === 'quote',
+        seconds: durationSeconds(settings?.durationMs ?? 0),
+        wordTarget: settings?.wordCount ?? 0,
+        quoteWords: settings?.wordCount ?? 0
+      }),
       punctuation: settings?.textMods.punctuation ?? false,
       numbers: settings?.textMods.numbers ?? false,
       randomCase: settings?.textMods.randomCase ?? false,
