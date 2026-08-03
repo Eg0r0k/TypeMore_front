@@ -8,36 +8,25 @@ const COOKIE_NAMES: Record<CookieType, string> = {
   [CookieType.SECURITY]: 'access_token'
 }
 
-export const useCookieManager = () => {
+export const useCookiesConsent = (onDone?: () => void) => {
   const { get, set, remove } = useCookies(Object.values(COOKIE_NAMES))
-  const getCookie = (type: CookieType): Cookie => ({
+  const readCookie = (type: CookieType): Cookie => ({
     name: COOKIE_NAMES[type],
     enabled: !!get(COOKIE_NAMES[type]),
     type
   })
-  const setCookie = (cookie: Cookie): void => {
+  const writeCookie = (cookie: Cookie): void => {
     if (cookie.enabled) {
       set(cookie.name, 'enabled')
     } else {
       remove(cookie.name)
     }
   }
-  return { getCookie, setCookie }
-}
-export const useCookieStore = () => {
-  const { getCookie, setCookie } = useCookieManager()
-  const cookies = reactive<Record<CookieType, Cookie>>({
-    [CookieType.SECURITY]: getCookie(CookieType.SECURITY),
-    [CookieType.METRICS]: getCookie(CookieType.METRICS)
-  })
-  const updateCookie = (cookie: Cookie): void => {
-    setCookie(cookie)
-  }
-  return { cookies, updateCookie }
-}
 
-export const useCookieConsentLogic = (onDone?: () => void) => {
-  const { cookies, updateCookie } = useCookieStore()
+  const cookies = reactive<Record<CookieType, Cookie>>({
+    [CookieType.SECURITY]: readCookie(CookieType.SECURITY),
+    [CookieType.METRICS]: readCookie(CookieType.METRICS)
+  })
   const showDefaultView = ref(true)
 
   // `enabled` is the only field that ever mutates (name/type are fixed), so
@@ -46,7 +35,7 @@ export const useCookieConsentLogic = (onDone?: () => void) => {
   watch(
     () => Object.values(cookies).map((cookie) => cookie.enabled),
     () => {
-      Object.values(cookies).forEach(updateCookie)
+      Object.values(cookies).forEach(writeCookie)
     }
   )
 
@@ -61,7 +50,7 @@ export const useCookieConsentLogic = (onDone?: () => void) => {
   const acceptAllCookies = () => {
     Object.values(cookies).forEach((cookie) => {
       cookie.enabled = true
-      updateCookie(cookie)
+      writeCookie(cookie)
     })
     setConsentFlag()
     onDone?.()
@@ -70,37 +59,17 @@ export const useCookieConsentLogic = (onDone?: () => void) => {
   const rejectNonEssentialCookies = () => {
     cookies[CookieType.METRICS].enabled = false
     cookies[CookieType.SECURITY].enabled = true
-    updateCookie(cookies[CookieType.SECURITY])
-    updateCookie(cookies[CookieType.METRICS])
+    writeCookie(cookies[CookieType.SECURITY])
+    writeCookie(cookies[CookieType.METRICS])
     setConsentFlag()
     onDone?.()
   }
 
   const acceptSelectedCookies = () => {
-    Object.values(cookies).forEach(updateCookie)
+    Object.values(cookies).forEach(writeCookie)
     setConsentFlag()
     onDone?.()
   }
-
-  return {
-    cookies,
-    showDefaultView,
-    toggleView,
-    acceptAllCookies,
-    rejectNonEssentialCookies,
-    acceptSelectedCookies
-  }
-}
-
-export const useCookiesConsent = (onDone?: () => void) => {
-  const {
-    cookies,
-    showDefaultView,
-    toggleView,
-    acceptAllCookies,
-    rejectNonEssentialCookies,
-    acceptSelectedCookies
-  } = useCookieConsentLogic(onDone)
 
   return {
     cookies,
