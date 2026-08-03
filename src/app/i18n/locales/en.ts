@@ -29,7 +29,6 @@ export default {
     quote: {
       length: 'length',
       group: { all: 'all', short: 'short', medium: 'medium', long: 'long', thicc: 'thicc' },
-      source: '— {source}',
       /**
        * Only 86 of the catalogue's languages have a quote corpus, so this is a
        * permanent fact about a perfectly good language rather than an error:
@@ -41,10 +40,6 @@ export default {
     },
     restart: 'restart test',
     /** The `mods` chip: what it opens, and what is on behind it. */
-    mods: {
-      label: 'mods',
-      active: '{count} on · ×{multiplier}'
-    },
     setup: {
       loading: 'loading words…',
       dictionaryError: 'could not load the word list for {lang}',
@@ -113,8 +108,7 @@ export default {
       danger: 'danger zone'
     },
     value: {
-      off: 'off',
-      on: 'on'
+      off: 'off'
     },
     uiLanguage: {
       label: 'interface language',
@@ -288,8 +282,7 @@ export default {
       createOne: 'Create one',
       forgotPassword: 'Forgot password?',
       /** Offered inline when the sign-in failed on an unverified address. */
-      resendVerification: 'Send a new verification link',
-      failed: 'Invalid email or password.'
+      resendVerification: 'Send a new verification link'
     },
     register: {
       title: 'Create account',
@@ -351,7 +344,6 @@ export default {
     header: {
       login: 'Login',
       restricted: 'account restricted',
-      account: 'Account',
       profile: 'My profile',
       logout: 'Log out'
     }
@@ -370,8 +362,6 @@ export default {
     /** Only ever a LOSS — beating the bot says nothing here. */
     botLoss: 'lost to the bot — {you} vs {them} wpm',
     quoteBoard: 'this quote’s board',
-    /** Hung under the grade and above it: the run's peak streak and its mods. */
-    combo: '{combo}x combo',
     mods: 'mods ×{multiplier}',
     /** Icon-only actions: each label is both the tooltip and the accessible name. */
     nextTest: 'next test',
@@ -420,7 +410,6 @@ export default {
   servers: {
     title: { lead: 'Welcome to', name: 'Servers' },
     status: {
-      label: 'status',
       connecting: 'connecting…',
       connected: 'connected',
       reconnecting: 'reconnecting…',
@@ -493,11 +482,9 @@ export default {
     wordCount: 'words',
     textMods: 'text mods',
     yourMods: 'your mods',
-    viewMods: 'visual mods',
     start: 'start game',
     ready: 'ready up',
     unready: 'cancel ready',
-    isReady: 'you are ready',
     leave: 'leave room',
     gate: {
       needPlayers: 'waiting for at least one more player',
@@ -719,8 +706,7 @@ export default {
       tooltip: '{tests} test | {tests} tests',
       total: '{tests} test in the last year | {tests} tests in the last year',
       less: 'less',
-      more: 'more',
-      streak: 'streak: {current} days (best {best})'
+      more: 'more'
     },
     pbs: {
       title: 'personal bests',
@@ -784,7 +770,6 @@ export default {
       title: 'tests',
       empty: 'no tests submitted yet.',
       when: 'when',
-      mode: 'mode',
       lang: 'language',
       consistency: 'cons.',
       chars: 'chars',

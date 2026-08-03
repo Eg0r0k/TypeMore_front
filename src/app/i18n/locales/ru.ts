@@ -29,15 +29,10 @@ export default {
         long: 'длинная',
         thicc: 'огромная'
       },
-      source: '— {source}',
       none: 'для языка {lang} нет цитат',
       noneSwitched: 'для языка {lang} нет цитат — режим переключён на слова'
     },
     restart: 'перезапустить тест',
-    mods: {
-      label: 'моды',
-      active: 'вкл: {count} · ×{multiplier}'
-    },
     setup: {
       loading: 'загрузка слов…',
       dictionaryError: 'не удалось загрузить список слов для {lang}',
@@ -99,8 +94,7 @@ export default {
       danger: 'опасная зона'
     },
     value: {
-      off: 'выкл',
-      on: 'вкл'
+      off: 'выкл'
     },
     uiLanguage: {
       label: 'язык интерфейса',
@@ -266,8 +260,7 @@ export default {
       noAccount: 'Нет аккаунта?',
       createOne: 'Создать',
       forgotPassword: 'Забыли пароль?',
-      resendVerification: 'Отправить новую ссылку для подтверждения',
-      failed: 'Неверная почта или пароль.'
+      resendVerification: 'Отправить новую ссылку для подтверждения'
     },
     register: {
       title: 'Создать аккаунт',
@@ -327,7 +320,6 @@ export default {
     },
     header: {
       login: 'Вход',
-      account: 'Аккаунт',
       restricted: 'аккаунт ограничен',
       profile: 'Мой профиль',
       logout: 'Выйти'
@@ -346,7 +338,6 @@ export default {
     /** Только проигрыш — победа над ботом здесь ничего не пишет. */
     botLoss: 'проигрыш боту — {you} против {them} wpm',
     quoteBoard: 'таблица этой цитаты',
-    combo: 'комбо {combo}x',
     mods: 'моды ×{multiplier}',
     nextTest: 'следующий тест',
     /** Тот же сид ещё раз — повторный текст не сохраняется. */
@@ -391,7 +382,6 @@ export default {
   servers: {
     title: { lead: 'Добро пожаловать в', name: 'Серверы' },
     status: {
-      label: 'статус',
       connecting: 'подключение…',
       connected: 'подключено',
       reconnecting: 'переподключение…',
@@ -462,11 +452,9 @@ export default {
     wordCount: 'слова',
     textMods: 'моды текста',
     yourMods: 'ваши моды',
-    viewMods: 'визуальные моды',
     start: 'начать игру',
     ready: 'я готов',
     unready: 'отменить готовность',
-    isReady: 'вы готовы',
     leave: 'выйти из комнаты',
     gate: {
       needPlayers: 'ждём ещё хотя бы одного игрока',
@@ -659,8 +647,7 @@ export default {
       tooltip: '{tests} тест | {tests} теста | {tests} тестов',
       total: '{tests} тест за год | {tests} теста за год | {tests} тестов за год',
       less: 'меньше',
-      more: 'больше',
-      streak: 'серия: {current} дн. (рекорд {best})'
+      more: 'больше'
     },
     pbs: {
       title: 'личные рекорды',
@@ -724,7 +711,6 @@ export default {
       title: 'тесты',
       empty: 'отправленных тестов пока нет.',
       when: 'когда',
-      mode: 'режим',
       lang: 'язык',
       consistency: 'стаб.',
       chars: 'символы',
