@@ -101,7 +101,7 @@ vi.mock('@/shared/api/query-client', async () => {
 })
 
 import { ApiError } from '@shared/api'
-import { BoardsPage } from '@/pages/boards'
+import BoardsPage from '@/pages/boards/ui.vue'
 
 const TIME_15: BucketInfo = {
   bucket: 'time:15000:en:seeded',
