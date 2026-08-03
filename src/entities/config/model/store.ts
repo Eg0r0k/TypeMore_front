@@ -4,15 +4,11 @@ import {
   resetSettings,
   setFontFamily,
   setFontSize,
-  setFPS,
   setLanguage,
   setMode,
   setTheme,
   setTime,
-  setWords,
-  toggleFps,
-  toggleKeyboard,
-  togglePlaySound
+  setWords
 } from '@/shared/lib/helpers/setConfigSettings'
 
 import { defineStore } from 'pinia'
@@ -27,16 +23,12 @@ export const useConfigStore = defineStore(
     const currentLanguage = computed(() => currentLang)
 
     return {
-      toggleKeyboard,
       config: configState,
-      togglePlaySound,
       setTime,
       setLanguage,
-      toggleFps,
       setFontFamily,
       setTheme,
       setWords,
-      setFPS,
       currentLang,
       setConfig,
       setFontSize,

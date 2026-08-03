@@ -43,7 +43,7 @@
       <Switch
         :model-value="config.showFps"
         :aria-label="t('settings.showFps.label')"
-        @update:model-value="configStore.setFPS"
+        @update:model-value="(v) => configStore.setConfig('showFps', v)"
       />
     </SettingRow>
   </div>
