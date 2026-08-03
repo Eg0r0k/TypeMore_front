@@ -101,18 +101,3 @@ export const validateConfig = (key: keyof Config, value: unknown): boolean | str
 
   return validator ? validator(value) : true
 }
-
-export const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-export const usernameReg = new RegExp(/^[a-zA-Z0-9_-]+$/)
-export const upperCaseReg = new RegExp(/[a-z]/)
-export const lowerCaseReg = new RegExp(/[A-Z]/)
-export const containNumberReg = new RegExp(/\d/)
-export const passwordReg = /^[a-zA-Z0-9!@#$%^&*(),.?":{}|<>]+$/
-export const isValidUrl = (href: string): boolean => {
-  try {
-    new URL(href, window.location.origin)
-    return true
-  } catch {
-    return false
-  }
-}
