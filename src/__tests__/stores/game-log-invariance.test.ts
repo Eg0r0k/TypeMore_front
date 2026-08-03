@@ -59,7 +59,12 @@ class FakeTimerWorker implements TimerWorkerLike {
   terminate(): void {}
 
   emitTick(elapsedMs: number): void {
-    this.onmessage?.({ data: { type: 'tick', elapsedMs, epoch: this.epoch } } as never)
+    // `as unknown as MessageEvent<TimerTick>` like every sibling fake — an
+    // `as never` here would accept ANY payload shape and let a TimerTick drift
+    // (epoch included) compile silently in exactly this file.
+    this.onmessage?.({
+      data: { type: 'tick', elapsedMs, epoch: this.epoch }
+    } as unknown as MessageEvent<TimerTick>)
   }
 }
 
