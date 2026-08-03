@@ -320,6 +320,59 @@ const SCRIPTS: readonly Script[] = [
       { do: 'delete', unit: 'char', at: 2400 },
       { do: 'commit', at: 2600 }
     ]
+  },
+  /**
+   * A soft keyboard delivering whole words, which is what the input adapter now
+   * emits for a multi-grapheme `insertText` — one `replace` over the word's
+   * buffer, then the separator's `commit`.
+   *
+   * The other eight scripts type every character, so nothing here had ever
+   * asked whether a word that ARRIVED AS A REPLACE feeds `advanceScore` and the
+   * combo the same way a typed one does. It is not a question about the current
+   * `advanceScore`: the live accumulator walks events as they happen while
+   * `scoreV2OfLog` refolds the finished log, and a replace is the one event kind
+   * that can move several characters and a word boundary at once. If those two
+   * ever disagreed about what a replaced word is worth, the client would show a
+   * score the server's refold does not produce — and after the adapter fix that
+   * path carries whole words, not just IME candidates.
+   *
+   * The four words are the four cases that differ for scoring:
+   *   один    typed out, letter by letter — the control
+   *   два     partly typed, then a suggestion rewrites the buffer (the bug's
+   *           own shape: replace over [0, caret), not an append)
+   *   три     delivered whole into an empty buffer
+   *   пять    a WRONG suggestion over a partly typed word — the combo must
+   *           break on a replaced word exactly as it breaks on a typed one,
+   *           which is the half a correct-words-only script cannot see
+   */
+  {
+    name: 'soft-keyboard words arrive as replaces',
+    config: TIME_10S,
+    words: ['один', 'два', 'три', 'четыре'],
+    logVersion: 1,
+    actions: [
+      { do: 'insert', text: 'о', at: 1000 },
+      { do: 'insert', text: 'д', at: 1120 },
+      { do: 'insert', text: 'и', at: 1240 },
+      { do: 'insert', text: 'н', at: 1360 },
+      { do: 'commit', at: 1480 },
+      // Partly typed, then the keyboard rewrites the whole buffer.
+      { do: 'insert', text: 'д', at: 1600 },
+      { do: 'insert', text: 'в', at: 1720 },
+      { do: 'replace', from: 0, to: 2, text: 'два', at: 1840 },
+      { do: 'commit', at: 1960 },
+      // Straight into an empty buffer.
+      { do: 'replace', from: 0, to: 0, text: 'три', at: 2100 },
+      { do: 'commit', at: 2220 },
+      // A suggestion that is simply wrong: the word is committed incorrect.
+      { do: 'insert', text: 'ч', at: 2360 },
+      { do: 'insert', text: 'е', at: 2480 },
+      { do: 'replace', from: 0, to: 2, text: 'пять', at: 2600 },
+      { do: 'commit', at: 2720 },
+      // End the run the ordinary way, so the metrics and score compared below
+      // are a finished run's rather than a live reading.
+      { do: 'tick', elapsed: 10_000 }
+    ]
   }
 ]
 
@@ -387,4 +440,40 @@ describe('the rejection path records nothing', () => {
       )
     }
   )
+
+  /**
+   * The soft-keyboard script above only proves anything if it actually builds a
+   * combo and then breaks it. A script whose words all came out right would
+   * pass every assertion in the battery while never asking what a REPLACED word
+   * does to the combo — the half that matters, since a break is the only thing
+   * that distinguishes the accumulator from a running total.
+   *
+   * So the shape is pinned here rather than trusted: three correct words in a
+   * row, the third of them delivered whole into an empty buffer, and a fourth
+   * that a wrong suggestion committed incorrect.
+   */
+  it('the soft-keyboard script builds a combo of three and then breaks it', () => {
+    const script = SCRIPTS.find((s) => s.name === 'soft-keyboard words arrive as replaces')
+    expect(script).toBeDefined()
+    const log = referenceLog(script as Script)
+    const ctx: CoreContext = { config: (script as Script).config, words: (script as Script).words }
+
+    const folded = foldLog(ctx, log, asMs(10_000))
+    expect(folded.isOk()).toBe(true)
+    const state = folded._unsafeUnwrap()
+
+    // Three words came out right — two of them through a replace — and the
+    // fourth did not, so the streak is genuinely interrupted.
+    expect(state.input.slice(0, 4)).toEqual(['один', 'два', 'три', 'пять'])
+    expect((script as Script).words.slice(0, 3)).toEqual(state.input.slice(0, 3))
+    expect((script as Script).words[3]).not.toBe(state.input[3])
+
+    const score = scoreV2OfLog(
+      log,
+      { config: (script as Script).config, words: (script as Script).words, generation: GENERATION },
+      DECLARATION
+    )
+    expect(score.comboPeak).toBeGreaterThanOrEqual(3)
+    expect(score.total).toBeGreaterThan(0)
+  })
 })

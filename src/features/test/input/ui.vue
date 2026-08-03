@@ -396,8 +396,22 @@
         playKeyFeedback(grapheme)
         store.insert(grapheme)
       }
-      // Multi-character text insertion is never emitted as a multi-grapheme insert.
-      else if (graphemes.length > 1) store.replace(caretPos(), caretPos(), data, 'ime')
+      // More than one grapheme in a single `insertText` is not a keystroke: it
+      // is a soft keyboard committing a whole word — GBoard and the iOS
+      // predictive bar deliver a suggestion this way rather than as
+      // `insertReplacementText`. Same intent as that branch, so the same
+      // treatment: the range is the WORD'S BUFFER, and a trailing separator is
+      // split off to commit instead of being stored.
+      //
+      // It used to pass a caret-width range and the raw `data`, which is two
+      // bugs a suggestion triggers together. The zero-width range appended the
+      // suggestion to the partial word instead of replacing it ("чдела" +
+      // "сделать " = "чделасделать "), and the raw text put the keyboard's
+      // space INSIDE the buffer, where the target has no such character and no
+      // `commit` is ever produced — the "invisible character" `applyComposedText`
+      // documents. A run typed entirely by hand came back with wrecked accuracy
+      // and a metric mismatch off exactly this.
+      else if (graphemes.length > 1) applyComposedText(0, caretPos(), data)
       return
     }
 

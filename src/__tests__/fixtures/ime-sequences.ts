@@ -152,6 +152,34 @@ export const AUTOCORRECT_REPLACEMENT: ImeSequence = {
 }
 
 /**
+ * The same autocorrect, delivered as PLAIN `insertText`.
+ *
+ * Not every soft keyboard reaches for `insertReplacementText`. GBoard and the
+ * iOS predictive bar commit a chosen word as one ordinary `insertText` carrying
+ * the whole word — and, because the keyboard typed the separator too, its
+ * trailing space. Semantically it is the row above: the word under the caret is
+ * being rewritten, not extended.
+ *
+ * The trailing space is the half that makes this fixture worth having
+ * separately. `AUTOCORRECT_REPLACEMENT` carries none, so it never exercised the
+ * split in `applyComposedText` — the space has to leave the word buffer and
+ * become a separator, or it is stored as a character the target does not have
+ * and the word can never come out right.
+ */
+export const SOFT_KEYBOARD_WORD: ImeSequence = {
+  id: 'soft-keyboard-word',
+  description: 'Soft keyboard commits a whole word with its separator — plain insertText',
+  steps: [{ kind: 'beforeinput', inputType: 'insertText', data: 'сделать ' }]
+}
+
+/** The same commit with no separator: still a replacement, just nothing to commit on. */
+export const SOFT_KEYBOARD_WORD_NO_SPACE: ImeSequence = {
+  id: 'soft-keyboard-word-no-space',
+  description: 'Soft keyboard commits a whole word without a separator — plain insertText',
+  steps: [{ kind: 'beforeinput', inputType: 'insertText', data: 'сделать' }]
+}
+
+/**
  * Firefox fires one extra `insertCompositionText` with `isComposing === false`
  * after the session is over. It is the ONE composition-typed event that must be
  * cancelled — monkeytype cancels it by exactly this test (`input.ts:65-72`).
@@ -175,5 +203,7 @@ export const IME_SEQUENCES: readonly ImeSequence[] = [
   ANDROID_SUGGESTION,
   ANDROID_LATIN_PLAIN,
   AUTOCORRECT_REPLACEMENT,
+  SOFT_KEYBOARD_WORD,
+  SOFT_KEYBOARD_WORD_NO_SPACE,
   FIREFOX_STRAY
 ]

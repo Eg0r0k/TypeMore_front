@@ -29,7 +29,9 @@ import {
   COMPOSITION_CANCELLED,
   FIREFOX_STRAY,
   JAPANESE_KANJI,
-  KOREAN_SYLLABLE
+  KOREAN_SYLLABLE,
+  SOFT_KEYBOARD_WORD,
+  SOFT_KEYBOARD_WORD_NO_SPACE
 } from './fixtures/ime-sequences'
 import { playSequence, playStep } from './helpers/ime'
 
@@ -238,6 +240,70 @@ describe('autocorrect outside a composition session', () => {
     expect(bufferOf(session)).toBe('hello')
     // Prevented: we applied it ourselves, the DOM must not also have it.
     expect(events[0].defaultPrevented).toBe(true)
+    wrapper.unmount()
+  })
+})
+
+/**
+ * A soft keyboard that commits a word as plain `insertText` rather than as
+ * `insertReplacementText` — the same intent, a different input type.
+ *
+ * This is the shape behind the run that came back `metric_mismatch` with 0.66
+ * accuracy off six committed words: the adapter used to APPEND the suggestion at
+ * the caret instead of replacing the word under it, and stored the keyboard's
+ * trailing space as a character. The buffer became partial+suggestion, the word
+ * could never match its target, and no `commit` was ever produced — so the
+ * space sat inside the word as the "invisible character" the composition path
+ * has always split out.
+ */
+describe('a soft keyboard commits a whole word through plain insertText', () => {
+  it('REPLACES the partly typed word and commits on the trailing space', () => {
+    const session = makeSession(['сделать', 'дальше'], 'чдела')
+    const wrapper = mountInput(session)
+    const events = playSequence(textareaOf(wrapper), SOFT_KEYBOARD_WORD)
+
+    // The range is the word's buffer, not a caret-width insertion, and the
+    // separator leaves the buffer to do what a separator does.
+    expect(session.calls).toEqual(['replace(0,5):сделать@ime', 'commit'])
+    expect(bufferOf(session)).toBe('сделать')
+    expect(bufferOf(session)).not.toContain(' ')
+    expect(events[0].defaultPrevented).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('replaces without committing when the keyboard sent no separator', () => {
+    const session = makeSession(['сделать', 'дальше'], 'чдела')
+    const wrapper = mountInput(session)
+    playSequence(textareaOf(wrapper), SOFT_KEYBOARD_WORD_NO_SPACE)
+
+    expect(session.calls).toEqual(['replace(0,5):сделать@ime'])
+    expect(bufferOf(session)).toBe('сделать')
+    wrapper.unmount()
+  })
+
+  it('emits the SAME event shape as the insertReplacementText path', () => {
+    // The two input types are one intent, so the log must not record which
+    // keyboard happened to deliver it: same range, same source, same text.
+    const viaInsertText = makeSession(['hello'], 'helo')
+    const a = mountInput(viaInsertText)
+    playStep(textareaOf(a), { kind: 'beforeinput', inputType: 'insertText', data: 'hello' })
+    a.unmount()
+
+    const viaReplacement = makeSession(['hello'], 'helo')
+    const b = mountInput(viaReplacement)
+    playSequence(textareaOf(b), AUTOCORRECT_REPLACEMENT)
+    b.unmount()
+
+    expect(viaInsertText.calls).toEqual(viaReplacement.calls)
+  })
+
+  it('still types a single grapheme one keystroke at a time', () => {
+    // The multi-grapheme arm must not swallow the ordinary one: a one-grapheme
+    // insertText is a keystroke and stays an `insert`.
+    const session = makeSession(['hello'], 'hell')
+    const wrapper = mountInput(session)
+    playStep(textareaOf(wrapper), { kind: 'beforeinput', inputType: 'insertText', data: 'o' })
+    expect(session.calls).toEqual(['insert:o'])
     wrapper.unmount()
   })
 })
