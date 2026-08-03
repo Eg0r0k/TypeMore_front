@@ -108,8 +108,8 @@
   import { TestWord } from '@/features/test/word'
   import { TestInput } from '@/features/test/input'
   import { type Canary, canaryAt } from '@typemore/core'
-  import { wordBreaksLine, wordsHaveNewline, wordsHaveTab } from '@entities/game'
-  import type { GameSession, GameView } from '@entities/game'
+  import { isGameSession, wordBreaksLine, wordsHaveNewline, wordsHaveTab } from '@entities/game'
+  import type { GameView } from '@entities/game'
   import { useCaret } from '@/shared/lib/hooks/useCaret'
   import { useGhostCarets, type TestGhostCaret } from '@/shared/lib/hooks/useGhostCarets'
   import { useLineJump } from '@/shared/lib/hooks/useLineJump'
@@ -186,11 +186,8 @@
   })
 
   const store = props.store
-  // A non-viewOnly field REQUIRES an input-capable session (the local player).
-  // Ghost/replay callers always pass viewOnly, so the cast never observes a pure
-  // GameView; the type system can't tie the two props together across a template.
   const session = computed(() =>
-    props.viewOnly || props.inputDisabled ? null : (props.store as GameSession)
+    props.viewOnly || props.inputDisabled || !isGameSession(props.store) ? null : props.store
   )
   /**
    * A field with no words is not a game: the session was never set up (the

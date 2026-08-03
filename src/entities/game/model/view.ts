@@ -47,6 +47,10 @@ export interface GameInputSink {
 /** A playable game: readable by the field AND writable by the input adapter. */
 export type GameSession = GameView & GameInputSink
 
+/** Structural check: a view that can also take input. */
+export const isGameSession = (view: GameView): view is GameSession =>
+  'insert' in view && 'commit' in view
+
 interface GameSessionSource extends GameInputSink {
   readonly snapshot: GameState
   readonly words: readonly string[]
