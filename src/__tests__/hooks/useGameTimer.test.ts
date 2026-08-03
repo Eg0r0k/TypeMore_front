@@ -13,8 +13,8 @@ class FakeWorker implements TimerWorkerLike {
 
   terminate(): void {}
 
-  emitTick(elapsedMs: number): void {
-    const tick: TimerTick = { type: 'tick', elapsedMs }
+  emitTick(elapsedMs: number, epoch = 1): void {
+    const tick: TimerTick = { type: 'tick', elapsedMs, epoch }
     // Only `data` is read by the handler; a full MessageEvent is unnecessary.
     this.onmessage?.({ data: tick } as unknown as MessageEvent<TimerTick>)
   }
@@ -24,11 +24,11 @@ describe('useGameTimer', () => {
   it('forwards commands to the worker', () => {
     const fake = new FakeWorker()
     const timer = useGameTimer(() => fake)
-    timer.start(15_000)
+    timer.start(15_000, 7)
     timer.stop()
     timer.reset()
     expect(fake.sent).toEqual([
-      { cmd: 'start', durationMs: 15_000 },
+      { cmd: 'start', durationMs: 15_000, epoch: 7 },
       { cmd: 'stop' },
       { cmd: 'reset' }
     ])
@@ -38,11 +38,16 @@ describe('useGameTimer', () => {
     const fake = new FakeWorker()
     const timer = useGameTimer(() => fake)
     let received: number | null = null
-    timer.onTick((nowMs) => {
+    let epoch: number | null = null
+    timer.onTick((nowMs, tickEpoch) => {
       received = nowMs
+      epoch = tickEpoch
     })
-    fake.emitTick(1234)
+    fake.emitTick(1234, 4)
     expect(received).toBe(1234)
+    // The wrapper forwards the epoch untouched; deciding what to do with it is
+    // the store's job, not the timer's.
+    expect(epoch).toBe(4)
   })
 
   // Frozen tab: suspended well past the deadline. The worker kept running; its
@@ -64,7 +69,7 @@ describe('useGameTimer', () => {
     const fake = new FakeWorker()
     const timer = useGameTimer(() => fake)
     timer.onTick((nowMs) => core.tick(nowMs))
-    timer.start(10_000)
+    timer.start(10_000, 1)
 
     expect(core.state.phase).toBe('running')
     fake.emitTick(25_000) // woke 15s past the deadline

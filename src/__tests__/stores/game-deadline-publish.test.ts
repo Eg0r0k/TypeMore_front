@@ -35,14 +35,20 @@ class FakeTimerWorker implements TimerWorkerLike {
   onmessage: ((event: MessageEvent<TimerTick>) => void) | null = null
   readonly sent: TimerCommand[] = []
 
+  /** The run this clock is armed for — echoed on every tick, like the real worker. */
+  epoch = 0
+
   postMessage(message: TimerCommand): void {
     this.sent.push(message)
+    if (message.cmd === 'start') this.epoch = message.epoch
   }
 
   terminate(): void {}
 
-  emitTick(elapsedMs: number): void {
-    this.onmessage?.({ data: { type: 'tick', elapsedMs } } as unknown as MessageEvent<TimerTick>)
+  emitTick(elapsedMs: number, epoch: number = this.epoch): void {
+    this.onmessage?.({
+      data: { type: 'tick', elapsedMs, epoch }
+    } as unknown as MessageEvent<TimerTick>)
   }
 }
 
@@ -75,7 +81,7 @@ function armedPastDeadline(id: string, words: readonly string[]): {
   setClock(5_000) // the anchor is captured on the first stamp, so its value is free
   store.insert('a')
   expect(store.phase).toBe('running')
-  expect(worker.sent).toContainEqual({ cmd: 'start', durationMs: 10_000 })
+  expect(worker.sent).toContainEqual({ cmd: 'start', durationMs: 10_000, epoch: 1 })
   setClock(5_000 + 10_001) // one ms past `startedAt + durationMs`, no tick delivered
   return { store, worker }
 }

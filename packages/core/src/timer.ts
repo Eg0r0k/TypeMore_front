@@ -10,9 +10,27 @@
 /** Cadence of authoritative timer ticks, in ms. */
 export const TICK_INTERVAL_MS = 1000
 
+/**
+ * Identifier of ONE run's clock. The store increments it on every `setup` /
+ * `reset`, hands it to `start`, and the worker echoes it back on every tick, so
+ * a tick can be matched to the run it was armed for.
+ *
+ * It exists because the two are not otherwise connected. A tick already posted
+ * when the main thread replaces the run (a restart is asynchronous — it awaits a
+ * dictionary or a quote — and the old worker keeps ticking throughout) is
+ * delivered against whatever core is current by then, and its `elapsedMs` is
+ * then charged to a clock it never measured. With the durations differing —
+ * which is the ordinary case, since changing `time` mid-run is what triggers the
+ * rebuild — a stale 30s elapsed lands on a fresh 15s run and finishes it before
+ * its first letter. Message ORDER cannot rule that out: user-input tasks are
+ * prioritised over worker messages, so the keystroke that starts the new run can
+ * overtake a tick queued before it.
+ */
+export type RunEpoch = number
+
 /** Commands sent from the main thread to the worker. */
 export type TimerCommand =
-  | { readonly cmd: 'start'; readonly durationMs: number }
+  | { readonly cmd: 'start'; readonly durationMs: number; readonly epoch: RunEpoch }
   | { readonly cmd: 'stop' }
   | { readonly cmd: 'reset' }
 
@@ -20,6 +38,8 @@ export type TimerCommand =
 export interface TimerTick {
   readonly type: 'tick'
   readonly elapsedMs: number
+  /** The run this tick measures — echoed verbatim from the `start` that armed it. */
+  readonly epoch: RunEpoch
 }
 
 /**

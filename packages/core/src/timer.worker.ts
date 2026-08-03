@@ -41,6 +41,8 @@ const ctx = self as unknown as TimerWorkerScope
 
 let startPerf = 0
 let durationMs = 0
+/** The run the current clock belongs to; echoed on every tick. See `RunEpoch`. */
+let epoch = 0
 let running = false
 let timeoutId: ReturnType<typeof setTimeout> | null = null
 
@@ -82,7 +84,7 @@ function fire(tickIndex: number, isTerminal: boolean): void {
   // deadline defines, not a reading of this clock.
   const measured = performance.now() - startPerf
   const elapsedMs = isTerminal ? Math.max(measured, durationMs) : measured
-  const tick: TimerTick = { type: 'tick', elapsedMs }
+  const tick: TimerTick = { type: 'tick', elapsedMs, epoch }
   ctx.postMessage(tick)
   if (isTerminal || elapsedMs >= durationMs) {
     running = false
@@ -99,6 +101,7 @@ ctx.onmessage = (event: MessageEvent<TimerCommand>): void => {
       clearPending()
       startPerf = performance.now()
       durationMs = message.durationMs
+      epoch = message.epoch
       running = true
       scheduleNext(1)
       break

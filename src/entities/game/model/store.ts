@@ -162,6 +162,14 @@ function createGameStore(storeId: string) {
      * finishes (the worker has already stopped by then).
      */
     let timerStartT = 0
+    /**
+     * Which run the timer is currently clocking. Bumped by `setup` and `reset`
+     * — the two places a run is replaced — handed to `timer.start`, and checked
+     * against every tick's echoed epoch before the tick is allowed anywhere near
+     * the core. See `RunEpoch` in the core's timer protocol for why order alone
+     * is not enough.
+     */
+    let runEpoch = 0
     let seq = 0
     // Live scoring accumulator (scoreV1). Mutated in place per event (O(1)); the
     // reactive projections below are refreshed from it after each dispatch.
@@ -263,7 +271,10 @@ function createGameStore(storeId: string) {
         // time and any MinSpeed floor breach surfaces even when the player stops.
         // The starting event's own `t` is the tick base — see `timerStartT`.
         timerStartT = nowMs
-        timer?.start(core.config.mode === 'time' ? core.config.durationMs : UNBOUNDED_TIMER_MS)
+        timer?.start(
+          core.config.mode === 'time' ? core.config.durationMs : UNBOUNDED_TIMER_MS,
+          runEpoch
+        )
       }
       if (next.phase === 'finished') timer?.stop()
     }
@@ -329,6 +340,10 @@ function createGameStore(storeId: string) {
       snapshot.value = core.state
       anchorPerf = null
       timerStartT = 0
+      // A new run means a new clock: the `reset` below tells the worker to stop,
+      // but a tick it posted before that message lands is still in flight and
+      // will be delivered against THIS core. It carries the old epoch.
+      runEpoch += 1
       seq = 0
       logVersion.value = game.logVersion ?? detectLogVersion()
       liveNow.value = 0 as Ms
@@ -365,6 +380,7 @@ function createGameStore(storeId: string) {
       snapshot.value = core.state
       anchorPerf = null
       timerStartT = 0
+      runEpoch += 1 // same reason as `setup`: the previous clock is now foreign
       seq = 0
       liveNow.value = 0 as Ms
       timer?.reset()
@@ -386,7 +402,10 @@ function createGameStore(storeId: string) {
       liveNow.value = 0 as Ms
       // GO pins the anchor and starts the timer at the same instant: zero offset.
       timerStartT = 0
-      timer?.start(core.config.mode === 'time' ? core.config.durationMs : UNBOUNDED_TIMER_MS)
+      timer?.start(
+        core.config.mode === 'time' ? core.config.durationMs : UNBOUNDED_TIMER_MS,
+        runEpoch
+      )
     }
 
     function insert(text: string): void {
@@ -529,8 +548,15 @@ function createGameStore(storeId: string) {
     function attachTimer(createWorker: () => TimerWorkerLike): void {
       if (timer) return
       timer = useGameTimer(createWorker)
-      timer.onTick((elapsedMs) => {
+      timer.onTick((elapsedMs, epoch) => {
         if (!core) return
+        // A tick armed for a run this store no longer holds measured a clock
+        // that no longer exists. Dropped in silence — charging its elapsed to
+        // the current run's `timerStartT` would move the live clock at best,
+        // and at worst finish a fresh short run on a long run's elapsed before
+        // its first letter (change `time` mid-run and the config watcher
+        // rebuilds the game underneath the still-ticking old worker).
+        if (epoch !== runEpoch) return
         // The worker reports elapsed-since-start; event time is that delta on
         // top of the starting event's `t` (see `timerStartT`).
         const nowMs = asMs(timerStartT + elapsedMs)

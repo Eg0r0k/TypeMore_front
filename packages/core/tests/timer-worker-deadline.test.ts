@@ -48,15 +48,21 @@ interface WorkerScope {
  * schedules the next one (the structured clone of the message). Everything else
  * is ideal — the browser fires each timeout at exactly `trunc(delay)` ms.
  */
-async function runWorker(durationMs: number, postCostMs: number): Promise<number[]> {
+async function runWorker(
+  durationMs: number,
+  postCostMs: number,
+  epoch = 1
+): Promise<number[]> {
   const clock = { now: 0 }
   const ticks: number[] = []
+  const epochs: number[] = []
   const queue = new Map<number, { at: number; fn: () => void }>()
   let nextId = 1
 
   const scope: WorkerScope = {
     postMessage(message) {
       ticks.push(message.elapsedMs)
+      epochs.push(message.epoch)
       clock.now += postCostMs
     },
     onmessage: null
@@ -75,7 +81,7 @@ async function runWorker(durationMs: number, postCostMs: number): Promise<number
 
   await import('../src/timer.worker')
   scope.onmessage?.({
-    data: { cmd: 'start', durationMs }
+    data: { cmd: 'start', durationMs, epoch }
   } as MessageEvent<TimerCommand>)
 
   // Drain the virtual event loop: earliest deadline first, ties by insertion.
@@ -86,6 +92,9 @@ async function runWorker(durationMs: number, postCostMs: number): Promise<number
     entry.fn()
   }
   expect(queue.size).toBe(0) // the worker always stops itself
+  // Every tick carries back the epoch it was armed with — the store matches on
+  // it to drop ticks belonging to a run it no longer holds.
+  expect(epochs).toEqual(ticks.map(() => epoch))
   return ticks
 }
 

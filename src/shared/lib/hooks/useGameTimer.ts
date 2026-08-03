@@ -19,7 +19,7 @@
  * No absolute worker time is ever compared against event time. See timer.worker.ts.
  */
 
-import { type Ms, type TimerCommand, type TimerTick, asMs } from '@typemore/core'
+import { type Ms, type RunEpoch, type TimerCommand, type TimerTick, asMs } from '@typemore/core'
 
 /**
  * Minimal worker surface the timer needs. The real `Worker` satisfies it; tests
@@ -32,25 +32,31 @@ export interface TimerWorkerLike {
 }
 
 export interface GameTimer {
-  start(durationMs: number): void
+  /** Arm the clock for run `epoch`; every tick it produces carries that epoch back. */
+  start(durationMs: number, epoch: RunEpoch): void
   stop(): void
   reset(): void
-  /** Sink for authoritative ticks; `nowMs` is already in the event `Ms` timebase. */
-  onTick(handler: (nowMs: Ms) => void): void
+  /**
+   * Sink for authoritative ticks; `nowMs` is already in the event `Ms` timebase.
+   * `epoch` is the run the tick was armed for — the caller compares it against
+   * the run it currently holds and drops the ones that belong to a previous one
+   * (see `RunEpoch`).
+   */
+  onTick(handler: (nowMs: Ms, epoch: RunEpoch) => void): void
   dispose(): void
 }
 
 export function useGameTimer(createWorker: () => TimerWorkerLike): GameTimer {
   const worker = createWorker()
-  let handler: ((nowMs: Ms) => void) | null = null
+  let handler: ((nowMs: Ms, epoch: RunEpoch) => void) | null = null
 
   worker.onmessage = (event) => {
     if (event.data.type !== 'tick') return
-    handler?.(asMs(event.data.elapsedMs))
+    handler?.(asMs(event.data.elapsedMs), event.data.epoch)
   }
 
   const timer: GameTimer = {
-    start: (durationMs) => worker.postMessage({ cmd: 'start', durationMs }),
+    start: (durationMs, epoch) => worker.postMessage({ cmd: 'start', durationMs, epoch }),
     stop: () => worker.postMessage({ cmd: 'stop' }),
     reset: () => worker.postMessage({ cmd: 'reset' }),
     onTick: (fn) => {

@@ -30,6 +30,7 @@ import {
   type GameEvent,
   type GenerationConfig,
   type ModsDeclaration,
+  type TimerCommand,
   type TimerTick,
   GameCore,
   asMs,
@@ -48,12 +49,17 @@ import { useGameStore } from '@entities/game'
 
 class FakeTimerWorker implements TimerWorkerLike {
   onmessage: ((event: MessageEvent<TimerTick>) => void) | null = null
-  postMessage(): void {}
+  /** Echoed on every tick, like the real worker — the store drops foreign epochs. */
+  private epoch = 0
+
+  postMessage(message: TimerCommand): void {
+    if (message.cmd === 'start') this.epoch = message.epoch
+  }
 
   terminate(): void {}
 
   emitTick(elapsedMs: number): void {
-    this.onmessage?.({ data: { type: 'tick', elapsedMs } } as never)
+    this.onmessage?.({ data: { type: 'tick', elapsedMs, epoch: this.epoch } } as never)
   }
 }
 

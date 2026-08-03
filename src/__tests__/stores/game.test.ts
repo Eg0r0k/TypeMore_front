@@ -271,17 +271,21 @@ class FakeTimerWorker implements TimerWorkerLike {
   readonly sent: TimerCommand[] = []
   terminated = false
 
+  /** The run this clock is armed for — echoed on every tick, like the real worker. */
+  epoch = 0
+
   postMessage(message: TimerCommand): void {
     this.sent.push(message)
+    if (message.cmd === 'start') this.epoch = message.epoch
   }
 
   terminate(): void {
     this.terminated = true
   }
 
-  emitTick(elapsedMs: number): void {
+  emitTick(elapsedMs: number, epoch: number = this.epoch): void {
     // Only `data` is read by the handler; a full MessageEvent is unnecessary.
-    this.onmessage?.({ data: { type: 'tick', elapsedMs } } as unknown as MessageEvent<TimerTick>)
+    this.onmessage?.({ data: { type: 'tick', elapsedMs, epoch } } as unknown as MessageEvent<TimerTick>)
   }
 }
 
@@ -308,8 +312,8 @@ describe('timer lifecycle (store owns the worker)', () => {
 
     a.insert('a')
     b.insert('a')
-    expect(workerA.sent).toContainEqual({ cmd: 'start', durationMs: 10_000 })
-    expect(workerB.sent).toContainEqual({ cmd: 'start', durationMs: 10_000 })
+    expect(workerA.sent).toContainEqual({ cmd: 'start', durationMs: 10_000, epoch: 1 })
+    expect(workerB.sent).toContainEqual({ cmd: 'start', durationMs: 10_000, epoch: 1 })
 
     workerA.emitTick(12_000) // past A's deadline; B's worker never ticks
     expect(a.phase).toBe('finished')

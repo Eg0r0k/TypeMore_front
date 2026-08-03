@@ -60,11 +60,20 @@ export const useMatchStore = defineStore('match', () => {
   let feeds: DemoFeed[] = []
   let local: GameStore | null = null
   let anchorPerf: number | null = null
+  /** Bumped by every `createMatch`; a tee captures it and never outlives it. */
+  let generation = 0
 
   const localStore = computed(() => (active.value ? local : null))
 
   function createMatch(match: MatchSetup): void {
     leaveMatch()
+    // Which match the ghost fan-out belongs to. The run epoch alone cannot
+    // answer that: `leaveMatch` releases the local store, and a fresh store
+    // starts its own counter at zero — so the next match's first run carries
+    // the SAME epoch the previous one did. `advanceTo` is shared across
+    // matches, so a tee left over from the previous one would drive THESE
+    // ghosts. See `attachLocalTimer`.
+    generation += 1
     local = useGameStore(MATCH_LOCAL_STORE_ID)
     local.setup(match.setup)
     feeds = []
@@ -85,8 +94,24 @@ export const useMatchStore = defineStore('match', () => {
   function attachLocalTimer(createWorker: () => TimerWorkerLike): void {
     local?.attachTimer(() => {
       const inner = createWorker()
+      // The tee is a SECOND consumer of every tick: the store's handler drops a
+      // foreign one for the CORE, and this side must drop it for the ghost
+      // fan-out, or a tick from a retired clock jumps every opponent's caret —
+      // and unlike the local core, nothing downstream would reject it.
+      //
+      // Two axes of staleness, because one does not cover the other:
+      //  - `armedEpoch` — a different RUN of this match, read off the `start`
+      //    passing through, so the tee and the store cannot disagree;
+      //  - `generation` — a different MATCH entirely. `leaveMatch` releases the
+      //    local store, whose fresh instance restarts its epoch at zero, so the
+      //    next match's first run reuses the number this tee is holding.
+      const generationAtAttach = generation
+      let armedEpoch: number | null = null
       const tee: TimerWorkerLike = {
-        postMessage: (message) => inner.postMessage(message),
+        postMessage: (message) => {
+          if (message.cmd === 'start') armedEpoch = message.epoch
+          inner.postMessage(message)
+        },
         get onmessage() {
           return inner.onmessage
         },
@@ -96,7 +121,11 @@ export const useMatchStore = defineStore('match', () => {
               ? null
               : (event) => {
                   handler(event)
-                  if (event.data.type === 'tick') {
+                  if (
+                    event.data.type === 'tick' &&
+                    event.data.epoch === armedEpoch &&
+                    generationAtAttach === generation
+                  ) {
                     anchorPerf = performance.now() - event.data.elapsedMs
                     advanceTo(event.data.elapsedMs)
                   }

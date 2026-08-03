@@ -44,16 +44,20 @@ class FakeTimerWorker implements TimerWorkerLike {
   readonly sent: TimerCommand[] = []
   terminated = false
 
+  /** The run this clock is armed for — echoed on every tick, like the real worker. */
+  epoch = 0
+
   postMessage(message: TimerCommand): void {
     this.sent.push(message)
+    if (message.cmd === 'start') this.epoch = message.epoch
   }
 
   terminate(): void {
     this.terminated = true
   }
 
-  emitTick(elapsedMs: number): void {
-    this.onmessage?.({ data: { type: 'tick', elapsedMs } } as unknown as MessageEvent<TimerTick>)
+  emitTick(elapsedMs: number, epoch: number = this.epoch): void {
+    this.onmessage?.({ data: { type: 'tick', elapsedMs, epoch } } as unknown as MessageEvent<TimerTick>)
   }
 }
 

@@ -440,6 +440,8 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
   let goLocalMs: number | null = null
   /** Session-owned cadence for the ghost fan-out (see `startMatchClock`). */
   let matchClock: GameTimer | null = null
+  /** Which arming of the match clock is current — see `startMatchClock`. */
+  let matchClockEpoch = 0
   let advanceTimer: number | null = null
   let chatCounter = 0
 
@@ -1141,9 +1143,20 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     const createWorker = deps.createTimerWorker
     if (createWorker === null || matchClock !== null) return
     matchClock = useGameTimer(createWorker)
+    // A real counter, not a constant. `stopMatchClock` calls `terminate()`,
+    // which kills the worker thread but does NOT revoke messages already queued
+    // on this thread — a tick posted a moment before termination is still
+    // delivered, and a rematch arms the next clock right afterwards. The stale
+    // tick reaches the PREVIOUS timer's handler, which closes over this same
+    // session-scoped counter and therefore reads the value the new clock minted.
+    matchClockEpoch += 1
+    const armed = matchClockEpoch
     // Cadence only: `advance` reads the anchor itself, never the tick payload.
-    matchClock.onTick(() => advance())
-    matchClock.start(MATCH_CLOCK_MS)
+    matchClock.onTick((_nowMs, epoch) => {
+      if (epoch !== armed) return
+      advance()
+    })
+    matchClock.start(MATCH_CLOCK_MS, armed)
   }
 
   function stopMatchClock(): void {

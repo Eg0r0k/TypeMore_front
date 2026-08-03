@@ -17,16 +17,20 @@ class FakeTimerWorker implements TimerWorkerLike {
   readonly sent: TimerCommand[] = []
   terminated = false
 
+  /** The run this clock is armed for — echoed on every tick, like the real worker. */
+  epoch = 0
+
   postMessage(message: TimerCommand): void {
     this.sent.push(message)
+    if (message.cmd === 'start') this.epoch = message.epoch
   }
 
   terminate(): void {
     this.terminated = true
   }
 
-  emitTick(elapsedMs: number): void {
-    this.onmessage?.({ data: { type: 'tick', elapsedMs } } as unknown as MessageEvent<TimerTick>)
+  emitTick(elapsedMs: number, epoch: number = this.epoch): void {
+    this.onmessage?.({ data: { type: 'tick', elapsedMs, epoch } } as unknown as MessageEvent<TimerTick>)
   }
 }
 
@@ -100,7 +104,7 @@ describe('match store', () => {
     const local = useGameStore(MATCH_LOCAL_STORE_ID)
 
     local.insert('a') // starts the timed run -> timer.start
-    expect(worker.sent).toContainEqual({ cmd: 'start', durationMs: 10_000 })
+    expect(worker.sent).toContainEqual({ cmd: 'start', durationMs: 10_000, epoch: 1 })
     expect(match.ghosts[0].driver.view.snapshot.phase).toBe('idle')
 
     worker.emitTick(5_000) // one authoritative tick advances the ghost too
@@ -109,6 +113,80 @@ describe('match store', () => {
     worker.emitTick(12_000) // past the local deadline: local settles, ghost drains
     expect(local.phase).toBe('finished')
     expect(match.ghosts[0].driver.view.finished).toBe(true)
+  })
+
+  // The tee is a SECOND consumer of every tick: the local store's handler drops
+  // a foreign one for the core, and this side has to drop it for the ghost
+  // fan-out independently. A stale tick reaching `advanceTo` would jump every
+  // opponent's caret forward by a clock they never ran on — and unlike the local
+  // core, nothing downstream would reject it. The epoch is read off the `start`
+  // passing through the tee, so both sides agree on which run is current.
+  it('does not fan a stale tick out to the ghosts', () => {
+    const match = useMatchStore()
+    const log = synthesizeBotLog(words, { wpm: 120, seed: 3 })
+    const worker = new FakeTimerWorker()
+
+    match.createMatch({
+      setup: { config: timeConfig, words },
+      ghosts: [{ name: 'bot', log }],
+      feed: FEED
+    })
+    match.attachLocalTimer(() => worker)
+    useGameStore(MATCH_LOCAL_STORE_ID).insert('a')
+    worker.emitTick(5_000)
+    const staleEpoch = worker.epoch
+    const reached = match.ghosts[0].driver.virtualNow
+    expect(reached).toBe(5_000)
+
+    // A rematch over the same teed worker: a fresh setup mints a new epoch, and
+    // the previous clock's tick is still in flight on this thread.
+    match.createMatch({
+      setup: { config: timeConfig, words },
+      ghosts: [{ name: 'bot', log }],
+      feed: FEED
+    })
+    useGameStore(MATCH_LOCAL_STORE_ID).insert('a')
+    // NOTE the epoch REPEATS: `leaveMatch` released the local store, and its
+    // fresh instance counts from zero again. That is exactly why the tee also
+    // pins the match generation — the run epoch cannot tell these two apart.
+    expect(worker.epoch).toBe(staleEpoch)
+
+    worker.emitTick(9_000, staleEpoch)
+    worker.emitTick(60_000, staleEpoch)
+
+    // Never fanned out: the new match's ghost has not moved off the start line.
+    expect(match.ghosts[0].driver.virtualNow).toBe(0)
+    expect(match.ghosts[0].driver.view.wordIndex).toBe(0)
+  })
+
+  // The same guard on the other axis: a stale tick from a previous RUN of the
+  // SAME match (the local store re-`setup`, so the epoch really does move).
+  it('does not fan a previous run’s tick out to the ghosts', () => {
+    const match = useMatchStore()
+    const log = synthesizeBotLog(words, { wpm: 120, seed: 3 })
+    const worker = new FakeTimerWorker()
+
+    match.createMatch({
+      setup: { config: timeConfig, words },
+      ghosts: [{ name: 'bot', log }],
+      feed: FEED
+    })
+    match.attachLocalTimer(() => worker)
+    const local = useGameStore(MATCH_LOCAL_STORE_ID)
+    local.insert('a')
+    worker.emitTick(5_000)
+    const staleEpoch = worker.epoch
+    expect(match.ghosts[0].driver.virtualNow).toBe(5_000)
+
+    local.setup({ config: timeConfig, words }) // the run is replaced in place
+    local.insert('a')
+    expect(worker.epoch).not.toBe(staleEpoch)
+
+    worker.emitTick(60_000, staleEpoch)
+    expect(match.ghosts[0].driver.virtualNow).toBe(5_000) // unmoved
+
+    worker.emitTick(6_000) // its own clock still drives the fan-out
+    expect(match.ghosts[0].driver.virtualNow).toBe(6_000)
   })
 
   it('leaveMatch disposes ghosts, terminates the teed worker, and releases the local id', () => {
