@@ -22,19 +22,6 @@ export const dictionaryCatalogueQueryOptions = () =>
   })
 
 /**
- * The catalogue projected to language KEYS — same cache entry, no extra fetch.
- *
- * Keys only. Anything that RENDERS a language wants
- * `dictionaryCatalogueQueryOptions` (whole rows) or `languageNamesQueryOptions`
- * (key → name), because the key is an identifier and never a label.
- */
-export const languageKeysQueryOptions = () =>
-  queryOptions({
-    ...dictionaryCatalogueQueryOptions(),
-    select: (catalogue: DictionaryCatalogue) => catalogue.map((d) => d.lang)
-  })
-
-/**
  * `lang` → its human name, for the surfaces that hold a bare key and must show
  * it: the settings bar, the room panel, a leaderboard bucket. The server's
  * catalogue is the ONLY place a language is named — no client-side prettifying
@@ -90,11 +77,5 @@ export const dictionaryBodyByHashQueryOptions = (dictHash: string) =>
 export const loadDictionaryCatalogue = (): Promise<DictionaryCatalogue> =>
   queryClient.ensureQueryData(dictionaryCatalogueQueryOptions())
 
-export const loadLanguages = async (): Promise<string[]> =>
-  (await loadDictionaryCatalogue()).map((d) => d.lang)
-
 export const loadDictionaryBody = (lang: string): Promise<DictionaryBody> =>
   queryClient.ensureQueryData(dictionaryBodyQueryOptions(lang))
-
-export const loadDictionaryBodyByHash = (dictHash: string): Promise<DictionaryBody> =>
-  queryClient.ensureQueryData(dictionaryBodyByHashQueryOptions(dictHash))

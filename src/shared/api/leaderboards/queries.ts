@@ -1,5 +1,4 @@
 import { queryOptions } from '@tanstack/vue-query'
-import { queryClient } from '../query-client'
 import { getBoardAround, getBoardMe, getBoardPage, listBuckets } from './endpoints'
 import { leaderboardKeys } from './keys'
 import type { BucketCatalogue } from './schemas'
@@ -60,6 +59,3 @@ export const boardMeQueryOptions = (bucket: string) =>
     queryFn: () => getBoardMe(bucket),
     staleTime: FRESH_FOR
   })
-
-/** Imperative read for code outside the component tree (route guards, tests). */
-export const loadBuckets = () => queryClient.ensureQueryData(bucketCatalogueQueryOptions())

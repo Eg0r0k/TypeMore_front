@@ -4,7 +4,6 @@ export {
   quotePageQueryOptions,
   languageHasQuotesQueryOptions,
   quoteByIdQueryOptions,
-  loadQuotePage,
   loadQuoteById,
   loadRandomQuote
 } from './queries'

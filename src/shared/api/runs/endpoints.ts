@@ -1,16 +1,13 @@
-import * as v from 'valibot'
 import { request } from '../transport'
 import {
   RunListSchema,
   RunReplayLogSchema,
   RunReplaySchema,
   RunSubmitResultSchema,
-  RunSummarySchema,
   type RunList,
   type RunReplay,
   type RunReplayLog,
-  type RunSubmitResult,
-  type RunSummary
+  type RunSubmitResult
 } from './schemas'
 import type { ListRunsParams, RunSubmitInput } from './types'
 
@@ -25,16 +22,6 @@ export const submitRun = (input: RunSubmitInput): Promise<RunSubmitResult> =>
 
 export const listRuns = (params: ListRunsParams = {}): Promise<RunList> =>
   request('/runs', RunListSchema, { query: { cursor: params.cursor, limit: params.limit } })
-
-export const getRun = (id: string): Promise<RunSummary> => request(`/runs/${id}`, RunSummarySchema)
-
-/**
- * The OWNER's own log, at any status, via the authenticated detail route.
- * Distinct from the public replay pair below, which serves accepted runs to
- * anyone and is what a leaderboard row links to.
- */
-export const getRunLog = (id: string): Promise<unknown> =>
-  request(`/runs/${id}`, v.unknown(), { query: { log: 1 } })
 
 /**
  * `GET /runs/{id}/replay` — public replay METADATA for one accepted run.

@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/vue-query'
-import { getRun, getRunReplay, getRunReplayLog, listRuns } from './endpoints'
+import { getRunReplay, getRunReplayLog, listRuns } from './endpoints'
 import { runKeys } from './keys'
 
 /** Layer 2 — Runs queryOptions factories. */
@@ -8,12 +8,6 @@ export const runsQueryOptions = (cursor?: string, limit?: number) =>
   queryOptions({
     queryKey: runKeys.list(cursor, limit),
     queryFn: () => listRuns({ cursor, limit })
-  })
-
-export const runQueryOptions = (id: string) =>
-  queryOptions({
-    queryKey: runKeys.detail(id),
-    queryFn: () => getRun(id)
   })
 
 /**

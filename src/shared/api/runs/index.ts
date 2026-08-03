@@ -2,7 +2,6 @@
 export { runKeys } from './keys'
 export {
   runsQueryOptions,
-  runQueryOptions,
   runReplayQueryOptions,
   runReplayLogQueryOptions
 } from './queries'

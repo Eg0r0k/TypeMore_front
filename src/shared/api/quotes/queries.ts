@@ -60,9 +60,6 @@ export const quoteByIdQueryOptions = (id: string) =>
  * Imperative reads for code outside the component tree (the game page's run
  * setup). Same client, same cache, same dedupe as `useQuery`.
  */
-export const loadQuotePage = (params: QuotePageParams = {}) =>
-  queryClient.ensureQueryData(quotePageQueryOptions(params))
-
 export const loadQuoteById = (id: string): Promise<Quote> =>
   queryClient.ensureQueryData(quoteByIdQueryOptions(id))
 

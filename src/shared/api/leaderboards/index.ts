@@ -5,8 +5,7 @@ export {
   boardPageQueryOptions,
   boardPageBeforeQueryOptions,
   boardAroundQueryOptions,
-  boardMeQueryOptions,
-  loadBuckets
+  boardMeQueryOptions
 } from './queries'
 
 export {

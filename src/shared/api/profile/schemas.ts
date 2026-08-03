@@ -41,26 +41,6 @@ export const ProfileSummarySchema = v.object({
 })
 export type ProfileSummary = v.InferOutput<typeof ProfileSummarySchema>
 
-/**
- * The FUTURE hover mini-card's payload (name, speed averages, top %), defined
- * now so the card is a rendering task, not an API design one, when it lands.
- * Everything but `topPercent` is a straight selection of the /summary response;
- * the percentile arrives with public profiles and stays optional until then.
- */
-export interface ProfileCompactSummary {
-  readonly displayName: string
-  readonly avgWpm: number
-  readonly avgRaw: number
-  readonly topPercent?: number
-}
-
-/** Selects the compact card out of a full summary. */
-export const compactSummaryOf = (summary: ProfileSummary): ProfileCompactSummary => ({
-  displayName: summary.displayName,
-  avgWpm: summary.wpm.average,
-  avgRaw: summary.raw.average
-})
-
 export const ProfileActivitySchema = v.object({
   days: v.array(v.object({ date: v.string(), tests: v.number(), timeMs: v.number() }))
 })
@@ -141,7 +121,6 @@ export const KeyboardLayoutSchema = v.object({
     })
   )
 })
-export type KeyboardLayout = v.InferOutput<typeof KeyboardLayoutSchema>
 
 export const KeyboardLayoutsSchema = v.object({ layouts: v.array(KeyboardLayoutSchema) })
 export type KeyboardLayouts = v.InferOutput<typeof KeyboardLayoutsSchema>
