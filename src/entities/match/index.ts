@@ -2,8 +2,6 @@ export { DEFAULT_GHOST_DELAY_MS, GhostDriver } from './model/ghost-driver'
 export type { GhostDriverOptions } from './model/ghost-driver'
 export { DemoFeed, synthesizeBotLog } from './model/demo-feed'
 export type { BotLogOptions, DemoFeedOptions } from './model/demo-feed'
-export { MATCH_LOCAL_STORE_ID, MAX_GHOSTS, useMatchStore } from './model/store'
-export type { MatchGhost, MatchGhostSetup, MatchSetup } from './model/store'
 export {
   AFK_KICK_SHARE_CLIENT,
   AFK_KICK_STREAK_MS,
