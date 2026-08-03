@@ -26,8 +26,21 @@ export interface TimerTick {
  * Delay in ms until tick `tickIndex`, anchored to the ideal grid
  * (`tickIndex * TICK_INTERVAL_MS`) and clamped to the deadline, given how much
  * has already `elapsedMs`. Anchoring to the grid instead of accumulating
- * `+= interval` means a late tick never shifts the ones after it; clamping to
- * the deadline guarantees a final tick lands exactly at completion.
+ * `+= interval` means a late tick never shifts the ones after it.
+ *
+ * The clamp AIMS the last tick at the deadline. It does not, and cannot,
+ * guarantee it lands at or past it — this comment used to claim it did, and
+ * that claim cost a hang. The returned delay is fractional, and `setTimeout`'s
+ * `timeout` argument is a WebIDL `long`: `setTimeout(fn, 999.6)` waits 999ms.
+ * Every tick therefore loses the fraction of its own delay, so the real grid
+ * sits BELOW the ideal one unless the browser hands the fraction back as
+ * scheduling slop — and a terminal tick reporting 14999.6 for a 15s run does
+ * not satisfy `settle`'s `nowMs >= startedAt + durationMs`, after which the
+ * worker stops for good and the run never completes.
+ *
+ * Landing the last tick is therefore the WORKER's job, not this function's:
+ * `timer.worker.ts` reports no less than `durationMs` on the terminal tick.
+ * See `tests/timer-worker-deadline.test.ts`.
  */
 export function nextTickDelay(elapsedMs: number, tickIndex: number, durationMs: number): number {
   const targetElapsed = Math.min(tickIndex * TICK_INTERVAL_MS, durationMs)

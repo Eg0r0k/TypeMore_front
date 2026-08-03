@@ -63,7 +63,25 @@ function scheduleNext(tickIndex: number): void {
 
 function fire(tickIndex: number, isTerminal: boolean): void {
   if (!running) return
-  const elapsedMs = performance.now() - startPerf // own delta, never an absolute timestamp
+  // Own delta, never an absolute timestamp. The TERMINAL tick additionally
+  // reports no less than the full duration, because it is the last one there
+  // will ever be: `settle` finishes a timed run on `nowMs >= startedAt +
+  // durationMs`, and the tick that was scheduled to land ON the deadline can
+  // arrive a sliver before it — `nextTickDelay` returns a fractional delay and
+  // `setTimeout`'s argument is a WebIDL `long`, so `setTimeout(fn, 999.6)` waits
+  // 999ms. Every tick loses the fraction of its own delay; when the browser does
+  // not hand it back as scheduling slop, the grid drifts below the ideal one and
+  // the last tick reports e.g. 14999.6 for a 15s run. The worker then stops
+  // unconditionally, the run never completes, and the screen hangs on the words
+  // forever (see tests/timer-worker-deadline.test.ts).
+  //
+  // This does not fake time. `settle` pins `finishedAt` to `startedAt +
+  // durationMs` — the deadline, never the instant the tick fired — so the
+  // finished state is bit-identical whether this tick reports 14999.6, 15000 or
+  // 15004.3. What is reported here is the instant the run ENDED, which the
+  // deadline defines, not a reading of this clock.
+  const measured = performance.now() - startPerf
+  const elapsedMs = isTerminal ? Math.max(measured, durationMs) : measured
   const tick: TimerTick = { type: 'tick', elapsedMs }
   ctx.postMessage(tick)
   if (isTerminal || elapsedMs >= durationMs) {
