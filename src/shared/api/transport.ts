@@ -104,10 +104,29 @@ export const request = async <S extends v.GenericSchema>(
   opts?: FetchOptions
 ): Promise<v.InferOutput<S>> => {
   let raw: unknown
-  try {
-    raw = await http(url, opts)
-  } catch (err) {
-    throw normalizeError(err)
+  /**
+   * DEV ONLY — the profile preview (`shared/dev-preview`) answers here, before
+   * the network, when its flag is on. The import is inside a DEV-guarded branch
+   * so the whole module (fixtures included) is dead code a production build
+   * drops. A fixture still goes through the parse below: a preview that would
+   * fail the contract must fail here too.
+   */
+  const preview = import.meta.env.DEV
+    ? (await import('../dev-preview/handler')).devPreviewResponse(url, {
+        query: opts?.query,
+        method: typeof opts?.method === 'string' ? opts.method : undefined
+      })
+    : null
+
+  if (preview !== null) {
+    if (preview.delayMs > 0) await new Promise((resolve) => setTimeout(resolve, preview.delayMs))
+    raw = preview.body
+  } else {
+    try {
+      raw = await http(url, opts)
+    } catch (err) {
+      throw normalizeError(err)
+    }
   }
 
   const parsed = v.safeParse(schema, raw)

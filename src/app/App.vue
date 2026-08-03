@@ -21,10 +21,13 @@
       <SettingsModal v-model:open="dialogs.settings" />
       <ThemesModal v-model:open="dialogs.themes" />
       <CookieModal v-model:open="dialogs.cookies" :dismissible="dialogs.cookiesDismissible" />
+      <!-- DEV only, and only on /profile and /u — see shared/dev-preview. -->
+      <component :is="DevPreviewBadge" v-if="DevPreviewBadge" />
     </TooltipProvider>
   </ConfigProvider>
 </template>
 <script setup lang="ts">
+  import { defineAsyncComponent } from 'vue'
   import { useScreenStore } from '@/entities/screen'
   import { useDialogsStore } from '@/entities/dialogs'
   import { LoaderWrapper } from '@/features/layouts/loader'
@@ -41,6 +44,15 @@
   const dialogs = useDialogsStore()
   useAppSetup()
   useAuthBootstrap()
+
+  /**
+   * The profile preview's badge. A conditional dynamic import, so the branch —
+   * and with it the component, the fixtures and the handler — is dead code a
+   * production build never emits.
+   */
+  const DevPreviewBadge = import.meta.env.DEV
+    ? defineAsyncComponent(() => import('@/shared/dev-preview/ui.vue'))
+    : null
 </script>
 <style lang="scss" scoped>
   .fade-enter-active,

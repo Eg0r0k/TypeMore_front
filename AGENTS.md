@@ -52,6 +52,8 @@ pnpm test:dev       # vitest --dom (watch)
 
 Git hooks (husky): `pre-commit` runs lint + lint:style + format; `pre-push` runs tests.
 
+`/profile` and `/u/{name}` can be looked at without a backend: open either with `?preview=1` (or `?preview=closed|empty|error|guest|missing|portrait`) and `src/shared/dev-preview` answers from fixtures at the transport boundary. DEV only — see `docs/DEV-PREVIEW.md`.
+
 ## Code Conventions & Common Patterns
 
 - **Components**: always `<script setup lang="ts">` with scoped `<style lang="scss">`. Component files are always named `ui.vue`, re-exported PascalCase from the slice barrel: `export { default as Button } from './ui.vue'`.
