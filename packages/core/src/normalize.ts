@@ -74,7 +74,20 @@ const SPACE_CHARS = [
  */
 export const EQUIVALENCE_GROUPS: readonly EquivalenceGroup[] = [
   { id: 'apostrophes', chars: ["'", '’', '‘', 'ʼ', '׳', 'ʻ', '᾽'] },
-  { id: 'double-quotes', chars: ['"', '”', '“', '„'] },
+  // Guillemets belong here for the same reason `„` does: they are the double
+  // quote of a language, not a different character. A Russian, French or
+  // Belarusian quote is written with `«…»` and the player's keyboard offers `"`
+  // — the layout has no guillemet key, and dead-key sequences for them are not
+  // standard anywhere the dictionaries cover. Untypeable-by-default, exactly
+  // like U+2026, and answered here rather than in the tokenizer because this
+  // one IS one grapheme against one grapheme: the fix `expandEllipsis` could
+  // not be (words.ts).
+  //
+  // Deliberately one group and not two. `«` and `»` are directional, but the
+  // registry's job is "may this keystroke stand for that target", and a
+  // keyboard that cannot produce either direction cannot be asked to pick
+  // between them — the same reason `“` and `”` have always shared an entry.
+  { id: 'double-quotes', chars: ['"', '”', '“', '„', '«', '»'] },
   { id: 'dashes', chars: ['-', '–', '—', '‐', '‑'] },
   { id: 'commas', chars: [',', '‚'] },
   { id: 'spaces', chars: SPACE_CHARS, canonical: ' ' },

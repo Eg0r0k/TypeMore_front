@@ -290,12 +290,17 @@ function randomInt(rng: () => number, max: number): number {
  *   2. randomCase   — randomize the case of every character
  *   3. capitalization — force the sentence-start word's first letter upper
  *   4. punctuation  — append a trailing mark
- * Two further transforms — lazy (accent stripping) then reverse (Reverse mod) —
- * are applied by `generateWords` to the decorated word AFTER sentence-boundary
- * detection, so they consume no PRNG and do not shift capitalization:
- * reverse-on targets are exact mirrors of reverse-off targets at the same seed,
- * and a lazy run's word list is aligned word-for-word with the same seed's
- * non-lazy list.
+ * Three further transforms — lazy (accent stripping), then reverse (Reverse
+ * mod), then the ellipsis rewrite (`expandEllipsis`) — are applied by
+ * `generateWords` to the decorated word AFTER sentence-boundary detection, so
+ * they consume no PRNG and do not shift capitalization: reverse-on targets are
+ * exact mirrors of reverse-off targets at the same seed, and a lazy run's word
+ * list is aligned word-for-word with the same seed's non-lazy list.
+ *
+ * The ellipsis rewrite in particular MUST stay after the boundary read: `…`
+ * becomes `...`, whose last character is in SENTENCE_END, so expanding first
+ * would capitalize the word after every ellipsis and produce a different word
+ * list for the same seed.
  *
  * WHY LAZY RUNS HERE AND NOT ON THE DICTIONARY TOKEN. `randomCase` above draws
  * once PER CHARACTER, so stripping accents first — where `ß` becomes the two
@@ -335,6 +340,53 @@ function decorate(
 /** Mirror a word by code point (Reverse mod). Pure, consumes no PRNG. */
 export function reverseWord(word: string): string {
   return [...word].reverse().join('')
+}
+
+const ELLIPSIS = '…'
+
+/**
+ * Rewrite U+2026 HORIZONTAL ELLIPSIS as the three periods every keyboard can
+ * actually produce. The LAST transform applied to a token, on both source
+ * paths, and the one place either of them normalises for TYPEABILITY.
+ *
+ * WHY IT EXISTS. A target the player cannot type is not a hard target, it is a
+ * broken one: there is no key, no dead key and no default compose sequence for
+ * U+2026 on any mainstream layout, so a run that meets one is unwinnable from
+ * that character on. It is not hypothetical — eleven vendored dictionaries
+ * carry twenty-four such tokens (belarusian, tatar_crimean, tatar_crimean_cyrillic,
+ * thai) and thirty-four quotes across thirteen languages contain forty-two
+ * occurrences. Every one of those runs ends in a wall.
+ *
+ * WHY THREE PERIODS RATHER THAN DROPPING IT. The ellipsis is a word's own
+ * punctuation and carries its meaning ("калі…" is a trailing-off, not "калі"),
+ * and `...` is what a person types when they mean it. Normalising in the
+ * OPPOSITE direction — accepting a typed `.` against an expected `…` in
+ * normalize.ts — was rejected: the equivalence registry maps ONE grapheme to
+ * one grapheme, three keystrokes against one target position would have to
+ * change the reducer's position arithmetic, and the target would still render
+ * as a character the player has no way to know costs three presses.
+ *
+ * WHY IT IS THE LAST TRANSFORM. It is output-only, exactly like `lazy` and
+ * `reverse`, and for the same reason `lazy` is: `decorate` draws from the PRNG
+ * once PER CHARACTER under `randomCase`, so expanding one character into three
+ * before it would change how many draws the word consumes and shift every word
+ * after it. Sentence detection also keeps reading the DECORATED word, not this
+ * one — `...` ends in a period and would otherwise start capitalising the word
+ * after every ellipsis, which is a different word list for the same seed.
+ * Placed after `reverse` for tidiness rather than necessity: `...` is its own
+ * mirror, so the two commute.
+ *
+ * WHY IT DOES NOT DISTURB A SINGLE HASH. `dictVersion` is taken over the RAW
+ * word list and `dictVersion([text])` over the RAW quote text, both BEFORE this
+ * runs and both unchanged by it, so every dict hash, every quote `text_hash`
+ * and every stored run's drift check reads exactly what it read before
+ * (`tests/tokenize-ellipsis.test.ts` proves it over the full corpora, not a
+ * sample). What DOES change is the target text of a run played on one of those
+ * eleven dictionaries or thirty-four quotes — deliberately, and that is why
+ * this ships with a revalidate pass (docs/REPLAY.md).
+ */
+export function expandEllipsis(token: string): string {
+  return token.includes(ELLIPSIS) ? token.split(ELLIPSIS).join('...') : token
 }
 
 /**
@@ -388,8 +440,16 @@ export function generateWords(
     // which is not a typeable word: the reducer would have nothing to compare a
     // keystroke against and the player could never satisfy it. Everything else
     // is preserved verbatim — `\t` belongs to the token it opens.
+    //
+    // `expandEllipsis` last, on the finished tokens: it is a typeability rule
+    // like the newline one above, and it runs AFTER `dictVersion([quote.text])`
+    // was checked against the raw text, so the quote's identity is the author's
+    // bytes and only the target the player types is rewritten.
     const normalized = quote.text.replace(/ *(\r\n|\r|\n) */g, '\n ')
-    const words = normalized.split(' ').filter((word) => word.length > 0)
+    const words = normalized
+      .split(' ')
+      .filter((word) => word.length > 0)
+      .map(expandEllipsis)
     if (words.length === 0) {
       return err({ kind: 'EmptyQuote', message: `quote ${quote.quoteId} has no typeable words` })
     }
@@ -431,7 +491,11 @@ export function generateWords(
 
     const base = dict.words[index]
     if (raw) {
-      words.push(base)
+      // Verbatim means "no DECORATION" — no PRNG transform, no mirror. The
+      // ellipsis rewrite is not decoration, it is the same typeability rule the
+      // quote branch applies to an author's text, and a code token nobody can
+      // type is as broken as a word nobody can type.
+      words.push(expandEllipsis(base))
       continue
     }
     const decorated = decorate(base, context.generation, rng, capitalizeNext)
@@ -442,7 +506,7 @@ export function generateWords(
     // rather than a mirror the accent matcher would then read backwards.
     let out = lazy ? replaceAccents(decorated, context.generation.language) : decorated
     if (context.generation.reverse) out = reverseWord(out)
-    words.push(out)
+    words.push(expandEllipsis(out))
     // Next word is capitalized when this one ended a sentence.
     capitalizeNext =
       context.generation.punctuation && SENTENCE_END.includes(decorated[decorated.length - 1] ?? '')
