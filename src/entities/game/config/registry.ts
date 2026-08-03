@@ -108,10 +108,22 @@ export interface ConstraintContext {
 /** An i18n key explaining why an option is unavailable, or `null` when it is available. */
 export type DisabledReason = string | null
 
-export interface OptionDescriptor<K extends GameOptionKey = GameOptionKey> {
+/**
+ * `C` and `V` exist so a descriptor can keep the LITERAL control and default it
+ * was written with (`values: readonly [15, 30, 60, 120]`, `defaultValue: 15`)
+ * instead of widening to `OptionControl` / `Config[K]`. That is what
+ * `_PresetDefaultsAreSelectable` at the bottom of the file reads. Both default
+ * to the wide type, so `OptionDescriptor<'time'>` and the bare
+ * `OptionDescriptor` still mean exactly what they meant.
+ */
+export interface OptionDescriptor<
+  K extends GameOptionKey = GameOptionKey,
+  C extends OptionControl = OptionControl,
+  V extends Config[K] = Config[K]
+> {
   readonly key: K
   readonly slot: OptionSlot
-  readonly control: OptionControl
+  readonly control: C
   readonly contexts: OptionContexts
   /** i18n key for the option's own label. */
   readonly i18nKey: string
@@ -123,7 +135,7 @@ export interface OptionDescriptor<K extends GameOptionKey = GameOptionKey> {
   readonly ariaLabel?: string
   /** i18n key prefix for an enum's value labels (`${prefix}.${value}`). */
   readonly valueI18nPrefix?: string
-  readonly defaultValue: Config[K]
+  readonly defaultValue: V
   /** Options whose value this one reacts to — documentation and test fodder. */
   readonly dependsOn?: readonly GameOptionKey[]
   /** Hidden entirely (a dimension preset that does not apply to the current mode). */
@@ -180,9 +192,16 @@ const inMode =
   (ctx: ConstraintContext): boolean =>
     modes.includes(ctx.mode)
 
-/** Identity helper: preserves the literal `key` so `defaultValue` is checked against it. */
-const option = <K extends GameOptionKey>(descriptor: OptionDescriptor<K>): OptionDescriptor<K> =>
-  descriptor
+/**
+ * Identity helper: preserves the literal `key` so `defaultValue` is checked
+ * against it, and — via the `const` type parameter — the literal `control` and
+ * `defaultValue` too, which is what `_PresetDefaultsAreSelectable` at the bottom
+ * of this file reads. Without it every descriptor would widen to
+ * `OptionDescriptor<K>` and the preset lists would be plain `number[]`.
+ */
+const option = <K extends GameOptionKey, C extends OptionControl, V extends Config[K]>(
+  descriptor: OptionDescriptor<K, C, V>
+): OptionDescriptor<K, C, V> => descriptor
 
 const D = DEFAULT_CONFIG
 
@@ -212,7 +231,9 @@ export const GAME_OPTIONS = [
     slot: 'core',
     // SECONDS. The room form sends `durationMs` and multiplies at its own
     // adapter — the wire shape is the protocol's, not this table's.
-    control: { kind: 'presets', values: [15, 30, 60, 120] },
+    // `as const` (here and on the other two preset rails): the literal tuple is
+    // what `_PresetDefaultsAreSelectable` checks `defaultValue` against.
+    control: { kind: 'presets', values: [15, 30, 60, 120] } as const,
     contexts: {
       solo: true,
       settingsModal: false,
@@ -229,7 +250,7 @@ export const GAME_OPTIONS = [
   option({
     key: 'words',
     slot: 'generation',
-    control: { kind: 'presets', values: [10, 25, 50, 100] },
+    control: { kind: 'presets', values: [10, 25, 50, 100] } as const,
     contexts: {
       solo: true,
       settingsModal: false,
@@ -392,7 +413,7 @@ export const GAME_OPTIONS = [
   option({
     key: 'minWpm',
     slot: 'core',
-    control: { kind: 'presets', values: [0, 60, 80, 100] },
+    control: { kind: 'presets', values: [0, 60, 80, 100] } as const,
     contexts: {
       solo: true,
       settingsModal: false,
@@ -536,8 +557,12 @@ export function optionsFor(context: OptionContext): readonly GameOption[] {
 
 /** The values a context accepts, narrowed by `valuesByContext`. */
 export function valuesFor(option: GameOption, context: OptionContext): readonly string[] {
-  if (option.control.kind !== 'enum') return []
-  return option.control.valuesByContext?.[context] ?? option.control.values
+  // Widened deliberately: descriptors keep their literal control type, and a
+  // literal that simply omits the optional `valuesByContext` does not carry the
+  // property at all. The declared union is where the option lives.
+  const control: OptionControl = option.control
+  if (control.kind !== 'enum') return []
+  return control.valuesByContext?.[context] ?? control.values
 }
 
 /** Numeric presets, or `[]` for a non-preset control. */
@@ -629,3 +654,27 @@ export type _ConfigIsPartitioned = Assert<Equals<GameOptionKey | AppOnlyConfigKe
 
 /** Every game option key has a descriptor, and no descriptor invents a key. */
 export type _RegistryIsExhaustive = Assert<Equals<GameOption['key'], GameOptionKey>>
+
+/**
+ * The keys of every `presets` option whose `defaultValue` is NOT one of its own
+ * `control.values` — `never` when the table is sound.
+ *
+ * A preset rail draws one button per value and marks the one the config holds.
+ * A default that is off its own list therefore renders as NOTHING selected, and
+ * the run silently uses a duration/count the player was never offered and cannot
+ * get back to by clicking. `time` shipped exactly like that (default 10, presets
+ * 15/30/60/120), and no validator could have caught it: `validation.ts` asks
+ * only for a positive integer, which 10 is.
+ */
+type PresetDefaultOffList<O> = O extends {
+  readonly key: infer K
+  readonly control: { readonly kind: 'presets'; readonly values: readonly (infer V)[] }
+  readonly defaultValue: infer Default
+}
+  ? [Default] extends [V]
+    ? never
+    : K
+  : never
+
+/** Every presets option's default is one of the values its own rail offers. */
+export type _PresetDefaultsAreSelectable = Assert<Equals<PresetDefaultOffList<GameOption>, never>>
