@@ -508,6 +508,7 @@
     font-size: 0.8rem;
     color: var(--sub-color);
     pointer-events: none;
+    user-select: none;
   }
 
   .game__viewport {
@@ -548,5 +549,10 @@
   .game__host {
     display: block;
     width: 100%;
+
+    // The whole shadow content in one stroke: `user-select: auto` resolves
+    // from the parent, and that resolution crosses the shadow boundary — so
+    // this also covers anything in there the words rule does not.
+    user-select: none;
   }
 </style>
