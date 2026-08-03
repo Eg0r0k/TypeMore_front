@@ -200,7 +200,13 @@ function netCharsFor(ctx: CoreContext, state: GameState): number {
   if (state.wordIndex < ctx.words.length) {
     const target = ctx.words[state.wordIndex] ?? ''
     const buffer = state.input[state.wordIndex] ?? ''
-    if (buffer.length > 0 && target.startsWith(buffer)) credited += buffer.length
+    // Re-derived rather than imported: the oracle counts the correct prefix
+    // itself, so agreeing with the shipped core is a result and not a shared
+    // helper returning the same value twice.
+    let i = 0
+    const shared = Math.min(target.length, buffer.length)
+    while (i < shared && buffer[i] === target[i]) i++
+    credited += i
   }
   return credited
 }
@@ -301,7 +307,10 @@ function wpmOverTime(ctx: CoreContext, events: readonly GameEvent[], endMs: Ms):
       rawWorth = typed.length + (earnsSeparator ? 1 : 0)
       at = settledAt.get(i) ?? end
     } else if (i === activeIndex) {
-      worth = typed.length > 0 && target.startsWith(typed) ? typed.length : 0
+      let k = 0
+      const shared = Math.min(target.length, typed.length)
+      while (k < shared && typed[k] === target[k]) k++
+      worth = k
       rawWorth = typed.length
     }
     const settlement = worth - (paidPerWord[i] ?? 0)

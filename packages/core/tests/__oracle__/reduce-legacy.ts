@@ -137,7 +137,13 @@ function netCharsOf(ctx: CoreContext, state: GameState): number {
   if (state.wordIndex < ctx.words.length) {
     const target = ctx.words[state.wordIndex] ?? ''
     const buffer = state.input[state.wordIndex] ?? ''
-    if (buffer.length > 0 && target.startsWith(buffer)) credited += buffer.length
+    // The word in hand is worth its CORRECT PREFIX, counted here rather than
+    // imported so the oracle agrees with the shipped core as a result rather
+    // than by calling the same helper twice.
+    let i = 0
+    const shared = Math.min(target.length, buffer.length)
+    while (i < shared && buffer[i] === target[i]) i++
+    credited += i
   }
   return credited
 }

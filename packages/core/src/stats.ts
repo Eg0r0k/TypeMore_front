@@ -14,6 +14,7 @@ import type { CoreContext, GameState } from './game-core'
 import {
   GameCore,
   bufferOf,
+  correctPrefixLength,
   endsLine,
   initialStateOf,
   netCharsOf,
@@ -563,7 +564,10 @@ export function timelineFrom(ctx: CoreContext, analysis: LogAnalysis, endMs: Ms)
       rawWorth = typed.length + (earnsSeparator ? 1 : 0)
       at = everCommitted[i] ? settledAt[i] : end
     } else if (i === activeIndex) {
-      netWorth = typed.length > 0 && target.startsWith(typed) ? typed.length : 0
+      // `correctPrefixLength`, the same call `netCharsOf` makes — the chart's
+      // last point and the headline settle the word in hand through ONE
+      // definition or they disagree about any run that ended mid-word.
+      netWorth = correctPrefixLength(target, typed)
       // `getChars` counts the active buffer's characters unconditionally, with
       // `includeMissed` off so its untyped tail is not charged.
       rawWorth = typed.length

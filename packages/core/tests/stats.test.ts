@@ -406,7 +406,24 @@ describe('net wpm credits only correct words', () => {
     expect(both.wpm).toBeLessThan(alone.wpm)
   })
 
-  it('gives partial credit to the word still being typed, while it is still right', () => {
+  // WHY THIS TEST INVERTED. It used to assert that a buffer which had gone
+  // wrong credits NOTHING — all-or-nothing on `target.startsWith(buffer)` — on
+  // the argument that the word will credit nothing when it commits either, so
+  // the number never walks backwards.
+  //
+  // The argument is sound and the behaviour it produced was not. On the FIRST
+  // word there is nothing else banked, so the display reads 12 wpm, then 24,
+  // then ZERO on one wrong keystroke, and stays there until the word commits.
+  // Nothing about the run got worse: two correct characters are still two
+  // correct characters, and the player is told they have typed nothing.
+  //
+  // It is also not what monkeytype does, which the old comment claimed. Their
+  // `calculateWpmAndRaw` credits fully correct words and their spaces, with no
+  // credit for the word in hand at all — so their first word reads 0 the whole
+  // way and jumps on commit. Crediting the correct prefix departs from them in
+  // the opposite direction, and it is what makes the headline agree with the
+  // chart, which has paid per correct keystroke since the curve was fixed.
+  it('credits the correct PREFIX of the word still being typed', () => {
     const right = computeMetrics(
       ctxOf(['hello']),
       [insertEvent(1, 0, 'h'), insertEvent(2, 100, 'e')],
@@ -418,9 +435,55 @@ describe('net wpm credits only correct words', () => {
       asMs(200)
     )
     expect(right.wpm).toBeGreaterThan(0)
-    // Already off the rails: it will credit nothing when it commits either, so
-    // it credits nothing now — the number never walks backwards.
-    expect(wrong.wpm).toBe(0)
+    // `h` is still right, so it is still paid for. The number holds instead of
+    // collapsing.
+    expect(wrong.wpm).toBeGreaterThan(0)
+    expect(wrong.wpm).toBeCloseTo(right.wpm / 2, 9)
+  })
+
+  it('stops the prefix at the first wrong character, not at every match', () => {
+    // `hxllo` against `hello`: `h` is right, `x` is not, and the `llo` after it
+    // only lines up because a wrong character pushed it into place. Counting
+    // matching POSITIONS would pay 4 here; counting a PREFIX pays 1, which is
+    // the whole difference between net and raw.
+    const ctx = ctxOf(['hello'])
+    const prefixOnly = computeMetrics(
+      ctx,
+      [
+        insertEvent(1, 0, 'h'),
+        insertEvent(2, 100, 'x'),
+        insertEvent(3, 200, 'l'),
+        insertEvent(4, 300, 'l'),
+        insertEvent(5, 400, 'o')
+      ],
+      asMs(500)
+    )
+    const oneChar = computeMetrics(ctx, [insertEvent(1, 0, 'h')], asMs(500))
+    expect(prefixOnly.wpm).toBe(oneChar.wpm)
+  })
+
+  it('does not survive the commit — a wrong word still pays nothing', () => {
+    // The prefix credit is TRANSIENT. This is what keeps it from reopening the
+    // leak that made a committed word all-or-nothing: bank speed for a word the
+    // player never produced and it is taken straight back when the word lands.
+    const ctx = ctxOf(['hello', 'world'])
+    const midWord = computeMetrics(
+      ctx,
+      [insertEvent(1, 0, 'h'), insertEvent(2, 100, 'e'), insertEvent(3, 200, 'x')],
+      asMs(300)
+    )
+    const committed = computeMetrics(
+      ctx,
+      [
+        insertEvent(1, 0, 'h'),
+        insertEvent(2, 100, 'e'),
+        insertEvent(3, 200, 'x'),
+        commitEvent(4, 300)
+      ],
+      asMs(300)
+    )
+    expect(midWord.wpm).toBeGreaterThan(0)
+    expect(committed.wpm).toBe(0)
   })
 
   /**

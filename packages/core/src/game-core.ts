@@ -528,6 +528,25 @@ export function separatorsOf(ctx: CoreContext, state: GameState): number {
 }
 
 /**
+ * How much of `buffer` is right so far: the number of leading characters that
+ * match `target`, stopping at the first that does not.
+ *
+ * THE single definition of "right so far" — `netCharsOf` credits it to the word
+ * in hand and `stats.timelineFrom` settles the same word against it, so the
+ * headline and the chart's last point cannot disagree about a run that ended
+ * mid-word. Stopping at the first mismatch rather than counting every matching
+ * position is what keeps it a PREFIX: `xн` against `вн` is worth nothing, not
+ * one, because the second character only looks right by having been pushed into
+ * place by a wrong one.
+ */
+export function correctPrefixLength(target: string, buffer: string): number {
+  const shared = target.length < buffer.length ? target.length : buffer.length
+  let i = 0
+  while (i < shared && buffer[i] === target[i]) i++
+  return i
+}
+
+/**
  * Net chars for WPM: what every word that came out RIGHT is worth
  * (`netCreditOf` — its characters and its separator), plus partial credit for
  * the word still being typed.
@@ -540,12 +559,31 @@ export function separatorsOf(ctx: CoreContext, state: GameState): number {
  * it, so the headline number, the chart's last point and the MinSpeed floor can
  * never disagree about what a run was worth.
  *
- * PARTIAL CREDIT, and why only here. The active word is not finished, so
- * "did it come out right" has no answer yet; the honest reading is "right so
- * far", which is `target.startsWith(buffer)`. A buffer that has already gone
- * wrong credits nothing and will credit nothing when it commits either, so the
- * number never walks backwards. This is monkeytype's `creditPartial`, which they
- * apply to the last word for exactly this reason.
+ * PARTIAL CREDIT, and why only here. The active word is not finished, so "did it
+ * come out right" has no answer yet, and the honest reading is how much of it IS
+ * right — the length of its correct prefix (`correctPrefixLength`).
+ *
+ * It used to be all-or-nothing on `target.startsWith(buffer)`, and that is a
+ * number players watch collapse. Typing `в`, `н` into `внутри` reads 12 wpm then
+ * 24; one wrong keystroke and the whole credit is withdrawn, so on the FIRST
+ * word — with nothing else banked — the display drops to zero and stays there
+ * until the word is committed. Nothing about the run got worse: two correct
+ * characters are still two correct characters.
+ *
+ * The comment this replaces claimed the all-or-nothing form was monkeytype's
+ * `creditPartial`. It is not. Their `calculateWpmAndRaw` is
+ * `((correctWordChars + correctSpaces) * 60 / testSeconds) / 5` — fully correct
+ * words and their spaces, with NO credit for the word in hand at all. So their
+ * number never falls to zero mid-word because it never left zero: their first
+ * word reads 0 the whole way and jumps on commit. Crediting the correct prefix
+ * is a deliberate departure in the other direction, and it is the one that makes
+ * the headline agree with the chart, which has paid per correct keystroke since
+ * the curve was fixed to stop opening on `0 wpm`.
+ *
+ * This does NOT reopen the leak that made a committed word all-or-nothing. That
+ * leak was about banking speed for words the player never produced; this credit
+ * is transient — the word settles to all-or-nothing the moment it commits, so a
+ * wrong word still pays exactly nothing, and no prefix credit survives it.
  */
 export function netCharsOf(ctx: CoreContext, state: GameState): number {
   const core = coreOf(state)
@@ -580,7 +618,7 @@ export function netCharsOf(ctx: CoreContext, state: GameState): number {
     const buffer = incremental
       ? bufferOf(state, state.wordIndex)
       : (state.input[state.wordIndex] ?? '')
-    if (buffer.length > 0 && target.startsWith(buffer)) credited += buffer.length
+    credited += correctPrefixLength(target, buffer)
   }
   return credited
 }
