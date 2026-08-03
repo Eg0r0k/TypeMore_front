@@ -14,7 +14,11 @@
           <div class="settings-dialog__search">
             <div class="relative">
               <IconSearch class="absolute top-1/2 left-5 -translate-1/2 pointer-events-none" />
-              <Input v-model="query" class="pl-10" :placeholder="t('settings.search')" />
+              <Input
+                v-model="query"
+                class="pl-10 bg-background"
+                :placeholder="t('settings.search')"
+              />
             </div>
           </div>
 
@@ -92,15 +96,10 @@
       </div>
     </DialogContent>
   </Dialog>
-
-  <!-- Siblings, not children: a dialog rendered inside DialogContent would be
-       torn down with it the moment the settings dialog hides. -->
-  <ThemesModal v-model:open="themesOpen" />
-  <CookieModal v-model:open="cookiesOpen" />
 </template>
 
 <script setup lang="ts">
-  import { computed, provide, ref, watch } from 'vue'
+  import { computed, provide, ref } from 'vue'
   import { useI18n } from 'vue-i18n'
   import IconSearch from '~icons/tabler/search'
 
@@ -113,8 +112,7 @@
   } from '@/shared/ui/dialog'
   import { SearchBar } from '@/shared/ui/search'
   import { Typography } from '@/shared/ui/typography'
-  import { CookieModal } from '@/features/modal/cookie'
-  import { ThemesModal } from '@/features/modal/themes'
+  import { useDialogsStore } from '@/entities/dialogs'
   import {
     CATEGORIES,
     SETTINGS,
@@ -183,30 +181,18 @@
   }
 
   /**
-   * Drill-down: hide the settings while the theme / cookie dialog is up, then
-   * come back when it closes. Stacking two reka dialogs shares one dismiss
-   * chain — closing the inner one dragged this dialog down with it.
+   * Drill-down: the theme and cookie dialogs are mounted once in App.vue, and
+   * the store owns both the flags and the come-back (it is a relationship
+   * between dialogs, not a fact about this one). Stacking two reka dialogs
+   * shares one dismiss chain — closing the inner one dragged this one down
+   * with it, which is what the drill-down avoids.
    */
-  const themesOpen = ref(false)
-  const cookiesOpen = ref(false)
-
-  const drillInto = (target: 'themes' | 'cookies'): void => {
-    open.value = false
-    if (target === 'themes') themesOpen.value = true
-    else cookiesOpen.value = true
-  }
-
-  const comeBack = (isOpen: boolean): void => {
-    if (!isOpen) open.value = true
-  }
-
-  watch(themesOpen, comeBack)
-  watch(cookiesOpen, comeBack)
+  const dialogs = useDialogsStore()
 
   provide(SETTINGS_FILTER, { isVisible: (id: SettingId) => matchedIds.value.has(id) })
   provide(SETTINGS_NAV, {
-    openThemes: () => drillInto('themes'),
-    openCookies: () => drillInto('cookies')
+    openThemes: () => dialogs.openThemes(),
+    openCookies: () => dialogs.openCookies()
   })
 </script>
 

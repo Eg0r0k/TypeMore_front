@@ -71,7 +71,7 @@ Git hooks (husky): `pre-commit` runs lint + lint:style + format; `pre-push` runs
 - `vite.config.ts` — plugins (vue, vueJsx, fontaine, visualizer), aliases, manualChunks, SCSS config.
 - `eslint.config.js` (flat), `.prettierrc.json`, `.stylelintrc.json` — lint/format.
 - `tsconfig.json` / `tsconfig.app.json` / `tsconfig.node.json` — TS config split.
-- `src/features/modal/*` — every modal in the app. There is no modal store/host: each is a self-contained component taking `v-model:open` and built on `@/shared/ui/dialog` (which already renders portal + overlay + close button and traps focus). The opener owns the `ref`.
+- `src/features/modal/*` — every modal in the app. Each is a self-contained component taking `v-model:open` and built on `@/shared/ui/dialog` (which already renders portal + overlay + close button and traps focus), and by default the opener owns the `ref`. THREE exceptions are app-level and mounted once in `App.vue` — settings, themes, cookies — because several unrelated places open them (header, profile, the settings dialog itself, the first-visit check); their flags and the settings ⇄ theme/cookie drill-down live in `entities/dialogs` (`useDialogsStore`). Openers call `openSettings()` / `openThemes()` / `openCookies()`; nobody mounts a second instance.
 - `src/features/modal/settings/` — the settings dialog (category column + search on `md+`, horizontal label strip below). `model/registry.ts` lists the categories and the searchable rows; `parts/SettingRow.vue` renders one row and hides itself via the injected `SETTINGS_FILTER`. Theme/cookie dialogs are NOT nested: `SETTINGS_NAV` hides the settings dialog, shows the other one, and comes back on close — stacked reka dialogs share one dismiss chain.
 
 ## Runtime/Tooling Preferences

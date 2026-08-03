@@ -15,7 +15,7 @@
         color="shadow"
         :aria-label="$t('settings.title')"
         :title="$t('settings.title')"
-        @click="settingsOpen = true"
+        @click="dialogs.openSettings()"
       >
         <IconSettings class="size-6" aria-hidden="true" />
       </Button>
@@ -47,7 +47,6 @@
         </Link>
       </Button>
     </div>
-    <SettingsModal v-model:open="settingsOpen" />
   </nav>
 </template>
 
@@ -67,13 +66,13 @@
   import IconSettings from '~icons/tabler/settings'
   import IconChartBar from '~icons/tabler/chart-bar'
   import IconUser from '~icons/tabler/user'
-  import { SettingsModal } from '@/features/modal/settings'
 
-  import { computed, ref } from 'vue'
+  import { computed } from 'vue'
   import { storeToRefs } from 'pinia'
   import { useRouter } from 'vue-router'
   import { useI18n } from 'vue-i18n'
   import { useAuthStore, useCurrentUser } from '@/entities/auth'
+  import { useDialogsStore } from '@/entities/dialogs'
   import { useLogoutMutation } from '@shared/api'
   import { routeLocation } from '@/shared/router'
 
@@ -95,7 +94,8 @@
   const { mutate: logout } = useLogoutMutation()
 
   const onProfile = (): void => void router.push(routeLocation.profile())
-  const settingsOpen = ref(false)
+  /** Settings live in App.vue now; the header only asks for them. */
+  const dialogs = useDialogsStore()
 
   const onLogout = (): void => {
     logout(undefined, {

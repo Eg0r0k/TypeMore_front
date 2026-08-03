@@ -11,22 +11,35 @@
           </Transition>
         </div>
       </div>
-      <CookieModal v-model:open="cookieOpen" :dismissible="false" />
+      <!--
+        The app-level dialogs, mounted ONCE. Settings and the theme picker are
+        opened from the header, the profile and from each other; a per-opener
+        instance meant the same tree existed twice with two open states. Every
+        opener now flips a flag in the dialogs store (entities/dialogs), which
+        also owns the settings ⇄ theme/cookie drill-down.
+      -->
+      <SettingsModal v-model:open="dialogs.settings" />
+      <ThemesModal v-model:open="dialogs.themes" />
+      <CookieModal v-model:open="dialogs.cookies" :dismissible="dialogs.cookiesDismissible" />
     </TooltipProvider>
   </ConfigProvider>
 </template>
 <script setup lang="ts">
   import { useScreenStore } from '@/entities/screen'
+  import { useDialogsStore } from '@/entities/dialogs'
   import { LoaderWrapper } from '@/features/layouts/loader'
   import { MainLayout } from '@/features/layouts/main'
   import { IS_TAURI, WindowToolbar } from '@/features/layouts/titlebar'
   import { CookieModal } from '@/features/modal/cookie'
+  import { SettingsModal } from '@/features/modal/settings'
+  import { ThemesModal } from '@/features/modal/themes'
   import { TooltipProvider } from '@/shared/ui/tooltip'
   import { ConfigProvider } from 'reka-ui'
   import { useAppSetup } from '@/shared/lib/hooks/useAppSetup'
   import { useAuthBootstrap } from '@/entities/auth'
   const screen = useScreenStore()
-  const { cookieOpen } = useAppSetup()
+  const dialogs = useDialogsStore()
+  useAppSetup()
   useAuthBootstrap()
 </script>
 <style lang="scss" scoped>

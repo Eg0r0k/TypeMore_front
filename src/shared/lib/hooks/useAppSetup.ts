@@ -1,10 +1,11 @@
 import { useConfigStore } from '@/entities/config'
+import { useDialogsStore } from '@/entities/dialogs'
 import { useRootClass } from '@/shared/lib/hooks/useRootClass'
 import { useThemes } from '@/shared/lib/hooks/useThemes'
 import { useUiLanguage } from '@/shared/lib/hooks/useUiLanguage'
 import { useFavicon } from '@vueuse/core'
 import { THEMES_KEY } from '@/shared/constants/inject-keys'
-import { onBeforeMount, onMounted, provide, ref } from 'vue'
+import { onBeforeMount, onMounted, provide } from 'vue'
 import logger from '@/shared/lib/helpers/logger'
 
 export const useAppSetup = () => {
@@ -18,7 +19,9 @@ export const useAppSetup = () => {
   // Locale follows the saved preference (or the browser under `system`) for the
   // whole app lifetime, not just while the settings dialog is mounted.
   useUiLanguage()
-  const cookieOpen = ref(false)
+  // The cookie notice is one of the app-level dialogs App.vue mounts; this only
+  // decides whether the first-visit gate goes up.
+  const dialogs = useDialogsStore()
 
   provide(THEMES_KEY, themesList)
 
@@ -35,12 +38,10 @@ export const useAppSetup = () => {
     configStore.setFontSize(configStore.config.fontSize)
     try {
       if (!localStorage.getItem('cookieConsentGiven')) {
-        cookieOpen.value = true
+        dialogs.requireCookieConsent()
       }
     } catch (e) {
       logger.error('Failed to get localstorage', e)
     }
   })
-
-  return { cookieOpen }
 }
