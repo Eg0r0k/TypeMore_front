@@ -79,31 +79,37 @@ describe('burstAccuracyWeight', () => {
 
 describe('maxBurstWpmFor', () => {
   it('pins the anchors themselves', () => {
-    expect(maxBurstWpmFor(15)).toBe(250)
-    expect(maxBurstWpmFor(30)).toBe(210)
-    expect(maxBurstWpmFor(60)).toBe(200)
+    expect(maxBurstWpmFor(15)).toBe(290)
+    expect(maxBurstWpmFor(30)).toBe(275)
+    expect(maxBurstWpmFor(60)).toBe(260)
+    expect(maxBurstWpmFor(300)).toBe(240)
+    expect(maxBurstWpmFor(600)).toBe(230)
   })
 
   it('is flat below the first anchor and above the last', () => {
-    expect(maxBurstWpmFor(10)).toBe(250)
-    expect(maxBurstWpmFor(1)).toBe(250)
-    expect(maxBurstWpmFor(0)).toBe(250)
-    expect(maxBurstWpmFor(120)).toBe(200)
-    expect(maxBurstWpmFor(3600)).toBe(200)
+    expect(maxBurstWpmFor(10)).toBe(290)
+    expect(maxBurstWpmFor(1)).toBe(290)
+    expect(maxBurstWpmFor(0)).toBe(290)
+    // Past the last anchor it stays there — ten minutes is where the table
+    // stops having evidence, not where the trend stops.
+    expect(maxBurstWpmFor(1200)).toBe(230)
+    expect(maxBurstWpmFor(3600)).toBe(230)
   })
 
   it('interpolates between them', () => {
-    // Half way from 15 s to 30 s is half way from 250 to 210.
-    expect(maxBurstWpmFor(22.5)).toBeCloseTo(230, 12)
-    // Half way from 30 s to 60 s is half way from 210 to 200.
-    expect(maxBurstWpmFor(45)).toBeCloseTo(205, 12)
+    // Half way from 15 s to 30 s is half way from 290 to 275.
+    expect(maxBurstWpmFor(22.5)).toBeCloseTo(282.5, 12)
+    // Half way from 30 s to 60 s is half way from 275 to 260.
+    expect(maxBurstWpmFor(45)).toBeCloseTo(267.5, 12)
+    // And the long tail interpolates the same way: half of 60→300 is 180 s.
+    expect(maxBurstWpmFor(180)).toBeCloseTo(250, 12)
   })
 
   it('is continuous — no cliff a fifth of a second wide', () => {
     // The reason for interpolating at all: a step table judges 29.9 s against
     // one number and 30.1 s against another 40 wpm lower, and two identical
     // typists land on opposite sides of it by accident.
-    for (const at of [15, 30, 60]) {
+    for (const at of [15, 30, 60, 300, 600]) {
       const below = maxBurstWpmFor(at - 0.001)
       const above = maxBurstWpmFor(at + 0.001)
       expect(Math.abs(above - below)).toBeLessThan(0.01)
@@ -120,7 +126,7 @@ describe('maxBurstWpmFor', () => {
   })
 
   it('reads its anchors from the table, so the table is the only place to tune', () => {
-    expect(BURST_CEILING.map((a) => a.wpm)).toEqual([250, 210, 200])
+    expect(BURST_CEILING.map((a) => a.wpm)).toEqual([290, 275, 260, 240, 230])
     for (let i = 1; i < BURST_CEILING.length; i++) {
       expect(BURST_CEILING[i].durationSec).toBeGreaterThan(BURST_CEILING[i - 1].durationSec)
       expect(BURST_CEILING[i].wpm).toBeLessThanOrEqual(BURST_CEILING[i - 1].wpm)
@@ -212,11 +218,11 @@ const burstOf = (r: ReturnType<typeof report>) => r.flags.find((f) => f.code ===
 describe('superhuman-burst fires on speed, whatever the accuracy', () => {
   // The arithmetic these counts come from: a correct 5-letter word plus its
   // separator is 6 net characters, so a 60 s run of W words is `6W / 5` wpm.
-  // 166 words = 199.2 (under the 200 ceiling), 250 words = 300.
-  const FAST_60 = 250
+  // 216 words = 259.2 (under the 260 ceiling at 60 s), 320 words = 384.
+  const FAST_60 = 320
 
   it('does not fire on a run at or below the ceiling', () => {
-    const r = report(60_000, 166)
+    const r = report(60_000, 216)
     expect(r.metrics.wpm).toBeLessThan(maxBurstWpmFor(60))
     expect(burstOf(r)).toBeUndefined()
   })
@@ -248,20 +254,21 @@ describe('superhuman-burst fires on speed, whatever the accuracy', () => {
   })
 
   it('judges the same speed differently at different distances', () => {
-    // 210 wpm: over the 60 s ceiling (200), under the 15 s one (250). The old
+    // 273.6 wpm: over the 60 s ceiling (260), under the 15 s one (290). The old
     // single constant could not say that, and it is why a minute of 336 wpm
-    // passed while a ten-second flurry of 251 did not.
-    // 29 words in 10 s and 174 in 60 s are both 208.8 wpm, exactly.
-    const short = report(10_000, 29)
-    const long = report(60_000, 174)
-    expect(short.metrics.wpm).toBeCloseTo(long.metrics.wpm, 0)
+    // passed while a ten-second flurry of 251 did not — and it is the same
+    // asymmetry the records show, 318 over 15 s against 281 over 60.
+    // 38 words in 10 s and 228 in 60 s are both 273.6 wpm, exactly.
+    const short = report(10_000, 38)
+    const long = report(60_000, 228)
+    expect(short.metrics.wpm).toBeCloseTo(long.metrics.wpm, 6)
     expect(burstOf(short)).toBeUndefined()
     expect(burstOf(long)).toBeDefined()
   })
 
   it('reports the ceiling it judged against, so a verdict can be read back', () => {
     const flag = burstOf(report(60_000, FAST_60))
-    expect(flag?.detail).toContain('ceiling 200')
+    expect(flag?.detail).toContain('ceiling 260')
     expect(flag?.detail).toContain('60s')
   })
 })
@@ -273,7 +280,7 @@ describe('the ceiling boundary is exclusive on the low side', () => {
     const ceiling = maxBurstWpmFor(60)
     let below = 0
     let above = 0
-    for (let words = 160; words <= 175; words++) {
+    for (let words = 210; words <= 225; words++) {
       const wpm = report(60_000, words).metrics.wpm
       if (wpm < ceiling) below = words
       else if (wpm > ceiling && above === 0) above = words

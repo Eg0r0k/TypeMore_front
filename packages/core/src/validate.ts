@@ -45,42 +45,59 @@ export interface BurstCeilingAnchor {
  * reason it does in running: a sprint is not a pace. A single global ceiling is
  * therefore either too lenient at the long distances or too strict at the short
  * ones, and the constant 250 it replaces was the first — it let a 336 wpm run
- * held for a full minute pass while a 251 wpm two-second flurry would not.
+ * held for a full minute pass while a 251 wpm two-second flurry would not. The
+ * published records say the same thing from the other side: 318 wpm has been
+ * done over 15 seconds and 281 over 60, so one number cannot be right for both.
  *
- * WHERE THE NUMBERS COME FROM. Two sources, and they disagree, so both are
- * written down rather than one being quietly preferred.
+ * WHERE THE NUMBERS COME FROM, and what they deliberately are not.
  *
- *   The published records are HIGHER than every anchor here. monkeytype's
- *   all-time English leaderboards are in the 280s at 15 s, the 290s at 30 s and
- *   the 270s at 60 s, and the current record holder has been reported at 305.
- *   Judged against those alone, a ceiling would start near 310 and this
- *   detector would never fire on anything but a machine.
+ * The published records are the reference point: monkeytype's all-time English
+ * leaderboard reads 318 wpm at 15 s and 281 wpm at 60 s. The anchors below sit
+ * BELOW both, and that is a decision rather than an oversight — a run of
+ * record class on THIS deployment is something an operator wants to look at, so
+ * the ceiling is set where "look at this" starts, not where "impossible for a
+ * human" starts.
  *
- *   The population THIS instance actually has tops out far lower. Over the 127
- *   runs of the honest export of 2026-08-03: 166.4 wpm at ≤15 s, 88.4 at 30 s,
- *   96.6 at 60 s, 62.5 beyond. Against that, every anchor below carries between
- *   1.5× and 2.4× headroom over the fastest honest run at its distance, and
- *   there is not one honest run within 80 wpm of the 30 s or 60 s anchor.
+ * Read that consequence plainly before touching the table: a genuine
+ * record-pace player WILL raise this flag, and while `sustained_superhuman`
+ * bypasses the suspicion threshold, raising it means the run leaves `accepted`
+ * and therefore leaves the leaderboard, with no in-product way back. The
+ * numbers are only defensible while that is understood; give `flagged` an
+ * operator-reversible path and they can be tightened further, take the
+ * bypass away and they can be tightened a lot further.
  *
- * The anchors follow the population, and they are set exactly where they are
- * because of what they have to catch: the confirmed cheating account's four
- * implausible runs are 282 wpm at 10 s, 212.4 at 30 s, and 336.2 and 373.4 at
- * 60 s. Catching the 212.4 one is what pins the 30 s anchor below it, and
- * monotonicity then pins the 60 s anchor below that.
+ * WHY THE TAIL KEEPS FALLING. Sustained speed drops with distance for the same
+ * reason it does in running, and the records show it inside their own range
+ * (318 over 15 s against 281 over 60). Past a minute there is no published
+ * figure to anchor against, so the last two points continue the trend rather
+ * than freezing it: a flat ceiling past 60 s would make a ten-minute run the
+ * easiest distance to fake, since holding 280 wpm for ten minutes is far less
+ * plausible than holding it for one and a flat table cannot say so.
  *
- * SO READ THIS BEFORE RAISING THEM. A world-class player — a real one, at the
- * published record pace — WILL raise this flag here, and because
- * `sustained_superhuman` bypasses the suspicion threshold, their run will go to
- * review. That is a deliberate trade for a deployment whose fastest honest run
- * is 166 wpm: review is a human looking, not a rejection, and on this
- * population the flag has never once fired on an honest run. It is the wrong
- * trade for a deployment that has actual record-pace players, and the fix then
- * is this table, not the detector.
+ * WHY NOT CALIBRATE TO THIS DEPLOYMENT'S OWN POPULATION, which was the first
+ * attempt. Over the 127 honest runs of the 2026-08-03 export the fastest
+ * anything gets is 166.4 wpm at ≤15 s, 88.4 at 30 s and 96.6 at 60 s, which
+ * invites anchors around 250/210/200. Those were the first numbers here and
+ * they were wrong: the sample contains no player of that class, so it measures
+ * who has shown up so far rather than what a person can do. Typists who sustain
+ * 200 wpm for ten minutes exist, and 200/60s+ would have flagged every long run
+ * they ever played.
+ *
+ * WHAT THIS DOES NOT CATCH, stated so nobody expects it to. Of the confirmed
+ * cheating account's four implausible runs only two are above these ceilings:
+ * 373.4 and 336.2 wpm held for a minute. Its 282.0 wpm over ten seconds and
+ * 212.4 over thirty are below the human record at their distances and are not
+ * separable from a strong typist BY SPEED. A ceiling low enough to catch them
+ * is a ceiling that catches real players, so they have to be caught by
+ * something else — cadence, telemetry, the canaries — and this table should not
+ * be bent trying.
  */
 export const BURST_CEILING: readonly BurstCeilingAnchor[] = [
-  { durationSec: 15, wpm: 250 },
-  { durationSec: 30, wpm: 210 },
-  { durationSec: 60, wpm: 200 }
+  { durationSec: 15, wpm: 290 },
+  { durationSec: 30, wpm: 275 },
+  { durationSec: 60, wpm: 260 },
+  { durationSec: 300, wpm: 240 },
+  { durationSec: 600, wpm: 230 }
 ]
 
 /**
@@ -88,9 +105,9 @@ export const BURST_CEILING: readonly BurstCeilingAnchor[] = [
  * last, linearly interpolated between them.
  *
  * CONTINUOUS ON PURPOSE. A step table would mean a run of 29.9 s is judged
- * against 250 and one of 30.1 s against 210 — a 40 wpm cliff that two identical
- * typists land on opposite sides of because one of them was a fifth of a second
- * slower to stop. Interpolating removes the cliff without changing what the
+ * against the 15 s ceiling and one of 30.1 s against the 30 s one — a cliff that
+ * two identical typists land on opposite sides of because one of them was a
+ * fifth of a second slower to stop. Interpolating removes the cliff without changing what the
  * anchors say, and monotonicity is preserved because the anchors are themselves
  * non-increasing (asserted by the tests, not assumed).
  */
