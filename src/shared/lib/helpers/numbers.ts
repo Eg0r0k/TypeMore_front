@@ -31,6 +31,14 @@ export const clamp = (value: number, min: number, max: number): number =>
 export const clamp01 = (value: number): number => clamp(value, 0, 1)
 
 /**
+ * A [0, 1] fraction as a rounded percent string: `0.973` → `"97%"`. Guarded
+ * against an already-scaled value so a contract drift renders oddly ("97%")
+ * rather than as "9700%".
+ */
+export const percent = (fraction: number): string =>
+  `${Math.round(fraction <= 1 ? fraction * 100 : fraction)}%`
+
+/**
  * Milliseconds → whole seconds, the way every duration-displaying surface
  * rounds. One definition so the solo, match and replay paths cannot drift
  * apart on whether 15 400ms reads as 15 or 16.

@@ -156,7 +156,7 @@
   import { groupThousands } from '@/shared/lib/helpers/numbers'
   import { Typography } from '@/shared/ui/typography'
   import IconInfoCircle from '~icons/tabler/info-circle'
-  import { percent } from '../model/format'
+  import { percent } from '@/shared/lib/helpers/numbers'
   import { KEYBOARD_LAYOUT_PRESETS, type LayoutKey, layoutByName } from '../model/layouts'
 
   /**

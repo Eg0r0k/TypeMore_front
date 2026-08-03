@@ -39,13 +39,6 @@ export const formatRelativeAchievedAt = (
 export const formatExactAchievedAt = (iso: string, locale?: string): string =>
   formatExactInstant(iso, locale)
 
-/**
- * `acc` arrives as a FRACTION (1 = 100%), unlike the percentages the live test
- * screen shows. Guarded against a pre-scaled value so a contract drift renders
- * oddly rather than as "9700%".
- */
-export const formatAccuracy = (acc: number): string => `${Math.round(acc <= 1 ? acc * 100 : acc)}%`
-
 /** wpm carries full float precision on the wire; a board column shows whole words. */
 export const formatWpm = (wpm: number): string => String(Math.round(wpm))
 

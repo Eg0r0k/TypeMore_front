@@ -43,7 +43,8 @@
   import { useI18n } from 'vue-i18n'
   import type { ProfileMetricStats, ProfileSummary } from '@shared/api'
   import { groupThousands } from '@/shared/lib/helpers/numbers'
-  import { formatClock, percent, speed } from '../model/format'
+  import { formatClock, speed } from '../model/format'
+  import { percent } from '@/shared/lib/helpers/numbers'
   import ProfileIdentity from './identity.vue'
 
   /**

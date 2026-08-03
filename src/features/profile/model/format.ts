@@ -26,9 +26,6 @@ export function formatClock(ms: number): string {
   return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
 }
 
-/** A [0, 1] fraction as a rounded percent string: `0.973` → `"97%"`. */
-export const percent = (fraction: number): string => `${Math.round(fraction * 100)}%`
-
 /** One decimal for speeds (`108.44` → `"108.4"`), trimming a trailing `.0`. */
 export const speed = (wpm: number): string => {
   const rounded = Math.round(wpm * 10) / 10

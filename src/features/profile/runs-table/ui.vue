@@ -177,7 +177,8 @@
   import { Typography } from '@/shared/ui/typography'
   import IconRace from '~icons/tabler/swords'
   import IconWatch from '~icons/tabler/eye'
-  import { percent, speed } from '../model/format'
+  import { speed } from '../model/format'
+  import { percent } from '@/shared/lib/helpers/numbers'
   import QuoteCell from './quote-cell.vue'
 
   /**

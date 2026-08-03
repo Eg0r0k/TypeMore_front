@@ -120,7 +120,7 @@
               </span>
               <span class="text-end tabular-nums">{{ formatWpm(entry.wpm) }}</span>
               <span class="text-end tabular-nums">{{ formatWpm(entry.raw) }}</span>
-              <span class="text-end tabular-nums">{{ formatAccuracy(entry.acc) }}</span>
+              <span class="text-end tabular-nums">{{ percent(entry.acc) }}</span>
               <!-- The date makes way for the actions on hover/focus. -->
               <span
                 class="text-end text-sub transition-tm group-hover:opacity-0 group-focus-within:opacity-0"
@@ -217,8 +217,8 @@
   import { BOARD_GRID } from '../board-grid'
   import { BoardModChips } from '../mod-chips'
   import { useBoardFeed } from '../model/use-board-feed'
+  import { percent } from '@/shared/lib/helpers/numbers'
   import {
-    formatAccuracy,
     formatExactAchievedAt,
     formatRelativeAchievedAt,
     formatScore,

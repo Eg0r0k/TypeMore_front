@@ -141,7 +141,8 @@
   import type { ProfileTimeseries } from '@shared/api'
   import { Typography } from '@/shared/ui/typography'
   import { useChartTooltip } from '@/shared/lib/hooks/useChartTooltip'
-  import { formatDuration, percent, speed } from '../model/format'
+  import { formatDuration, speed } from '../model/format'
+  import { percent } from '@/shared/lib/helpers/numbers'
 
   /**
    * The daily activity chart (results-chart idiom — see wpm-chart.vue): bars

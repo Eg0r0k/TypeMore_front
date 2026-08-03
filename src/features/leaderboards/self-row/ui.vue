@@ -40,7 +40,7 @@
       </span>
       <span class="text-end tabular-nums">{{ formatWpm(entry.wpm) }}</span>
       <span class="text-end tabular-nums">{{ formatWpm(entry.raw) }}</span>
-      <span class="text-end tabular-nums">{{ formatAccuracy(entry.acc) }}</span>
+      <span class="text-end tabular-nums">{{ percent(entry.acc) }}</span>
       <span class="text-end text-sub">{{ whenLabel(entry) }}</span>
     </div>
 
@@ -76,7 +76,8 @@
   import { BOARD_GRID } from '../board-grid'
   import { BoardModChips } from '../mod-chips'
   import { topPercent } from '../model/percentile'
-  import { formatAccuracy, formatRelativeAchievedAt, formatScore, formatWpm } from '../model/format'
+  import { formatRelativeAchievedAt, formatScore, formatWpm } from '../model/format'
+  import { percent } from '@/shared/lib/helpers/numbers'
   import type { OwnRankState } from '../model/use-own-rank'
 
   /**

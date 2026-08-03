@@ -88,7 +88,8 @@
   import { groupThousands } from '@/shared/lib/helpers/numbers'
   import IconRace from '~icons/tabler/swords'
   import IconWatch from '~icons/tabler/eye'
-  import { percent, speed } from '../model/format'
+  import { speed } from '../model/format'
+  import { percent } from '@/shared/lib/helpers/numbers'
 
   /**
    * PB cards from /profile/pbs — the leaderboard entries, decorated. Deliberately
