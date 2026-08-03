@@ -29,7 +29,7 @@
     <button
       v-if="own"
       type="button"
-      class="relative -mt-8 w-fit rounded-full transition-tm focus-ring sm:-mt-12"
+      class="group relative -mt-8 w-fit rounded-full transition-tm focus-ring sm:-mt-12"
       :aria-label="t('settings.title')"
       :title="t('settings.title')"
       data-testid="profile-settings"
@@ -38,9 +38,15 @@
       <UserAvatar
         :name="summary.displayName"
         :src="avatarSrc"
-        class="size-16 ring-4 ring-bg transition-tm hover:brightness-110 sm:size-24"
+        class="size-16 ring-4 ring-bg sm:size-24"
         data-testid="profile-avatar"
       />
+      <span
+        class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-full bg-black/45 opacity-0 transition-tm group-hover:opacity-100 group-focus-visible:opacity-100"
+        aria-hidden="true"
+      >
+        <Pencil class="size-5 text-white sm:size-6" />
+      </span>
     </button>
     <UserAvatar
       v-else
@@ -151,7 +157,7 @@
   import { computed, ref } from 'vue'
   import { useI18n } from 'vue-i18n'
   import { RouterLink } from 'vue-router'
-  import { CalendarDays, Flame } from '@lucide/vue'
+  import { CalendarDays, Flame, Pencil } from '@lucide/vue'
 
   import type { ProfileSummary } from '@shared/api'
   import { useDialogsStore } from '@/entities/dialogs'
