@@ -18,12 +18,7 @@
         <slot name="before" />
       </div>
 
-      <div
-        v-if="$slots.sticky"
-        ref="stickyRef"
-        class="virtual-scrollable-sticky"
-        :style="stickyStyle"
-      >
+      <div v-if="$slots.sticky" ref="stickyRef" class="virtual-scrollable-sticky">
         <slot name="sticky" />
       </div>
 
@@ -86,36 +81,23 @@
     items: T[]
     estimateSize?: number
     itemHeight?: number
-    overscan?: number
     getItemKey?: (index: number) => string | number
     loading?: boolean
-    bordered?: boolean
-    hideThumb?: boolean
-    loadMoreOffset?: number
     paddingTop?: number
     paddingBottom?: number
-    stickyOffset?: string
   }
 
   const props = withDefaults(defineProps<Props>(), {
     estimateSize: 64,
     itemHeight: undefined,
-    overscan: 5,
     getItemKey: (index: number) => index,
     loading: false,
-    bordered: false,
-    hideThumb: false,
-    loadMoreOffset: 300,
     paddingTop: 0,
-    paddingBottom: 0,
-    stickyOffset: '0px'
+    paddingBottom: 0
   })
 
   const emit = defineEmits<{
     scroll: [event: Event]
-    scrolledTop: []
-    scrolledBottom: []
-    loadMore: []
   }>()
 
   const beforeHeight = ref(0)
@@ -141,7 +123,6 @@
 
   let beforeResizeObserver: ResizeObserver | null = null
   let stickyResizeObserver: ResizeObserver | null = null
-  let lastLoadMoreItemsCount = -1
   let scrollDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
   function updateBeforeHeight() {
@@ -162,18 +143,14 @@
     }
   }
 
-  const scrollable = useScrollable(containerRef, {
-    direction: 'vertical',
-    onScrollOffset: props.loadMoreOffset,
-    onScrolledTop: () => emit('scrolledTop')
-  })
+  const scrollable = useScrollable(containerRef, { direction: 'vertical' })
 
   const virtualizer = useVirtualizer(
     computed(() => ({
       count: props.items.length,
       getScrollElement: () => containerRef.value,
       estimateSize: () => props.itemHeight ?? props.estimateSize,
-      overscan: props.overscan,
+      overscan: 5,
       getItemKey: (index: number) => props.getItemKey(index),
       scrollMargin: preListHeight.value
     }))
@@ -193,32 +170,10 @@
       scrollable.updateThumb()
     }, 16)
 
-    const target = e.target as HTMLElement
-    const distanceToBottom = target.scrollHeight - target.scrollTop - target.clientHeight
-
-    if (
-      props.items.length > 0 &&
-      !props.loading &&
-      distanceToBottom <= props.loadMoreOffset &&
-      lastLoadMoreItemsCount !== props.items.length
-    ) {
-      lastLoadMoreItemsCount = props.items.length
-      emit('scrolledBottom')
-      emit('loadMore')
-    }
-
     emit('scroll', e)
   }
 
-  const wrapperClasses = computed(() => [
-    'scrollable-wrapper',
-    'scrollable-direction-y',
-    {
-      'scrollable-y-bordered': props.bordered,
-      'scrolled-start': props.bordered && scrollable.isScrolledToStart.value,
-      'scrolled-end': props.bordered && scrollable.isScrolledToEnd.value
-    }
-  ])
+  const wrapperClasses = ['scrollable-wrapper', 'scrollable-direction-y']
 
   const containerClasses = computed(() => [
     'scrollable',
@@ -229,15 +184,11 @@
     }
   ])
 
-  const showThumbVisible = computed(() => !props.hideThumb && scrollable.thumbSize.value > 0)
+  const showThumbVisible = computed(() => scrollable.thumbSize.value > 0)
 
   const thumbStyle = computed(() => ({
     height: `${scrollable.thumbSize.value}px`,
     transform: `translateY(${scrollable.thumbPosition.value}px)`
-  }))
-
-  const stickyStyle = computed(() => ({
-    top: props.stickyOffset
   }))
 
   provide(scrollableInjectionKey, scrollable)
@@ -259,11 +210,7 @@
 
   watch(
     () => props.items.length,
-    (newLength, oldLength) => {
-      if (newLength < oldLength || newLength === 0) {
-        lastLoadMoreItemsCount = -1
-      }
-
+    () => {
       nextTick(() => {
         virtualizer.value.measure()
         scrollable.updateThumb()
@@ -351,6 +298,7 @@
 <style scoped lang="scss">
   .virtual-scrollable-sticky {
     position: sticky;
+    top: 0;
     z-index: 10;
     background: color-mix(in oklab, var(--bg-color) 92%, transparent);
     backdrop-filter: blur(16px);
