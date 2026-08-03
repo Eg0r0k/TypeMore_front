@@ -18,10 +18,6 @@ import {
 export const useRootClass = () => {
   const add: string[] = []
 
-  // Exactly one scroll class: mobile gets the native scrollbar, everything
-  // else overlay when the platform can do it, custom otherwise. The old third
-  // condition (`USE_CUSTOM_SCROLL` = "neither of the first two") was inert in
-  // this position — a bare `else` is what it always meant.
   if (IS_MOBILE) {
     add.push('native-scroll')
   } else if (IS_OVERLAY_SCROLL_SUPPORTED) {

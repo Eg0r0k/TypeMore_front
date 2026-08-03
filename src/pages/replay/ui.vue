@@ -329,8 +329,7 @@
       mode: r.config.mode,
       language: meta.data.value?.lang ?? '',
       difficulty: r.config.difficulty,
-      // A quote's generation `length` is deliberately 0 (its targets are its
-      // own bytes) — the reconstructed text carries the honest word count.
+      // A quote's generation `length` is deliberately 0 — count the text itself.
       amount: summaryAmountOf({
         mode: r.config.mode,
         isQuote: isQuoteRun.value,

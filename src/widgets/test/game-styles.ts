@@ -27,9 +27,7 @@ export const SMOOTH_CARET_MS: Record<SmoothCaret, number> = {
 }
 
 export const WORDS_SHADOW_STYLES = `
-/* Selection off (anti-scrape layer 2, and plain UX: the text is a target to
-   type, not content to copy — a stray drag mid-run painting the field blue
-   reads as a glitch). -webkit- alongside: Safari still wants the prefix. */
+/* Selection off — anti-scrape layer 2; -webkit-: Safari still wants the prefix. */
 .game__words {
   display: flex;
   flex-wrap: wrap;

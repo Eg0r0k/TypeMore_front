@@ -1,14 +1,8 @@
 /**
- * `ResultSummary.amount` — the run's magnitude, ONE rule for the three
- * surfaces that render `TestResults` (the solo page, the match results, the
- * public replay): time mode counts the window's seconds, words mode counts
- * its configured target, and a QUOTE counts the typed text's own words.
- *
- * A quote has no configured amount, and each surface used to substitute its
- * own number — the solo page the text's length, the match the host's drawn
- * `wordCount`, the replay the generation `length` a quote deliberately stores
- * as 0 — so the same run reported three different magnitudes, one of them
- * always zero.
+ * `ResultSummary.amount`, one rule for the three surfaces rendering
+ * `TestResults`: time counts the window's seconds, words its configured
+ * target, and a quote the typed text's own words — a quote has no configured
+ * amount, only the text it is.
  */
 export function summaryAmountOf(input: {
   readonly mode: string

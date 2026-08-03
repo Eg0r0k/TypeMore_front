@@ -68,8 +68,7 @@ export function useMatchResults() {
       mode: settings?.mode ?? 'time',
       language: settings?.lang ?? '',
       difficulty: freemods?.difficulty ?? 'normal',
-      // For a quote match `wordCount` IS the drawn text's length (protocol §5),
-      // so the quote branch and the words branch happen to read the same field.
+      // For a quote match `wordCount` IS the drawn text's length (protocol §5).
       amount: summaryAmountOf({
         mode: settings?.mode ?? 'time',
         isQuote: settings?.mode === 'quote',
