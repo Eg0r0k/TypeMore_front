@@ -251,6 +251,37 @@ describe('GameField caret styles', () => {
     }
   )
 
+  it('blinks while the run has not started, and stops once it is running', async () => {
+    const view = makeView()
+    view.snapshot = { ...view.snapshot, phase: 'idle' }
+    const wrapper = mount(Test, {
+      props: { store: view, shadowMode: 'open' as const },
+      attachTo: document.body
+    })
+    await flushPromises()
+
+    const caret = () => shadowOf(wrapper)?.querySelector('.game__caret')
+    expect(caret()?.classList.contains('game__caret--blink')).toBe(true)
+
+    view.snapshot = { ...view.snapshot, phase: 'running' }
+    await nextTick()
+    expect(caret()?.classList.contains('game__caret--blink')).toBe(false)
+
+    wrapper.unmount()
+  })
+
+  it('never blinks on a view-only field — a replay is not a run waiting to start', async () => {
+    const view = makeView()
+    view.snapshot = { ...view.snapshot, phase: 'idle' }
+    const wrapper = mountField(view)
+    await flushPromises()
+
+    const caret = shadowOf(wrapper)?.querySelector('.game__caret')
+    expect(caret?.classList.contains('game__caret--blink')).toBe(false)
+
+    wrapper.unmount()
+  })
+
   it('renders no caret element at all when the style is off', async () => {
     const wrapper = mountWithCaret({ caretStyle: 'off' })
     await flushPromises()

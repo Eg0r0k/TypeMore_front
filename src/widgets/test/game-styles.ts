@@ -57,6 +57,11 @@ export const WORDS_SHADOW_STYLES = `
   transition: transform var(--tm-caret-ms, 120ms) ease;
   will-change: transform;
 }
+/* Idle blink (run not started). Only the 50% frame is defined, so the 0%/100%
+   frames fall back to each caret style's own base opacity. */
+@keyframes tm-caret-blink { 50% { opacity: 0; } }
+.game__caret--blink { animation: tm-caret-blink 1.1s ease-in-out infinite; }
+
 /* Block: fills the character cell; translucent so the glyph under it stays legible. */
 .game__caret--block {
   width: max(var(--tm-caret-w, 2px), 2px);

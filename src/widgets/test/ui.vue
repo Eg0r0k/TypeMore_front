@@ -41,7 +41,7 @@
         <div
           v-if="caretVisible && caretStyle !== 'off'"
           class="game__caret"
-          :class="`game__caret--${caretStyle}`"
+          :class="[`game__caret--${caretStyle}`, { 'game__caret--blink': caretBlinking }]"
           :style="caretBoxStyle"
         />
         <div
@@ -238,6 +238,7 @@
     update: updateCaret,
     invalidate: invalidateCaret
   } = useCaret(wordsRef, caretIndexRef)
+  const caretBlinking = computed(() => !props.viewOnly && store.snapshot.phase === 'idle')
   // Ghost carets: a viewOnly field (someone else's replay) never renders them.
   const ghostList = computed<readonly TestGhostCaret[]>(() =>
     props.viewOnly ? [] : (props.ghosts ?? [])
