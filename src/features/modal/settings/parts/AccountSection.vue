@@ -66,6 +66,7 @@
     useUpdateSettingsMutation,
     type SettingsInput
   } from '@shared/api'
+  import { gatedBy } from '@shared/lib/helpers/gated-query'
   import { useAuthStore } from '@/entities/auth'
   import { Switch } from '@/shared/ui/switch'
   import { Typography } from '@/shared/ui/typography'
@@ -90,11 +91,6 @@
   const { t } = useI18n()
   const authStore = useAuthStore()
 
-  /** Options + a gate, shaped the way /profile gates its queries. */
-  const gatedBy = <T extends object>(options: T, on: boolean): T & { enabled: boolean } => ({
-    ...options,
-    enabled: on
-  })
   const me = useQuery(computed(() => gatedBy(meQueryOptions(), authStore.isAuth)))
   const mutation = useUpdateSettingsMutation()
 

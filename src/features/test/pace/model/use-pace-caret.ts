@@ -38,6 +38,7 @@ import { useAuthStore } from '@/entities/auth'
 import { useConfigStore } from '@/entities/config'
 import type { useGameStore } from '@entities/game'
 import { profilePBsQueryOptions, profileSummaryQueryOptions, runsQueryOptions } from '@shared/api'
+import { gatedBy } from '@shared/lib/helpers/gated-query'
 import { ConfigModes } from '@/shared/constants/type'
 
 export interface PaceCaretPosition {
@@ -104,13 +105,6 @@ export function usePaceCaret(opts: {
   const wantsProfile = computed(
     () => auth.isAuth && (mode.value === 'pb' || mode.value === 'last' || mode.value === 'avg')
   )
-
-  // Generic spread keeps the options' exact (const-keyed) type — an inline
-  // object literal widens the queryKey and the overloads stop matching.
-  const gatedBy = <T extends object>(options: T, enabled: boolean): T & { enabled: boolean } => ({
-    ...options,
-    enabled
-  })
 
   // Profile-backed sources, fetched only when their mode is actually selected
   // (and never for a guest — those modes are not offered to one).

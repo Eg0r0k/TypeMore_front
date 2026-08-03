@@ -95,6 +95,7 @@
     quoteByIdQueryOptions,
     quoteIdOfBucketKey
   } from '@shared/api'
+  import { gatedBy } from '@shared/lib/helpers/gated-query'
   import {
     BoardRail,
     BoardView,
@@ -137,16 +138,6 @@
   const quoteId = computed<string | null>(() =>
     typeof route.query.bucket === 'string' ? quoteIdOfBucketKey(route.query.bucket) : null
   )
-
-  /**
-   * Attach `enabled` while keeping the options type INTACT — a literal spread
-   * collapses the `queryOptions()` intersection and vue-query's overloads
-   * reject the result (same note as the replay page's `gatedBy`).
-   */
-  const gatedBy = <T extends object>(options: T, enabled: boolean): T & { enabled: boolean } => ({
-    ...options,
-    enabled
-  })
 
   // Resolved for the RAIL (which language row a quote board lights up); the
   // header resolves the same id through the same cache entry for its text.

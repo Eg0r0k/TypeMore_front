@@ -1,6 +1,7 @@
 import { computed, ref, type ComputedRef, type Ref } from 'vue'
 import { refDebounced } from '@vueuse/core'
 import { useQuery } from '@tanstack/vue-query'
+import { gatedBy } from '@shared/lib/helpers/gated-query'
 
 import {
   isApiError,
@@ -62,15 +63,6 @@ export function usePlayerSearch(): PlayerSearch {
   // asked. Reading the raw one here means the hint appears as the player
   // types rather than a quarter-second after they stop.
   const askable = computed(() => isSearchable(debounced.value))
-
-  // Spreading a `queryOptions()` result inline loses the branded key type and
-  // stops matching `useQuery`'s overloads; adding the flag through a generic
-  // keeps it. Same shape as `gatedBy` in the replay-source composable, which
-  // gates the same way for the same reason.
-  const gatedBy = <T extends object>(options: T, enabled: boolean): T & { enabled: boolean } => ({
-    ...options,
-    enabled
-  })
 
   const search = useQuery(
     computed(() => gatedBy(userSearchQueryOptions(debounced.value), askable.value))

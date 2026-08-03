@@ -1,5 +1,6 @@
 import { computed, type ComputedRef, type Ref } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
+import { gatedBy } from '@shared/lib/helpers/gated-query'
 import {
   dictionaryBodyByHashQueryOptions,
   quoteByIdQueryOptions,
@@ -42,11 +43,6 @@ export interface ReplaySource {
  * rate-limit token (the two replay routes share one bucket).
  */
 export function useReplaySource(runId: Ref<string>): ReplaySource {
-  const gatedBy = <T extends object>(options: T, enabled: boolean): T & { enabled: boolean } => ({
-    ...options,
-    enabled
-  })
-
   const meta = useQuery(computed(() => runReplayQueryOptions(runId.value)))
   const runIsReal = computed(() => meta.isSuccess.value)
 
