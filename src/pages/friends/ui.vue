@@ -64,7 +64,6 @@
     // across the full 1440.
     width: 100%;
     min-width: 0;
-    max-width: 60rem;
     margin-inline: auto;
     padding-block: 1.5rem;
   }

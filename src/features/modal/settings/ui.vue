@@ -222,7 +222,7 @@
     border-bottom: 1px solid var(--sub-color);
 
     @media (width >= 768px) {
-      padding: 20px 14px;
+      padding: 16px 14px 20px 14px;
       border-right: 1px solid var(--sub-color);
       border-bottom: 0;
     }
