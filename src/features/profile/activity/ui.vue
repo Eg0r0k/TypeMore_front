@@ -32,7 +32,7 @@
          (an over-constrained auto margin resolves to 0, so the left edge is
          never clipped inside the scroller). -->
     <TooltipProvider v-else :delay-duration="150">
-      <div class="overflow-x-auto pb-1">
+      <div class="overflow-x-auto py-1">
         <div class="mx-auto flex w-max gap-1.5">
           <!-- Weekday rail, Monday first, aligned cell-for-cell with the grid. -->
           <div
