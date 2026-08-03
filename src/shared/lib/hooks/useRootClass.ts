@@ -5,9 +5,7 @@ import {
   IS_FIREFOX,
   IS_MOBILE,
   IS_OVERLAY_SCROLL_SUPPORTED,
-  IS_SAFARI,
-  USE_CUSTOM_SCROLL,
-  USE_NATIVE_SCROLL
+  IS_SAFARI
 } from '@/shared/lib/helpers/environment'
 
 /**
@@ -20,11 +18,15 @@ import {
 export const useRootClass = () => {
   const add: string[] = []
 
-  if (USE_NATIVE_SCROLL) {
+  // Exactly one scroll class: mobile gets the native scrollbar, everything
+  // else overlay when the platform can do it, custom otherwise. The old third
+  // condition (`USE_CUSTOM_SCROLL` = "neither of the first two") was inert in
+  // this position — a bare `else` is what it always meant.
+  if (IS_MOBILE) {
     add.push('native-scroll')
   } else if (IS_OVERLAY_SCROLL_SUPPORTED) {
     add.push('overlay-scroll')
-  } else if (USE_CUSTOM_SCROLL) {
+  } else {
     add.push('custom-scroll')
   }
 
