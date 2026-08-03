@@ -84,7 +84,7 @@ import {
 import { useConfigStore } from '@/entities/config/model/store'
 import { type GameTimer, type TimerWorkerLike, useGameTimer } from '@shared/lib/hooks/useGameTimer'
 
-import { DEFAULT_GHOST_DELAY_MS, GhostDriver } from './ghost-driver'
+import { DEFAULT_GHOST_DELAY_MS, GhostDriver, caretAnchorOf } from './ghost-driver'
 import { createMatchTransport } from './create-transport'
 import {
   freemodsConfig,
@@ -510,10 +510,7 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
   function caretOf(rec: PeerRecord): GhostCaretAnchor {
     const snapshot = rec.driver?.view.snapshot
     if (snapshot === undefined) return { wordIndex: 0, charIndex: 0 }
-    const wordIndex = snapshot.wordIndex
-    const target = (matchWords[wordIndex] ?? '').length
-    const typed = (snapshot.input[wordIndex] ?? '').length
-    return { wordIndex, charIndex: typed < target ? typed : target }
+    return caretAnchorOf(matchWords, snapshot)
   }
 
   /** GameView + input sink for `<GameField>`. Input is gated to the running phase. */

@@ -48,6 +48,24 @@ import { liveMeasureAt } from '@shared/lib/helpers/live-window'
 
 export const DEFAULT_GHOST_DELAY_MS = 250
 
+/**
+ * A ghost's caret in TARGET coordinates: the word it is on plus the filled
+ * target positions inside it. Extra (over-typed) characters move a caret on
+ * the typist's OWN screen but occupy no target position, so `charIndex` is
+ * clamped to the word's length — without the clamp an over-typing ghost
+ * renders past the word's end, ahead of where it actually is. The ONE rule
+ * for every relayed caret: the multiplayer rail and the record ghost alike.
+ */
+export function caretAnchorOf(
+  words: readonly string[],
+  snapshot: GameState
+): { readonly wordIndex: number; readonly charIndex: number } {
+  const wordIndex = snapshot.wordIndex
+  const target = (words[wordIndex] ?? '').length
+  const typed = (snapshot.input[wordIndex] ?? '').length
+  return { wordIndex, charIndex: typed < target ? typed : target }
+}
+
 export interface GhostDriverOptions {
   /** Fixed display delay (jitter buffer), ms of virtual time. Default 250. */
   readonly delayMs?: number

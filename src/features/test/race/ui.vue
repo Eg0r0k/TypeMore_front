@@ -11,7 +11,7 @@
   import { useI18n } from 'vue-i18n'
 
   import { useGameStore } from '@entities/game'
-  import { GhostDriver } from '@entities/match'
+  import { GhostDriver, caretAnchorOf } from '@entities/match'
   import { useRaceStore, type RaceConfigSnapshot } from '@entities/race'
   import { useReplaySource } from '@/features/replay-view'
   import { durationSeconds } from '@/shared/lib/helpers/numbers'
@@ -53,9 +53,9 @@
 
   /**
    * Publish the ghost's caret to the store (the home field renders it). The
-   * anchor is target positions from the ghost's own state — wordIndex plus the
-   * typed length inside it — mirroring the multiplayer rule: never measure the
-   * raw typed string. A finished ghost leaves the track.
+   * anchor comes from `caretAnchorOf` — the SAME clamp-to-target rule the
+   * multiplayer rail uses, not a hand-copied mirror of it. A finished ghost
+   * leaves the track.
    */
   let lastWord = -1
   let lastChar = -1
@@ -68,9 +68,7 @@
       }
       return
     }
-    const snapshot = ghost.view.snapshot
-    const wordIndex = snapshot.wordIndex
-    const charIndex = snapshot.input[wordIndex]?.length ?? 0
+    const { wordIndex, charIndex } = caretAnchorOf(ghost.view.words, ghost.view.snapshot)
     if (wordIndex === lastWord && charIndex === lastChar) return
     lastWord = wordIndex
     lastChar = charIndex

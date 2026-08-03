@@ -1,4 +1,4 @@
-export { DEFAULT_GHOST_DELAY_MS, GhostDriver } from './model/ghost-driver'
+export { DEFAULT_GHOST_DELAY_MS, GhostDriver, caretAnchorOf } from './model/ghost-driver'
 export type { GhostDriverOptions } from './model/ghost-driver'
 export { DemoFeed, synthesizeBotLog } from './model/demo-feed'
 export type { BotLogOptions, DemoFeedOptions } from './model/demo-feed'
