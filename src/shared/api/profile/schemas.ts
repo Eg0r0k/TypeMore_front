@@ -15,6 +15,17 @@ export type ProfileMetricStats = v.InferOutput<typeof ProfileMetricStatsSchema>
 
 export const ProfileSummarySchema = v.object({
   displayName: v.string(),
+  /**
+   * The account's picture, when it has one.
+   *
+   * NOT SERVED YET — no backend route returns an avatar today. It is modelled
+   * here, and modelled as `nullish`, so that the day it appears the client
+   * needs no new plumbing: the header already hands this to `UserAvatar`, and
+   * an absent field parses to `undefined`, which renders exactly what a missing
+   * picture renders now (the player's initials). If the server names it
+   * something other than `avatarUrl`, this line is the only place to change.
+   */
+  avatarUrl: v.nullish(v.string()),
   joined: v.string(),
   testsStarted: v.number(),
   testsCompleted: v.number(),

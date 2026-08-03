@@ -17,7 +17,14 @@ import { RunStatusSchema } from '../runs/schemas'
 export const PublicProfileSchema = v.object({
   name: v.string(),
   joined: v.string(),
-  public: v.boolean()
+  public: v.boolean(),
+  /**
+   * The picture, when the server grows one — see the note on
+   * `ProfileSummarySchema.avatarUrl`. Modelled on the HEADER too because this
+   * is the one payload a CLOSED profile still answers with, and a closed
+   * profile's page shows a name and a face and nothing else.
+   */
+  avatarUrl: v.nullish(v.string())
 })
 export type PublicProfile = v.InferOutput<typeof PublicProfileSchema>
 

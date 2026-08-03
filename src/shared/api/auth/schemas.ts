@@ -8,6 +8,12 @@ import * as v from 'valibot'
 export const UserSchema = v.object({
   id: v.string(),
   displayName: v.string(),
+  /**
+   * The account's picture. NOT SERVED YET — see the note on
+   * `ProfileSummarySchema.avatarUrl`; `nullish` so today's `/me` parses
+   * unchanged and the header renders initials until the field appears.
+   */
+  avatarUrl: v.nullish(v.string()),
   createdAt: v.string(),
   /**
    * True while the account is under an active ban.
