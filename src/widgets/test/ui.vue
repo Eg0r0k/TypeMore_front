@@ -13,7 +13,7 @@
       @composition="composingText = $event"
     />
     <div v-if="showFocusHint" class="game__focus-hint" aria-hidden="true">
-      press any key to type
+      {{ t('game.focusHint') }}
     </div>
     <div ref="viewportRef" class="game__viewport w-full">
       <div ref="hostRef" class="game__host"></div>
@@ -103,6 +103,7 @@
 
 <script lang="ts" setup>
   import { computed, nextTick, onMounted, ref, watch } from 'vue'
+  import { useI18n } from 'vue-i18n'
   import { useEventListener, useResizeObserver } from '@vueuse/core'
 
   import { TestWord } from '@/features/test/word'
@@ -172,6 +173,8 @@
      */
     canarySeed?: number | null
   }
+  const { t } = useI18n()
+
   const props = withDefaults(defineProps<Props>(), {
     isRightToLeft: false,
     tape: false,

@@ -21,6 +21,11 @@ import type { GameView } from '@entities/game'
 import { type TestGhostCaret, useGhostCarets } from '@shared/lib/hooks/useGhostCarets'
 import { asMs, asSeq } from '@typemore/core'
 import { ref } from 'vue'
+import { config } from '@vue/test-utils'
+import { createI18n } from 'vue-i18n'
+import en from '@/app/i18n/locales/en'
+
+config.global.plugins.push(createI18n({ legacy: false, locale: 'en', messages: { en } }))
 
 const rect = (left: number, top: number): DOMRect =>
   ({

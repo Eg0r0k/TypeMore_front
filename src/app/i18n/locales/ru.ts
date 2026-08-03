@@ -15,6 +15,7 @@ export default {
     flashlight: 'фонарик',
     minSpeed: 'мин. скорость',
     minSpeedOff: 'выкл',
+    focusHint: 'нажмите любую клавишу, чтобы печатать',
     textMods: 'текстовые моды',
     testSettings: 'настройки теста',
     testSettingsHint: 'Выберите, из чего собран забег: моды текста, режим и его объём.',

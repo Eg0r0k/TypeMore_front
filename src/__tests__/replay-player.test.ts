@@ -38,6 +38,11 @@ import {
 } from '@typemore/core'
 
 import { withTelemetry, withoutSeq } from './fixtures/telemetry-twin'
+import { config } from '@vue/test-utils'
+import { createI18n } from 'vue-i18n'
+import en from '@/app/i18n/locales/en'
+
+config.global.plugins.push(createI18n({ legacy: false, locale: 'en', messages: { en } }))
 
 const WORDS = ['hello', 'world'] as const
 

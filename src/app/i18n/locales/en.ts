@@ -16,6 +16,7 @@ export default {
     flashlight: 'flashlight',
     minSpeed: 'min speed',
     minSpeedOff: 'off',
+    focusHint: 'press any key to type',
     /** Accessible name of the settings bar's text-mod toggle group. */
     textMods: 'text modifiers',
     /**

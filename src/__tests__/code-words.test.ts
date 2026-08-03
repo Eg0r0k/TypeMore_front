@@ -18,6 +18,11 @@ import { TestWord } from '@/features/test/word'
 import { TestInput } from '@/features/test/input'
 import { wordBreaksLine, wordsHaveNewline, wordsHaveTab, type GameSession } from '@entities/game'
 import { type GameState, asMs, asSeq } from '@typemore/core'
+import { config } from '@vue/test-utils'
+import { createI18n } from 'vue-i18n'
+import en from '@/app/i18n/locales/en'
+
+config.global.plugins.push(createI18n({ legacy: false, locale: 'en', messages: { en } }))
 
 const state = (over: Partial<GameState> = {}): GameState => ({
   phase: 'running',

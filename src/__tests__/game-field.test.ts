@@ -12,6 +12,11 @@ import { Test } from '@/widgets/test'
 import type { GameView } from '@entities/game'
 import { type GameState, asMs, asSeq } from '@typemore/core'
 import { SMOOTH_CARET_MS } from '@/widgets/test/game-styles'
+import { config } from '@vue/test-utils'
+import { createI18n } from 'vue-i18n'
+import en from '@/app/i18n/locales/en'
+
+config.global.plugins.push(createI18n({ legacy: false, locale: 'en', messages: { en } }))
 
 interface MutableView {
   snapshot: GameState

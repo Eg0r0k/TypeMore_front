@@ -39,6 +39,11 @@ vi.mock('@/widgets/test', () => ({
 }))
 
 import { RoomMatch } from '@/features/room/match'
+import { config } from '@vue/test-utils'
+import { createI18n } from 'vue-i18n'
+import en from '@/app/i18n/locales/en'
+
+config.global.plugins.push(createI18n({ legacy: false, locale: 'en', messages: { en } }))
 
 const selfView = () =>
   reactive({
