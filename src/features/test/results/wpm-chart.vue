@@ -65,16 +65,21 @@
       </g>
 
       <!--
-        `raw` is the INSTANTANEOUS series — how fast each single second was — so
-        filling it down to the axis turns it into the run's own terrain. It is
-        also what makes the `wpm` line legible: a 2px accent line reads far
-        better over a soft mass than over an empty grid, and that line is what
-        this screen is opened for. The fill is the raw series' own colour, so
-        nothing here is coloured as something it is not.
+        `burst` is the INSTANTANEOUS series — how fast each single second was —
+        so filling it down to the axis turns it into the run's own terrain. It
+        is also what makes the two cumulative lines legible: a 2px accent line
+        reads far better over a soft mass than over an empty grid, and those
+        lines are what this screen is opened for. The fill is the burst series'
+        own colour, so nothing here is coloured as something it is not.
       -->
-      <path v-if="rawArea" class="wpm-chart__area wpm-chart__area--raw" :d="rawArea" />
+      <path v-if="burstArea" class="wpm-chart__area wpm-chart__area--burst" :d="burstArea" />
 
-      <!-- series -->
+      <!--
+        series, painted bottom to top in order of what the screen is read for:
+        the burst terrain, the cumulative raw line over it, and the cumulative
+        net wpm line last, because that is the number the run is judged by.
+      -->
+      <path class="wpm-chart__line wpm-chart__line--burst" :d="burstPath" />
       <path class="wpm-chart__line wpm-chart__line--raw" :d="rawPath" />
       <path class="wpm-chart__line wpm-chart__line--wpm" :d="wpmPath" />
       <g class="wpm-chart__errors">
@@ -96,6 +101,7 @@
         <line :x1="hoveredPoint.x" :x2="hoveredPoint.x" :y1="PAD.top" :y2="HEIGHT - PAD.bottom" />
         <circle class="wpm-chart__dot--wpm" :cx="hoveredPoint.x" :cy="hoveredPoint.wpmY" r="3" />
         <circle class="wpm-chart__dot--raw" :cx="hoveredPoint.x" :cy="hoveredPoint.rawY" r="3" />
+        <circle class="wpm-chart__dot--burst" :cx="hoveredPoint.x" :cy="hoveredPoint.burstY" r="3" />
       </g>
     </svg>
 
@@ -111,13 +117,17 @@
       </span>
       <span>
         <i class="wpm-chart__swatch wpm-chart__swatch--raw" />
-        burst {{ hoveredPoint.raw }}
+        raw {{ hoveredPoint.raw }}
+      </span>
+      <span>
+        <i class="wpm-chart__swatch wpm-chart__swatch--burst" />
+        burst {{ hoveredPoint.burst }}
       </span>
       <!--
-        The one line that stops this number being read as an average. It is the
-        speed of THIS second alone, so it sits far above and far below the run's
-        wpm and is meant to: the summary's `raw` is the whole run divided by its
-        own duration, and the two are different questions.
+        The one line that stops the figure above being read as an average. It is
+        the speed of THIS second alone, so it sits far above and far below the
+        two cumulative lines and is meant to — those are the run so far over the
+        run so far, and each of them lands exactly on its own summary figure.
       -->
       <span class="wpm-chart__tooltip-hint">{{ t('results.chart.burstHint') }}</span>
       <span v-if="hoveredPoint.errors > 0">
@@ -133,6 +143,10 @@
       </span>
       <span>
         <i class="wpm-chart__swatch wpm-chart__swatch--raw" />
+        raw
+      </span>
+      <span>
+        <i class="wpm-chart__swatch wpm-chart__swatch--burst" />
         burst
       </span>
       <span>
@@ -153,28 +167,28 @@
   /**
    * WPM-over-time chart for the results screen. Pure view: it charts a
    * `TimelinePoint[]` (itself a pure function of the log — see stats.ts) so a
-   * replay of the same log draws the same graph. Two line series — the
-   * cumulative net wpm and the instantaneous per-second speed, the latter
-   * filled down to the axis — plus error markers on a secondary axis and the
-   * run's average.
+   * replay of the same log draws the same graph. THREE line series, matching
+   * monkeytype's chart series for series — the cumulative net wpm, the
+   * cumulative raw, and the instantaneous per-second speed, the last filled
+   * down to the axis — plus error markers on a secondary axis and the run's
+   * average.
    *
-   * WHY THE SECOND SERIES IS LABELLED `burst`, over a field still called `raw`.
-   * It is the speed of one second on its own: keystrokes inside that bucket
-   * divided by that bucket. The summary's `raw` is a different number — every
-   * raw character of the run over the run's whole duration — so the line was
-   * never going to land on it, and calling both `raw` had players reading the
-   * gap as a bug. monkeytype draws THREE series and names this exact
-   * computation `burst` (`getBurstHistory`: `insertText` events per interval,
-   * divided by the interval); their `raw` is a cumulative running average that
-   * does land on its summary number, like our wpm line does.
+   * WHAT THE THREE ARE, because two of them look alike and are not. `wpm` and
+   * `raw` are CUMULATIVE: the run so far over the run so far, so each of them
+   * lands exactly on its own figure in the summary above (`stats.ts` asserts
+   * that with `===`, not a tolerance). `burst` is the speed of ONE second on
+   * its own and lands on nothing — it is the terrain the other two are read
+   * against, and it is meant to swing.
    *
-   * So this rename makes the label honest, and leaves the chart one series
-   * short of theirs: there is no cumulative `raw` line here yet. Adding one
-   * means touching `timelineFrom`, which lives in the goja bundle — it is
-   * queued for the next core release rather than paid for on its own (one
-   * vendoring, one deploy order, one revalidate). The field on `TimelinePoint`
-   * keeps its name until then, for the same reason: renaming it is a core
-   * change, and this is not.
+   * The middle line is the one this release added. Until now the chart drew the
+   * per-second series and CALLED it raw, which meant the label named a figure
+   * in the header that the line was never going to touch, and players read the
+   * gap as a bug. The rename came first, on its own, because it cost nothing;
+   * the line the name was freed up for needed `timelineFrom` to change, which
+   * meant a core release with a re-vendored bundle and a revalidate pass behind
+   * it. `TimelinePoint.raw` now means the cumulative series and `burst` is the
+   * per-second one — the same field name, a different number, which is the one
+   * trap in reading this component against an older checkout.
    *
    * The fill is there for the wpm line's sake: it is the number the screen is
    * read for, and a 2px accent line over an empty grid is a thinner mark than it
@@ -224,7 +238,7 @@
   }
 
   const wpmMax = computed(() =>
-    niceMax(Math.max(0, ...points.value.flatMap((p) => [p.wpm, p.raw])), 20)
+    niceMax(Math.max(0, ...points.value.flatMap((p) => [p.wpm, p.raw, p.burst])), 20)
   )
   const errorMax = computed(() => Math.max(1, ...points.value.map((p) => p.errors)))
 
@@ -305,6 +319,12 @@
       yOf
     )
   )
+  const burstPath = computed(() =>
+    curve(
+      points.value.map((point) => point.burst),
+      yOf
+    )
+  )
   const rawPath = computed(() =>
     curve(
       points.value.map((point) => point.raw),
@@ -319,11 +339,11 @@
    * a `Z` back to its own coordinate would be an invisible zero-width sliver,
    * and the empty string is what keeps the element out of the DOM entirely.
    */
-  const rawArea = computed(() => {
+  const burstArea = computed(() => {
     if (count.value < 2) return ''
     const right = xAt(count.value - 1).toFixed(2)
     const left = xAt(0).toFixed(2)
-    return `${rawPath.value} L ${right} ${baselineY} L ${left} ${baselineY} Z`
+    return `${burstPath.value} L ${right} ${baselineY} L ${left} ${baselineY} Z`
   })
 
   /**
@@ -357,10 +377,12 @@
       second: point.second,
       wpm: Math.round(point.wpm),
       raw: Math.round(point.raw),
+      burst: Math.round(point.burst),
       errors: point.errors,
       x: xAt(index),
       wpmY: yOf(point.wpm),
-      rawY: yOf(point.raw)
+      rawY: yOf(point.raw),
+      burstY: yOf(point.burst)
     }
   })
 
@@ -420,7 +442,7 @@
     &__area {
       stroke: none;
 
-      &--raw {
+      &--burst {
         fill: var(--sub-color);
         fill-opacity: 0.17;
       }
@@ -449,7 +471,21 @@
         stroke-width: 2;
       }
 
+      /*
+       * The cumulative raw line sits between the other two in every sense: it
+       * is a cumulative line like `wpm`, so it gets `wpm`'s dashed treatment
+       * rather than a fourth colour, and it is not the number the run is judged
+       * by, so it is thinner and dashed. Three solid weights would have been
+       * three things competing to be read first.
+       */
       &--raw {
+        stroke: var(--main-color);
+        stroke-width: 1.25;
+        stroke-dasharray: 5 4;
+        opacity: 0.65;
+      }
+
+      &--burst {
         stroke: var(--sub-color);
         stroke-width: 1.5;
       }
@@ -472,6 +508,11 @@
       }
 
       &--raw {
+        fill: var(--main-color);
+        fill-opacity: 0.65;
+      }
+
+      &--burst {
         fill: var(--sub-color);
       }
     }
@@ -525,6 +566,11 @@
       }
 
       &--raw {
+        background-color: var(--main-color);
+        opacity: 0.65;
+      }
+
+      &--burst {
         background-color: var(--sub-color);
       }
 

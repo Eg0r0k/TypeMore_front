@@ -113,8 +113,8 @@ describe('wpmOverTime', () => {
 
     expect(points).toHaveLength(3)
     // 2 keys over the second before the finish — not 2 keys over 10ms (×2400).
-    expect(points[2].raw).toBeCloseTo(24, 10)
-    expect(Math.max(...points.map((p) => p.raw))).toBeLessThan(100)
+    expect(points[2].burst).toBeCloseTo(24, 10)
+    expect(Math.max(...points.map((p) => p.burst))).toBeLessThan(100)
   })
 })
 
@@ -232,7 +232,7 @@ describe('metrics consistency — a pure function of the per-second buckets', ()
       insertEvent(8, 1500, 'a')
     ]
     const metrics = computeMetrics(handCtx, handLog, asMs(2000))
-    expect(wpmOverTime(handCtx, handLog, asMs(2000)).map((p) => p.raw)).toEqual([24, 72])
+    expect(wpmOverTime(handCtx, handLog, asMs(2000)).map((p) => p.burst)).toEqual([24, 72])
     expect(metrics.consistency).toBe(consistencyOf([24, 72]))
     const cov = 0.5
     expect(metrics.consistency).toBeCloseTo(1 - Math.tanh(cov + cov ** 3 / 3 + cov ** 5 / 5), 15)
@@ -262,7 +262,7 @@ describe('metrics consistency — a pure function of the per-second buckets', ()
     // The shared fixture ends on the grid; the tail fixture ends inside a
     // bucket, so this pins both the whole-second and the trailing-window rule.
     expect(computeMetrics(ctx, log, endMs).consistency).toBe(
-      consistencyOf(wpmOverTime(ctx, log, endMs).map((p) => p.raw))
+      consistencyOf(wpmOverTime(ctx, log, endMs).map((p) => p.burst))
     )
     const tailCtx = ctxOf(['abcdef'])
     const tailLog: GameEvent[] = [
@@ -273,7 +273,7 @@ describe('metrics consistency — a pure function of the per-second buckets', ()
       insertEvent(5, 2005, 'e')
     ]
     expect(computeMetrics(tailCtx, tailLog, asMs(2010)).consistency).toBe(
-      consistencyOf(wpmOverTime(tailCtx, tailLog, asMs(2010)).map((p) => p.raw))
+      consistencyOf(wpmOverTime(tailCtx, tailLog, asMs(2010)).map((p) => p.burst))
     )
   })
 })

@@ -51,6 +51,7 @@ interface Analysis {
   }[]
   /** Timestamp of each committed word separator (one per word advance). */
   readonly commitTimes: readonly number[]
+  readonly commitWordIndex: readonly number[]
 }
 
 /**
@@ -66,6 +67,7 @@ function analyze(ctx: CoreContext, events: readonly GameEvent[]): Analysis {
   const wordLastT: (number | undefined)[] = []
   const keystrokes: { t: number; correct: boolean; wordIndex: number }[] = []
   const commitTimes: number[] = []
+  const commitWordIndex: number[] = []
 
   for (const event of sortEvents(events)) {
     state = settle(ctx, state, event.t)
@@ -90,7 +92,10 @@ function analyze(ctx: CoreContext, events: readonly GameEvent[]): Analysis {
     const result = reduce(ctx, state, event)
     if (result.isErr()) break
     state = result.value
-    for (let j = beforeIndex; j < state.wordIndex; j++) commitTimes.push(event.t)
+    for (let j = beforeIndex; j < state.wordIndex; j++) {
+      commitTimes.push(event.t)
+      commitWordIndex.push(j)
+    }
   }
 
   return {
@@ -100,7 +105,8 @@ function analyze(ctx: CoreContext, events: readonly GameEvent[]): Analysis {
     wordFirstT,
     wordLastT,
     keystrokes,
-    commitTimes
+    commitTimes,
+    commitWordIndex
   }
 }
 
@@ -248,33 +254,60 @@ function wpmOverTime(ctx: CoreContext, events: readonly GameEvent[], endMs: Ms):
   // then settles up: the word is worth all of itself plus its separator if it
   // came out right and nothing at all if it did not, so a word that goes wrong
   // takes its letters back exactly where that became true.
+  //
+  // The SECOND cumulative line, `raw`, is paid on the same machinery for a
+  // different quantity: every keystroke counts wherever it landed, right or
+  // wrong, and each commit settles the word to the number of characters its
+  // buffer actually holds plus the separator the run typed after it. That is
+  // `getChars` read forwards — `correct + incorrect + extra` for any word is
+  // just its buffer's length — which is what makes the last point land on
+  // `Metrics.raw` rather than merely near it.
   const credits: { t: number; chars: number }[] = []
+  const rawCredits: { t: number; chars: number }[] = []
   const paidPerWord: number[] = []
+  const paidRawPerWord: number[] = []
   for (const key of analysis.keystrokes) {
-    if (!key.correct) continue
     if (key.wordIndex < 0 || key.wordIndex >= ctx.words.length) continue
+    rawCredits.push({ t: key.t, chars: 1 })
+    paidRawPerWord[key.wordIndex] = (paidRawPerWord[key.wordIndex] ?? 0) + 1
+    if (!key.correct) continue
     credits.push({ t: key.t, chars: 1 })
     paidPerWord[key.wordIndex] = (paidPerWord[key.wordIndex] ?? 0) + 1
   }
+  // Each word settles at the LAST instant the caret advanced past it — which is
+  // not the same as "the nth commit is word n" once `free` mode and
+  // `freedomMode` let a backspace retreat into the previous word.
+  const settledAt = new Map<number, number>()
   for (let i = 0; i < analysis.commitTimes.length; i++) {
+    settledAt.set(analysis.commitWordIndex[i], analysis.commitTimes[i])
+  }
+  // Walked over the WORDS, in the three cases the final state has for them:
+  // committed, in hand, or entered-and-retreated-out-of (worth nothing, so the
+  // keystream's credit comes back off).
+  const activeIndex = analysis.finalState.wordIndex
+  const committed = Math.min(activeIndex, ctx.words.length)
+  for (let i = 0; i < ctx.words.length; i++) {
     const target = ctx.words[i] ?? ''
+    const typed = analysis.finalState.input[i] ?? ''
     let worth = 0
-    if ((analysis.finalState.input[i] ?? '') === target) {
-      worth = target.length
-      if (!endsLine(target) && !(finishedByCount && i === analysis.commitTimes.length - 1)) worth++
+    let rawWorth = 0
+    let at = end
+    if (i < committed) {
+      const earnsSeparator = !endsLine(target) && !(finishedByCount && i === committed - 1)
+      if (typed === target) {
+        worth = target.length
+        if (earnsSeparator) worth++
+      }
+      rawWorth = typed.length + (earnsSeparator ? 1 : 0)
+      at = settledAt.get(i) ?? end
+    } else if (i === activeIndex) {
+      worth = typed.length > 0 && target.startsWith(typed) ? typed.length : 0
+      rawWorth = typed.length
     }
     const settlement = worth - (paidPerWord[i] ?? 0)
-    if (settlement !== 0) credits.push({ t: analysis.commitTimes[i], chars: settlement })
-  }
-  // The word still in the buffer never commits, so it settles at the run's end
-  // instead, against the same all-or-nothing allowance `netCharsFor` gives it.
-  const activeIndex = analysis.finalState.wordIndex
-  if (activeIndex < ctx.words.length) {
-    const target = ctx.words[activeIndex] ?? ''
-    const buffer = analysis.finalState.input[activeIndex] ?? ''
-    const worth = buffer.length > 0 && target.startsWith(buffer) ? buffer.length : 0
-    const settlement = worth - (paidPerWord[activeIndex] ?? 0)
-    if (settlement !== 0) credits.push({ t: end, chars: settlement })
+    if (settlement !== 0) credits.push({ t: at, chars: settlement })
+    const rawSettlement = rawWorth - (paidRawPerWord[i] ?? 0)
+    if (rawSettlement !== 0) rawCredits.push({ t: at, chars: rawSettlement })
   }
   const points: TimelinePoint[] = []
   for (let s = 1; s <= seconds; s++) {
@@ -300,12 +333,19 @@ function wpmOverTime(ctx: CoreContext, events: readonly GameEvent[], endMs: Ms):
     }
     let netSoFar = 0
     for (const credit of credits) if (credit.t <= checkpoint) netSoFar += credit.chars
-    const elapsedMin = (checkpoint - startedAt) / 60000
+    let rawSoFar = 0
+    for (const credit of rawCredits) if (credit.t <= checkpoint) rawSoFar += credit.chars
+    // ONE expression for elapsed minutes, spelled as `metricsFrom` spells it
+    // (`durationSec / 60`), not as `x / 60000`. Two roundings against one differ
+    // in the last ulp for any duration that is not a whole number of seconds,
+    // and the cumulative lines are asserted against the summary with `===`.
+    const elapsedMin = Math.max(0, (checkpoint - startedAt) / 1000) / 60
     const rateMin = (checkpoint - rateStart) / 60000
     points.push({
       second: s,
       wpm: elapsedMin > 0 ? netSoFar / 5 / elapsedMin : 0,
-      raw: rateMin > 0 ? rawInWindow / 5 / rateMin : 0,
+      raw: elapsedMin > 0 ? rawSoFar / 5 / elapsedMin : 0,
+      burst: rateMin > 0 ? rawInWindow / 5 / rateMin : 0,
       errors: errorsInBucket
     })
   }

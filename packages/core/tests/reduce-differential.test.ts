@@ -310,9 +310,30 @@ describe('differential: the B2 reducer reproduces the pre-B2 reducer exactly', (
         expect(mineConsistency).toBeGreaterThanOrEqual(0)
         expect(mineConsistency).toBeLessThanOrEqual(1)
         expect(mineConsistency).toBe(
-          consistencyOf(wpmOverTime(ctx, events, endMs).map((p) => p.raw))
+          consistencyOf(wpmOverTime(ctx, events, endMs).map((p) => p.burst))
         )
-        expect(wpmOverTime(ctx, events, endMs)).toEqual(legacyWpmOverTime(ctx, events, endMs))
+        const timeline = wpmOverTime(ctx, events, endMs)
+        expect(timeline).toEqual(legacyWpmOverTime(ctx, events, endMs))
+
+        // (3b) THE ACCEPTANCE CRITERION of the three-series change, checked on
+        // every one of these logs rather than on a chosen few: both cumulative
+        // lines END on their own summary figure, and end on it EXACTLY.
+        //
+        // `toBe`, not `toBeCloseTo`. A tolerance here would hide the only bug
+        // this can have: the chart and the header are computed from the same
+        // credits over the same window, so they either agree bit for bit or
+        // someone has re-derived one of them a second way — which is precisely
+        // what `x / 60000` against `(x / 1000) / 60` was, silently wrong in the
+        // last ulp for every run that did not last a whole number of seconds.
+        //
+        // A log that produced no timeline (no start instant, or a zero-length
+        // window) is skipped rather than asserted: there is no last point to
+        // compare, and the metrics for such a run are zero by their own guard.
+        if (timeline.length > 0) {
+          const last = timeline[timeline.length - 1]
+          expect(last.wpm).toBe(metrics.wpm)
+          expect(last.raw).toBe(metrics.raw)
+        }
         expect(errorWords(ctx, events)).toEqual(legacyErrorWords(ctx, events))
       })
     }

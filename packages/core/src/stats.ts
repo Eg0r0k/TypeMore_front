@@ -53,15 +53,55 @@ export interface Metrics {
   readonly durationSec: number
 }
 
+/**
+ * One second of a run, as three speeds and an error count — monkeytype's chart,
+ * series for series.
+ *
+ * Two of them are CUMULATIVE and one is not, and that distinction is the whole
+ * reason the shape changed. `wpm` and `raw` are the run so far divided by the
+ * run so far, so each lands exactly on its own summary figure at the last
+ * checkpoint (`timelineFrom` asserts this by construction; the battery asserts
+ * it by comparison). `burst` is the speed of ONE second on its own and lands on
+ * nothing — it is meant to swing.
+ *
+ * `burst` was called `raw` until this release, which is the trap in reading
+ * this type at a glance: the field is still there and it means something else
+ * now. Nothing else in the shape moved.
+ */
 export interface TimelinePoint {
   /** 1-based second checkpoint from test start. */
   readonly second: number
-  /** Cumulative net WPM at this checkpoint (trends to the final wpm). */
+  /** Cumulative net WPM at this checkpoint. Its last point IS `Metrics.wpm`. */
   readonly wpm: number
-  /** Instantaneous raw WPM for this one-second bucket. */
+  /** Cumulative RAW WPM at this checkpoint. Its last point IS `Metrics.raw`. */
   readonly raw: number
+  /**
+   * Instantaneous raw WPM for this one-second bucket — the keystrokes inside
+   * the window over the window. Called `raw` before this release; monkeytype
+   * names the identical computation `burst` (`getBurstHistory`), and their
+   * `raw` is the cumulative line above, which is what the rename made room for.
+   */
+  readonly burst: number
   /** Incorrect keystrokes produced during this one-second bucket. */
   readonly errors: number
+}
+
+/**
+ * Elapsed minutes from a run's start to an instant — THE single expression, so
+ * a chart checkpoint and the summary that checkpoint must equal cannot disagree
+ * in the last bit.
+ *
+ * That is not hypothetical precision-fetishism. `x / 60000` and `(x / 1000) /
+ * 60` are two roundings against one, and they differ in the final ulp for about
+ * a quarter of all durations — every duration that is not a whole number of
+ * seconds, which is every count-mode run. `timelineFrom` used the first form
+ * and `metricsFrom` the second, so "the last point equals the headline" was
+ * true for timed runs, true for most counted ones, and quietly false for the
+ * rest. The acceptance test for the cumulative series is a `===`, and it is
+ * this function that lets it be one.
+ */
+function elapsedMinutes(startedAt: Ms, at: number): number {
+  return Math.max(0, (at - startedAt) / 1000) / 60
 }
 
 export interface ErrorWord {
@@ -99,6 +139,21 @@ export interface LogAnalysis {
   readonly keyWordIndex: readonly number[]
   /** Timestamp of each committed word separator (one per word advance). */
   readonly commitTimes: readonly number[]
+  /**
+   * The word index each entry of {@link commitTimes} advanced PAST — its
+   * parallel array, and not the same thing as the entry's position.
+   *
+   * They coincide for every ordinary run, which is why the position was used as
+   * the index for so long. They stop coinciding the moment the caret can move
+   * BACKWARDS: in `free` mode, and under `freedomMode`, a backspace at position
+   * zero retreats into the previous word, so word 3 can be advanced past twice
+   * and the run can end with more commits recorded than words committed. Reading
+   * `commitTimes[i]` as "word i" then attributes a settlement to the wrong word
+   * — and settles words the final state does not consider committed at all,
+   * which is how the results chart's last point could end up NEGATIVE on an
+   * abandoned free-mode run.
+   */
+  readonly commitWordIndex: readonly number[]
 }
 
 /**
@@ -117,6 +172,7 @@ export function analyzeLog(ctx: CoreContext, events: readonly GameEvent[]): LogA
   const keyCorrect: boolean[] = []
   const keyWordIndex: number[] = []
   const commitTimes: number[] = []
+  const commitWordIndex: number[] = []
 
   // Metrics and score are functions of the STATE events alone: log-v2 telemetry
   // (`down`/`up`) is invisible here by contract — a v2 log must analyze
@@ -156,7 +212,10 @@ export function analyzeLog(ctx: CoreContext, events: readonly GameEvent[]): LogA
       break
     }
     state = result.value
-    for (let j = beforeIndex; j < state.wordIndex; j++) commitTimes.push(event.t)
+    for (let j = beforeIndex; j < state.wordIndex; j++) {
+      commitTimes.push(event.t)
+      commitWordIndex.push(j)
+    }
   }
 
   return {
@@ -169,7 +228,8 @@ export function analyzeLog(ctx: CoreContext, events: readonly GameEvent[]): LogA
     keyTimes,
     keyCorrect,
     keyWordIndex,
-    commitTimes
+    commitTimes,
+    commitWordIndex
   }
 }
 
@@ -254,9 +314,16 @@ export function consistencyOf(rawPerSecond: readonly number[]): number {
 
 /**
  * The per-second raw WPM series consistency consumes — the SAME buckets the
- * results chart plots as `TimelinePoint.raw`, computed expression-for-expression
+ * results chart plots as `TimelinePoint.burst`, computed expression-for-expression
  * like the timeline builder so the two cannot disagree in the last bit
- * (`stats.test.ts` pins the equality): whole one-second windows, and a trailing
+ * (`stats.test.ts` pins the equality).
+ *
+ * It is the BURST series and not the new cumulative `raw` one, which is the
+ * whole reason consistency did not move when that series was added: variance of
+ * a running average is not variance of a rate — a cumulative line flattens by
+ * construction, so consistency computed over it would climb towards 1 for every
+ * run regardless of how uneven the typing was. Kept as its own function for the
+ * same reason it always was: whole one-second windows, and a trailing
  * bucket whose rate window is the full second ending at the finish (clamped at
  * the start), never the sliver the run actually ended inside.
  */
@@ -311,7 +378,9 @@ export function metricsFrom(ctx: CoreContext, analysis: LogAnalysis, endMs: Ms):
   // Uniform across modes: for a finished timed test `finishedAt` is the deadline,
   // so `end - startedAt` already equals the configured duration.
   const durationSec = startedAt === null ? 0 : Math.max(0, (end - startedAt) / 1000)
-  const minutes = durationSec / 60
+  // `elapsedMinutes(startedAt, end)` by construction — spelled through the same
+  // helper `timelineFrom` uses so the two can never be re-derived apart.
+  const minutes = startedAt === null ? 0 : elapsedMinutes(startedAt, end)
 
   // Net comes from the ONE definition in game-core: only words that came out
   // right pay, so `chars.correct` — which counts lucky letters inside wrong
@@ -338,10 +407,10 @@ export function metricsOf(core: GameCore, nowMs?: Ms): Metrics {
 }
 
 /**
- * Per-second WPM/raw timeline with per-bucket error counts — a pure function of
- * the log, for the results chart. `wpm` is cumulative net (correct characters +
- * committed spaces) so its final point tracks the summary wpm; `raw` is the rate
- * of all characters produced over the second ending at the bucket's checkpoint.
+ * Three-series timeline with per-bucket error counts — a pure function of the
+ * log, for the results chart. `wpm` and `raw` are cumulative and each ends on
+ * its own summary figure; `burst` is the rate over the second ending at the
+ * bucket's checkpoint. See {@link TimelinePoint}.
  */
 export function wpmOverTime(
   ctx: CoreContext,
@@ -394,15 +463,41 @@ export function timelineFrom(ctx: CoreContext, analysis: LogAnalysis, endMs: Ms)
     analysis.finalState.phase === 'finished' &&
     ctx.config.mode !== 'time' &&
     ctx.config.mode !== 'free'
+  //
+  // THE SECOND CUMULATIVE LINE works the same way and for a different reason.
+  // `Metrics.raw` is not a count of keystrokes — it is what `getChars` reads
+  // off the FINAL buffers (`correct + incorrect + extra`, which for any word is
+  // simply how many characters it holds) plus the separators actually typed. So
+  // a prefix sum of the keystream would not land on it: a character typed and
+  // then backspaced was produced but is not in the buffer at the end. The
+  // credit/settlement machinery already solves exactly this, so `raw` uses it
+  // too — every keystroke credits 1 wherever it was struck, and each commit
+  // settles the word to what its buffer actually holds, plus its separator when
+  // the run typed one (`separatorsOf`'s rule, mirrored below like the net line
+  // mirrors it).
+  //
+  // The two streams are kept separate rather than folded into one array of
+  // pairs: they settle to DIFFERENT amounts (net is all-or-nothing per word,
+  // raw is characters-as-typed), and merging them would mean one loop with two
+  // meanings.
   const input = analysis.finalState.input
   const creditTimes: number[] = []
   const creditChars: number[] = []
+  const rawTimes: number[] = []
+  const rawChars: number[] = []
   // What the keystream has paid each word so far, so its commit can settle up.
   const paidPerWord = new Float64Array(ctx.words.length)
+  const paidRawPerWord = new Float64Array(ctx.words.length)
   for (let k = 0; k < analysis.keyTimes.length; k++) {
-    if (!analysis.keyCorrect[k]) continue
     const word = analysis.keyWordIndex[k]
     if (word < 0 || word >= ctx.words.length) continue
+    // Raw counts what was PRODUCED, right or wrong — that is the difference
+    // between the two lines, and it is the same difference the two summary
+    // figures have.
+    rawTimes.push(analysis.keyTimes[k])
+    rawChars.push(1)
+    paidRawPerWord[word]++
+    if (!analysis.keyCorrect[k]) continue
     // Correctness is frozen at the position the character landed, so a typo
     // that was backspaced and retyped pays once, for the retyped character —
     // the running total tracks the correct prefix rather than the keypresses.
@@ -410,31 +505,79 @@ export function timelineFrom(ctx: CoreContext, analysis: LogAnalysis, endMs: Ms)
     creditChars.push(1)
     paidPerWord[word]++
   }
+  // WHEN each word settles: the LAST time the caret advanced past it. In every
+  // ordinary run that is also the only time, and the commit's position in the
+  // log is its word index — which is what this used to assume. It is not true
+  // in `free` mode or under `freedomMode`, where a backspace at position zero
+  // retreats into the previous word: word 3 gets advanced past twice, the log
+  // records more commits than the run committed words, and reading them
+  // positionally settles word 5 with word 3's arithmetic. See
+  // `LogAnalysis.commitWordIndex`.
+  const settledAt = new Float64Array(ctx.words.length)
+  const everCommitted = new Uint8Array(ctx.words.length)
   for (let i = 0; i < analysis.commitTimes.length; i++) {
-    const target = ctx.words[i] ?? ''
-    let worth = 0
-    if ((input[i] ?? '') === target) {
-      worth = target.length
-      if (!endsLine(target) && !(finishedByCount && i === analysis.commitTimes.length - 1)) worth++
-    }
-    const settlement = worth - (paidPerWord[i] ?? 0)
-    if (settlement !== 0) {
-      creditTimes.push(analysis.commitTimes[i])
-      creditChars.push(settlement)
-    }
+    const word = analysis.commitWordIndex[i]
+    if (word < 0 || word >= ctx.words.length) continue
+    settledAt[word] = analysis.commitTimes[i]
+    everCommitted[word] = 1
   }
-  // The word still in the buffer never commits, so it settles at the run's end
-  // instead — against `netCharsOf`'s all-or-nothing allowance, landing on the
-  // last checkpoint so the final point equals the summary wpm exactly.
+
+  // WHAT each word is worth at the end — the same three cases `getChars` and
+  // `separatorsOf` split the final state into, walked in their terms rather
+  // than the log's:
+  //
+  //   i <  wordIndex : committed. Net pays all-or-nothing; raw pays the buffer
+  //                    as typed. Both add the separator on `separatorsOf`'s
+  //                    rule, which is the only rule about separators anywhere.
+  //   i == wordIndex : the word still in hand — partial credit for net, its
+  //                    characters for raw, settled at the run's END so the
+  //                    final point lands on the summary figure.
+  //   i >  wordIndex : entered and then RETREATED out of. The final state does
+  //                    not count these at all, so they are worth nothing and
+  //                    the keystream's credit for them has to come back off.
+  //                    Taken back at the end rather than at the retreat, which
+  //                    the log does not record; the line is right where it is
+  //                    read, and monotone nowhere it was not already.
   const activeIndex = analysis.finalState.wordIndex
-  if (activeIndex < ctx.words.length) {
-    const target = ctx.words[activeIndex] ?? ''
-    const buffer = input[activeIndex] ?? ''
-    const worth = buffer.length > 0 && target.startsWith(buffer) ? buffer.length : 0
-    const settlement = worth - (paidPerWord[activeIndex] ?? 0)
+  const committed = Math.min(activeIndex, ctx.words.length)
+  for (let i = 0; i < ctx.words.length; i++) {
+    const paidNet = paidPerWord[i] ?? 0
+    const paidRaw = paidRawPerWord[i] ?? 0
+    if (paidNet === 0 && paidRaw === 0 && !everCommitted[i]) continue
+
+    const target = ctx.words[i] ?? ''
+    const typed = input[i] ?? ''
+    let netWorth = 0
+    let rawWorth = 0
+    // A plain instant, not a branded `Ms`: `settledAt` is a Float64Array, and
+    // the credit arrays it feeds are plain numbers already.
+    let at: number = end
+    if (i < committed) {
+      const earnsSeparator = !endsLine(target) && !(finishedByCount && i === committed - 1)
+      if (typed === target) {
+        netWorth = target.length
+        if (earnsSeparator) netWorth++
+      }
+      // A separator is counted by `separatorsOf` because it was TYPED, not
+      // because the word deserved it — so raw takes it whatever the word did.
+      rawWorth = typed.length + (earnsSeparator ? 1 : 0)
+      at = everCommitted[i] ? settledAt[i] : end
+    } else if (i === activeIndex) {
+      netWorth = typed.length > 0 && target.startsWith(typed) ? typed.length : 0
+      // `getChars` counts the active buffer's characters unconditionally, with
+      // `includeMissed` off so its untyped tail is not charged.
+      rawWorth = typed.length
+    }
+
+    const settlement = netWorth - paidNet
     if (settlement !== 0) {
-      creditTimes.push(end)
+      creditTimes.push(at)
       creditChars.push(settlement)
+    }
+    const rawSettlement = rawWorth - paidRaw
+    if (rawSettlement !== 0) {
+      rawTimes.push(at)
+      rawChars.push(rawSettlement)
     }
   }
 
@@ -459,15 +602,20 @@ export function timelineFrom(ctx: CoreContext, analysis: LogAnalysis, endMs: Ms)
     }
   }
   // `netByCheckpoint[s]` = credit banked at or before `start + s·1000`.
-  const netByCheckpoint = new Float64Array(seconds + 2)
-  for (let i = 0; i < creditTimes.length; i++) {
-    const offset = creditTimes[i] - startedAt
-    // `t <= start + s·1000` first holds at `s = ceil(offset / 1000)`; credit at
-    // or before the start instant is inside every checkpoint.
-    const from = offset <= 0 ? 0 : Math.ceil(offset / 1000)
-    if (from <= seconds) netByCheckpoint[from] += creditChars[i]
+  const bankBy = (times: readonly number[], chars: readonly number[]): Float64Array => {
+    const banked = new Float64Array(seconds + 2)
+    for (let i = 0; i < times.length; i++) {
+      const offset = times[i] - startedAt
+      // `t <= start + s·1000` first holds at `s = ceil(offset / 1000)`; credit
+      // at or before the start instant is inside every checkpoint.
+      const from = offset <= 0 ? 0 : Math.ceil(offset / 1000)
+      if (from <= seconds) banked[from] += chars[i]
+    }
+    for (let s = 1; s <= seconds; s++) banked[s] += banked[s - 1]
+    return banked
   }
-  for (let s = 1; s <= seconds; s++) netByCheckpoint[s] += netByCheckpoint[s - 1]
+  const netByCheckpoint = bankBy(creditTimes, creditChars)
+  const rawByCheckpoint = bankBy(rawTimes, rawChars)
 
   const points: TimelinePoint[] = []
   for (let s = 1; s <= seconds; s++) {
@@ -482,15 +630,18 @@ export function timelineFrom(ctx: CoreContext, analysis: LogAnalysis, endMs: Ms)
     const tail = checkpoint < bucketEnd
     const rateStart = Math.max(startedAt, checkpoint - 1000)
     let netSoFar: number
-    let rawInWindow: number
+    let rawSoFar: number
+    let burstInWindow: number
     let errors: number
     if (s < seconds) {
       netSoFar = netByCheckpoint[s]
-      rawInWindow = rawInBucket[s]
+      rawSoFar = rawByCheckpoint[s]
+      burstInWindow = rawInBucket[s]
       errors = errorsInBucket[s]
     } else {
       netSoFar = 0
-      rawInWindow = 0
+      rawSoFar = 0
+      burstInWindow = 0
       errors = 0
       for (let k = 0; k < keyTimes.length; k++) {
         const t = keyTimes[k]
@@ -500,18 +651,25 @@ export function timelineFrom(ctx: CoreContext, analysis: LogAnalysis, endMs: Ms)
         if (t >= bucketStart && t < bucketEnd && !correct) errors++
         // No keystroke is past `end`, so the tail window needs no upper bound.
         const inWindow = tail ? t >= rateStart : t >= bucketStart && t < bucketEnd
-        if (inWindow) rawInWindow++
+        if (inWindow) burstInWindow++
       }
       for (let i = 0; i < creditTimes.length; i++) {
         if (creditTimes[i] <= checkpoint) netSoFar += creditChars[i]
       }
+      for (let i = 0; i < rawTimes.length; i++) {
+        if (rawTimes[i] <= checkpoint) rawSoFar += rawChars[i]
+      }
     }
-    const elapsedMin = (checkpoint - startedAt) / 60000
+    // The cumulative lines divide by the run so far; `burst` divides by its own
+    // window. That is the entire difference between them, and it is why only
+    // the first two can land on a summary figure.
+    const elapsedMin = elapsedMinutes(startedAt, checkpoint)
     const rateMin = (checkpoint - rateStart) / 60000
     points.push({
       second: s,
       wpm: elapsedMin > 0 ? netSoFar / 5 / elapsedMin : 0,
-      raw: rateMin > 0 ? rawInWindow / 5 / rateMin : 0,
+      raw: elapsedMin > 0 ? rawSoFar / 5 / elapsedMin : 0,
+      burst: rateMin > 0 ? burstInWindow / 5 / rateMin : 0,
       errors
     })
   }
