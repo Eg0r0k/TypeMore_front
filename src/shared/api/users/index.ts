@@ -8,6 +8,13 @@ export {
   publicProfileTimeseriesQueryOptions,
   publicProfilePBsQueryOptions,
   publicProfilePortraitQueryOptions,
-  publicProfileRunsQueryOptions
+  publicProfileRunsQueryOptions,
+  userSearchQueryOptions
 } from './queries'
-export type { PublicProfile, PublicRun, PublicRunList } from './schemas'
+export {
+  SEARCH_MIN_QUERY_LEN,
+  SEARCH_MAX_QUERY_LEN,
+  isSearchable,
+  searchUsers
+} from './endpoints'
+export type { PublicProfile, PublicRun, PublicRunList, UserSearch } from './schemas'

@@ -22,6 +22,21 @@ export const PublicProfileSchema = v.object({
 export type PublicProfile = v.InferOutput<typeof PublicProfileSchema>
 
 /**
+ * `GET /users?q=` — one search hit is the profile HEADER, verbatim. The server
+ * serves the identical shape on purpose ("so a client renders a hit and a
+ * profile header through the same shape"), so this reuses the schema rather
+ * than declaring a twin that could drift.
+ *
+ * Wrapped in an object rather than a bare array, again matching the server: the
+ * envelope is what lets a "your query was truncated" signal appear later
+ * without breaking a client that already parses this.
+ */
+export const UserSearchSchema = v.object({
+  users: v.array(PublicProfileSchema)
+})
+export type UserSearch = v.InferOutput<typeof UserSearchSchema>
+
+/**
  * One public-history row — the server-side ALLOWLIST twin of `RunSummary`:
  * verdict numbers and derived display cells only. Everything a row needs to
  * render in the shared runs table is here; everything the owner reported and

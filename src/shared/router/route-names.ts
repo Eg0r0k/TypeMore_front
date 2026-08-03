@@ -13,6 +13,7 @@ export const ROUTE_NAMES = {
   ERROR: 'error',
   MATCH: 'match',
   BOARDS: 'boards',
+  FRIENDS: 'friends',
   REPLAY: 'replay',
   RACE: 'race'
 } as const

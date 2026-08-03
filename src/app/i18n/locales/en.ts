@@ -393,6 +393,30 @@ export default {
       copyFailed: 'could not copy or save the list'
     }
   },
+  friends: {
+    title: { lead: 'Your', name: 'Friends' },
+    find: 'find a player',
+    search: {
+      label: 'player search',
+      placeholder: 'search by name…',
+      tooShort: 'type at least {min} characters',
+      searching: 'searching…',
+      // Names the query back, so the answer is visibly about what was asked
+      // and not about whatever was typed a moment later.
+      empty: 'nobody is called anything like “{query}”',
+      found: '{count} player | {count} players',
+      error: 'the search failed — try again',
+      closed: 'closed',
+      joined: 'joined {date}',
+      // The server has no cursor here: a search is refined, not paged.
+      refine: 'showing the first matches — type more of the name to narrow them'
+    },
+    list: {
+      label: 'friends',
+      soon: 'friends are not here yet',
+      meanwhile: 'for now you can look players up and open their profiles'
+    }
+  },
   servers: {
     title: { lead: 'Welcome to', name: 'Servers' },
     status: {

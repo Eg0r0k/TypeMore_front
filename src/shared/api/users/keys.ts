@@ -17,5 +17,11 @@ export const usersKeys = {
   pbs: (name: string) => [...usersKeys.profile(name), 'pbs'] as const,
   portrait: (name: string) => [...usersKeys.profile(name), 'portrait'] as const,
   runs: (name: string, cursor?: string) =>
-    [...usersKeys.profile(name), 'runs', cursor ?? null] as const
+    [...usersKeys.profile(name), 'runs', cursor ?? null] as const,
+  /**
+   * Search hangs off `all`, NOT off `profile(name)`: a query string is not a
+   * name, and nesting it there would put `search('bob')` inside the cache
+   * subtree of a player actually called `bob`.
+   */
+  search: (query: string) => [...usersKeys.all, 'search', query] as const
 } as const

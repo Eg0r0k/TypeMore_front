@@ -16,8 +16,10 @@ import {
 import {
   PublicProfileSchema,
   PublicRunListSchema,
+  UserSearchSchema,
   type PublicProfile,
-  type PublicRunList
+  type PublicRunList,
+  type UserSearch
 } from './schemas'
 
 /**
@@ -65,3 +67,40 @@ export const getPublicProfilePortrait = (name: string): Promise<ProfileKeyboard>
 
 export const getPublicProfileRuns = (name: string, cursor?: string): Promise<PublicRunList> =>
   request(`${base(name)}/runs`, PublicRunListSchema, { query: { cursor } })
+
+/**
+ * Bounds the SERVER enforces on `q`, mirrored so the client can decline to ask
+ * instead of collecting a 400. Both are its rules, not ours:
+ *
+ * - 3 because a trigram index cannot serve a shorter pattern — below it the
+ *   search silently degrades into a sequential scan over every account — and
+ *   because a display name shorter than 3 characters cannot exist anyway.
+ * - 20 because that is the display-name CHECK's upper bound: a longer `q`
+ *   cannot be contained in any name, so there is nothing to look for.
+ *
+ * Counted in CODE POINTS, like the server counts them (runes, not bytes), so a
+ * Cyrillic handle is measured the same on both sides.
+ */
+export const SEARCH_MIN_QUERY_LEN = 3
+export const SEARCH_MAX_QUERY_LEN = 20
+
+/** Whether `query` is worth sending — the client-side twin of the 400 above. */
+export const isSearchable = (query: string): boolean => {
+  const length = [...query.trim()].length
+  return length >= SEARCH_MIN_QUERY_LEN && length <= SEARCH_MAX_QUERY_LEN
+}
+
+/**
+ * `GET /users?q=&limit=` — find a player by part of their name.
+ *
+ * No cursor by design (the server's): a search box is refined, not paged. No
+ * hits is an empty list and a 200, never a 404 — the question "who is called
+ * something like this" was answered, and the answer was nobody.
+ *
+ * CLOSED profiles are in the results, with `public: false`. That is deliberate
+ * server-side — search finds a profile, it is never a second way to READ one —
+ * and it is why the caller must render them as a state rather than filter them
+ * out: a player looking for someone who closed their profile has to find them.
+ */
+export const searchUsers = (query: string, limit?: number): Promise<UserSearch> =>
+  request('/users', UserSearchSchema, { query: { q: query.trim(), limit } })

@@ -8,7 +8,8 @@ import {
   getPublicProfilePortrait,
   getPublicProfileRuns,
   getPublicProfileSummary,
-  getPublicProfileTimeseries
+  getPublicProfileTimeseries,
+  searchUsers
 } from './endpoints'
 import { usersKeys } from './keys'
 
@@ -84,4 +85,27 @@ export const publicProfileRunsQueryOptions = (name: string, cursor?: string) =>
     queryKey: usersKeys.runs(name, cursor),
     queryFn: () => getPublicProfileRuns(name, cursor),
     retry: retryUnlessAnswered
+  })
+
+/**
+ * Player search. Deliberately carries NO `enabled`: gating is the consumer's,
+ * exactly like every other factory here — the search box knows when its query
+ * is long enough, this does not.
+ *
+ * `placeholderData` keeps the previous hits on screen while a refined query is
+ * in flight, so the list does not blank on every keystroke; the endpoint is
+ * rate-limited server-side, which is the other reason callers debounce.
+ */
+export const userSearchQueryOptions = (query: string) =>
+  queryOptions({
+    queryKey: usersKeys.search(query.trim()),
+    queryFn: () => searchUsers(query),
+    // A 400 is the server saying the query is out of bounds — an answer, and
+    // one `isSearchable` should have prevented us asking in the first place.
+    retry: (failureCount: number, error: unknown) =>
+      isApiError(error) && error.status === 400 ? false : retryUnlessAnswered(failureCount, error),
+    placeholderData: keepPreviousData,
+    // A name index does not move minute to minute; re-asking the same fragment
+    // while the player edits around it should not re-hit a rate-limited route.
+    staleTime: 30_000
   })
