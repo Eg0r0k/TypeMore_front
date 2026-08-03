@@ -150,9 +150,17 @@ cadence only** — no metric depends on the number of ticks.
 behavior for behavior (their `test-logic.ts` finish path): the **coefficient of
 variation of the per-second raw WPM series** — population standard deviation
 over mean — mapped through the kogasa curve. The series is exactly the
-`TimelinePoint.raw` buckets the results chart plots (whole one-second windows;
+`TimelinePoint.burst` buckets the results chart plots (whole one-second windows;
 the trailing bucket's rate window is the full second ending at the finish),
-pinned equal by test so the metric and the chart cannot drift. The formula:
+pinned equal by test so the metric and the chart cannot drift.
+
+It is the **burst** series and not the cumulative `raw` one that arrived beside
+it, and the distinction is load-bearing rather than nominal: variance of a
+running average is not variance of a rate. A cumulative line flattens by
+construction, so consistency computed over it would climb toward 1 for every
+run however uneven the typing was. (Until the v4 core the burst series WAS
+called `raw` — same numbers, and the name now belongs to the cumulative line
+that lands on the summary's `raw`.) The formula:
 
 ```
 cov         = stddev(rawPerSecond) / mean(rawPerSecond)      (population stddev)
