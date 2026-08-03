@@ -39,7 +39,9 @@
           <div class="seat__head">
             <div class="seat__icons">
               <IconCrown v-if="player.playerId === room.hostPlayerId" class="seat__host-badge" />
-              <IconUser v-else />
+              <!-- The seat's occupant. The crown replaces it for the host, who
+                   is marked by the role rather than by the face. -->
+              <UserAvatar v-else :name="player.nick" class="size-5" />
             </div>
             <span class="seat__nick">{{ player.nick }}</span>
             <span v-if="player.isGuest" class="seat__guest">{{ t('room.guest') }}</span>
@@ -92,6 +94,7 @@
   import { FreemodChips } from '@/entities/lobby'
   import type { RoomPlayer } from '@/entities/lobby'
   import { useMatchSessionStore } from '@/entities/match'
+  import { UserAvatar } from '@/shared/ui/avatar'
   import { Button } from '@/shared/ui/button'
   import { Typography } from '@/shared/ui/typography'
   import { Tooltip, TooltipTrigger, TooltipContent } from '@/shared/ui/tooltip'
@@ -99,7 +102,6 @@
   import IconCopy from '~icons/tabler/copy'
   import IconEyeOff from '~icons/tabler/eye-off'
   import IconCrown from '~icons/tabler/crown'
-  import IconUser from '~icons/tabler/user'
   import IconUserX from '~icons/tabler/user-x'
 
   /**

@@ -22,7 +22,9 @@
       <DropdownMenu v-if="isAuth">
         <DropdownMenuTrigger as-child>
           <Button color="shadow" size="s" class="controls__user" :button-label="displayName">
-            <IconUser class="size-6" aria-hidden="true" />
+            <!-- The account's own face, next to its own name — decoration in
+                 the accessibility tree, because the name is right there. -->
+            <UserAvatar :name="displayName" :src="avatarUrl" class="size-6" />
             {{ displayName }}
           </Button>
         </DropdownMenuTrigger>
@@ -50,6 +52,7 @@
 </template>
 
 <script setup lang="ts">
+  import { UserAvatar } from '@/shared/ui/avatar'
   import { Button } from '@/shared/ui/button'
   import { Link } from '@/shared/ui/link'
   import {
@@ -86,6 +89,8 @@
   const { isAuth } = storeToRefs(useAuthStore())
   const { data: user } = useCurrentUser()
   const displayName = computed(() => user.value?.displayName ?? '')
+  /** Absent until the server serves avatars; the initials stand in until then. */
+  const avatarUrl = computed(() => user.value?.avatarUrl ?? null)
 
   const { mutate: logout } = useLogoutMutation()
 
