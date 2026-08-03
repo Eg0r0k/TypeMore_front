@@ -268,6 +268,40 @@ function createGameStore(storeId: string) {
       if (next.phase === 'finished') timer?.stop()
     }
 
+    /**
+     * Publish a completion the core reached WITHOUT accepting the event that
+     * revealed it.
+     *
+     * `GameCore.dispatch` settles the clock BEFORE it reduces, so a key pressed
+     * past a timed run's deadline finishes the core and then has its own event
+     * rejected (`TestFinished`) — the reducer is right to refuse it, but the
+     * completion it just made is real and is the run's true end. Dropping it left
+     * `snapshot` on `running` forever: every later key was rejected for the same
+     * reason, and the results screen (gated on `phase === 'finished'`) never
+     * opened. That made the DISPATCH path a dead end whenever the worker's
+     * terminal tick failed to land, instead of the second driver of completion it
+     * is.
+     *
+     * Identity is the whole signal: `settle` hands back the SAME state object
+     * when it changed nothing and a fresh one only when it completed the run, so
+     * this is a no-op on every ordinary rejection (BackspaceLocked, StoppedOnError,
+     * a non-monotonic seq) and costs one reference comparison there.
+     *
+     * `advanceScore` is deliberately NOT called: the event never entered the log,
+     * so it must never move the score either. `applyResult` does the rest —
+     * `liveNow` is pinned to `finishedAt` (never to the late keystroke's `t`) and
+     * the timer is stopped.
+     *
+     * `nowMs` only ever reaches `liveNow` for a state that is NOT finished, and
+     * the only state `settle` can produce is a finished one — so the callers
+     * that have a fresh `t` pass it and the one that does not (the reconcile
+     * before telemetry's capture gate) keeps the live clock where it was.
+     */
+    function publishSettled(nowMs: number = liveNow.value): void {
+      if (!core || core.state === snapshot.value) return
+      applyResult(core.state, false, nowMs)
+    }
+
     /** Fold one accepted event into the live scoreV1 accumulator (O(1) per event). */
     function advanceScore(event: GameEvent): void {
       if (!core) return
@@ -369,6 +403,7 @@ function createGameStore(storeId: string) {
         // the accepted log stays contiguous (validateLog structural rule #1,
         // and the peers' desync detector reads the same invariant).
         seq -= 1
+        publishSettled(t)
       }
     }
 
@@ -383,6 +418,7 @@ function createGameStore(storeId: string) {
         applyResult(result.value, wasIdle && result.value.phase === 'running', t)
       } else {
         seq -= 1 // see insert(): rejected events return their seq
+        publishSettled(t)
       }
     }
 
@@ -396,6 +432,7 @@ function createGameStore(storeId: string) {
         applyResult(result.value, false, t)
       } else {
         seq -= 1 // see insert(): rejected events return their seq
+        publishSettled(t)
       }
     }
 
@@ -409,20 +446,37 @@ function createGameStore(storeId: string) {
         applyResult(result.value, false, t)
       } else {
         seq -= 1 // see insert(): rejected events return their seq
+        publishSettled(t)
       }
     }
 
     /**
      * Log v2 keystroke telemetry (`down`/`up`, physical `KeyboardEvent.code`).
-     * STATE NO-OPS by contract: no score step, no snapshot refresh, no timer
-     * interaction — the event is only stamped and appended to the log, so the
-     * render path does zero additional work per key. Silently dropped on a v1
-     * run (capability detection said no reliable physical keyboard), before
-     * setup, and once the run is finished — capture stops with the run, so the
-     * release of the key that typed the final grapheme stays out of the log.
+     * REDUCER no-ops by contract: no score step, no timer interaction — the
+     * event is only stamped and appended to the log, so the render path does
+     * zero additional work per key. Silently dropped on a v1 run (capability
+     * detection said no reliable physical keyboard), before setup, and once the
+     * run is finished — capture stops with the run, so the release of the key
+     * that typed the final grapheme stays out of the log.
+     *
+     * What it is NOT free of is `dispatch`'s pre-reduce `settle`: a key released
+     * past a timed run's deadline finishes the CORE, even though the reducer
+     * hands the telemetry event back as a no-op. That completion is published
+     * like any other (`publishSettled` — a reference comparison per key, and a
+     * write only on the one event that ever crosses the deadline). Without it
+     * the run would be finished in the core and `running` on screen, with the
+     * guard above making sure no further telemetry ever revisits the question.
      */
     function telemetry(kind: 'down' | 'up', code: string): void {
       if (!core || logVersion.value !== EVENT_LOG_VERSION_TELEMETRY) return
+      // Reconcile BEFORE the capture gate below, never after. That gate answers
+      // "should this key be RECORDED", and a finished core answers no — but if
+      // the core is finished while `snapshot` still says running, returning
+      // there would lock that desync in permanently, since no later telemetry
+      // ever gets past it either. Publishing first makes every dispatch entry
+      // point in this store self-healing: whatever put the two out of step,
+      // the next key through any of them puts them back.
+      publishSettled()
       if (core.state.phase === 'finished') return
       const { seq: s, t } = stamp()
       const event = kind === 'down' ? keyDownEvent(s, t, code) : keyUpEvent(s, t, code)
@@ -431,6 +485,7 @@ function createGameStore(storeId: string) {
         // the contiguity invariant survives even a future reducer change.
         seq -= 1
       }
+      publishSettled(t)
     }
 
     function keyDown(code: string): void {
