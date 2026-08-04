@@ -8,7 +8,7 @@ export const FOOTER_LINKS: readonly FooterLink[] = [
   {
     icon: IconBrandGithub,
     label: 'GitHub',
-    link: 'https://github.com/Eg0r0k/TypeMore_front'
+    link: 'https://github.com/Eg0r0k'
   },
   {
     icon: IconShield,
@@ -18,7 +18,10 @@ export const FOOTER_LINKS: readonly FooterLink[] = [
   {
     icon: IconFileText,
     label: 'Terms',
-    link: 'terms'
+    // Absolute, like its neighbours: a bare 'terms' resolves RELATIVE to
+    // whatever route the footer happens to be under, so the same entry pointed
+    // somewhere different on every page.
+    link: '/terms'
   },
   {
     icon: IconShieldLock,
