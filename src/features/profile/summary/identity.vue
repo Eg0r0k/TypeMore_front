@@ -29,7 +29,7 @@
     <button
       v-if="own"
       type="button"
-      class="group relative -mt-8 w-fit rounded-full transition-tm focus-ring sm:-mt-12"
+      class="group relative -mt-8 size-16 ring-4 ring-bg sm:size-24 w-fit rounded-full transition-tm focus-ring sm:-mt-12"
       :aria-label="t('settings.title')"
       :title="t('settings.title')"
       data-testid="profile-settings"
@@ -38,7 +38,7 @@
       <UserAvatar
         :name="summary.displayName"
         :src="avatarSrc"
-        class="size-16 ring-4 ring-bg sm:size-24"
+        class="w-full h-full"
         data-testid="profile-avatar"
       />
       <span
