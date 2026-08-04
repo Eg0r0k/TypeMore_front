@@ -12,13 +12,55 @@
       <!-- 1.2 — the wpm line, across the banner's UPPER band. Full width reads
            as texture where a chart pinned to one corner read as a stray chart;
            the band stops well above the avatar, which owns the bottom third. -->
-      <ProfileSparkline :points="recentWpm" class="absolute h-full opacity-60 sm:top-6 left-0" />
+      <ProfileSparkline :points="recentWpm" class="absolute h-full opacity-70 left-0" />
       <!-- 1.2b — "copy this profile's link", in the banner's top-right corner.
            Over the sparkline rather than beside the nick: it is chrome for the
            PAGE, not a fact about the player, and the corner is where a reader
            already looks for a share action. -->
-      <div v-if="shareName" class="absolute right-2 top-2">
-        <ProfileCopyLink :name="shareName" />
+      <!-- 1.2b — the page's own chrome, top-right: share, report, and the
+           player's links under them. The links sit here rather than in the
+           meta line because they are OUTBOUND — somewhere else to go — and
+           grouping them with the two buttons keeps every "leave this page"
+           control in one corner instead of scattered through the facts. -->
+      <div
+        class="absolute right-3 top-0 py-3 flex flex-col justify-between h-full items-end gap-1.5"
+      >
+        <!-- Its own provider: the report button carries a tooltip, and this
+             header is mounted by pages that have no reason to know that. -->
+        <TooltipProvider v-if="!shareName || !canReport" :delay-duration="80">
+          <div class="flex items-center gap-1.5">
+            <ProfileCopyLink v-if="shareName" :name="shareName" />
+            <Tooltip v-if="canReport">
+              <TooltipTrigger as-child>
+                <Button
+                  color="shadow"
+                  size="icon-sm"
+                  :aria-label="t('report.title.user')"
+                  data-testid="profile-report"
+                  @click="emit('report')"
+                >
+                  <IconFlag class="size-4 text-background!" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{{ t('report.title.user') }}</TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
+
+        <div v-if="links.length" class="flex items-end gap-4">
+          <a
+            v-for="link in links"
+            :key="link.kind"
+            :href="linkUrl(link.kind, link.handle)"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="focus-ring inline-flex min-w-0 items-center gap-1.5 rounded-sm text-xs text-background! transition-tm hover:text-sub"
+            :data-testid="`profile-link-${link.kind}`"
+          >
+            <span class="min-w-0 truncate">{{ link.handle }}</span>
+            <component :is="LINK_ICONS[link.kind]" class="size-4 shrink-0" aria-hidden="true" />
+          </a>
+        </div>
       </div>
     </div>
 
@@ -31,7 +73,10 @@
 
       On your OWN page it is also the way into settings — the header has no
       button of its own, and your own face is the thing on this page that means
-      "you". Somebody else's avatar is a picture and nothing more.
+      "you". It opens on the ACCOUNT tab, because everything this header shows
+      (bio, keyboard, links, the badge showcase) is edited there and a click on
+      your own face means "let me change this", not "let me change the caret".
+      Somebody else's avatar is a picture and nothing more.
     -->
     <button
       v-if="own"
@@ -40,7 +85,7 @@
       :aria-label="t('settings.title')"
       :title="t('settings.title')"
       data-testid="profile-settings"
-      @click="dialogs.openSettings()"
+      @click="dialogs.openSettings('account')"
     >
       <UserAvatar
         :name="summary.displayName"
@@ -89,6 +134,19 @@
       </TooltipProvider>
     </div>
 
+    <!-- 1.5b — the bio, straight under the name it belongs to: it is the
+         player's own sentence about themselves, so it reads as part of the
+         identity rather than as a footnote after the numbers. Plain text with
+         `whitespace-pre-line` — the server stores no markup and this renders
+         none. -->
+    <p
+      v-if="bio"
+      class="mt-2 max-w-prose whitespace-pre-line text-sm text-sub"
+      data-testid="profile-bio"
+    >
+      {{ bio }}
+    </p>
+
     <!-- 1.6 — the meta line: how long they have been here, and whether they
          are here today. -->
     <div
@@ -105,31 +163,18 @@
         <Flame v-if="hasStreak" class="size-4 shrink-0" aria-hidden="true" />
         <span class="tabular-nums">{{ streakText }}</span>
       </span>
+    </div>
 
-      <!-- The board they type on and where else to find them join the same
-           line as "joined" and the streak: all four are one-line facts about
-           the person, and giving each its own row would make a header out of
-           four half-empty strips. -->
-      <span
-        v-if="keyboard"
-        class="inline-flex min-w-0 items-center gap-1.5"
-        data-testid="profile-keyboard"
-      >
-        <Keyboard class="size-4 shrink-0" aria-hidden="true" />
-        <span class="min-w-0 truncate">{{ keyboard }}</span>
-      </span>
-      <a
-        v-for="link in links"
-        :key="link.kind"
-        :href="linkUrl(link.kind, link.handle)"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="link-main inline-flex min-w-0 items-center gap-1.5"
-        :data-testid="`profile-link-${link.kind}`"
-      >
-        <component :is="LINK_ICONS[link.kind]" class="size-4 shrink-0" aria-hidden="true" />
-        <span class="min-w-0 truncate">{{ link.handle }}</span>
-      </a>
+    <!-- 1.6b — the board they type on, its own line under the meta. It is a
+         fact about the person like the two above it, but a longer one: a full
+         keyboard name would push "joined" and the streak off a phone. -->
+    <div
+      v-if="keyboard"
+      class="mt-1.5 flex min-w-0 items-center gap-1.5 text-sm text-sub"
+      data-testid="profile-keyboard"
+    >
+      <Keyboard class="size-4 shrink-0" aria-hidden="true" />
+      <span class="min-w-0 truncate">{{ keyboard }}</span>
     </div>
 
     <!--
@@ -189,22 +234,6 @@
       </div>
     </div>
 
-    <!-- 1.8b — the bio, LAST of the header.
-         Deliberately after the numbers and the languages: a reader opening
-         somebody's profile came for what they type and how fast, and prose is
-         the one thing here that cannot be skimmed. Placed high it would push
-         every fact down to make room for a sentence nobody asked for; placed
-         here it is there for whoever wants it and costs nothing to whoever
-         does not. Plain text, `whitespace-pre-line` — the server stores no
-         markup and this renders none. -->
-    <p
-      v-if="bio"
-      class="mt-6 max-w-prose whitespace-pre-line text-sm text-sub"
-      data-testid="profile-bio"
-    >
-      {{ bio }}
-    </p>
-
     <!-- 1.9 — the header ends here; everything below is the profile as it was. -->
     <div class="mt-6 border-t border-sub-alt" />
   </div>
@@ -219,9 +248,12 @@
   import IconBrandYoutube from '~icons/tabler/brand-youtube'
   import IconBrandTwitch from '~icons/tabler/brand-twitch'
 
+  import IconFlag from '~icons/tabler/flag'
+
   import { BadgeChip, badgesOf } from '@/entities/badge'
   import { linkUrl } from '@shared/api'
-  import { TooltipProvider } from '@/shared/ui/tooltip'
+  import { Button } from '@/shared/ui/button'
+  import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip'
   import ProfileCopyLink from '../copy-link/ui.vue'
 
   import type { LinkKind, ProfileSummary, UserLink } from '@shared/api'
@@ -266,9 +298,25 @@
        * no public URL to offer.
        */
       shareName?: string | null
+      /**
+       * Offer the "report this player" button. The PAGE decides: reporting
+       * needs a session and a subject that is not yourself, and neither is
+       * this component's business.
+       */
+      canReport?: boolean
     }>(),
-    { recentWpm: () => [], own: false, bio: null, keyboard: null, shareName: null }
+    {
+      recentWpm: () => [],
+      own: false,
+      bio: null,
+      keyboard: null,
+      shareName: null,
+      canReport: false
+    }
   )
+
+  /** The page hosts the report dialog; this only asks for it. */
+  const emit = defineEmits<{ report: [] }>()
 
   const { t, locale } = useI18n()
   /** The settings dialog itself lives in App.vue; this only asks for it. */

@@ -98,6 +98,8 @@
           :links="header.data.value?.links"
           :badges="header.data.value?.badges"
           :share-name="header.data.value?.name"
+          :can-report="canReport"
+          @report="reportOpen = true"
         />
       </ProfileSection>
 
@@ -192,11 +194,20 @@
         <ProfileRunsTable :user="name" readonly @watch="toReplay" />
       </ProfileSection>
     </template>
+    <!-- Reporting a player: the page owns the dialog, the header only asks.
+         Mounted only when there is a subject id to name — a report is filed
+         against a uuid, and a display name is not a subject the API takes. -->
+    <ReportModal
+      v-if="header.data.value?.id"
+      v-model:open="reportOpen"
+      :subject="{ type: 'user', id: header.data.value.id }"
+      :subject-label="header.data.value.name"
+    />
   </main>
 </template>
 
 <script setup lang="ts">
-  import { computed } from 'vue'
+  import { computed, ref } from 'vue'
   import { useQuery } from '@tanstack/vue-query'
   import { useRoute, useRouter } from 'vue-router'
   import { useI18n } from 'vue-i18n'
@@ -215,6 +226,7 @@
     publicProfileTimeseriesQueryOptions
   } from '@shared/api'
   import { useAuthStore } from '@/entities/auth'
+  import { ReportModal } from '@/features/modal/report'
   import {
     ProfileActivity,
     ProfileDailyChart,
@@ -279,6 +291,17 @@
     () =>
       me.data.value !== undefined &&
       me.data.value.displayName.toLowerCase() === (header.data.value?.name ?? '').toLowerCase()
+  )
+
+  /** The report dialog over THIS player; the header's flag opens it. */
+  const reportOpen = ref(false)
+  /**
+   * Reporting needs a session, a subject id to name, and somebody other than
+   * yourself: the server refuses a self-report, so offering the button on
+   * your own page would be a control that only ever fails.
+   */
+  const canReport = computed(
+    () => authStore.isAuth && !isOwner.value && header.data.value?.id !== undefined
   )
 
   const closed = computed(

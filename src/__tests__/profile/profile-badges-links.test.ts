@@ -86,13 +86,40 @@ describe('the identity half in the header', () => {
     expect(wrapper.find('[data-testid="profile-nick"]').text()).toBe('boardsmoke')
   })
 
-  it('puts the badges on the NAME line and the share button in the banner', () => {
-    const wrapper = mountIdentity({ badges: ['staff'], shareName: 'boardsmoke' })
-    expect(wrapper.find('[data-testid="profile-badges"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="profile-copy-link"]').exists()).toBe(true)
-    // The bio is LAST: it comes after the counters a reader actually came for.
+  it('places each piece where its meaning puts it', () => {
+    const wrapper = mountIdentity({
+      badges: ['staff'],
+      shareName: 'boardsmoke',
+      canReport: true,
+      bio: 'types words',
+      keyboard: 'Keychron Q1',
+      links: [{ kind: 'github', handle: 'egor' }]
+    })
     const html = wrapper.html()
-    expect(html.indexOf('profile-badges')).toBeLessThan(html.indexOf('profile-counters'))
+
+    // Badges on the name line, bio straight under it, keyboard under the meta,
+    // and all of it above the counters.
+    expect(html.indexOf('profile-badges')).toBeLessThan(html.indexOf('profile-bio'))
+    expect(html.indexOf('profile-bio')).toBeLessThan(html.indexOf('profile-meta'))
+    expect(html.indexOf('profile-meta')).toBeLessThan(html.indexOf('profile-keyboard'))
+    expect(html.indexOf('profile-keyboard')).toBeLessThan(html.indexOf('profile-counters'))
+
+    // The corner holds both buttons and the outbound links, in that order.
+    expect(wrapper.find('[data-testid="profile-copy-link"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="profile-report"]').exists()).toBe(true)
+    expect(html.indexOf('profile-copy-link')).toBeLessThan(html.indexOf('profile-link-github'))
+  })
+
+  it('asks the page to report rather than reporting itself', async () => {
+    const wrapper = mountIdentity({ canReport: true })
+    await wrapper.find('[data-testid="profile-report"]').trigger('click')
+    expect(wrapper.emitted('report')).toHaveLength(1)
+  })
+
+  it('offers no report button when the page did not allow one', () => {
+    // Your own page, an anonymous reader, or a header with no subject id: all
+    // three are the page's judgement, and all three arrive here as `false`.
+    expect(mountIdentity({}).find('[data-testid="profile-report"]').exists()).toBe(false)
   })
 
   it('draws the showcase in the order it was given, skipping unknown codes', () => {

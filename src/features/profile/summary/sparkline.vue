@@ -17,9 +17,9 @@
     <!-- The area first, so the line sits on top of its own fill. It closes on
          the BOTTOM of the box, which is the bottom of the banner: the shape is
          a filled horizon, not a chart floating in the middle of it. -->
-    <polygon :points="area" fill="currentColor" fill-opacity="0.14" />
-    <polyline
-      :points="path"
+    <path :d="area" fill="currentColor" fill-opacity="0.14" />
+    <path
+      :d="path"
       fill="none"
       stroke="currentColor"
       stroke-opacity="0.45"
@@ -37,7 +37,7 @@
   /**
    * The banner's wpm line: the run-to-run shape of the recent runs.
    *
-   * Two decisions make it read as a banner and not as a chart that wandered in.
+   * Three decisions make it read as a banner and not as a chart that wandered in.
    *
    * SMOOTHED — a three-run rolling mean. Consecutive runs differ by a dozen wpm
    * for reasons a profile header has no business narrating (a bad word, a
@@ -48,13 +48,18 @@
    * a steady typist's two-wpm wobble into an alpine ridge. With a floor, a
    * steady typist gets a steady line and a real climb still climbs.
    *
+   * CURVED — the points are joined by monotone cubic segments rather than
+   * straight ones. At this size the corners of a polyline are the loudest thing
+   * in the banner, and they are an artefact of the sampling rate, not of how
+   * anyone types.
+   *
    * FILLED to the bottom edge. The line alone read as a stray chart pinned to
    * the top of the banner; closed into an area that reaches the floor, the same
    * data reads as the banner's own surface.
    *
    * Hand-rolled SVG on purpose: the chart library is for the charts SECTION,
    * where a reader takes numbers off the picture. Pulling a chart runtime in
-   * here would cost more than a polyline draws.
+   * here would cost more than a path draws.
    */
   const props = defineProps<{
     /** wpm per run, oldest first. Fewer than {@link MIN_POINTS} draws nothing. */
@@ -79,6 +84,8 @@
    */
   const BAND = 0.55
 
+  type Point = { readonly x: number; readonly y: number }
+
   /** Centred-ish rolling mean; the ends average what they have. */
   const smoothed = (values: readonly number[]): number[] =>
     values.map((_, index) => {
@@ -86,6 +93,54 @@
       const window = values.slice(from, from + WINDOW)
       return window.reduce((sum, value) => sum + value, 0) / window.length
     })
+
+  const at = (point: Point): string => `${point.x.toFixed(2)},${point.y.toFixed(2)}`
+
+  /**
+   * Monotone cubic interpolation (Fritsch–Carlson) as a cubic Bézier path.
+   *
+   * Smooth, and — unlike Catmull-Rom — it never overshoots the data: the curve
+   * between two runs stays between their two values. That matters here because
+   * the band has exactly {@link PAD} of headroom and none at all at the bottom,
+   * so an overshooting spline would clip against the top edge and bleed past
+   * the band into the avatar's corner. It also keeps the picture honest: a
+   * bulge below the worst run would be a wpm nobody typed.
+   */
+  const curve = (points: readonly Point[]): string => {
+    const count = points.length
+    if (count < 2) return ''
+
+    const dx = points.slice(1).map((point, index) => point.x - points[index].x)
+    const slope = points.slice(1).map((point, index) => (point.y - points[index].y) / dx[index])
+
+    const tangents = points.map((_, index) => {
+      if (index === 0) return slope[0]
+      if (index === count - 1) return slope[count - 2]
+
+      const before = slope[index - 1]
+      const after = slope[index]
+      // A sign change (or a flat) is a local extremum: a zero tangent pins the
+      // curve inside its two points instead of bowing past them.
+      if (before * after <= 0) return 0
+
+      // Weighted harmonic mean of the neighbouring slopes — the weights are what
+      // keeps the result monotone on each segment.
+      const w1 = 2 * dx[index] + dx[index - 1]
+      const w2 = dx[index] + 2 * dx[index - 1]
+      return (w1 + w2) / (w1 / before + w2 / after)
+    })
+
+    let d = `M ${at(points[0])}`
+    for (let index = 0; index < count - 1; index += 1) {
+      const step = dx[index] / 3
+      const from = points[index]
+      const to = points[index + 1]
+      const control1: Point = { x: from.x + step, y: from.y + tangents[index] * step }
+      const control2: Point = { x: to.x - step, y: to.y - tangents[index + 1] * step }
+      d += ` C ${at(control1)} ${at(control2)} ${at(to)}`
+    }
+    return d
+  }
 
   const path = computed<string | null>(() => {
     const values = props.points.filter((value) => Number.isFinite(value))
@@ -102,22 +157,21 @@
     const band = HEIGHT * BAND
     const usable = band - PAD
 
-    return line
-      .map((value, index) => {
-        const x = (index / (line.length - 1)) * WIDTH
-        const y = band - ((value - low) / span) * usable
-        return `${x.toFixed(2)},${y.toFixed(2)}`
-      })
-      .join(' ')
+    return curve(
+      line.map((value, index) => ({
+        x: (index / (line.length - 1)) * WIDTH,
+        y: band - ((value - low) / span) * usable
+      }))
+    )
   })
 
   /**
-   * The same line, closed down the sides to the bottom of the box. Empty (not
+   * The same curve, closed down the sides to the bottom of the box. Empty (not
    * null) when there is no line — the `<svg>` above is gone in that case, and
    * an attribute typed `string | null` would only be an attribute Vue has to
    * decide how to drop.
    */
   const area = computed(() =>
-    path.value === null ? '' : `0,${HEIGHT} ${path.value} ${WIDTH},${HEIGHT}`
+    path.value === null ? '' : `${path.value} L ${WIDTH},${HEIGHT} L 0,${HEIGHT} Z`
   )
 </script>

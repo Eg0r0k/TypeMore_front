@@ -15,8 +15,12 @@
           data-testid="profile-copy-link"
           @click="copy"
         >
-          <IconCheck v-if="copied" class="size-4 text-main" data-testid="profile-copy-link-done" />
-          <IconLink v-else class="size-4" />
+          <IconCheck
+            v-if="copied"
+            class="size-4 text-background!"
+            data-testid="profile-copy-link-done"
+          />
+          <IconLink v-else class="size-4 text-background!" />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom" data-testid="profile-copy-link-tip">

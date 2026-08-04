@@ -13,6 +13,8 @@
       :links="links"
       :badges="badges"
       :share-name="shareName"
+      :can-report="canReport"
+      @report="emit('report')"
     />
 
     <!--
@@ -61,6 +63,9 @@
    * sparkline's runs come from the PAGE's feed (own `/runs` or the player's
    * public history), so this component stays fed by the one summary query.
    */
+  /** Re-emitted from the header: the PAGE hosts the report dialog. */
+  const emit = defineEmits<{ report: [] }>()
+
   const props = defineProps<{
     summary: ProfileSummary
     part?: 'identity' | 'stats'
@@ -77,6 +82,7 @@
     links?: readonly UserLink[]
     badges?: readonly string[]
     shareName?: string | null
+    canReport?: boolean
   }>()
   const { t } = useI18n()
 

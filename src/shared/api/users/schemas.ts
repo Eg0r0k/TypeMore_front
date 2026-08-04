@@ -23,6 +23,12 @@ export type LinkKind = UserLink['kind']
  * state the page renders, never a 404.
  */
 export const PublicProfileSchema = v.object({
+  /**
+   * The account's uuid — what a REPORT names its subject by. Optional so a
+   * server that predates the field still parses; a page without it simply
+   * offers no report button.
+   */
+  id: v.optional(v.string()),
   name: v.string(),
   joined: v.string(),
   public: v.boolean(),
