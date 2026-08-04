@@ -509,6 +509,12 @@ export default {
     start: 'start game',
     forceStart: 'start without waiting',
     /** Said when a route change is refused: the seat is a server fact. */
+    presence: {
+      title: 'still there?',
+      /** The countdown is IN the sentence: the number is the whole message. */
+      body: 'Your seat is given up in {seconds}s so the room does not sit empty.',
+      confirm: 'I’m here'
+    },
     leaveHint: 'use the leave button to give up your seat',
     ready: 'ready up',
     unready: 'cancel ready',

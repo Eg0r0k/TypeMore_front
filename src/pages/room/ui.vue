@@ -64,11 +64,13 @@
       <RoomChat class="lobby__chat" />
     </div>
 
+    <!-- "Are you still there?" — lobby only, and the page is what knows that. -->
+    <PresenceModal :presence="presence" />
   </div>
 </template>
 
 <script setup lang="ts">
-  import { onUnmounted, provide, watch, watchEffect } from 'vue'
+  import { computed, onUnmounted, provide, watch, watchEffect } from 'vue'
   import { onBeforeRouteLeave, useRouter } from 'vue-router'
   import { useI18n } from 'vue-i18n'
   import { LEAVE_SHAKE_KEY } from '@/shared/constants/inject-keys'
@@ -80,6 +82,7 @@
   import { RoomChat } from '@/features/room/chat'
   import { RoomConfig, RoomIdentity } from '@/features/room/config'
   import { RoomControls } from '@/features/room/controls'
+  import { PresenceModal, useLobbyPresence } from '@/features/room/presence'
   import { RoomMatch } from '@/features/room/match'
   import { RoomPlayers } from '@/features/room/players'
   import { RoomResults, useMatchResults } from '@/features/room/results'
@@ -139,6 +142,20 @@
    * screens you navigate FROM — taking the header away there would take away
    * the way out.
    */
+  /**
+   * The lobby presence check. Armed ONLY in the lobby: a seat in a running
+   * match is never given up by an idle clock, and a player typing for twenty
+   * minutes is never asked whether they are still there.
+   *
+   * When it fires it calls the ordinary `leaveRoom` — the same thing the leave
+   * button does — so the seat is released by the path that already exists and
+   * the room is reaped by the machinery that already reaps empty rooms.
+   */
+  const presence = useLobbyPresence({
+    armed: computed(() => session.room !== null && session.phase === 'lobby'),
+    leave: () => session.leaveRoom()
+  })
+
   const screen = useScreenStore()
   watchEffect(() => screen.setTyping(session.phase === 'running'))
   onUnmounted(() => screen.setTyping(false))
