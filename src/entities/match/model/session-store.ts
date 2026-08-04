@@ -421,6 +421,15 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
 
   const peerMap = new Map<string, PeerRecord>()
   let countdownFrame: CountdownFrame | null = null
+  /**
+   * The settings and own freemods the CURRENT (or just-ended) match was played
+   * under, frozen at countdown. `room.settings` is the LOBBY's live state: the
+   * moment the host walks back and toggles a text mod, it moves — and a result
+   * screen reading it would show the NEXT match's setup on the finished run.
+   * Published (unlike `countdownFrame`) because the results view is the reader.
+   */
+  const matchSettings = shallowRef<RoomSettings | null>(null)
+  const matchSelfFreemods = shallowRef<Freemods | null>(null)
   let matchId: string | null = null
   /** Δ2: the match already forfeited by this store — the re-send guard. */
   let forfeitedMatchId: string | null = null
@@ -696,6 +705,8 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     scoreGen = null
     selfConfig = null
     selfFreemods = null
+    matchSettings.value = null
+    matchSelfFreemods.value = null
     matchEndReason.value = null
     setupReady = false
     goReached = false
@@ -898,6 +909,8 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     const selfEntry = frame.players.find((player) => player.playerId === selfId.value)
     selfFreemods = selfEntry?.freemods ?? null
     selfConfig = selfEntry !== undefined ? freemodsConfig(frame.settings, selfEntry.freemods) : null
+    matchSettings.value = frame.settings
+    matchSelfFreemods.value = selfFreemods
     const records: PeerRecord[] = frame.players
       .filter((player) => player.playerId !== selfId.value)
       .map((player) => ({
@@ -1483,8 +1496,9 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
   function updateSettings(settings: RoomSettings): void {
     safeSend({ type: 'settings_update', settings })
   }
-  function startMatch(): void {
-    safeSend({ type: 'start_match' })
+  /** Host-only. `force` starts without waiting on readiness (server still holds the 2-seat floor). */
+  function startMatch(force = false): void {
+    safeSend(force ? { type: 'start_match', force: true } : { type: 'start_match' })
   }
   function kickPlayer(playerId: string): void {
     safeSend({ type: 'kick', playerId })
@@ -1552,6 +1566,8 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
     countdownMsLeft,
     matchSeed,
     matchError,
+    matchSettings,
+    matchSelfFreemods,
     selfView,
     selfHud,
     selfOutcome,

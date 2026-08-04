@@ -217,6 +217,29 @@ export default {
       signin: 'Sign in to manage your account’s privacy settings.',
       error: 'Could not save the setting — check your connection and try it again.'
     },
+    bio: {
+      label: 'bio',
+      placeholder: 'a line about you',
+      description: 'Plain text — shown on your public profile.'
+    },
+    keyboardName: { label: 'keyboard', placeholder: 'the board you type on' },
+    links: {
+      label: 'links',
+      github: 'github',
+      youtube: 'youtube',
+      twitch: 'twitch',
+      placeholder: 'handle',
+      /** Said when the field holds something that is not a handle — a url, usually. */
+      invalid: 'enter the handle only, not a link'
+    },
+    badges: {
+      label: 'badges',
+      description: 'Pick which to show on your profile, and in what order.',
+      moveUp: 'move up',
+      moveDown: 'move down'
+    },
+    profileSave: 'save profile',
+    profileSaved: 'saved',
     profilePublic: {
       label: 'public profile',
       description: 'Off, visitors see only your nick. Leaderboard runs stay public either way.'
@@ -484,6 +507,9 @@ export default {
     textMods: 'text mods',
     yourMods: 'your mods',
     start: 'start game',
+    forceStart: 'start without waiting',
+    /** Said when a route change is refused: the seat is a server fact. */
+    leaveHint: 'use the leave button to give up your seat',
     ready: 'ready up',
     unready: 'cancel ready',
     leave: 'leave room',
@@ -657,6 +683,11 @@ export default {
     moreAbove: 'load more above'
   },
   profile: {
+    copyLink: {
+      label: 'copy profile link',
+      /** The confirmation, on the button's own tooltip — not a toast. */
+      copied: 'copied'
+    },
     signin: {
       hint: 'sign in to see your typing statistics — tests, records, charts and the keyboard heatmap.',
       action: 'sign in'
@@ -837,5 +868,41 @@ export default {
     retry: 'retry',
     back: 'back to the board',
     by: 'by {player}'
+  },
+  report: {
+    /** Per-subject titles: what the dialog is about, not a generic "report". */
+    title: {
+      user: 'report player',
+      quote: 'report quote',
+      run: 'report run'
+    },
+    reasonLabel: 'reason',
+    reasonPlaceholder: 'choose a reason',
+    /**
+     * The union of every subject's reason vocabulary (backend `docs/REPORTS.md`
+     * mirrors migration 00026) — flat, because the codes that repeat across
+     * subjects (`cheating`, `other`) mean the same thing everywhere.
+     */
+    reasons: {
+      offensive_name: 'offensive name',
+      impersonation: 'impersonation',
+      cheating: 'cheating',
+      typo: 'typo in the text',
+      wrong_language: 'wrong language',
+      offensive: 'offensive content',
+      impossible_score: 'impossible result',
+      other: 'other'
+    },
+    commentPlaceholder: 'details (optional)',
+    submit: 'send report',
+    /** One confirmation for a new report AND a repeat — see the modal's note. */
+    sent: 'report sent — thank you',
+    errors: {
+      signIn: 'sign in to file a report',
+      restricted: 'this account cannot file reports',
+      tooMany: 'too many reports for now — try again later',
+      notFound: 'this is no longer available to report',
+      generic: 'could not send the report — try again'
+    }
   }
 } as const

@@ -16,6 +16,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
+import { createPinia } from 'pinia'
 
 import type { BoardEntry, BoardMe, BoardMods } from '@shared/api'
 import { i18n } from '@app/i18n'
@@ -95,7 +96,7 @@ const settle = async (): Promise<void> => {
 const mountView = async (entriesTotal?: number) => {
   const wrapper = mount(BoardView, {
     props: { bucket: BUCKET, entriesTotal },
-    global: { plugins: [i18n, router, [VueQueryPlugin, { queryClient }]] }
+    global: { plugins: [i18n, router, createPinia(), [VueQueryPlugin, { queryClient }]] }
   })
   await settle()
   return wrapper

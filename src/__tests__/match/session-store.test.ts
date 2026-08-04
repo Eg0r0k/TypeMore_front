@@ -242,6 +242,68 @@ describe('match session store (loopback)', () => {
     expect(session.peers.every((peer) => peer.status === 'finished')).toBe(true)
   })
 
+  it('the result screen keeps the PLAYED settings when the lobby changes them afterwards', async () => {
+    const server = new LoopbackServer({ countdownLeadMs: 40 })
+    const { session } = await createSession(server)
+    cleanups.push(() => session.dispose())
+
+    await hostMatch(server, session, roomSettings(), [600])
+    typeOwnRun(session)
+    await until(() => session.phase === 'results', 'match end')
+
+    // Frozen at countdown, still published while the result is on screen.
+    expect(session.matchSettings).not.toBeNull()
+    expect(session.matchSettings!.textMods.punctuation).toBe(false)
+
+    // The host walks back and flips a text mod for the NEXT match. The room's
+    // live settings move; the snapshot the result screen reads must not.
+    session.updateSettings(
+      roomSettings({
+        textMods: { punctuation: true, numbers: true, randomCase: false, reverse: false }
+      })
+    )
+    await until(
+      () => session.room?.settings.textMods.punctuation === true,
+      'live room settings updated'
+    )
+
+    expect(session.phase).toBe('results')
+    expect(session.matchSettings!.textMods.punctuation).toBe(false)
+    expect(session.matchSettings!.textMods.numbers).toBe(false)
+
+    // Leaving the results is what releases the snapshot.
+    session.backToLobby()
+    expect(session.matchSettings).toBeNull()
+  })
+
+  it('force start begins the match while a seat is not ready; plain start refuses', async () => {
+    const server = new LoopbackServer({ countdownLeadMs: 40 })
+    const { session } = await createSession(server)
+    cleanups.push(() => session.dispose())
+
+    session.createRoom()
+    await until(() => session.room !== null, 'room_state after create_room')
+    session.updateSettings(roomSettings())
+
+    // A seated wire client that never readies up.
+    const raw = new LoopbackTransport(server)
+    await raw.connect()
+    cleanups.push(() => raw.disconnect())
+    raw.send({ type: 'join_room', code: session.room!.code })
+    await until(() => raw.state === 'in_room', 'raw client seated')
+
+    session.startMatch()
+    await until(() => session.lastError?.code === 'not_ready', 'plain start refused')
+
+    session.startMatch(true)
+    await until(
+      () => session.phase === 'countdown' || session.phase === 'running',
+      'force start counts down'
+    )
+    // The unready seat is IN the match, not carved out.
+    expect(session.peers).toHaveLength(1)
+  })
+
   it("time mode ranks by scoreV2 under each player's OWN frozen freemods", async () => {
     const server = new LoopbackServer({ countdownLeadMs: 40 })
     const { session, workers } = await createSession(server)

@@ -80,6 +80,13 @@ export function matchGeneration(
     numbers: settings.textMods.numbers,
     randomCase: settings.textMods.randomCase,
     reverse: settings.textMods.reverse,
+    lazy: settings.textMods.lazy,
+    // `language` exists in generation for ONE purpose: picking lazy mode's
+    // per-language accent pack (German writes `ä` as `ae`, Serbian `đ` as
+    // `dj`). It must therefore travel with `lazy` or a German room would strip
+    // its umlauts the generic way while a solo German run spells them out —
+    // the same seed, two different texts. With `lazy` off it changes nothing.
+    language: settings.lang,
     textSource: quote
   }
 }
@@ -107,5 +114,16 @@ export function freemodsConfig(settings: RoomSettings, freemods: Freemods): Core
  * zeroed so `modMultiplierV1` derives multipliers from freemods alone.
  */
 export function scoringGeneration(generation: GenerationConfig): GenerationConfig {
-  return { ...generation, punctuation: false, numbers: false, randomCase: false, reverse: false }
+  // `lazy` is zeroed with the rest: it is a TEXT mod, identical for every seat,
+  // so it defines the map rather than one player's difficulty. (It carries no
+  // multiplier in solo either — stripping diacritics makes a text easier, not
+  // harder.) `language` stays: it is not a mod, and nothing scores off it.
+  return {
+    ...generation,
+    punctuation: false,
+    numbers: false,
+    randomCase: false,
+    reverse: false,
+    lazy: false
+  }
 }

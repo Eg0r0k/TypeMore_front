@@ -9,6 +9,14 @@ import { RunStatusSchema } from '../runs/schemas'
  * would be a contract that can drift.
  */
 
+/** One social link: which service, and the handle on it (never a URL). */
+export const UserLinkSchema = v.object({
+  kind: v.picklist(['github', 'youtube', 'twitch']),
+  handle: v.string()
+})
+export type UserLink = v.InferOutput<typeof UserLinkSchema>
+export type LinkKind = UserLink['kind']
+
 /**
  * `GET /users/{name}` — the header. The ONE payload a closed profile still
  * answers with: identity plus the fact of being closed. `public: false` is a
@@ -24,7 +32,31 @@ export const PublicProfileSchema = v.object({
    * is the one payload a CLOSED profile still answers with, and a closed
    * profile's page shows a name and a face and nothing else.
    */
-  avatarUrl: v.nullish(v.string())
+  avatarUrl: v.nullish(v.string()),
+  /**
+   * The IDENTITY half (backend 00029). Present only on an OPEN profile and
+   * only for fields whose owner filled them in, so an untouched profile parses
+   * exactly as it did before these existed — hence nullish/optional
+   * throughout rather than defaulted-to-empty.
+   *
+   * `bio` is PLAIN TEXT and is rendered as text: no markdown, no HTML. The cap
+   * (250) is the server's and the schema's; this copy exists so a malformed
+   * response fails at the boundary rather than in a component.
+   */
+  bio: v.nullish(v.string()),
+  keyboard: v.nullish(v.string()),
+  /**
+   * Social links as HANDLES, never URLs — the client owns the prefix list
+   * (`LINK_PREFIXES`), which is what keeps the set of hosts this app can link
+   * to a list in the source rather than data anybody can write.
+   */
+  links: v.optional(v.array(UserLinkSchema), []),
+  /**
+   * The badge showcase, in its owner's order. Codes only: what a badge looks
+   * like lives in `entities/badge`, and a code this build cannot draw renders
+   * as nothing at all.
+   */
+  badges: v.optional(v.array(v.string()), [])
 })
 export type PublicProfile = v.InferOutput<typeof PublicProfileSchema>
 

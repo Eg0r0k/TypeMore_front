@@ -42,6 +42,7 @@
       :afk-ms="game.afk.afkMs"
       :quote-id="activeQuote?.id ?? null"
       :quote-source="activeQuote?.source ?? null"
+      :can-report-quote="auth.isAuth && activeQuote != null"
       :history="game.wordHistory"
       :bot-defeat="botDefeat"
       :repeated="repeatedRun"
@@ -52,6 +53,16 @@
       @next="onNext"
       @restart="onRepeat"
       @race-again="onRestart"
+      @report-quote="quoteReportOpen = true"
+    />
+
+    <!-- The report dialog over the quote just typed. Mounted only while a
+         quote is active: the flag that opens it requires one. -->
+    <ReportModal
+      v-if="activeQuote"
+      v-model:open="quoteReportOpen"
+      :subject="{ type: 'quote', id: activeQuote.id }"
+      :subject-label="activeQuote.source ?? undefined"
     />
 
     <TestStage v-else>
@@ -136,6 +147,7 @@
   } from '@/features/test/results'
   import { usePaceCaret } from '@/features/test/pace'
   import { ReplayPlayer } from '@/features/test/replay'
+  import { ReportModal } from '@/features/modal/report'
   import {
     type GameSetup,
     type ReplayData,
@@ -145,6 +157,7 @@
   } from '@entities/game'
   import { useRaceStore } from '@entities/race'
   import { useScreenStore } from '@/entities/screen'
+  import { useAuthStore } from '@/entities/auth'
   import { RaceHost } from '@/features/test/race'
   import { useConfigStore } from '@/entities/config/model/store'
   import {
@@ -186,6 +199,9 @@
   const { t } = useI18n()
   const game = useGameStore('local')
   const race = useRaceStore()
+  const auth = useAuthStore()
+  /** The quote-report dialog; opened by the flag on the results screen. */
+  const quoteReportOpen = ref(false)
   const config = useConfigStore().config
   // The field reads only the GameView contract; `blind` flows in from app config
   // here — the widget layer never touches the config store.

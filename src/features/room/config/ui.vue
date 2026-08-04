@@ -393,7 +393,8 @@
         punctuation: active.has('punctuation'),
         numbers: active.has('numbers'),
         randomCase: active.has('randomCase'),
-        reverse: active.has('reverse')
+        reverse: active.has('reverse'),
+        lazy: active.has('lazy')
       }
     })
   }

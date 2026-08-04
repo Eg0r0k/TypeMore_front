@@ -47,7 +47,17 @@ export function useMatchResults() {
   const isGuestOf = (playerId: string): boolean | undefined =>
     session.room?.players.find((seat) => seat.playerId === playerId)?.isGuest
 
-  const mode = computed(() => session.room?.settings.mode ?? 'time')
+  /**
+   * The settings the run on screen was PLAYED under — the store's frozen
+   * countdown snapshot, not the lobby's live `room.settings`. The live object
+   * moves the moment the host walks back to the lobby and toggles a text mod,
+   * and a result screen following it would relabel a finished run with the
+   * NEXT match's setup. The live settings are only a fallback for a state
+   * that should not occur (results showing with no snapshot recorded).
+   */
+  const playedSettings = computed(() => session.matchSettings ?? session.room?.settings ?? null)
+
+  const mode = computed(() => playedSettings.value?.mode ?? 'time')
 
   /** The result screen is up for a seat that is out, or for the whole match. */
   const showing = computed(() => session.phase === 'results' || session.phase === 'eliminated')
@@ -56,14 +66,16 @@ export function useMatchResults() {
   const live = computed(() => session.phase === 'eliminated')
 
   /**
-   * The room's settings as the solo screen's "test type" cell reads them. The
-   * shape half is the room's (mode, length, text mods, language); the difficulty
-   * and nospace halves are this seat's own freemods, which is exactly what the
-   * run was played under.
+   * The match's settings as the solo screen's "test type" cell reads them. The
+   * shape half is the frozen countdown snapshot (mode, length, text mods,
+   * language); the difficulty and nospace halves are this seat's own freemods
+   * as frozen at the same instant — exactly what the run was played under.
    */
   const summary = computed<ResultSummary>(() => {
-    const settings = session.room?.settings
-    const freemods = session.selfId === null ? undefined : freemodsOf(session.selfId)
+    const settings = playedSettings.value ?? undefined
+    const freemods =
+      session.matchSelfFreemods ??
+      (session.selfId === null ? undefined : freemodsOf(session.selfId))
     return {
       mode: settings?.mode ?? 'time',
       language: settings?.lang ?? '',

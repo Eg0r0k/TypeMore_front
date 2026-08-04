@@ -548,7 +548,22 @@ export const quote = (id: string): Quote => {
 export const publicProfile = (name: string, isPublic: boolean): PublicProfile => ({
   name,
   joined: instant(512),
-  public: isPublic
+  public: isPublic,
+  // The identity half, so the preview exercises the parts of the header that
+  // only exist once somebody has filled them in. A CLOSED profile carries
+  // none of it — that is the server's rule, and a fixture that broke it would
+  // preview a page the API cannot produce.
+  ...(isPublic
+    ? {
+        bio: 'preview account — types words, sometimes correctly',
+        keyboard: 'Keychron Q1 / Gateron Brown',
+        links: [
+          { kind: 'github' as const, handle: 'typemore' },
+          { kind: 'twitch' as const, handle: 'typemore_tv' }
+        ],
+        badges: ['staff', 'beta_tester']
+      }
+    : { links: [], badges: [] })
 })
 
 // ── /runs, /users/{name}/runs ──────────────────────────────────────────────

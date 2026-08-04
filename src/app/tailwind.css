@@ -141,6 +141,37 @@
   }
 }
 
+/*
+ * The "no, THAT way out" nudge: a short horizontal shake pointing at the
+ * control the user should have used (the room's leave button, when they try to
+ * navigate away from a lobby some other way).
+ *
+ * Deliberately a plain keyframe rather than a `transition`, because the trigger
+ * is an EVENT with no state change behind it — there is nothing to transition
+ * between. `useShake` (shared/lib/hooks) drives it by toggling the class; it
+ * also honours reduced motion, so nothing here needs a media query.
+ */
+@theme {
+  --animate-shake: shake 0.4s var(--ease-standard);
+
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+
+    20%,
+    60% {
+      transform: translateX(-5px);
+    }
+
+    40%,
+    80% {
+      transform: translateX(5px);
+    }
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

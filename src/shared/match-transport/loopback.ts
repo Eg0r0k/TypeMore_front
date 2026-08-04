@@ -430,7 +430,7 @@ export class LoopbackServer {
         this.setFreemods(client, frame.freemods)
         return
       case 'start_match':
-        this.startMatch(client)
+        this.startMatch(client, frame.force === true)
         return
       case 'kick':
         this.kick(client, frame.playerId)
@@ -477,7 +477,13 @@ export class LoopbackServer {
         // publishedHashes tripwire, so it cannot drift out from under us.
         lang: 'english',
         dictHash: 'be99aa1a',
-        textMods: { punctuation: false, numbers: false, randomCase: false, reverse: false },
+        textMods: {
+          punctuation: false,
+          numbers: false,
+          randomCase: false,
+          reverse: false,
+          lazy: false
+        },
         textSource: { kind: 'seeded' }
       },
       hostId: client.playerId,
@@ -562,6 +568,23 @@ export class LoopbackServer {
       this.errorTo(client, 'bad_message', 'settings.name must be 1-32 chars after sanitizing')
       return
     }
+    // Mirrors the real server's ValidateSettings bounds. The identifiers are
+    // capped because the server echoes them into every seat's room_state, the
+    // countdown, the persisted match and the anonymous lobby listing; the
+    // dimensions are capped by the same numbers the run-ingest endpoint uses,
+    // so a match whose result nobody could submit cannot be configured.
+    if (settings.lang.length > 32 || settings.dictHash.length > 64) {
+      this.errorTo(client, 'bad_message', 'lang/dictHash exceed their length limits')
+      return
+    }
+    if ((settings.textSource.quoteId?.length ?? 0) > 64) {
+      this.errorTo(client, 'bad_message', 'textSource.quoteId exceeds its length limit')
+      return
+    }
+    if ((settings.durationMs ?? 0) > 3_600_000 || (settings.wordCount ?? 0) > 3_000) {
+      this.errorTo(client, 'bad_message', 'durationMs/wordCount exceed their limits')
+      return
+    }
     room.settings = { ...settings, name }
     for (const seat of room.seats) seat.ready = false // §3: applying settings resets every ready flag
     this.sendRoomState(room)
@@ -583,7 +606,7 @@ export class LoopbackServer {
     this.sendRoomState(room)
   }
 
-  private startMatch(client: ClientRecord): void {
+  private startMatch(client: ClientRecord, force = false): void {
     const room = client.room
     if (room === null) {
       this.errorTo(client, 'not_in_room', 'start_match outside a room')
@@ -593,9 +616,10 @@ export class LoopbackServer {
       this.errorTo(client, 'forbidden', 'start_match is host-only and needs no running match')
       return
     }
-    const nonHostUnready = room.seats.some(
-      (seat) => seat.client.playerId !== room.hostId && !seat.ready
-    )
+    // Mirrors the real server: `force` waives readiness alone, never the floor.
+    const nonHostUnready =
+      !force &&
+      room.seats.some((seat) => seat.client.playerId !== room.hostId && !seat.ready)
     if (room.seats.length < 2 || nonHostUnready) {
       this.errorTo(client, 'not_ready', 'need ≥2 seats and every non-host seat ready')
       return

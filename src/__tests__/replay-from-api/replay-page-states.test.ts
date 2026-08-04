@@ -53,6 +53,16 @@ vi.mock('@/features/test/replay', () => ({
   })
 }))
 
+// The report dialog is its own feature with its own test; here it would drag
+// the real mutation layer through the '@shared/api' mock above.
+vi.mock('@/features/modal/report', () => ({
+  ReportModal: defineComponent({
+    name: 'ReportModal',
+    props: { open: Boolean, subject: { type: Object, required: true }, subjectLabel: String },
+    setup: () => () => null
+  })
+}))
+
 import { dictVersion, insertEvent, type CoreConfig, type GenerationConfig } from '@typemore/core'
 import { i18n } from '@app/i18n'
 import { TooltipProvider } from '@/shared/ui/tooltip'

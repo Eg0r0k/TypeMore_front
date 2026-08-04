@@ -89,6 +89,18 @@
           part="identity"
           :recent-wpm="recentWpm"
         />
+        <!-- The self-described half, under the identity block it belongs to.
+             Rendered from what the SERVER served: a closed profile never
+             carries these, so there is nothing here to hide client-side. -->
+        <div class="mt-3 flex items-start justify-between gap-3">
+          <ProfileIdentity
+            :bio="header.data.value?.bio"
+            :keyboard="header.data.value?.keyboard"
+            :links="header.data.value?.links"
+            :badges="header.data.value?.badges"
+          />
+          <ProfileCopyLink v-if="header.data.value" :name="header.data.value.name" />
+        </div>
       </ProfileSection>
 
       <ProfileSection
@@ -207,8 +219,10 @@
   import { useAuthStore } from '@/entities/auth'
   import {
     ProfileActivity,
+    ProfileCopyLink,
     ProfileDailyChart,
     ProfileHistogram,
+    ProfileIdentity,
     ProfileIdentitySkeleton,
     ProfileKeyboard,
     ProfilePBCards,

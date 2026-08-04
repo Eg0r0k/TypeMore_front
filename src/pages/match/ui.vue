@@ -124,7 +124,13 @@
       wordCount,
       lang: config.language,
       dictHash: dictVersion(dictionary.words),
-      textMods: { punctuation: false, numbers: false, randomCase: false, reverse: false },
+      textMods: {
+        punctuation: false,
+        numbers: false,
+        randomCase: false,
+        reverse: false,
+        lazy: false
+      },
       textSource: { kind: 'seeded' }
     })
 

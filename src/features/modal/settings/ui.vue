@@ -84,6 +84,10 @@
                   <ThemeSection />
                 </template>
                 <AccountSection v-else-if="category === 'account'" />
+                <!-- The profile editor sits under the account category with the
+                     privacy switches: both are things that exist only once
+                     there is an account, and both are about the same page. -->
+                <ProfileSection v-if="category === 'account'" />
                 <DangerSection v-else />
               </div>
             </template>
@@ -122,6 +126,7 @@
     type SettingId
   } from './model/registry'
   import AccountSection from './parts/AccountSection.vue'
+  import ProfileSection from './parts/ProfileSection.vue'
   import AppearanceSection from './parts/AppearanceSection.vue'
   import CaretSection from './parts/CaretSection.vue'
   import DangerSection from './parts/DangerSection.vue'

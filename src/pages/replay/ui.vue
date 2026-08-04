@@ -35,6 +35,23 @@
         <Typography v-if="byLine" size="s" color="sub">
           {{ byLine }} · {{ achievedDate }}
         </Typography>
+        <!-- Reporting needs a session (the server refuses anonymous filing),
+             so a guest never sees a button that can only fail. -->
+        <Tooltip v-if="auth.isAuth">
+          <TooltipTrigger as-child>
+            <Button
+              class="ml-auto"
+              color="shadow"
+              size="icon-sm"
+              :aria-label="t('report.title.run')"
+              data-testid="replay-report"
+              @click="openRunReport"
+            >
+              <IconFlag class="size-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{{ t('report.title.run') }}</TooltipContent>
+        </Tooltip>
       </div>
 
       <TestResults
@@ -47,9 +64,11 @@
         :afk-ms="results.afk.afkMs"
         :quote-id="quoteRef?.quoteId ?? null"
         :quote-source="quoteSourceText"
+        :can-report-quote="auth.isAuth && quoteRef != null"
         :history="results.history"
         :actions="RESULTS_ACTIONS"
         @replay="watching = true"
+        @report-quote="openQuoteReport"
       />
     </div>
 
@@ -125,6 +144,8 @@
         {{ t('replay.back') }}
       </Button>
     </div>
+
+    <ReportModal v-model:open="reportOpen" :subject="reportSubject" :subject-label="reportLabel" />
   </main>
 </template>
 
@@ -135,6 +156,8 @@
   import { useQuery } from '@tanstack/vue-query'
 
   import { ReplayPlayer } from '@/features/test/replay'
+  import { ReportModal } from '@/features/modal/report'
+  import { useAuthStore } from '@/entities/auth'
   import {
     type ResultSummary,
     type ResultsAction,
@@ -152,13 +175,15 @@
     dictionaryBodyByHashQueryOptions,
     quoteByIdQueryOptions,
     runReplayLogQueryOptions,
-    runReplayQueryOptions
+    runReplayQueryOptions,
+    type ReportSubject
   } from '@shared/api'
   import { ROUTE_NAMES } from '@app/router/route-names'
   import { Button } from '@shared/ui/button'
   import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
   import { Typography } from '@shared/ui/typography'
   import IconArrowLeft from '~icons/tabler/arrow-left'
+  import IconFlag from '~icons/tabler/flag'
   import { formatShortDate } from '@/shared/lib/helpers/datetime'
   import { durationSeconds } from '@/shared/lib/helpers/numbers'
 
@@ -186,6 +211,30 @@
   const { t, locale } = useI18n()
   const route = useRoute()
   const router = useRouter()
+  const auth = useAuthStore()
+
+  /**
+   * ONE report dialog, two subjects this page can put in it: the run (the
+   * byline's flag) and, on a quote run, the quote itself (the flag beside the
+   * source line). The subject is set at open time, never guessed at render.
+   */
+  const reportOpen = ref(false)
+  const reportSubject = ref<ReportSubject>({ type: 'run', id: props.runId })
+  const reportLabel = ref<string | undefined>(undefined)
+
+  const openRunReport = (): void => {
+    reportSubject.value = { type: 'run', id: props.runId }
+    reportLabel.value = byLine.value ?? undefined
+    reportOpen.value = true
+  }
+
+  const openQuoteReport = (): void => {
+    const q = quoteRef.value
+    if (!q) return
+    reportSubject.value = { type: 'quote', id: q.quoteId }
+    reportLabel.value = quoteSourceText.value ?? undefined
+    reportOpen.value = true
+  }
 
   const meta = useQuery(computed(() => runReplayQueryOptions(props.runId)))
 

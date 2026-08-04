@@ -8,6 +8,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
+import { createPinia } from 'pinia'
 
 import type { BucketInfo } from '@shared/api'
 import { i18n } from '@app/i18n'
@@ -143,7 +144,7 @@ const settle = async (): Promise<void> => {
 
 const mountPage = async () => {
   const wrapper = mount(BoardsPage, {
-    global: { plugins: [i18n, router, [VueQueryPlugin, { queryClient }]] }
+    global: { plugins: [i18n, router, createPinia(), [VueQueryPlugin, { queryClient }]] }
   })
   await settle()
   return wrapper
@@ -254,7 +255,7 @@ describe('boards page', () => {
     h.catalogue.mockReturnValue(Promise.withResolvers<BucketInfo[]>().promise)
 
     const wrapper = mount(BoardsPage, {
-      global: { plugins: [i18n, router, [VueQueryPlugin, { queryClient }]] }
+      global: { plugins: [i18n, router, createPinia(), [VueQueryPlugin, { queryClient }]] }
     })
     await nextTick()
 

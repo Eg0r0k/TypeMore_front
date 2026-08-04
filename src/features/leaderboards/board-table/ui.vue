@@ -160,6 +160,20 @@
               >
                 <IconSwords />
               </Button>
+              <!-- The board row is the one public surface that carries another
+                   player's id, so this is where "report player" lives. Needs a
+                   session to file; your own row offers no way to report yourself. -->
+              <Button
+                v-if="auth.isAuth && entry.userId !== selfUserId"
+                color="shadow"
+                size="icon-sm"
+                data-testid="boards-action-report"
+                :aria-label="`${t('report.title.user')} ${entry.displayName}`"
+                :title="t('report.title.user')"
+                @click.stop="openReport(entry)"
+              >
+                <IconFlag />
+              </Button>
             </span>
           </li>
         </template>
@@ -196,6 +210,13 @@
         {{ isLoadingMore ? t('boards.loading') : t('boards.more') }}
       </Button>
     </TooltipProvider>
+
+    <ReportModal
+      v-if="reportEntry"
+      v-model:open="reportOpen"
+      :subject="{ type: 'user', id: reportEntry.userId }"
+      :subject-label="reportEntry.displayName"
+    />
   </div>
 </template>
 
@@ -210,6 +231,7 @@
   import IconMedal from '~icons/tabler/medal'
   import IconEye from '~icons/tabler/eye'
   import IconSwords from '~icons/tabler/swords'
+  import IconFlag from '~icons/tabler/flag'
   import { Button } from '@/shared/ui/button'
   import { TABLE_GRID_HEAD, TABLE_GRID_ROW } from '@/shared/ui/table'
   import { Typography } from '@/shared/ui/typography'
@@ -217,6 +239,8 @@
   import { BOARD_GRID } from '../board-grid'
   import { BoardModChips } from '../mod-chips'
   import { useBoardFeed } from '../model/use-board-feed'
+  import { ReportModal } from '@/features/modal/report'
+  import { useAuthStore } from '@/entities/auth'
   import { percent } from '@/shared/lib/helpers/numbers'
   import {
     formatExactAchievedAt,
@@ -237,6 +261,18 @@
 
   const { t, locale } = useI18n()
   const router = useRouter()
+  const auth = useAuthStore()
+
+  // ── Report a player ────────────────────────────────────────────────────────
+  // ONE dialog for the whole table, aimed at open time — a modal per row would
+  // mount hundreds of dialogs for an action almost nobody takes.
+  const reportOpen = ref(false)
+  const reportEntry = ref<BoardEntry | null>(null)
+
+  const openReport = (entry: BoardEntry): void => {
+    reportEntry.value = entry
+    reportOpen.value = true
+  }
 
   const {
     segments,

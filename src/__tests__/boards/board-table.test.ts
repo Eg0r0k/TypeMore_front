@@ -10,6 +10,7 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
+import { createPinia } from 'pinia'
 
 import type { BoardEntry, BoardMods, BoardPage } from '@shared/api'
 import { i18n } from '@app/i18n'
@@ -95,7 +96,9 @@ const settle = async (): Promise<void> => {
 const mountTable = async (props: { bucket: string; selfUserId?: string }) => {
   const wrapper = mount(BoardTable, {
     props,
-    global: { plugins: [i18n, router, [VueQueryPlugin, { queryClient }]] }
+    // Pinia: the table reads the auth store to decide whether the row offers
+    // "report player" (a session is required to file).
+    global: { plugins: [i18n, router, createPinia(), [VueQueryPlugin, { queryClient }]] }
   })
   await settle()
   return wrapper

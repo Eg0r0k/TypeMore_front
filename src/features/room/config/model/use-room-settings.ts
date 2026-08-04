@@ -19,7 +19,7 @@ const FALLBACK_SETTINGS: RoomSettings = {
   durationMs: 30000,
   lang: 'english',
   dictHash: '',
-  textMods: { punctuation: false, numbers: false, randomCase: false, reverse: false },
+  textMods: { punctuation: false, numbers: false, randomCase: false, reverse: false, lazy: false },
   textSource: { kind: 'seeded' }
 }
 

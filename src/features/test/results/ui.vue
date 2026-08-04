@@ -160,6 +160,22 @@
             </TooltipTrigger>
             <TooltipContent>{{ t('results.quoteBoard') }}</TooltipContent>
           </Tooltip>
+          <!-- Reporting stays an EVENT: this view owns no modal and no session
+               knowledge — the surface decides whether reporting is possible. -->
+          <Tooltip v-if="canReportQuote">
+            <TooltipTrigger as-child>
+              <button
+                type="button"
+                class="text-sub hover:text-text transition-tm focus-ring inline-flex shrink-0 cursor-pointer items-center rounded-md p-1 [&_svg]:size-4"
+                data-testid="results-report-quote"
+                @click="emit('reportQuote')"
+              >
+                <IconFlag />
+                <span class="sr-only">{{ t('report.title.quote') }}</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{{ t('report.title.quote') }}</TooltipContent>
+          </Tooltip>
         </dd>
       </div>
     </dl>
@@ -294,6 +310,7 @@
   import IconUsers from '~icons/tabler/users'
   import IconDoorExit from '~icons/tabler/door-exit'
   import IconBoard from '~icons/tabler/trophy'
+  import IconFlag from '~icons/tabler/flag'
   import { quoteBucketKey } from '@shared/api'
   import { GameModIcons, type GameModsLike } from '@/entities/game'
   import { routeLocation } from '@/app/router/route-locations'
@@ -378,6 +395,12 @@
       /** Upstream's attribution for that quote, shown under the run's summary. */
       quoteSource?: string | null
       /**
+       * Offer the "report this quote" flag beside the source line. The SURFACE
+       * decides (a session is required to file, and only a quote run has a
+       * quote); this pure view just renders the button and emits.
+       */
+      canReportQuote?: boolean
+      /**
        * The player finished SLOWER than the active bot (pace caret or record
        * ghost): `{ you, them }` in wpm. Null (a win, or no bot) renders nothing.
        */
@@ -409,6 +432,7 @@
       afkMs: 0,
       quoteId: null,
       quoteSource: null,
+      canReportQuote: false,
       history: null,
       botDefeat: null,
       repeated: false,
@@ -432,6 +456,8 @@
     (event: 'lobby'): void
     /** Room only: give the seat up. */
     (event: 'leave'): void
+    /** The quote-source flag: the surface hosts the report dialog. */
+    (event: 'reportQuote'): void
   }>()
 
   const { t } = useI18n()

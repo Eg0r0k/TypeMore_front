@@ -15,5 +15,7 @@ export const profileKeys = {
     [...profileKeys.all, 'timeseries', from ?? null, to ?? null] as const,
   pbs: () => [...profileKeys.all, 'pbs'] as const,
   keyboard: () => [...profileKeys.all, 'keyboard'] as const,
+  /** The OWNER's editable profile (bio, links, badge showcase). */
+  own: () => [...profileKeys.all, 'own'] as const,
   layouts: () => [...API_SCOPE, 'layouts'] as const
 } as const

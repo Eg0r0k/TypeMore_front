@@ -141,7 +141,8 @@ describe('optionsFor(context) — an option renders only where it is declared', 
       'punctuation',
       'numbers',
       'randomCase',
-      'reverse'
+      'reverse',
+      'lazy'
     ])
   })
 
@@ -156,11 +157,12 @@ describe('optionsFor(context) — an option renders only where it is declared', 
         !o.contexts.roomSettings &&
         !o.contexts.freemod
     )
-    // Lazy mode, the input-behaviour trio and the visual mods. Lazy is solo-only
-    // because `RoomSettings.textMods` has no field for it: until the protocol
-    // grows one, a lazy seat would type a different text from its neighbours.
+    // The input-behaviour trio and the visual mods. Lazy is NOT here any more:
+    // `RoomSettings.textMods` grew a `lazy` field, so it is a shared text mod
+    // like the other four. It could never have been a freemod — the transform
+    // runs at generation time, so a per-seat lazy would hand one player a
+    // different text from its neighbours.
     expect(keysOf(soloOnly)).toEqual([
-      'lazy',
       'freedomMode',
       'stopOnError',
       'quickEnd',
@@ -196,7 +198,8 @@ describe('PROTOCOL.md §5 — the registry maps to the wire, it does not reshape
     punctuation: 'textMods',
     numbers: 'textMods',
     randomCase: 'textMods',
-    reverse: 'textMods'
+    reverse: 'textMods',
+    lazy: 'textMods'
   }
   /** Registry key → the `Freemods` field it feeds. */
   const FREEMOD_WIRE_FIELD: Record<string, string> = {

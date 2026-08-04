@@ -147,6 +147,43 @@ describe('RoomControls — start gating (host)', () => {
   })
 })
 
+describe('RoomControls — force start (host)', () => {
+  it('offers force start only while it does something: enough seats, someone unready', async () => {
+    const store = makeStore({
+      selfId: 'p1',
+      hostId: 'p1',
+      seats: [{ playerId: 'p1' }, { playerId: 'p2', ready: false }]
+    })
+    const wrapper = mountControls()
+
+    const force = wrapper.find('[data-testid="force-start-button"]')
+    expect(force.exists()).toBe(true)
+
+    await force.trigger('click')
+    expect(store.startMatch).toHaveBeenCalledExactlyOnceWith(true)
+    expect(toast.warning).not.toHaveBeenCalled()
+  })
+
+  it('hides force start when everyone is ready, when alone, and for non-hosts', () => {
+    makeStore({
+      selfId: 'p1',
+      hostId: 'p1',
+      seats: [{ playerId: 'p1' }, { playerId: 'p2', ready: true }]
+    })
+    expect(mountControls().find('[data-testid="force-start-button"]').exists()).toBe(false)
+
+    makeStore({ selfId: 'p1', hostId: 'p1', seats: [{ playerId: 'p1' }] })
+    expect(mountControls().find('[data-testid="force-start-button"]').exists()).toBe(false)
+
+    makeStore({
+      selfId: 'p2',
+      hostId: 'p1',
+      seats: [{ playerId: 'p1' }, { playerId: 'p2', ready: false }]
+    })
+    expect(mountControls().find('[data-testid="force-start-button"]').exists()).toBe(false)
+  })
+})
+
 describe('RoomControls — non-host', () => {
   it('hides the host-only start button and offers ready instead', async () => {
     const store = makeStore({

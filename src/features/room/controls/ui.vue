@@ -10,6 +10,19 @@
       <IconPlayerPlay />
       {{ t('room.start') }}
     </Button>
+    <!-- The escape hatch for a lobby stuck on one idle seat. Offered only while
+         it DOES something the main button cannot: enough seats, not all ready.
+         The unready players are seated into the match — the AFK rules, not the
+         roster, deal with whoever then does not type. -->
+    <Button
+      v-if="session.isHost && enoughPlayers && !allReady"
+      color="gray"
+      data-testid="force-start-button"
+      @click="session.startMatch(true)"
+    >
+      <IconPlayerPlay />
+      {{ t('room.forceStart') }}
+    </Button>
     <Button
       v-if="!session.isHost"
       size="l"
@@ -21,7 +34,12 @@
       <IconX v-else />
       {{ isReady ? t('room.unready') : t('room.ready') }}
     </Button>
-    <Button color="gray" data-testid="leave-button" @click="session.leaveRoom()">
+    <Button
+      color="gray"
+      data-testid="leave-button"
+      :class="{ 'animate-shake': shaking }"
+      @click="session.leaveRoom()"
+    >
       <IconLogout />
       {{ t('room.leave') }}
     </Button>
@@ -29,8 +47,9 @@
 </template>
 
 <script setup lang="ts">
-  import { computed } from 'vue'
+  import { computed, inject, shallowRef } from 'vue'
   import { useI18n } from 'vue-i18n'
+  import { LEAVE_SHAKE_KEY } from '@/shared/constants/inject-keys'
   import type { RoomPlayer } from '@/entities/lobby'
   import { useMatchSessionStore } from '@/entities/match'
   import { Button } from '@/shared/ui/button'
@@ -53,10 +72,11 @@
   const nonHostSeats = computed(() =>
     players.value.filter((player: RoomPlayer) => player.playerId !== session.room?.hostPlayerId)
   )
-  const canStart = computed(
-    () =>
-      players.value.length >= 2 && nonHostSeats.value.every((player: RoomPlayer) => player.ready)
+  const enoughPlayers = computed(() => players.value.length >= 2)
+  const allReady = computed(() =>
+    nonHostSeats.value.every((player: RoomPlayer) => player.ready)
   )
+  const canStart = computed(() => enoughPlayers.value && allReady.value)
   /**
    * Why the match cannot start, said only when someone tries. The gate itself is
    * still §3's — two seats, every non-host seat ready — and the server enforces
@@ -74,6 +94,14 @@
     () =>
       players.value.find((player: RoomPlayer) => player.playerId === session.selfId)?.ready === true
   )
+
+  /**
+   * Leaving a room is an act with a wire frame behind it, so a browser Back out
+   * of the lobby is refused by the page's guard — and refusing silently would
+   * read as a broken button. The page shakes this one to answer "then how do I
+   * get out". Defaulted, so the component still mounts outside a room page.
+   */
+  const shaking = inject(LEAVE_SHAKE_KEY, shallowRef(false))
 </script>
 
 <style lang="scss" scoped>

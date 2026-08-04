@@ -18,3 +18,4 @@ export {
   searchUsers
 } from './endpoints'
 export type { PublicProfile, PublicRun, PublicRunList, UserSearch } from './schemas'
+export type { UserLink, LinkKind } from './schemas'

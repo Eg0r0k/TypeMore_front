@@ -63,13 +63,17 @@
       <RoomControls class="lobby__controls" />
       <RoomChat class="lobby__chat" />
     </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
-  import { onUnmounted, watch, watchEffect } from 'vue'
-  import { useRouter } from 'vue-router'
+  import { onUnmounted, provide, watch, watchEffect } from 'vue'
+  import { onBeforeRouteLeave, useRouter } from 'vue-router'
   import { useI18n } from 'vue-i18n'
+  import { LEAVE_SHAKE_KEY } from '@/shared/constants/inject-keys'
+  import { useShake } from '@/shared/lib/hooks/useShake'
+  import { toast } from '@/shared/ui/sonner'
   import { routeLocation } from '@/app/router/route-locations'
   import { useMatchSessionStore } from '@/entities/match'
   import { useScreenStore } from '@/entities/screen'
@@ -103,6 +107,27 @@
       if (!room) void router.replace(routeLocation.servers())
     }
   )
+
+  /**
+   * The seat is a SERVER fact: walking away from this route without the leave
+   * button would leave a seat behind, holding a slot in a five-seat room and a
+   * countdown other people are waiting on. So the route change is refused while
+   * the seat is still held, and the refusal points at the control that does it
+   * properly — the leave button shakes, and the toast says the same thing in
+   * words for anyone who cannot see motion.
+   *
+   * Only while a seat is HELD: once the room is gone the redirect above is the
+   * one navigating, and it must not be blocked by its own guard.
+   */
+  const { shaking, shake } = useShake()
+  provide(LEAVE_SHAKE_KEY, shaking)
+
+  onBeforeRouteLeave(() => {
+    if (session.room === null) return true
+    shake()
+    toast.warning(t('room.leaveHint'))
+    return false
+  })
 
   /**
    * The same signal the solo screen raises, and the reason it lives in a store

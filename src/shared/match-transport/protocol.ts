@@ -20,7 +20,14 @@ const TextModsSchema = v.object({
   punctuation: v.boolean(),
   numbers: v.boolean(),
   randomCase: v.boolean(),
-  reverse: v.boolean()
+  reverse: v.boolean(),
+  /**
+   * Lazy mode — the generated words without their diacritics (`épée` → `epee`).
+   * Defaulted rather than required: it was added to §5 after the field set was
+   * frozen, and a server or a peer that predates it says nothing, which must
+   * decode as the old behaviour rather than fail the frame.
+   */
+  lazy: v.optional(v.boolean(), false)
 })
 export type TextMods = v.InferOutput<typeof TextModsSchema>
 
@@ -270,7 +277,8 @@ const SetFreemodsSchema = v.object({
   freemods: FreemodsSchema
 })
 
-const StartMatchSchema = v.object({ type: v.literal('start_match') })
+// `force` waives ONLY the readiness gate server-side; the two-seat floor holds.
+const StartMatchSchema = v.object({ type: v.literal('start_match'), force: v.optional(v.boolean()) })
 
 const KickSchema = v.object({ type: v.literal('kick'), playerId: v.string() })
 

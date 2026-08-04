@@ -376,11 +376,15 @@ export const GAME_OPTIONS = [
     contexts: {
       solo: true,
       settingsModal: false,
-      // Absent from a room: the shared map is defined by `RoomSettings.textMods`,
-      // and lazy has no field there. Adding one is a protocol change, and until
-      // it exists a lazy seat would generate a different text from its
-      // neighbours — the one failure a shared seed exists to prevent.
-      roomSettings: false,
+      // A TEXT mod, so it is the host's and room-wide. It reached the room the
+      // only way it could: `RoomSettings.textMods` grew a `lazy` field
+      // (protocol §5, additively — an older client decodes it as false). It is
+      // NOT a freemod, and could never be one: the transform runs at GENERATION
+      // time, so a per-seat lazy would hand one player a different text from
+      // its neighbours, which is the one failure a shared seed exists to
+      // prevent. It also earns no multiplier — only log-provable per-player
+      // rules multiply (MATCH.md §3) — and this one is the map.
+      roomSettings: true,
       freemod: false,
       roomLocal: false
     },
