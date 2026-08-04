@@ -23,6 +23,21 @@ describe('dialogs store', () => {
     expect(dialogs.cookies).toBe(false)
   })
 
+  it('carries a tab request, and carries none when nobody asked', () => {
+    const dialogs = useDialogsStore()
+
+    dialogs.openSettings('account')
+    expect(dialogs.settings).toBe(true)
+    expect(dialogs.settingsCategory).toBe('account')
+
+    // A plain open must CLEAR the previous request, not inherit it: the header
+    // button means "settings", and the last thing the profile avatar asked for
+    // is none of its business.
+    dialogs.settings = false
+    dialogs.openSettings()
+    expect(dialogs.settingsCategory).toBeNull()
+  })
+
   it('drills from settings into themes and comes back when they close', async () => {
     const dialogs = useDialogsStore()
     dialogs.openSettings()

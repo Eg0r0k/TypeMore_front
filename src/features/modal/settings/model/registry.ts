@@ -7,6 +7,8 @@ import IconPalette from '~icons/tabler/palette'
 import IconShieldLock from '~icons/tabler/shield-lock'
 import IconAlertTriangle from '~icons/tabler/alert-triangle'
 
+import type { SettingsCategory } from '@/entities/dialogs'
+
 /**
  * The settings dialog is data-driven in ONE respect only: search. Every row
  * declares itself here so the search box can match a query against its
@@ -15,7 +17,13 @@ import IconAlertTriangle from '~icons/tabler/alert-triangle'
  * in their section — a generic control renderer would buy nothing and cost
  * every future setting a detour through an abstraction.
  */
-export type CategoryId = 'input' | 'sound' | 'caret' | 'appearance' | 'account' | 'danger'
+/**
+ * The category vocabulary itself lives in `entities/dialogs`, because openers
+ * ask for a tab by name (`openSettings('account')`) and they cannot see this
+ * file — features are not importable from below. Aliased here so everything in
+ * this slice keeps calling it what it has always been called.
+ */
+export type CategoryId = SettingsCategory
 
 export type SettingId =
   | 'freedomMode'

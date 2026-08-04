@@ -83,11 +83,16 @@
                   <AppearanceSection />
                   <ThemeSection />
                 </template>
-                <AccountSection v-else-if="category === 'account'" />
-                <!-- The profile editor sits under the account category with the
-                     privacy switches: both are things that exist only once
-                     there is an account, and both are about the same page. -->
-                <ProfileSection v-if="category === 'account'" />
+                <!-- Account owns both the profile editor and the privacy
+                     switches: both exist only once there is an account, and
+                     both are about the same page. They are ONE branch of this
+                     chain — a second `v-if` between the arms detaches the
+                     `v-else` below, and the danger zone then renders under
+                     every tab. -->
+                <template v-else-if="category === 'account'">
+                  <ProfileSection />
+                  <AccountSection />
+                </template>
                 <DangerSection v-else />
               </div>
             </template>
@@ -103,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, provide, ref } from 'vue'
+  import { computed, provide, ref, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
   import IconSearch from '~icons/tabler/search'
 
@@ -193,6 +198,26 @@
    * with it, which is what the drill-down avoids.
    */
   const dialogs = useDialogsStore()
+
+  /**
+   * Deep-link into a tab: `openSettings('account')` from the profile avatar
+   * lands here instead of on whatever tab the dialog was last left on.
+   *
+   * Both flags are watched together because `openSettings` writes them in the
+   * same tick — watching `open` alone would read the category before it was
+   * set on the very first open. The request is CONSUMED (cleared) once applied,
+   * which is what lets the theme/cookie drill-down come back to the tab you
+   * actually left rather than to the one you originally arrived on.
+   */
+  watch(
+    [open, () => dialogs.settingsCategory],
+    ([isOpen, requested]) => {
+      if (!isOpen || !requested) return
+      selectCategory(requested)
+      dialogs.settingsCategory = null
+    },
+    { immediate: true }
+  )
 
   provide(SETTINGS_FILTER, { isVisible: (id: SettingId) => matchedIds.value.has(id) })
   provide(SETTINGS_NAV, {
