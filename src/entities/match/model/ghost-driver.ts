@@ -37,10 +37,12 @@ import {
   type ScoreState,
   GameCore,
   asMs,
+  computeMetrics,
+  finalizeScoreV3,
   initialScoreState,
+  isTelemetryEvent,
   metricsOf,
-  scoreOfLog,
-  scoreStep,
+  scoreStepV3,
   sortEvents
 } from '@typemore/core'
 import type { GameSetup, GameView } from '@entities/game'
@@ -80,7 +82,7 @@ export class GhostDriver {
   private _virtualNow = 0
   private readonly snapshotRef: ShallowRef<GameState>
   private readonly displayNowRef = shallowRef<Ms>(asMs(0))
-  /** Incremental scoreV1 fold of the dispatched prefix — O(1) per event, unlike `score`'s full refold. */
+  /** Incremental scoreV3 fold of the dispatched prefix — O(1) per event, unlike `score`'s full refold. */
   private scoreState: ScoreState = initialScoreState()
   private readonly liveScoreRef = shallowRef<{ readonly base: number; readonly streak: number }>({
     base: 0,
@@ -91,7 +93,7 @@ export class GhostDriver {
   readonly view: GameView
   /** Live metrics (WPM/accuracy/…) recomputed from the ghost's own log. */
   readonly metrics: ComputedRef<Metrics>
-  /** Live scoreV1 result from the ghost's own fold — opponents' scores come free (no ghost UI yet). */
+  /** Live scoreV3 result from the ghost's own fold — opponents' scores come free (no ghost UI yet). */
   readonly score: ComputedRef<ScoreResult>
   /** Live combo points + current streak, advanced with the display clock (the race rail reads this). */
   readonly liveScore: ComputedRef<{ readonly base: number; readonly streak: number }>
@@ -130,7 +132,18 @@ export class GhostDriver {
 
     this.score = computed(() => {
       void this.snapshotRef.value
-      return scoreOfLog(this.core.events, { config: this.core.config, words: this.core.words })
+      // scoreV3 fold (a ghost's events include a mobile peer's ime replaces,
+      // which must score exactly as they do on that peer's own screen). A ghost
+      // setup carries no generation config, so the mod multiplier is pinned to
+      // 1 — same as the v1 fold this replaced; standings apply the peer's real
+      // multiplier via `scoreV3OfLog` in the session store.
+      const ctx = { config: this.core.config, words: this.core.words }
+      const ordered = sortEvents(this.core.events).filter((e) => !isTelemetryEvent(e))
+      const state = initialScoreState()
+      for (const event of ordered) scoreStepV3(state, event, ctx)
+      const endMs = ordered.length > 0 ? ordered[ordered.length - 1].t : asMs(0)
+      const metrics = computeMetrics(ctx, ordered, endMs)
+      return finalizeScoreV3(state.base, state.comboPeak, metrics, ctx.config.mode, 1)
     })
 
     this.liveScore = computed(() => this.liveScoreRef.value)
@@ -185,9 +198,9 @@ export class GhostDriver {
       // the authoritative judgement happens in validateLog on the full log.
       const event = this.pending[this.cursor]
       this.core.dispatch(event)
-      // Same unconditional fold as `scoreOfLog`: rejected events are no-ops
-      // inside `scoreStep` too (a finished state ignores everything).
-      scoreStep(this.scoreState, event, { config: this.core.config, words: this.core.words })
+      // Same unconditional fold as the batch score: rejected events are no-ops
+      // inside `scoreStepV3` too (a finished state ignores everything).
+      scoreStepV3(this.scoreState, event, { config: this.core.config, words: this.core.words })
       this.cursor += 1
     }
     if (this.cursor > dispatchedFrom) {

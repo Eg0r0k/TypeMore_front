@@ -138,7 +138,7 @@ describe('useRunSubmission — auto-submits only for an authed, finished, eligib
       mode: 'time',
       durationMs: 15000,
       seed: 2864901,
-      scoreVersion: 2
+      scoreVersion: 3
     })
     expect(wrapper.vm.sub.state.value).toBe('saved')
   })

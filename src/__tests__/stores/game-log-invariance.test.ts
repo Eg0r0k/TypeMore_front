@@ -42,7 +42,7 @@ import {
   keyDownEvent,
   keyUpEvent,
   replaceEvent,
-  scoreV2OfLog
+  scoreV3OfLog
 } from '@typemore/core'
 import type { TimerWorkerLike } from '@shared/lib/hooks/useGameTimer'
 import { useGameStore } from '@entities/game'
@@ -332,7 +332,7 @@ const SCRIPTS: readonly Script[] = [
    * asked whether a word that ARRIVED AS A REPLACE feeds `advanceScore` and the
    * combo the same way a typed one does. It is not a question about the current
    * `advanceScore`: the live accumulator walks events as they happen while
-   * `scoreV2OfLog` refolds the finished log, and a replace is the one event kind
+   * `scoreV3OfLog` refolds the finished log, and a replace is the one event kind
    * that can move several characters and a word boundary at once. If those two
    * ever disagreed about what a replaced word is worth, the client would show a
    * score the server's refold does not produce — and after the adapter fix that
@@ -438,7 +438,7 @@ describe('the rejection path records nothing', () => {
       //    log — which it only can if the rejected events never reached
       //    `advanceScore`.
       expect(store.scoreResult).toEqual(
-        scoreV2OfLog(log, { config: script.config, words: script.words, generation: GENERATION }, DECLARATION)
+        scoreV3OfLog(log, { config: script.config, words: script.words, generation: GENERATION }, DECLARATION)
       )
     }
   )
@@ -470,7 +470,7 @@ describe('the rejection path records nothing', () => {
     expect((script as Script).words.slice(0, 3)).toEqual(state.input.slice(0, 3))
     expect((script as Script).words[3]).not.toBe(state.input[3])
 
-    const score = scoreV2OfLog(
+    const score = scoreV3OfLog(
       log,
       { config: (script as Script).config, words: (script as Script).words, generation: GENERATION },
       DECLARATION

@@ -27,9 +27,14 @@ import {
   netCharsOf,
   separatorsOf,
   SCORE_VERSION_2,
+  SCORE_VERSION_3,
+  finalizeScoreV3,
+  replaceEvent,
   scoreOfLog,
   scoreStep,
+  scoreStepV3,
   scoreV2OfLog,
+  scoreV3OfLog,
   sortEvents
 } from '@typemore/core'
 
@@ -425,5 +430,170 @@ describe('scoreV2 mods scale the total, never base/acc', () => {
     )
     expect(punct.modMultiplier).toBeCloseTo(1.1, 10)
     expect(punct.base).toBe(plain.base)
+  })
+})
+
+// ── scoreV3: ime replaces score (the mobile composition path) ────────────────
+
+const V3_SETUP = (words: string[], over: Partial<CoreConfig> = {}) => ({
+  config: config(over),
+  words,
+  generation: genV2()
+})
+
+/** Fold scoreStepV3 over a log — the live path a v3 store drives. */
+function foldScoreV3(events: readonly GameEvent[], ctx: CoreContext) {
+  const state = initialScoreState()
+  for (const event of sortEvents(events)) scoreStepV3(state, event, ctx)
+  return state
+}
+
+describe('scoreV3: an ime replace scores its graphemes like keystrokes', () => {
+  it('a word composed in one ime replace scores exactly like typing it', () => {
+    const ctx: CoreContext = { config: config(), words: ['hello'] }
+    const typed = foldScore(
+      [
+        insertEvent(1, 0, 'h'),
+        insertEvent(2, 80, 'e'),
+        insertEvent(3, 160, 'l'),
+        insertEvent(4, 240, 'l'),
+        insertEvent(5, 320, 'o'),
+        commitEvent(6, 400)
+      ],
+      ctx
+    )
+    const composed = foldScoreV3(
+      [replaceEvent(1, 320, 0, 0, 'hello', 'ime'), commitEvent(2, 400)],
+      ctx
+    )
+    expect(composed.base).toBe(typed.base) // 50
+    expect(composed.comboPeak).toBe(typed.comboPeak) // 5
+    expect(composed.finished).toBe(true)
+  })
+
+  it('paste still never scores (the v1/v2 rule survives into v3)', () => {
+    const ctx: CoreContext = { config: config(), words: ['hello'] }
+    const s = foldScoreV3(
+      [replaceEvent(1, 100, 0, 0, 'hello', 'paste'), commitEvent(2, 200)],
+      ctx
+    )
+    expect(s.base).toBe(0)
+    expect(s.streak).toBe(0)
+  })
+
+  it('a suggestion over an attempted prefix pays only the frontier tail', () => {
+    const ctx: CoreContext = { config: config(), words: ['hello'] }
+    const s = foldScoreV3(
+      [
+        insertEvent(1, 0, 'h'), // streak 1, +10
+        insertEvent(2, 80, 'e'), // streak 2, +10
+        insertEvent(3, 160, 'x'), // wrong at pos 2 → combo 0, reached = 3
+        deleteEvent(4, 240, 'char'),
+        // The keyboard suggestion rewrites the whole buffer. Positions 0-2 have
+        // been attempted (corrections, 0 points); 3-4 are first attempts.
+        replaceEvent(5, 320, 0, 2, 'hello', 'ime')
+      ],
+      ctx
+    )
+    expect(s.base).toBe(20 + 20) // h, e + the two frontier letters l, o
+    expect(s.streak).toBe(2) // rebuilt from the reset, not restored
+    expect(s.comboPeak).toBe(2)
+  })
+
+  it('a wrong grapheme inside a composed word breaks combo where it lands', () => {
+    const ctx: CoreContext = { config: config(), words: ['dog', 'cat'] }
+    const s = foldScoreV3(
+      [
+        replaceEvent(1, 100, 0, 0, 'dgo', 'ime') // d correct (+10), g wrong → 0, o wrong → 0
+      ],
+      ctx
+    )
+    expect(s.base).toBe(10)
+    expect(s.streak).toBe(0)
+    expect(s.comboPeak).toBe(1)
+  })
+
+  it('stamps SCORE_VERSION_3 and keeps the v2 finalize formula', () => {
+    const log = [replaceEvent(1, 320, 0, 0, 'hello', 'ime'), commitEvent(2, 400)]
+    const v3 = scoreV3OfLog(log, V3_SETUP(['hello']), NO_MODS)
+    expect(v3.version).toBe(SCORE_VERSION_3)
+    expect(v3.base).toBe(50)
+    expect(v3.total).toBe(
+      Math.round(v3.base * v3.accMultiplier * (v3.timeBonus ?? 1) * (v3.modMultiplier ?? 1))
+    )
+  })
+})
+
+describe('scoreV3 regression: without ime replaces, v3 === v2 exactly', () => {
+  const SEEDS = Array.from({ length: 40 }, (_, i) => i + 1)
+
+  it.each(SEEDS)('insert/delete/commit-only log (seed %i)', (seed) => {
+    const ctx: CoreContext = { config: config(), words: V2_WORDS }
+    const log = randomLog(lcg(seed), ctx)
+    const setup = { config: ctx.config, words: ctx.words, generation: genV2() }
+    const v2 = scoreV2OfLog(log, setup, NO_MODS)
+    const v3 = scoreV3OfLog(log, setup, NO_MODS)
+    expect({ ...v3, version: SCORE_VERSION_2 }).toEqual(v2)
+  })
+
+  it('v2 itself still refuses ime points (the stored formula did not move)', () => {
+    const log = [replaceEvent(1, 320, 0, 0, 'hello', 'ime'), commitEvent(2, 400)]
+    const v2 = scoreV2OfLog(log, V3_SETUP(['hello']), NO_MODS)
+    expect(v2.base).toBe(0)
+    expect(v2.total).toBe(0)
+  })
+})
+
+describe('scoreV3 equivalence (property): scoreStepV3 fold == scoreV3OfLog', () => {
+  const SEEDS = Array.from({ length: 40 }, (_, i) => i + 1)
+
+  /** `randomLog` with occasional ime replaces — the mobile composition shape. */
+  function randomLogV3(rng: () => number, ctx: CoreContext): GameEvent[] {
+    const core = new GameCore({ config: ctx.config, words: ctx.words })
+    let seq = 0
+    let t = 0
+    const steps = 80 + Math.floor(rng() * 120)
+    for (let i = 0; i < steps && core.state.phase !== 'finished'; i++) {
+      t += 1 + Math.floor(rng() * 130)
+      const roll = rng()
+      let event: GameEvent
+      const wi = core.state.wordIndex
+      const target = ctx.words[wi] ?? ''
+      const bufLen = (core.state.input[wi] ?? '').length
+      if (roll < 0.2) {
+        // A composition session settling: the whole word (sometimes garbled)
+        // replaces the buffer, exactly what compositionend dispatches.
+        const text = rng() < 0.8 ? target : target.slice(0, -1) + 'x'
+        event = replaceEvent(++seq, t, 0, bufLen, text, rng() < 0.9 ? 'ime' : 'paste')
+      } else if (roll < 0.72) {
+        const correctChar = target[bufLen] ?? 'z'
+        const char = rng() < 0.82 ? correctChar : 'x'
+        event = insertEvent(++seq, t, char)
+      } else if (roll < 0.88) {
+        event = deleteEvent(++seq, t, rng() < 0.8 ? 'char' : 'word')
+      } else {
+        event = commitEvent(++seq, t)
+      }
+      core.dispatch(event)
+    }
+    return core.events.slice()
+  }
+
+  it.each(SEEDS)('live accumulation matches the batch fold (seed %i)', (seed) => {
+    const ctx: CoreContext = { config: config(), words: V2_WORDS }
+    const log = randomLogV3(lcg(seed + 5000), ctx)
+    const endMs = log.length > 0 ? log[log.length - 1].t : asMs(0)
+    const setup = { config: ctx.config, words: ctx.words, generation: genV2() }
+
+    const state = foldScoreV3(log, ctx)
+    const viaStep = finalizeScoreV3(
+      state.base,
+      state.comboPeak,
+      computeMetrics(ctx, log, endMs),
+      ctx.config.mode,
+      1
+    )
+    const viaLog = scoreV3OfLog(log, setup, NO_MODS)
+    expect(viaStep).toEqual(viaLog)
   })
 })

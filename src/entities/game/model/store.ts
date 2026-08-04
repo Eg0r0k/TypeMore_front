@@ -55,7 +55,7 @@ import {
   commitEvent,
   comboMultiplier,
   deleteEvent,
-  finalizeScoreV2,
+  finalizeScoreV3,
   gradeOf,
   afkStatsOf,
   initialScoreState,
@@ -66,7 +66,7 @@ import {
   metricsOf,
   modMultiplierV1,
   errorWordsOf,
-  scoreStep,
+  scoreStepV3,
   timelineOf,
   replaceEvent,
   type WordHistoryEntry,
@@ -171,8 +171,9 @@ function createGameStore(storeId: string) {
      */
     let runEpoch = 0
     let seq = 0
-    // Live scoring accumulator (scoreV1). Mutated in place per event (O(1)); the
-    // reactive projections below are refreshed from it after each dispatch.
+    // Live scoring accumulator (scoreV3: ime replaces score — the mobile
+    // composition path). Mutated in place per event (O(1)); the reactive
+    // projections below are refreshed from it after each dispatch.
     let scoreState: ScoreState = initialScoreState()
     // The setup halves the core does NOT hold: the generation config the words
     // came from and the declared view-only mods. Retained so `getReplayData`
@@ -235,7 +236,7 @@ function createGameStore(storeId: string) {
     const comboMultiplierValue = computed(() => comboMultiplier(combo.value))
     const scoreResult = computed<ScoreResult | null>(() =>
       core
-        ? finalizeScoreV2(
+        ? finalizeScoreV3(
             scoreBase.value,
             comboPeak.value,
             metrics.value,
@@ -313,10 +314,10 @@ function createGameStore(storeId: string) {
       applyResult(core.state, false, nowMs)
     }
 
-    /** Fold one accepted event into the live scoreV1 accumulator (O(1) per event). */
+    /** Fold one accepted event into the live scoreV3 accumulator (O(1) per event). */
     function advanceScore(event: GameEvent): void {
       if (!core) return
-      scoreStep(scoreState, event, { config: core.config, words: core.words })
+      scoreStepV3(scoreState, event, { config: core.config, words: core.words })
       scoreBase.value = scoreState.base
       combo.value = scoreState.streak
       comboPeak.value = scoreState.comboPeak

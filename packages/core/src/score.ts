@@ -33,6 +33,11 @@
  * Determinism: plain IEEE double math; the only rounding is the single
  * `Math.round` on `total`. No intermediate rounding, so the incremental and
  * batch forms cannot drift.
+ *
+ * VERSIONS LIVE SIDE BY SIDE, NEVER EDITED: v1 (`scoreStep`/`scoreOfLog`),
+ * v2 (+ mod multiplier, `scoreV2OfLog`), v3 (+ ime replaces score,
+ * `scoreStepV3`/`scoreV3OfLog`). A stored run replays through the fold its
+ * `score_version` names, forever.
  */
 import type { GameEvent, Ms } from './events'
 import { asMs, isTelemetryEvent, sortEvents } from './events'
@@ -48,6 +53,18 @@ import { modMultiplierV1 } from './mods'
 export const SCORE_VERSION = 1 as const
 /** scoreV2 formula version (SCORING_CONCEPT §7.6): base × acc² [× timeBonus] × modMult. */
 export const SCORE_VERSION_2 = 2 as const
+/**
+ * scoreV3 formula version (SCORING_CONCEPT §7.6): v2 with ONE change — an
+ * `'ime'` replace scores its graphemes like the keystrokes they are.
+ *
+ * Why: Android keyboards drive PLAIN typing through a composition session, so a
+ * mobile player's every word reaches the log as `replace(..., 'ime')` — and
+ * under v1/v2's "replace never scores" rule an entire legitimately-typed run
+ * totals 0. That rule was aimed at paste, and for `'paste'` it still holds
+ * unchanged. stats.ts has always counted replace graphemes for accuracy/WPM;
+ * v3 makes the score agree with the metrics.
+ */
+export const SCORE_VERSION_3 = 3 as const
 
 /** Points awarded for one scoring keystroke, before the combo multiplier. */
 const POINTS_PER_KEYSTROKE = 10
@@ -236,6 +253,52 @@ function applyCommit(state: ScoreState, ctx: CoreContext): void {
 }
 
 /**
+ * scoreV3's replace arm. An `'ime'` replace is a composed word — on Android the
+ * ONLY form ordinary typing takes — so its graphemes score exactly as
+ * `applyInsert` scores keystrokes: correct at a first-attempt position pays
+ * `10 × comboMultiplier`, incorrect breaks combo, a correction pays 0.
+ *
+ * First-attempt is judged against the frontier AS IT STOOD BEFORE this event
+ * for every grapheme: the composition replaces `[from, to)` in one act, so a
+ * suggestion that rewrites an already-attempted prefix scores only the
+ * positions beyond the old frontier — accepting "сделать" over a typed "чдела"
+ * pays for the tail, not for the five corrections.
+ *
+ * `'paste'` keeps the v1/v2 rule (never a scoring keystroke), and ALL shadow
+ * bookkeeping (buffer length, frontier, nospace auto-commit) is delegated to
+ * the one existing `applyReplace`, so v3 cannot drift from v1/v2 in how the
+ * buffer moves — the versions differ in points alone.
+ */
+function applyReplaceV3(
+  state: ScoreState,
+  from: number,
+  to: number,
+  text: string,
+  source: 'ime' | 'paste',
+  ctx: CoreContext
+): void {
+  if (source === 'ime') {
+    const wi = state.wordIndex
+    const target = ctx.words[wi] ?? ''
+    const reached = state.reached[wi] ?? 0
+    let pos = from
+    for (const char of text) {
+      const correct = pos < target.length && target[pos] === char
+      if (correct && pos >= reached) {
+        state.streak += 1
+        if (state.streak > state.comboPeak) state.comboPeak = state.streak
+        state.base += POINTS_PER_KEYSTROKE * comboMultiplier(state.streak)
+      } else if (!correct) {
+        state.streak = 0
+      }
+      // correct && pos < reached: a correction — 0 points, combo untouched.
+      pos += 1
+    }
+  }
+  applyReplace(state, from, to, text, ctx)
+}
+
+/**
  * Advance the score accumulator by one event. Mutates and returns `state`
  * (O(1) per step). Only `insert` can score; `delete`/`commit`/`replace` move
  * the shadow. Events after a count-mode finish are ignored.
@@ -259,6 +322,20 @@ export function scoreStep(state: ScoreState, event: GameEvent, ctx: CoreContext)
       break
   }
   return state
+}
+
+/**
+ * The scoreV3 per-event step: `scoreStep` with the one v3 difference — an
+ * `'ime'` replace scores (see `applyReplaceV3`). Live HUD and ghost folds on
+ * v3 runs advance through this; v1/v2 folds keep `scoreStep` untouched.
+ */
+export function scoreStepV3(state: ScoreState, event: GameEvent, ctx: CoreContext): ScoreState {
+  if (state.finished) return state
+  if (event.kind === 'replace') {
+    applyReplaceV3(state, event.from, event.to, event.text, event.source, ctx)
+    return state
+  }
+  return scoreStep(state, event, ctx)
 }
 
 /**
@@ -383,4 +460,66 @@ export function scoreV2OfLog(
     declaration
   )
   return finalizeScoreV2(state.base, state.comboPeak, metrics, ctx.config.mode, modMultiplier)
+}
+
+/**
+ * Finish a run's score under scoreV3. The FORMULA is v2's unchanged —
+ * `total = round(base × acc² [× timeBonus] × modMultiplier)`, same single
+ * rounding — because v3 changes what accumulates into `base` (ime replaces
+ * score), not how the base is finished. Stamped with its own version so the
+ * stored result routes back to the v3 fold on replay.
+ */
+export function finalizeScoreV3(
+  base: number,
+  comboPeak: number,
+  metrics: Metrics,
+  mode: GenerationMode,
+  modMultiplier: number
+): ScoreResult {
+  return {
+    ...finalizeScoreV2(base, comboPeak, metrics, mode, modMultiplier),
+    version: SCORE_VERSION_3
+  }
+}
+
+/**
+ * Batch scoreV3 — the server's authoritative recompute for `score_version` 3
+ * and the finals path of v3 clients. `scoreV2OfLog` line for line with the two
+ * v3 substitutions (`scoreStepV3`, `finalizeScoreV3`); kept as its own function
+ * rather than a parameter on v2 because a stored formula must never move —
+ * every historical run replays through the fold its version names
+ * (SCORING_CONCEPT §7.6).
+ */
+export function scoreV3OfLog(
+  log: readonly GameEvent[],
+  setup: ScoreSetup,
+  declaration: ModsDeclaration
+): ScoreResult {
+  const ctx: CoreContext = { config: setup.config, words: setup.words }
+  // State events only — see scoreOfLog: telemetry is inert for the score and
+  // must not move the finish-instant fallback.
+  const ordered = sortEvents(log).filter((e) => !isTelemetryEvent(e))
+  const lastT = ordered.length > 0 ? ordered[ordered.length - 1].t : asMs(0)
+
+  // Authoritative finish instant (mirrors validateLog): replay, then surface a
+  // post-last-event MinSpeed breach so the measured duration matches the client.
+  const analysis = analyzeLog(ctx, ordered)
+  let end: Ms = lastT
+  if (!analysis.aborted) {
+    let finalState = settle(ctx, analysis.finalState, lastT)
+    if (ctx.config.minWpm > 0 && finalState.phase === 'running') {
+      const failAt = minSpeedFailInstant(ctx, finalState)
+      if (failAt !== null) finalState = settle(ctx, finalState, failAt)
+    }
+    if (finalState.finishedAt !== null) end = finalState.finishedAt
+  }
+
+  const state = initialScoreState()
+  for (const event of ordered) scoreStepV3(state, event, ctx)
+  const metrics = metricsFrom(ctx, analysis, end)
+  const modMultiplier = modMultiplierV1(
+    { generation: setup.generation, config: ctx.config },
+    declaration
+  )
+  return finalizeScoreV3(state.base, state.comboPeak, metrics, ctx.config.mode, modMultiplier)
 }

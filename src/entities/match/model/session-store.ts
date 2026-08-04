@@ -47,7 +47,7 @@ import {
   minSpeedFailInstant,
   modMultiplierV1,
   progressOf,
-  scoreV2OfLog,
+  scoreV3OfLog,
   settle
 } from '@typemore/core'
 import { liveMeasureAt } from '@shared/lib/helpers/live-window'
@@ -484,7 +484,7 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
   })
 
   /**
-   * The peer's frozen mod multiplier — exactly the one `scoreV2OfLog` will
+   * The peer's frozen mod multiplier — exactly the one `scoreV3OfLog` will
    * apply to this seat at match end (own freemods, no visual-mod declaration:
    * those never travel the wire). Pure arithmetic over two small configs, so
    * recomputing per `peers` evaluation costs nothing worth caching.
@@ -1355,7 +1355,7 @@ export const useMatchSessionStore = defineStore('matchSession', () => {
       const metrics = computeMetrics(ctx, log, end)
       const score =
         log.length > 0 && scoreGen !== null
-          ? scoreV2OfLog(
+          ? scoreV3OfLog(
               log,
               { config: playerConfig, words: matchWords, generation: scoreGen },
               NO_DECLARATION

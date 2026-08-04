@@ -14,7 +14,7 @@
  *   seed          → the 32-bit seed the client generated the words from
  *   dictHash      → SeedContext.dictVersion (fnv1a of the dictionary; of the
  *                                            TEXT for a quote run)
- *   scoreVersion  → 2 (scoreV2 — see SCORE_VERSION note below)
+ *   scoreVersion  → 3 (scoreV3 — see SCORE_VERSION note below)
  *   setup         → { adoptedFromRunId?, config, generation, declaration }
  *                   (the replayable snapshot, with generation.textSource
  *                   STRIPPED of its text for a quote, plus the optional text
@@ -41,13 +41,15 @@ import {
 import type { RunSubmitInput } from '@shared/api'
 
 /**
- * scoreV2 formula version. The client finalizes with `finalizeScoreV2`
- * (ScoreResult.version === 2), so the submitted `scoreVersion` MUST match.
- * RUNS.md's structural check allows the `KnownScoreVersions` allow-list
- * `{1, 2}`, with v1 kept only for older builds — so v2 is the current contract,
- * not a client that runs ahead of the server.
+ * scoreV3 formula version (ime replaces score — the mobile composition path).
+ * The client finalizes with `finalizeScoreV3` (ScoreResult.version === 3), so
+ * the submitted `scoreVersion` MUST match. RUNS.md's structural check allows
+ * the `KnownScoreVersions` allow-list `{1, 2, 3}`, with v1/v2 kept only for
+ * older builds — so v3 is the current contract, not a client that runs ahead
+ * of the server. DEPLOY ORDER: the server must know v3 before this ships, or
+ * every submit bounces with `unsupported_score_version`.
  */
-export const SCORE_VERSION = 2 as const
+export const SCORE_VERSION = 3 as const
 
 /**
  * The run's SUBMITTED DIMENSION, or `null` when the run has none to name.

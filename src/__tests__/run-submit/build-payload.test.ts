@@ -168,7 +168,7 @@ describe('buildRunPayload — RUNS.md field-for-field (contract-drift guard)', (
     expect(payload.seed).toBe(2864901)
     expect(payload.dictHash).toBe('a1b2c3d4')
     expect(payload.scoreVersion).toBe(SCORE_VERSION)
-    expect(payload.scoreVersion).toBe(2)
+    expect(payload.scoreVersion).toBe(3)
 
     // toEqual verifies the exact setup shape ({config, generation, declaration}) — no extra keys.
     expect(payload.setup).toEqual({ config, generation, declaration })
@@ -220,7 +220,7 @@ describe('buildRunPayload — RUNS.md field-for-field (contract-drift guard)', (
       lang: 'en',
       seed: 2864901,
       dictHash: 'a1b2c3d4',
-      scoreVersion: 2,
+      scoreVersion: 3,
       setup: { config, generation, declaration },
       clientMetrics: { wpm: 80, raw: 85, acc: 0.97 },
       clientScore: score,
