@@ -340,6 +340,14 @@
     punctuation: boolean
     numbers: boolean
     randomCase: boolean
+    /**
+     * Both are TEXT mods like the three above and were simply missing here,
+     * so a run played reversed — or without diacritics — reported neither on
+     * the result screen. Optional so a caller that predates them still
+     * compiles; every caller in this repo passes them.
+     */
+    reverse?: boolean
+    lazy?: boolean
     nospace: boolean
   }
 
@@ -636,6 +644,8 @@
     punctuation: props.summary.punctuation,
     numbers: props.summary.numbers,
     randomCase: props.summary.randomCase,
+    reverse: props.summary.reverse,
+    lazy: props.summary.lazy,
     nospace: props.summary.nospace,
     difficulty: props.summary.difficulty
   }))

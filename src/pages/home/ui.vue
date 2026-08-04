@@ -366,6 +366,8 @@
     punctuation: config.punctuation,
     numbers: config.numbers,
     randomCase: config.randomCase,
+    reverse: config.reverse,
+    lazy: config.lazy,
     nospace: config.nospace
   }))
 

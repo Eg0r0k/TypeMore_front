@@ -371,6 +371,8 @@
         punctuation: false,
         numbers: false,
         randomCase: false,
+        reverse: false,
+        lazy: false,
         nospace: false
       }
     }
@@ -389,6 +391,9 @@
       punctuation: r.generation.punctuation,
       numbers: r.generation.numbers,
       randomCase: r.generation.randomCase,
+      reverse: r.generation.reverse,
+      // A run recorded before `lazy` existed says nothing, which is `false`.
+      lazy: r.generation.lazy === true,
       nospace: r.config.nospace
     }
   })

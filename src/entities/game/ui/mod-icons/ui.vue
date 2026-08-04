@@ -47,6 +47,8 @@
     numbers?: boolean
     randomCase?: boolean
     reverse?: boolean
+    /** Diacritics stripped at generation time (`épée` → `epee`). */
+    lazy?: boolean
     nospace?: boolean
     blind?: boolean
     fading?: boolean
@@ -72,6 +74,7 @@
     'nospace',
     'blind',
     'reverse',
+    'lazy',
     'fading',
     'flashlight'
   ] as const

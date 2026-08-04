@@ -91,6 +91,8 @@ export function useMatchResults() {
       punctuation: settings?.textMods.punctuation ?? false,
       numbers: settings?.textMods.numbers ?? false,
       randomCase: settings?.textMods.randomCase ?? false,
+      reverse: settings?.textMods.reverse ?? false,
+      lazy: settings?.textMods.lazy ?? false,
       nospace: freemods?.nospace ?? false
     }
   })
