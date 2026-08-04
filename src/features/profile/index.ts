@@ -8,7 +8,5 @@ export { default as ProfileHistogram } from './charts/histogram.vue'
 export { default as ProfileDailyChart } from './charts/daily.vue'
 export { default as ProfileRunsTable } from './runs-table/ui.vue'
 export { default as ProfileKeyboard } from './keyboard/ui.vue'
-/** The self-described half of a header: badges, bio, board, links. */
-export { default as ProfileIdentity } from './identity/ui.vue'
 /** "Copy this profile's link", confirmed on the button itself. */
 export { default as ProfileCopyLink } from './copy-link/ui.vue'

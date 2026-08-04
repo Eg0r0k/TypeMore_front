@@ -83,24 +83,22 @@
         <!-- No action in the header here: this is somebody's page as a reader
              sees it, and the only action /profile offers is the viewer's own
              settings. -->
+        <!-- The identity half rides INSIDE the header rather than as a strip
+             under it: badges belong on the name line, the board and the links
+             belong with "joined" and the streak, and the bio belongs last.
+             Rendered from what the SERVER served — a closed profile never
+             carries any of it, so there is nothing here to hide client-side. -->
         <ProfileSummaryCard
           v-if="summary.data.value"
           :summary="summary.data.value"
           part="identity"
           :recent-wpm="recentWpm"
+          :bio="header.data.value?.bio"
+          :keyboard="header.data.value?.keyboard"
+          :links="header.data.value?.links"
+          :badges="header.data.value?.badges"
+          :share-name="header.data.value?.name"
         />
-        <!-- The self-described half, under the identity block it belongs to.
-             Rendered from what the SERVER served: a closed profile never
-             carries these, so there is nothing here to hide client-side. -->
-        <div class="mt-3 flex items-start justify-between gap-3">
-          <ProfileIdentity
-            :bio="header.data.value?.bio"
-            :keyboard="header.data.value?.keyboard"
-            :links="header.data.value?.links"
-            :badges="header.data.value?.badges"
-          />
-          <ProfileCopyLink v-if="header.data.value" :name="header.data.value.name" />
-        </div>
       </ProfileSection>
 
       <ProfileSection
@@ -219,10 +217,8 @@
   import { useAuthStore } from '@/entities/auth'
   import {
     ProfileActivity,
-    ProfileCopyLink,
     ProfileDailyChart,
     ProfileHistogram,
-    ProfileIdentity,
     ProfileIdentitySkeleton,
     ProfileKeyboard,
     ProfilePBCards,

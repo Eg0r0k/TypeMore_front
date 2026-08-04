@@ -42,12 +42,23 @@
         <!-- The header has a shape worth reserving, so it brings its own
              skeleton instead of the section's plain block. -->
         <template #skeleton><ProfileIdentitySkeleton /></template>
+        <!-- The owner sees their own identity half too, and that is the
+             point: it is the only place they can check what a visitor gets
+             without opening their own public page. The source is
+             `/me/profile` rather than the public header — the owner's route
+             answers whatever their privacy switches say, so a closed profile
+             still shows its owner what is stored. -->
         <ProfileSummaryCard
           v-if="summary.data.value"
           :summary="summary.data.value"
           part="identity"
           :recent-wpm="recentWpm"
           own
+          :bio="ownProfile.data.value?.bio"
+          :keyboard="ownProfile.data.value?.keyboard"
+          :links="ownProfile.data.value?.links"
+          :badges="shownBadgeCodes"
+          :share-name="summary.data.value.displayName"
         />
       </ProfileSection>
 
@@ -231,6 +242,7 @@
     profileHistogramQueryOptions,
     profileKeyboardQueryOptions,
     profilePBsQueryOptions,
+    ownProfileQueryOptions,
     profileSummaryQueryOptions,
     profileTimeseriesQueryOptions,
     runsQueryOptions
@@ -271,6 +283,24 @@
     enabled
   })
   const summary = useQuery(computed(() => gatedBy(profileSummaryQueryOptions(), authed.value)))
+
+  /**
+   * The owner's own identity half. A separate query from the summary because
+   * it is a separate route with a separate cache entry — the settings dialog
+   * writes it, and the header re-renders from the same entry the moment it
+   * does, with nothing here to invalidate.
+   *
+   * Only the SHOWN badges reach the header: the pool includes ones held but
+   * hidden, and the owner's page must show what a visitor sees, not what the
+   * settings screen offers to arrange.
+   */
+  const ownProfile = useQuery(computed(() => gatedBy(ownProfileQueryOptions(), authed.value)))
+  const shownBadgeCodes = computed(() =>
+    (ownProfile.data.value?.badges ?? [])
+      .filter((badge) => badge.shown)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      .map((badge) => badge.code)
+  )
   const activity = useQuery(computed(() => gatedBy(profileActivityQueryOptions(), authed.value)))
   const pbs = useQuery(computed(() => gatedBy(profilePBsQueryOptions(), authed.value)))
   const histogram = useQuery(computed(() => gatedBy(profileHistogramQueryOptions(), authed.value)))

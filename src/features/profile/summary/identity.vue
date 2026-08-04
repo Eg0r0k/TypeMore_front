@@ -13,6 +13,13 @@
            as texture where a chart pinned to one corner read as a stray chart;
            the band stops well above the avatar, which owns the bottom third. -->
       <ProfileSparkline :points="recentWpm" class="absolute h-full opacity-60 sm:top-6 left-0" />
+      <!-- 1.2b — "copy this profile's link", in the banner's top-right corner.
+           Over the sparkline rather than beside the nick: it is chrome for the
+           PAGE, not a fact about the player, and the corner is where a reader
+           already looks for a share action. -->
+      <div v-if="shareName" class="absolute right-2 top-2">
+        <ProfileCopyLink :name="shareName" />
+      </div>
     </div>
 
     <!--
@@ -63,14 +70,23 @@
       the API serves no TP and no position, and a placeholder would be a
       number this page invented.
     -->
-    <div class="mt-2 min-w-0">
+    <div class="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
       <h1
-        class="truncate text-[22px] font-semibold leading-tight text-text sm:text-[28px]"
+        class="min-w-0 truncate text-[22px] font-semibold leading-tight text-text sm:text-[28px]"
         :title="summary.displayName"
         data-testid="profile-nick"
       >
         {{ summary.displayName }}
       </h1>
+      <!-- The showcase sits ON the name line: a badge is a fact about WHO this
+           is, so it belongs where the reader is already looking, and it is the
+           one piece of the identity half worth seeing before anything else. It
+           wraps to its own line rather than squeezing a long handle. -->
+      <TooltipProvider v-if="shownBadges.length" :delay-duration="80">
+        <div class="flex flex-wrap items-center gap-1.5" data-testid="profile-badges">
+          <BadgeChip v-for="badge in shownBadges" :key="badge.code" :badge="badge" />
+        </div>
+      </TooltipProvider>
     </div>
 
     <!-- 1.6 — the meta line: how long they have been here, and whether they
@@ -89,6 +105,31 @@
         <Flame v-if="hasStreak" class="size-4 shrink-0" aria-hidden="true" />
         <span class="tabular-nums">{{ streakText }}</span>
       </span>
+
+      <!-- The board they type on and where else to find them join the same
+           line as "joined" and the streak: all four are one-line facts about
+           the person, and giving each its own row would make a header out of
+           four half-empty strips. -->
+      <span
+        v-if="keyboard"
+        class="inline-flex min-w-0 items-center gap-1.5"
+        data-testid="profile-keyboard"
+      >
+        <Keyboard class="size-4 shrink-0" aria-hidden="true" />
+        <span class="min-w-0 truncate">{{ keyboard }}</span>
+      </span>
+      <a
+        v-for="link in links"
+        :key="link.kind"
+        :href="linkUrl(link.kind, link.handle)"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="link-main inline-flex min-w-0 items-center gap-1.5"
+        :data-testid="`profile-link-${link.kind}`"
+      >
+        <component :is="LINK_ICONS[link.kind]" class="size-4 shrink-0" aria-hidden="true" />
+        <span class="min-w-0 truncate">{{ link.handle }}</span>
+      </a>
     </div>
 
     <!--
@@ -148,6 +189,22 @@
       </div>
     </div>
 
+    <!-- 1.8b — the bio, LAST of the header.
+         Deliberately after the numbers and the languages: a reader opening
+         somebody's profile came for what they type and how fast, and prose is
+         the one thing here that cannot be skimmed. Placed high it would push
+         every fact down to make room for a sentence nobody asked for; placed
+         here it is there for whoever wants it and costs nothing to whoever
+         does not. Plain text, `whitespace-pre-line` — the server stores no
+         markup and this renders none. -->
+    <p
+      v-if="bio"
+      class="mt-6 max-w-prose whitespace-pre-line text-sm text-sub"
+      data-testid="profile-bio"
+    >
+      {{ bio }}
+    </p>
+
     <!-- 1.9 — the header ends here; everything below is the profile as it was. -->
     <div class="mt-6 border-t border-sub-alt" />
   </div>
@@ -157,9 +214,17 @@
   import { computed, ref } from 'vue'
   import { useI18n } from 'vue-i18n'
   import { RouterLink } from 'vue-router'
-  import { CalendarDays, Flame, Pencil } from '@lucide/vue'
+  import { CalendarDays, Flame, Keyboard, Pencil } from '@lucide/vue'
+  import IconBrandGithub from '~icons/tabler/brand-github'
+  import IconBrandYoutube from '~icons/tabler/brand-youtube'
+  import IconBrandTwitch from '~icons/tabler/brand-twitch'
 
-  import type { ProfileSummary } from '@shared/api'
+  import { BadgeChip, badgesOf } from '@/entities/badge'
+  import { linkUrl } from '@shared/api'
+  import { TooltipProvider } from '@/shared/ui/tooltip'
+  import ProfileCopyLink from '../copy-link/ui.vue'
+
+  import type { LinkKind, ProfileSummary, UserLink } from '@shared/api'
   import { useDialogsStore } from '@/entities/dialogs'
   import { formatExactInstant, formatShortDate } from '@/shared/lib/helpers/datetime'
   import { groupThousands } from '@/shared/lib/helpers/numbers'
@@ -186,8 +251,23 @@
       recentWpm?: readonly number[]
       /** The viewer's OWN page: only there does the header offer an action. */
       own?: boolean
+      /**
+       * The identity half (backend 00029). Optional throughout: a profile
+       * whose owner filled nothing in renders exactly the header it rendered
+       * before these existed — no empty showcase, no placeholder bio.
+       */
+      bio?: string | null
+      keyboard?: string | null
+      links?: readonly UserLink[]
+      /** Badge CODES, in their owner's order. */
+      badges?: readonly string[]
+      /**
+       * The display name the share link is built from. Absent on a page with
+       * no public URL to offer.
+       */
+      shareName?: string | null
     }>(),
-    { recentWpm: () => [], own: false }
+    { recentWpm: () => [], own: false, bio: null, keyboard: null, shareName: null }
   )
 
   const { t, locale } = useI18n()
@@ -200,6 +280,20 @@
    * schema line, not a change to this page (see ProfileSummarySchema).
    */
   const avatarSrc = computed(() => props.summary.avatarUrl ?? null)
+
+  const LINK_ICONS: Record<LinkKind, unknown> = {
+    github: IconBrandGithub,
+    youtube: IconBrandYoutube,
+    twitch: IconBrandTwitch
+  }
+
+  const links = computed(() => props.links ?? [])
+  /**
+   * Codes this build cannot draw are dropped rather than rendered blank: a
+   * grant of a retired code is a real row the server keeps serving forever,
+   * and a client one deploy behind will meet codes it has never heard of.
+   */
+  const shownBadges = computed(() => badgesOf(props.badges ?? []))
 
   const joinedDate = computed(() => formatShortDate(props.summary.joined, locale.value))
   /** The exact instant, for the title — the visible date is deliberately short. */

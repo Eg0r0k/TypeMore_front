@@ -8,6 +8,11 @@
       :summary="summary"
       :recent-wpm="recentWpm"
       :own="own"
+      :bio="bio"
+      :keyboard="keyboard"
+      :links="links"
+      :badges="badges"
+      :share-name="shareName"
     />
 
     <!--
@@ -41,7 +46,7 @@
 <script setup lang="ts">
   import { computed } from 'vue'
   import { useI18n } from 'vue-i18n'
-  import type { ProfileMetricStats, ProfileSummary } from '@shared/api'
+  import type { ProfileMetricStats, ProfileSummary, UserLink } from '@shared/api'
   import { groupThousands } from '@/shared/lib/helpers/numbers'
   import { formatClock, speed } from '../model/format'
   import { percent } from '@/shared/lib/helpers/numbers'
@@ -61,6 +66,17 @@
     part?: 'identity' | 'stats'
     recentWpm?: readonly number[]
     own?: boolean
+    /**
+     * The identity half (backend 00029), forwarded to the header like
+     * `recentWpm` and for the same reason: the PAGE knows where it comes from
+     * — the public header for somebody else's profile, `/me/profile` for your
+     * own — and this wrapper only places it.
+     */
+    bio?: string | null
+    keyboard?: string | null
+    links?: readonly UserLink[]
+    badges?: readonly string[]
+    shareName?: string | null
   }>()
   const { t } = useI18n()
 

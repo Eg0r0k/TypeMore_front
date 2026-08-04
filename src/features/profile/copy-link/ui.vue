@@ -3,9 +3,8 @@
        it has to appear on a click and leave on its own. `open` forces it up
        while `copied` holds; the rest of the time it behaves like every other
        tooltip in the app and explains the button on hover. -->
-  <!-- Its own provider, for the same reason ProfileIdentity has one: the
-       confirmation IS a tooltip, so the button cannot depend on the page
-       having provided one. -->
+  <!-- Its own provider: the confirmation IS a tooltip, so the button cannot
+       depend on whatever mounts it having provided one. -->
   <TooltipProvider :delay-duration="80">
     <Tooltip :open="copied || undefined">
       <TooltipTrigger as-child>

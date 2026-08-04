@@ -1,5 +1,5 @@
 /**
- * The profile's identity half on the client: the badge showcase, the bio, the
+ * The identity half INSIDE the profile header: the badge showcase, the bio, the
  * board and the links.
  *
  * Two properties matter more than the markup. A badge CODE this build cannot
@@ -10,20 +10,47 @@
  * entire set of hosts the product can send a reader to.
  */
 import { mount } from '@vue/test-utils'
+import { createPinia } from 'pinia'
 import { describe, expect, it } from 'vitest'
-import { h } from 'vue'
+import { createI18n } from 'vue-i18n'
+import { createMemoryHistory, createRouter } from 'vue-router'
 
-import { i18n } from '@app/i18n'
-import { TooltipProvider } from '@/shared/ui/tooltip'
-import { ProfileIdentity } from '@/features/profile'
+import type { ProfileSummary } from '@shared/api'
+import { ProfileSummaryCard } from '@/features/profile'
 import { BADGE_CODES, badgeOf, badgesOf } from '@/entities/badge'
 import { LINK_PREFIXES, linkUrl } from '@shared/api'
+import en from '@/app/i18n/locales/en'
 
+const i18n = createI18n({ legacy: false, locale: 'en', messages: { en } })
+const router = createRouter({
+  history: createMemoryHistory(),
+  routes: [
+    { path: '/', name: 'home', component: { template: '<div />' } },
+    { path: '/u/:name', name: 'user', component: { template: '<div />' } }
+  ]
+})
+
+const summary: ProfileSummary = {
+  displayName: 'boardsmoke',
+  joined: '2026-07-01T10:00:00Z',
+  testsStarted: 10,
+  testsCompleted: 10,
+  restartsPerCompleted: 0,
+  timeTypingMs: 60_000,
+  estimatedWordsTyped: 100,
+  wpm: { highest: 100, average: 90, averageLast10: 95 },
+  raw: { highest: 110, average: 100, averageLast10: 105 },
+  acc: { highest: 1, average: 0.96, averageLast10: 0.97 },
+  consistency: { highest: 0.8, average: 0.7, averageLast10: 0.75 },
+  streak: { current: 1, best: 2 },
+  languages: [{ lang: 'english', tests: 10 }]
+}
+
+/** The header, rendered with whatever identity half the page hands it. */
 const mountIdentity = (props: Record<string, unknown>) =>
-  mount(TooltipProvider, {
-    props: { delayDuration: 0 },
-    slots: { default: () => h(ProfileIdentity, props) },
-    global: { plugins: [i18n] }
+  mount(ProfileSummaryCard, {
+    props: { summary, part: 'identity', ...props },
+    global: { plugins: [i18n, router, createPinia()] }
   })
 
 describe('badge registry', () => {
@@ -45,12 +72,27 @@ describe('badge registry', () => {
   })
 })
 
-describe('ProfileIdentity', () => {
-  it('renders nothing at all when the profile carries nothing', () => {
+describe('the identity half in the header', () => {
+  it('adds nothing to the header when the profile carries nothing', () => {
     const wrapper = mountIdentity({})
-    expect(wrapper.find('[data-testid="profile-identity"]').exists()).toBe(false)
-    // Specifically: no empty showcase and no "no badges yet" placeholder.
-    expect(wrapper.text()).toBe('')
+    // No empty showcase, no "no badges yet" placeholder, no blank bio line —
+    // a header whose owner filled nothing in looks exactly as it did before
+    // any of this existed.
+    expect(wrapper.find('[data-testid="profile-badges"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="profile-bio"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="profile-keyboard"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="profile-copy-link"]').exists()).toBe(false)
+    // And the header itself is still all there.
+    expect(wrapper.find('[data-testid="profile-nick"]').text()).toBe('boardsmoke')
+  })
+
+  it('puts the badges on the NAME line and the share button in the banner', () => {
+    const wrapper = mountIdentity({ badges: ['staff'], shareName: 'boardsmoke' })
+    expect(wrapper.find('[data-testid="profile-badges"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="profile-copy-link"]').exists()).toBe(true)
+    // The bio is LAST: it comes after the counters a reader actually came for.
+    const html = wrapper.html()
+    expect(html.indexOf('profile-badges')).toBeLessThan(html.indexOf('profile-counters'))
   })
 
   it('draws the showcase in the order it was given, skipping unknown codes', () => {

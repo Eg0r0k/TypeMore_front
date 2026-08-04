@@ -56,15 +56,6 @@
       @report-quote="quoteReportOpen = true"
     />
 
-    <!-- The report dialog over the quote just typed. Mounted only while a
-         quote is active: the flag that opens it requires one. -->
-    <ReportModal
-      v-if="activeQuote"
-      v-model:open="quoteReportOpen"
-      :subject="{ type: 'quote', id: activeQuote.id }"
-      :subject-label="activeQuote.source ?? undefined"
-    />
-
     <TestStage v-else>
       <!-- Settings, then the language, then the words: the language is the last
            thing above the field because it is the one that names what is in it. -->
@@ -124,6 +115,20 @@
         </Button>
       </template>
     </TestStage>
+
+    <!-- The report dialog over the quote just typed. Mounted only while a
+         quote is active: the flag that opens it requires one.
+
+         It lives AFTER the whole ReplayPlayer / TestResults / TestStage chain
+         and must stay there: v-else binds to the NEXT SIBLING, so a node
+         placed between the branches silently detaches the chain and the stage
+         renders alongside the results instead of replacing them. -->
+    <ReportModal
+      v-if="activeQuote"
+      v-model:open="quoteReportOpen"
+      :subject="{ type: 'quote', id: activeQuote.id }"
+      :subject-label="activeQuote.source ?? undefined"
+    />
   </main>
 </template>
 
