@@ -490,6 +490,8 @@ export default {
     guest: 'guest',
     host: 'host',
     readySeat: 'ready',
+    /** The seat nick is a control: it opens that player's mini profile. */
+    viewProfile: 'view {name}’s profile',
     kick: 'kick from room',
     makeHost: 'make host',
     settings: 'room settings',
@@ -693,6 +695,15 @@ export default {
       label: 'copy profile link',
       /** The confirmation, on the button's own tooltip — not a toast. */
       copied: 'copied'
+    },
+    /**
+     * The popover card: a player's profile in the space of a lobby seat. The
+     * closed/not-found copy is `user.*` verbatim — the same two server answers
+     * the full page renders, said once.
+     */
+    mini: {
+      open: 'open profile',
+      error: 'could not load this profile'
     },
     signin: {
       hint: 'sign in to see your typing statistics — tests, records, charts and the keyboard heatmap.',

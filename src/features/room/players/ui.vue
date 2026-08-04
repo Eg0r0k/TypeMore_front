@@ -41,9 +41,36 @@
               <IconCrown v-if="player.playerId === room.hostPlayerId" class="seat__host-badge" />
               <!-- The seat's occupant. The crown replaces it for the host, who
                    is marked by the role rather than by the face. -->
-              <UserAvatar v-else :name="player.nick" class="size-5" />
+              <UserAvatar v-else :name="player.nick" class="size-8" />
             </div>
-            <span class="seat__nick">{{ player.nick }}</span>
+            <!--
+              A seated ACCOUNT's nick is its display name, so it addresses the
+              public profile directly — the card needs nothing from the relay.
+              A guest has no account and therefore no card: the nick stays a
+              plain label rather than a control that would open an empty one.
+            -->
+            <Popover
+              v-if="!player.isGuest"
+              :open="openCard === player.playerId"
+              @update:open="(open: boolean) => (openCard = open ? player.playerId : null)"
+            >
+              <PopoverTrigger as-child>
+                <button
+                  type="button"
+                  class="seat__nick seat__nick--linked focus-ring rounded-sm"
+                  :aria-label="t('room.viewProfile', { name: player.nick })"
+                  data-testid="seat-profile-trigger"
+                >
+                  {{ player.nick }}
+                </button>
+              </PopoverTrigger>
+              <!-- Mounted only while open, which is what keeps a five-seat
+                   lobby from firing five profile requests on render. -->
+              <PopoverContent align="start" class="w-80 p-0 bg-accent">
+                <ProfileMiniCard :name="player.nick" />
+              </PopoverContent>
+            </Popover>
+            <span v-else class="seat__nick">{{ player.nick }}</span>
             <span v-if="player.isGuest" class="seat__guest">{{ t('room.guest') }}</span>
             <IconCheck
               v-if="player.ready"
@@ -94,8 +121,10 @@
   import { FreemodChips } from '@/entities/lobby'
   import type { RoomPlayer } from '@/entities/lobby'
   import { useMatchSessionStore } from '@/entities/match'
+  import { ProfileMiniCard } from '@/features/profile'
   import { UserAvatar } from '@/shared/ui/avatar'
   import { Button } from '@/shared/ui/button'
+  import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
   import { Typography } from '@/shared/ui/typography'
   import { Tooltip, TooltipTrigger, TooltipContent } from '@/shared/ui/tooltip'
   import IconCheck from '~icons/tabler/check'
@@ -120,6 +149,13 @@
       'seat--guest': player.isGuest,
       'seat--ready': player.ready
     })
+
+  /**
+   * Which seat's mini profile is up — one id rather than a flag per seat, so
+   * opening a second card closes the first instead of stacking popovers over
+   * a five-row list.
+   */
+  const openCard = ref<string | null>(null)
 
   const copied = ref(false)
   let copyTimer: ReturnType<typeof setTimeout> | null = null
@@ -153,6 +189,20 @@
 
     &__host-badge {
       color: var(--main-color);
+    }
+
+    // A nick that opens a card is still a nick: no underline, no button chrome
+    // — only the cursor and the hover colour say it does something, which is
+    // as much as a name in a list can afford before it reads as a link.
+    &__nick--linked {
+      padding: 0;
+      cursor: pointer;
+      background: none;
+      border: 0;
+
+      &:hover {
+        color: var(--main-color);
+      }
     }
 
     &__guest {

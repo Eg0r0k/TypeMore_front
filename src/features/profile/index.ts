@@ -10,3 +10,5 @@ export { default as ProfileRunsTable } from './runs-table/ui.vue'
 export { default as ProfileKeyboard } from './keyboard/ui.vue'
 /** "Copy this profile's link", confirmed on the button itself. */
 export { default as ProfileCopyLink } from './copy-link/ui.vue'
+/** A player's public profile in the space of a popover. */
+export { default as ProfileMiniCard } from './mini-card/ui.vue'

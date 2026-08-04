@@ -461,6 +461,8 @@ export default {
     guest: 'гость',
     host: 'хост',
     readySeat: 'готов',
+    /** The seat nick is a control: it opens that player's mini profile. */
+    viewProfile: 'профиль игрока {name}',
     kick: 'выгнать из комнаты',
     makeHost: 'сделать хостом',
     settings: 'настройки комнаты',
@@ -631,6 +633,10 @@ export default {
     copyLink: {
       label: 'скопировать ссылку на профиль',
       copied: 'скопировано'
+    },
+    mini: {
+      open: 'открыть профиль',
+      error: 'не удалось загрузить профиль'
     },
     signin: {
       hint: 'войдите, чтобы увидеть свою статистику — тесты, рекорды, графики и тепловую карту клавиатуры.',
