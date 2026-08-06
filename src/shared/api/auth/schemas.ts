@@ -34,7 +34,14 @@ export const UserSchema = v.object({
    * the same truth it enforces.
    */
   profilePublic: v.optional(v.boolean(), true),
-  keyboardPublic: v.optional(v.boolean(), false)
+  keyboardPublic: v.optional(v.boolean(), false),
+  /**
+   * Expanded capability set (backend `docs/MODERATION.md`, "The admin
+   * surface"). OMITTED for a plain player — the wire stays byte-identical to
+   * what it was before permissions existed — so an empty array and an absent
+   * field must mean the same thing.
+   */
+  permissions: v.optional(v.array(v.string()), [])
 })
 export type User = v.InferOutput<typeof UserSchema>
 

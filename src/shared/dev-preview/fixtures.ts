@@ -64,7 +64,8 @@ export const me = (name: string = PREVIEW_ME): User => ({
   createdAt: instant(512),
   restricted: false,
   profilePublic: true,
-  keyboardPublic: true
+  keyboardPublic: true,
+  permissions: []
 })
 
 // ── /profile/summary, /users/{name}/summary ────────────────────────────────
