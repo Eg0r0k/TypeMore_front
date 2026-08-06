@@ -42,6 +42,12 @@ export const adminRoutes: RouteRecordRaw[] = [
         name: ROUTE_NAMES.ADMIN_PLAYERS,
         component: () => import('@/pages/admin/players/ui.vue'),
         meta: { title: 'Admin' }
+      },
+      {
+        path: 'runs',
+        name: ROUTE_NAMES.ADMIN_RUNS,
+        component: () => import('@/pages/admin/runs/ui.vue'),
+        meta: { title: 'Admin' }
       }
     ]
   }

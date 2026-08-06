@@ -23,5 +23,6 @@ export const routeLocation = {
   user: (name: string): RouteLocationRaw => ({ name: ROUTE_NAMES.USER, params: { name } }),
   admin: (): RouteLocationRaw => ({ name: ROUTE_NAMES.ADMIN }),
   adminReports: (): RouteLocationRaw => ({ name: ROUTE_NAMES.ADMIN_REPORTS }),
-  adminPlayers: (): RouteLocationRaw => ({ name: ROUTE_NAMES.ADMIN_PLAYERS })
+  adminPlayers: (): RouteLocationRaw => ({ name: ROUTE_NAMES.ADMIN_PLAYERS }),
+  adminRuns: (): RouteLocationRaw => ({ name: ROUTE_NAMES.ADMIN_RUNS })
 } as const

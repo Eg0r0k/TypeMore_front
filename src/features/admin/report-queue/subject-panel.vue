@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-3 border-t border-sub-alt pt-3">
+  <div class="flex flex-col gap-3">
     <p v-if="detail.isPending.value" class="text-sm text-sub">{{ t('admin.reports.loading') }}</p>
 
     <div v-else-if="detail.isError.value" class="flex items-center gap-3">
@@ -13,7 +13,7 @@
       <li
         v-for="report in detail.data.value?.reports ?? []"
         :key="report.id"
-        class="flex flex-col gap-1 rounded-[6px] bg-sub-alt px-3 py-2"
+        class="flex flex-col gap-1 rounded-[6px] bg-bg/60 px-3 py-2"
       >
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
           <span class="text-text">{{ t(`report.reasons.${report.reason}`) }}</span>
@@ -82,6 +82,7 @@
   import { formatExactInstant, formatShortDate } from '@/shared/lib/helpers/datetime'
   import { Button } from '@/shared/ui/button'
   import { Input } from '@/shared/ui/input'
+  import { toast } from '@/shared/ui/sonner'
   import { Typography } from '@/shared/ui/typography'
 
   const props = defineProps<{
@@ -101,7 +102,10 @@
     failed.value = false
     resolve.mutate(
       { subject: props.subject, verdict, ...(note.value.trim() ? { note: note.value.trim() } : {}) },
-      { onError: () => (failed.value = true) }
+      {
+        onSuccess: () => toast(t('admin.reports.resolvedToast')),
+        onError: () => (failed.value = true)
+      }
     )
   }
 </script>

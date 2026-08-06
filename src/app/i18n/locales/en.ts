@@ -926,10 +926,38 @@ export default {
     title: 'moderation',
     nav: {
       reports: 'reports',
-      players: 'players'
+      players: 'players',
+      runs: 'run review'
+    },
+    runs: {
+      label: 'run review',
+      lead: 'judged runs above a suspicion floor, worst first — accepted ones included: these are the calls the machine wanted help with.',
+      floorLabel: 'suspicion floor',
+      floorAll: 'all',
+      suspicion: 'suspicion',
+      details: 'details',
+      empty: 'nothing above this floor — the queue is clear',
+      loadFailed: 'could not load the queue',
+      retry: 'retry',
+      loading: 'loading…',
+      historyFailed: 'could not load the decision history',
+      noOverrides: 'no manual decisions on this run',
+      overriddenTag: 'decided by hand',
+      status: {
+        accepted: 'accepted',
+        flagged: 'flagged',
+        rejected: 'rejected',
+        pending: 'pending'
+      },
+      overrideLabel: 'new status',
+      reasonPlaceholder: 'reason — required, goes on the record',
+      override: 'override',
+      overridden: 'status overridden',
+      overrideFailed: 'could not override — try again'
     },
     players: {
       label: 'player card',
+      lead: 'one player, everything a moderator can do to them: resolution, bans, badges.',
       searchPlaceholder: 'name, uuid or email',
       search: 'open',
       notFound: 'nobody by that identifier',
@@ -965,6 +993,8 @@ export default {
     },
     reports: {
       label: 'report queue',
+      lead: 'one row is one subject, loudest first; resolving records the decision — the act itself lives on its own surface.',
+      resolvedToast: 'reports resolved',
       filter: {
         all: 'all',
         user: 'players',

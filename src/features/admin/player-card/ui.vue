@@ -1,6 +1,8 @@
 <template>
-  <section class="mt-4 flex min-w-0 flex-col gap-4" :aria-label="t('admin.players.label')">
-    <form class="flex flex-wrap items-center gap-2" @submit.prevent="onSearch">
+  <section class="flex min-w-0 flex-col gap-4" :aria-label="t('admin.players.label')">
+    <SectionHeader :title="t('admin.players.label')" :description="t('admin.players.lead')" />
+
+    <form class="mt-1 flex flex-wrap items-center gap-2" @submit.prevent="onSearch">
       <Input
         v-model="draft"
         :placeholder="t('admin.players.searchPlaceholder')"
@@ -110,6 +112,7 @@
   import { Button } from '@/shared/ui/button'
   import { Input } from '@/shared/ui/input'
   import { Typography } from '@/shared/ui/typography'
+  import SectionHeader from '../parts/section-header.vue'
   import BadgesSection from './badges-section.vue'
   import BansSection from './bans-section.vue'
 
