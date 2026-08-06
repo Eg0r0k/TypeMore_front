@@ -17,7 +17,8 @@ export const ROUTE_NAMES = {
   REPLAY: 'replay',
   RACE: 'race',
   ADMIN: 'admin',
-  ADMIN_REPORTS: 'admin-reports'
+  ADMIN_REPORTS: 'admin-reports',
+  ADMIN_PLAYERS: 'admin-players'
 } as const
 
 export type AppRouteName = (typeof ROUTE_NAMES)[keyof typeof ROUTE_NAMES]

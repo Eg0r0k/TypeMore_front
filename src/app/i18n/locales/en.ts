@@ -925,7 +925,43 @@ export default {
   admin: {
     title: 'moderation',
     nav: {
-      reports: 'reports'
+      reports: 'reports',
+      players: 'players'
+    },
+    players: {
+      label: 'player card',
+      searchPlaceholder: 'name, uuid or email',
+      search: 'open',
+      notFound: 'nobody by that identifier',
+      ambiguous: 'more than one account matches — pick one:',
+      loadFailed: 'could not load the player',
+      retry: 'retry',
+      restricted: 'restricted',
+      openProfile: 'open profile',
+      bans: {
+        title: 'bans',
+        empty: 'no bans on record',
+        active: 'active',
+        permanent: 'permanent',
+        until: 'until {date}',
+        revoked: 'revoked {date}',
+        by: 'by {name}',
+        reasonPlaceholder: 'reason — internal note, required',
+        untilPlaceholder: '72h or an instant; empty = permanent',
+        issue: 'ban',
+        issued: 'ban issued',
+        amended: 'existing ban amended',
+        unban: 'unban',
+        failed: 'could not apply — try again'
+      },
+      badges: {
+        title: 'badges',
+        empty: 'no grants on record',
+        grant: 'grant {code}',
+        revoke: 'revoke',
+        hidden: 'granted, not shown',
+        revokedTag: 'revoked'
+      }
     },
     reports: {
       label: 'report queue',

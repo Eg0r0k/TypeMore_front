@@ -1,13 +1,31 @@
 /** Admin surface — capability-gated moderation reads and writes. */
 export { adminKeys } from './keys'
-export { reportQueueQueryOptions, subjectReportsQueryOptions } from './queries'
-export { useResolveReportsMutation } from './mutations'
+export {
+  playerBadgesQueryOptions,
+  playerBansQueryOptions,
+  reportQueueQueryOptions,
+  subjectReportsQueryOptions
+} from './queries'
+export {
+  useGrantBadgeMutation,
+  useIssueBanMutation,
+  useResolveReportsMutation,
+  useRevokeBadgeMutation,
+  useRevokeBanMutation
+} from './mutations'
+export { ResolutionCandidatesSchema } from './schemas'
 export type {
+  AdminUser,
+  BadgeGrant,
+  Ban,
+  BanIssued,
   QueueSubject,
   ReportQueue,
   ReportQueueItem,
   ResolveResult,
   SubjectReport,
-  SubjectReports
+  SubjectReports,
+  UserBadges,
+  UserBans
 } from './schemas'
-export type { ResolveReportsInput, ResolveVerdict } from './types'
+export type { IssueBanInput, ResolveReportsInput, ResolveVerdict } from './types'

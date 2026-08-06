@@ -52,6 +52,12 @@
       to: routeLocation.adminReports(),
       label: 'admin.nav.reports',
       testid: 'admin-nav-reports'
+    },
+    {
+      permission: 'bans:read',
+      to: routeLocation.adminPlayers(),
+      label: 'admin.nav.players',
+      testid: 'admin-nav-players'
     }
   ]
 

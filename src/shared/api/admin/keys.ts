@@ -5,5 +5,8 @@ export const adminKeys = {
   reportQueues: () => [...adminKeys.all, 'report-queue'] as const,
   reportQueue: (type?: string) => [...adminKeys.reportQueues(), type ?? 'all'] as const,
   subjectReports: (type: string, id: string) =>
-    [...adminKeys.all, 'subject-reports', type, id] as const
+    [...adminKeys.all, 'subject-reports', type, id] as const,
+  players: () => [...adminKeys.all, 'player'] as const,
+  playerBans: (identifier: string) => [...adminKeys.players(), identifier, 'bans'] as const,
+  playerBadges: (identifier: string) => [...adminKeys.players(), identifier, 'badges'] as const
 } as const

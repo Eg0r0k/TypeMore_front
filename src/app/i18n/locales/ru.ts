@@ -835,7 +835,43 @@ export default {
   admin: {
     title: 'модерация',
     nav: {
-      reports: 'жалобы'
+      reports: 'жалобы',
+      players: 'игроки'
+    },
+    players: {
+      label: 'карточка игрока',
+      searchPlaceholder: 'ник, uuid или email',
+      search: 'открыть',
+      notFound: 'никого с таким идентификатором',
+      ambiguous: 'подходит больше одного аккаунта — выберите:',
+      loadFailed: 'не удалось загрузить игрока',
+      retry: 'повторить',
+      restricted: 'ограничен',
+      openProfile: 'открыть профиль',
+      bans: {
+        title: 'баны',
+        empty: 'банов не было',
+        active: 'активен',
+        permanent: 'навсегда',
+        until: 'до {date}',
+        revoked: 'снят {date}',
+        by: 'кем: {name}',
+        reasonPlaceholder: 'причина — внутренняя заметка, обязательна',
+        untilPlaceholder: '72h или момент; пусто = навсегда',
+        issue: 'забанить',
+        issued: 'бан выдан',
+        amended: 'существующий бан изменён',
+        unban: 'разбанить',
+        failed: 'не удалось применить — попробуйте ещё раз'
+      },
+      badges: {
+        title: 'бейджи',
+        empty: 'выдач не было',
+        grant: 'выдать {code}',
+        revoke: 'отозвать',
+        hidden: 'выдан, скрыт владельцем',
+        revokedTag: 'отозван'
+      }
     },
     reports: {
       label: 'очередь жалоб',

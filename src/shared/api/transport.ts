@@ -28,18 +28,26 @@ export interface ApiErrorShape {
   status: number
   code: string
   message?: string
+  /**
+   * The raw error body, for the few responses that carry more than the
+   * envelope (e.g. the admin resolution 409's `candidates`). UNPARSED — a
+   * consumer schema-validates the slice it needs, exactly like a success body.
+   */
+  details?: unknown
 }
 
 /** The only error type the app ever catches from the API layer. */
 export class ApiError extends Error implements ApiErrorShape {
   readonly status: number
   readonly code: string
+  readonly details?: unknown
 
   constructor(shape: ApiErrorShape) {
     super(shape.message ?? shape.code)
     this.name = 'ApiError'
     this.status = shape.status
     this.code = shape.code
+    this.details = shape.details
   }
 }
 
@@ -63,7 +71,12 @@ export const apiErrorFromResponse = (
 ): ApiError => {
   const parsed = v.safeParse(ErrorBodySchema, body)
   if (parsed.success) {
-    return new ApiError({ status, code: parsed.output.error, message: parsed.output.message })
+    return new ApiError({
+      status,
+      code: parsed.output.error,
+      message: parsed.output.message,
+      details: body
+    })
   }
   return new ApiError({
     status,

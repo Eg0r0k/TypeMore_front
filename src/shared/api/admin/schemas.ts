@@ -5,11 +5,13 @@
  * `docs/REPORTS.md`). Go marshals a nil slice as `null`, so every array here
  * normalizes `null`/absent to `[]`.
  */
-const arrayOrEmpty = <S extends v.GenericSchema>(schema: S) =>
+const arrayOrEmpty = <S extends v.GenericSchema>(
+  schema: S
+): v.GenericSchema<unknown, v.InferOutput<S>[]> =>
   v.pipe(
     v.nullish(v.array(schema)),
     v.transform((value) => value ?? [])
-  )
+  ) as v.GenericSchema<unknown, v.InferOutput<S>[]>
 
 /** `type` stays a plain string: a subject type this build predates must not fail the whole queue parse. */
 export const QueueSubjectSchema = v.object({
@@ -68,3 +70,82 @@ export const ResolveResultSchema = v.object({
   resolved: v.number()
 })
 export type ResolveResult = v.InferOutput<typeof ResolveResultSchema>
+
+/** The ban surface (backend `internal/moderation/handler.go`, docs/MODERATION.md). */
+export const AdminUserSchema = v.object({
+  id: v.string(),
+  displayName: v.string()
+})
+export type AdminUser = v.InferOutput<typeof AdminUserSchema>
+
+export const BanSchema = v.object({
+  id: v.string(),
+  userId: v.string(),
+  displayName: v.optional(v.string()),
+  reason: v.string(),
+  issuedBy: v.string(),
+  issuedAt: v.string(),
+  expiresAt: v.optional(v.string()),
+  revokedAt: v.optional(v.string()),
+  active: v.boolean()
+})
+export type Ban = v.InferOutput<typeof BanSchema>
+
+export const UserBansSchema = v.object({
+  user: AdminUserSchema,
+  restricted: v.boolean(),
+  bans: arrayOrEmpty(BanSchema)
+})
+export type UserBans = v.InferOutput<typeof UserBansSchema>
+
+/** `POST /bans` answers a DIFF — `amended` + `previous` — never a bare "ok". */
+export const BanIssuedSchema = v.object({
+  user: AdminUserSchema,
+  ban: BanSchema,
+  amended: v.boolean(),
+  previous: v.optional(BanSchema)
+})
+export type BanIssued = v.InferOutput<typeof BanIssuedSchema>
+
+export const BanRevokedSchema = v.object({
+  revoked: v.boolean(),
+  ban: v.optional(BanSchema)
+})
+export type BanRevoked = v.InferOutput<typeof BanRevokedSchema>
+
+/** The resolution 409: an ambiguous identifier answers its candidates. */
+export const ResolutionCandidatesSchema = v.object({
+  candidates: arrayOrEmpty(AdminUserSchema)
+})
+
+/** The badge surface (backend `internal/moderation/badges_http.go`). */
+export const BadgeGrantSchema = v.object({
+  code: v.string(),
+  grantedAt: v.string(),
+  grantedBy: v.optional(v.string()),
+  revokedAt: v.optional(v.string()),
+  revokedBy: v.optional(v.string()),
+  granted: v.boolean(),
+  shown: v.boolean()
+})
+export type BadgeGrant = v.InferOutput<typeof BadgeGrantSchema>
+
+export const UserBadgesSchema = v.object({
+  user: AdminUserSchema,
+  badges: arrayOrEmpty(BadgeGrantSchema),
+  knownBadges: arrayOrEmpty(v.string())
+})
+export type UserBadges = v.InferOutput<typeof UserBadgesSchema>
+
+export const BadgeGrantedSchema = v.object({
+  user: AdminUserSchema,
+  badge: BadgeGrantSchema
+})
+export type BadgeGranted = v.InferOutput<typeof BadgeGrantedSchema>
+
+export const BadgeRevokedSchema = v.object({
+  user: AdminUserSchema,
+  code: v.string(),
+  revoked: v.boolean()
+})
+export type BadgeRevoked = v.InferOutput<typeof BadgeRevokedSchema>
