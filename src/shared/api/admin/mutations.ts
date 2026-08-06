@@ -1,7 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
-import { grantBadge, issueBan, resolveReports, revokeBadge, revokeBan } from './endpoints'
+import {
+  grantBadge,
+  issueBan,
+  overrideRunStatus,
+  resolveReports,
+  revokeBadge,
+  revokeBan
+} from './endpoints'
 import { adminKeys } from './keys'
-import type { IssueBanInput, ResolveReportsInput } from './types'
+import type { IssueBanInput, OverrideRunInput, ResolveReportsInput } from './types'
 
 /** Resolving closes the whole subject group, so every queue view is stale. */
 export const useResolveReportsMutation = () => {
@@ -45,3 +52,13 @@ export const useRevokeBadgeMutation = () =>
   usePlayerMutation((input: { identifier: string; code: string }) =>
     revokeBadge(input.identifier, input.code)
   )
+
+export const useOverrideRunMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: OverrideRunInput) => overrideRunStatus(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: adminKeys.reviews() })
+    }
+  })
+}

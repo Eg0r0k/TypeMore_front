@@ -17,4 +17,13 @@ export interface IssueBanInput {
   until?: string
 }
 
+/** `pending` is refused by the server: it is not a judgement to disagree with. */
+export type OverridableStatus = 'accepted' | 'flagged' | 'rejected'
+
+export interface OverrideRunInput {
+  runId: string
+  status: OverridableStatus
+  reason: string
+}
+
 export type { ReportSubjectType }

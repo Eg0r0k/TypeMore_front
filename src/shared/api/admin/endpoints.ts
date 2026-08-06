@@ -6,6 +6,9 @@ import {
   BanRevokedSchema,
   ReportQueueSchema,
   ResolveResultSchema,
+  ReviewQueueSchema,
+  RunOverridesSchema,
+  StatusOverrideSchema,
   SubjectReportsSchema,
   UserBadgesSchema,
   UserBansSchema,
@@ -15,11 +18,19 @@ import {
   type BanRevoked,
   type ReportQueue,
   type ResolveResult,
+  type ReviewQueue,
+  type RunOverrides,
+  type StatusOverride,
   type SubjectReports,
   type UserBadges,
   type UserBans
 } from './schemas'
-import type { IssueBanInput, ReportSubjectType, ResolveReportsInput } from './types'
+import type {
+  IssueBanInput,
+  OverrideRunInput,
+  ReportSubjectType,
+  ResolveReportsInput
+} from './types'
 
 export const reportQueue = (type?: ReportSubjectType, limit?: number): Promise<ReportQueue> =>
   request('/admin/reports', ReportQueueSchema, {
@@ -71,3 +82,20 @@ export const revokeBadge = (identifier: string, code: string): Promise<BadgeRevo
     BadgeRevokedSchema,
     { method: 'DELETE' }
   )
+
+export const reviewQueue = (minSuspicion?: number, limit?: number): Promise<ReviewQueue> =>
+  request('/admin/runs/review', ReviewQueueSchema, {
+    query: {
+      ...(minSuspicion === undefined ? {} : { minSuspicion }),
+      ...(limit === undefined ? {} : { limit })
+    }
+  })
+
+export const runOverrides = (runId: string): Promise<RunOverrides> =>
+  request(`/admin/runs/${encodeURIComponent(runId)}/overrides`, RunOverridesSchema)
+
+export const overrideRunStatus = (input: OverrideRunInput): Promise<StatusOverride> =>
+  request(`/admin/runs/${encodeURIComponent(input.runId)}/status`, StatusOverrideSchema, {
+    method: 'POST',
+    body: { status: input.status, reason: input.reason }
+  })

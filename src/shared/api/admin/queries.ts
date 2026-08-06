@@ -1,5 +1,12 @@
 import { queryOptions } from '@tanstack/vue-query'
-import { reportQueue, subjectReports, userBadges, userBans } from './endpoints'
+import {
+  reportQueue,
+  reviewQueue,
+  runOverrides,
+  subjectReports,
+  userBadges,
+  userBans
+} from './endpoints'
 import { adminKeys } from './keys'
 import type { ReportSubjectType } from './types'
 
@@ -29,4 +36,16 @@ export const playerBadgesQueryOptions = (identifier: string) =>
     queryKey: adminKeys.playerBadges(identifier),
     queryFn: () => userBadges(identifier),
     retry: false
+  })
+
+export const reviewQueueQueryOptions = (minSuspicion?: number) =>
+  queryOptions({
+    queryKey: adminKeys.reviewQueue(minSuspicion),
+    queryFn: () => reviewQueue(minSuspicion)
+  })
+
+export const runOverridesQueryOptions = (runId: string) =>
+  queryOptions({
+    queryKey: adminKeys.runOverrides(runId),
+    queryFn: () => runOverrides(runId)
   })

@@ -149,3 +149,47 @@ export const BadgeRevokedSchema = v.object({
   revoked: v.boolean()
 })
 export type BadgeRevoked = v.InferOutput<typeof BadgeRevokedSchema>
+
+/** The run review surface (backend `internal/runs/override.go`, docs/MODERATION.md). */
+export const ReviewRowSchema = v.object({
+  id: v.string(),
+  userId: v.optional(v.string()),
+  displayName: v.optional(v.string()),
+  status: v.string(),
+  mode: v.string(),
+  lang: v.optional(v.string()),
+  suspicion: v.number(),
+  overridden: v.boolean(),
+  /** The server's recomputed metrics, verbatim; the screen picks what it can read. */
+  metrics: v.nullish(
+    v.object({
+      wpm: v.optional(v.number()),
+      raw: v.optional(v.number()),
+      acc: v.optional(v.number())
+    })
+  ),
+  createdAt: v.string()
+})
+export type ReviewRow = v.InferOutput<typeof ReviewRowSchema>
+
+export const ReviewQueueSchema = v.object({
+  runs: arrayOrEmpty(ReviewRowSchema),
+  minSuspicion: v.number()
+})
+export type ReviewQueue = v.InferOutput<typeof ReviewQueueSchema>
+
+export const StatusOverrideSchema = v.object({
+  id: v.string(),
+  runId: v.string(),
+  fromStatus: v.string(),
+  toStatus: v.string(),
+  reason: v.string(),
+  decidedByName: v.optional(v.string()),
+  decidedAt: v.string()
+})
+export type StatusOverride = v.InferOutput<typeof StatusOverrideSchema>
+
+export const RunOverridesSchema = v.object({
+  overrides: arrayOrEmpty(StatusOverrideSchema)
+})
+export type RunOverrides = v.InferOutput<typeof RunOverridesSchema>
