@@ -80,14 +80,14 @@
     "--error-extra-color": "#b71517"
   },
   {
-    "name": "VS Code 2",
-    "--bg-color": "#181818",
-    "--main-color": "#007aCC",
-    "--sub-color": "#3a3a3a",
-    "--sub-alt-color": "#1f1f1f",
-    "--text-color": "#cccccc",
-    "--error-color": "#f14c4c",
-    "--error-extra-color": "#eb5c39"
+    "name": "VS Code Light",
+    "--bg-color": "#ffffff",
+    "--main-color": "#005fb8",
+    "--sub-color": "#a0a0a0",
+    "--sub-alt-color": "#f3f3f3",
+    "--text-color": "#1f1f1f",
+    "--error-color": "#d11a0f",
+    "--error-extra-color": "#8f1108"
   },
   {
     "name": "Neo",
@@ -103,11 +103,11 @@
     "name": "Orange Apple",
     "--bg-color": "#0d1c1c",
     "--main-color": "#f0e800",
-    "--sub-color": "#ff6600",
-    "--sub-alt-color": "#9c9191",
-    "--text-color": "#ffffff",
-    "--error-color": "#ff0000",
-    "--error-extra-color": "#751d1d"
+    "--sub-color": "#5e7370",
+    "--sub-alt-color": "#081414",
+    "--text-color": "#f2f7f5",
+    "--error-color": "#ff5f1f",
+    "--error-extra-color": "#a03410"
   },
   {
     "name": "Terrarium",
@@ -122,12 +122,12 @@
   {
     "name": "Drive",
     "--bg-color": "#00002e",
-    "--main-color": "#ffadad",
-    "--sub-color": "#ff3d8b",
-    "--sub-alt-color": "#060548",
-    "--text-color": "#f1deef",
-    "--error-color": "#8fecff",
-    "--error-extra-color": "#558cab"
+    "--main-color": "#ff3d8b",
+    "--sub-color": "#5f6aa8",
+    "--sub-alt-color": "#05053f",
+    "--text-color": "#cfe8ff",
+    "--error-color": "#ff7a45",
+    "--error-extra-color": "#a3402a"
   },
   {
     "name": "Strict",
@@ -143,21 +143,21 @@
     "name": "Cyberpunk",
     "--bg-color": "#0f0f0f",
     "--main-color": "#ff00ff",
-    "--sub-color": "#00ffff",
-    "--sub-alt-color": "#1a1a1a",
-    "--text-color": "#e5e5e5",
+    "--sub-color": "#3f7a7a",
+    "--sub-alt-color": "#17171b",
+    "--text-color": "#e5e5ea",
     "--error-color": "#ff4c4c",
     "--error-extra-color": "#993434"
   },
   {
     "name": "Maiamy",
     "--bg-color": "#f35588",
-    "--main-color": "#00fff7",
-    "--sub-color": "#94294c",
-    "--sub-alt-color": "#db4979",
-    "--text-color": "#f0e9ec",
-    "--error-color": "#fff591",
-    "--error-extra-color": "#b9b269"
+    "--main-color": "#00423f",
+    "--sub-color": "#b03a5e",
+    "--sub-alt-color": "#e8467a",
+    "--text-color": "#2b0a17",
+    "--error-color": "#ffe14d",
+    "--error-extra-color": "#a68000"
   },
   {
     "name": "Vue",
@@ -183,11 +183,11 @@
     "name": "Brow",
     "--bg-color": "#10100e",
     "--main-color": "#ff9500",
-    "--sub-color": "#5f361b",
-    "--sub-alt-color": "#c25700",
+    "--sub-color": "#6b4a2a",
+    "--sub-alt-color": "#1a1613",
     "--text-color": "#fee190",
-    "--error-color": "#fdec30",
-    "--error-extra-color": "#785417"
+    "--error-color": "#ff4d3d",
+    "--error-extra-color": "#99291f"
   },
   {
     "name": "Octane",
@@ -202,12 +202,12 @@
   {
     "name": "Honey",
     "--bg-color": "#f2aa00",
-    "--main-color": "#fff546",
-    "--sub-color": "#a66b00",
-    "--sub-alt-color": "#e19e00",
-    "--text-color": "#f3eecb",
-    "--error-color": "#e82626",
-    "--error-extra-color": "#861313"
+    "--main-color": "#6b2f00",
+    "--sub-color": "#a86e00",
+    "--sub-alt-color": "#e09c00",
+    "--text-color": "#241500",
+    "--error-color": "#a3001f",
+    "--error-extra-color": "#6b0014"
   },
   {
     "name": "YouTube",
@@ -220,7 +220,7 @@
     "--error-extra-color": "#791717"
   },
   {
-    "name": "0_0",
+    "name": "Ember",
     "--bg-color": "#0e0e0e",
     "--main-color": "#ff9000",
     "--sub-color": "#555555",
@@ -250,7 +250,7 @@
     "--error-extra-color": "#993434"
   },
   {
-    "name": "0_6",
+    "name": "Neon Ice",
     "--bg-color": "#1f1f1f",
     "--main-color": "#00ffff",
     "--sub-color": "#484848",
@@ -260,7 +260,7 @@
     "--error-extra-color": "#a82828"
   },
   {
-    "name": "0_9",
+    "name": "Neon Rose",
     "--bg-color": "#141414",
     "--main-color": "#ff007f",
     "--sub-color": "#3b3b3b",
@@ -270,104 +270,104 @@
     "--error-extra-color": "#b31919"
   },
   {
-    "name": "1_0",
+    "name": "Cerulean",
     "--bg-color": "#1f1f1f",
     "--main-color": "#3498db",
-    "--sub-color": "#2980b9",
-    "--sub-alt-color": "#2c3e50",
+    "--sub-color": "#5c6b78",
+    "--sub-alt-color": "#191919",
     "--text-color": "#ecf0f1",
     "--error-color": "#e74c3c",
-    "--error-extra-color": "#c0392b"
+    "--error-extra-color": "#a03227"
   },
   {
-    "name": "1_5",
+    "name": "Brass",
     "--bg-color": "#2f3640",
-    "--main-color": "#e1b12c",
-    "--sub-color": "#fbc531",
-    "--sub-alt-color": "#353b48",
+    "--main-color": "#fbc531",
+    "--sub-color": "#737d8c",
+    "--sub-alt-color": "#272c35",
     "--text-color": "#f5f6fa",
-    "--error-color": "#e84118",
-    "--error-extra-color": "#c23616"
+    "--error-color": "#ff6b4a",
+    "--error-extra-color": "#a63c26"
   },
   {
-    "name": "1_6",
+    "name": "Firefly",
     "--bg-color": "#273c75",
-    "--main-color": "#44bd32",
-    "--sub-color": "#4cd137",
-    "--sub-alt-color": "#192a56",
-    "--text-color": "#f5f6fa",
-    "--error-color": "#e84118",
-    "--error-extra-color": "#c23616"
+    "--main-color": "#6be04f",
+    "--sub-color": "#6f80b0",
+    "--sub-alt-color": "#1e2f5e",
+    "--text-color": "#f2f5ff",
+    "--error-color": "#ff6b52",
+    "--error-extra-color": "#a83a29"
   },
   {
-    "name": "2_0",
+    "name": "Ignition",
     "--bg-color": "#212121",
     "--main-color": "#ff5722",
-    "--sub-color": "#ff7043",
-    "--sub-alt-color": "#424242",
+    "--sub-color": "#6b6b6b",
+    "--sub-alt-color": "#1a1a1a",
     "--text-color": "#f5f5f5",
-    "--error-color": "#d32f2f",
-    "--error-extra-color": "#b71c1c"
+    "--error-color": "#f0435f",
+    "--error-extra-color": "#99283c"
   },
   {
     "name": "Laguna",
     "--bg-color": "#0d47a1",
-    "--main-color": "#29b6f6",
-    "--sub-color": "#03a9f4",
-    "--sub-alt-color": "#1565c0",
+    "--main-color": "#4fc3f7",
+    "--sub-color": "#6b93cf",
+    "--sub-alt-color": "#0a3a85",
     "--text-color": "#e3f2fd",
-    "--error-color": "#d32f2f",
-    "--error-extra-color": "#b71c1c"
+    "--error-color": "#ff6b6b",
+    "--error-extra-color": "#a83a3a"
   },
   {
-    "name": "3_0",
+    "name": "Atom One",
     "--bg-color": "#282c34",
     "--main-color": "#61dafb",
-    "--sub-color": "#20232a",
-    "--sub-alt-color": "#30363d",
+    "--sub-color": "#5c6370",
+    "--sub-alt-color": "#21252b",
     "--text-color": "#ffffff",
     "--error-color": "#e06c75",
     "--error-extra-color": "#be5046"
   },
   {
-    "name": "3_3",
+    "name": "Redline",
     "--bg-color": "#0f0f0f",
-    "--main-color": "#ff0000",
-    "--sub-color": "#282828",
-    "--sub-alt-color": "#1c1c1c",
-    "--text-color": "#ffffff",
-    "--error-color": "#d32f2f",
-    "--error-extra-color": "#b71c1c"
+    "--main-color": "#ff2d2d",
+    "--sub-color": "#4d4d4d",
+    "--sub-alt-color": "#1a1a1a",
+    "--text-color": "#f0f0f0",
+    "--error-color": "#ffa726",
+    "--error-extra-color": "#a35f10"
   },
   {
     "name": "Snow",
     "--bg-color": "#ffffff",
-    "--main-color": "#007bff",
-    "--sub-color": "#f8f9fa",
-    "--sub-alt-color": "#e9ecef",
-    "--text-color": "#343a40",
-    "--error-color": "#dc3545",
-    "--error-extra-color": "#c82333"
+    "--main-color": "#0aa2c0",
+    "--sub-color": "#9fb0bd",
+    "--sub-alt-color": "#eef4f8",
+    "--text-color": "#1f2933",
+    "--error-color": "#d32535",
+    "--error-extra-color": "#94141f"
   },
   {
     "name": "KeySmash",
     "--bg-color": "#1a1a1a",
     "--main-color": "#ff4500",
-    "--sub-color": "#2f2f2f",
-    "--sub-alt-color": "#404040",
+    "--sub-color": "#5e5e5e",
+    "--sub-alt-color": "#232323",
     "--text-color": "#dcdcdc",
-    "--error-color": "#ff6347",
-    "--error-extra-color": "#cc2c1a"
+    "--error-color": "#f43f5e",
+    "--error-extra-color": "#9f2540"
   },
   {
     "name": "Contrast",
     "--bg-color": "#000000",
     "--main-color": "#ffffff",
-    "--sub-color": "#1c1c1c",
-    "--sub-alt-color": "#333333",
+    "--sub-color": "#6e6e6e",
+    "--sub-alt-color": "#141414",
     "--text-color": "#f0f0f0",
     "--error-color": "#ff5252",
-    "--error-extra-color": "#ff1744"
+    "--error-extra-color": "#b32d2d"
   },
   {
     "name": "GameBoy",
@@ -382,45 +382,45 @@
   {
     "name": "Coffee",
     "--bg-color": "#3f3230",
-    "--main-color": "#c4af9d",
-    "--sub-color": "#85644d",
-    "--sub-alt-color": "#ceab8c",
-    "--text-color": "#1f0d00",
-    "--error-color": "#854442",
-    "--error-extra-color": "#854442"
+    "--main-color": "#ceab8c",
+    "--sub-color": "#8a6a52",
+    "--sub-alt-color": "#332826",
+    "--text-color": "#f2e4d5",
+    "--error-color": "#e5736b",
+    "--error-extra-color": "#94382f"
   },
   {
     "name": "UwU",
     "--bg-color": "#ffc2cd",
-    "--main-color": "#fc3468",
-    "--sub-color": "#ff93ac",
-    "--sub-alt-color": "#ff084a",
-    "--text-color": "#ffffff",
-    "--error-color": "#da3333",
-    "--error-extra-color": "#791717"
+    "--main-color": "#d81b5e",
+    "--sub-color": "#b85f77",
+    "--sub-alt-color": "#f7b0bd",
+    "--text-color": "#4a1526",
+    "--error-color": "#a3001f",
+    "--error-extra-color": "#6b0014"
   },
   {
-    "name": "F",
+    "name": "Cobalt",
     "--bg-color": "#3b5998",
-    "--main-color": "#8b9dc3",
-    "--sub-color": "#f7f7f7",
-    "--sub-alt-color": "#dfe3ee",
-    "--text-color": "#ffffff",
-    "--error-color": "#ff3333",
-    "--error-extra-color": "#aa0909"
+    "--main-color": "#ffd166",
+    "--sub-color": "#93a5cc",
+    "--sub-alt-color": "#2f4a80",
+    "--text-color": "#eef3fc",
+    "--error-color": "#ff7a7a",
+    "--error-extra-color": "#ab3f3f"
   },
   {
     "name": "Lasure",
     "--bg-color": "#18233a",
-    "--main-color": "#22345b",
+    "--main-color": "#87adff",
     "--sub-color": "#344b7b",
     "--sub-alt-color": "#131e35",
-    "--text-color": "#87adff",
+    "--text-color": "#c6d5f5",
     "--error-color": "#ca4754",
     "--error-extra-color": "#7e2a33"
   },
   {
-    "name": "monokai",
+    "name": "Monokai",
     "--bg-color": "#272822",
     "--main-color": "#a6e22e",
     "--sub-color": "#e6db74",
@@ -548,5 +548,55 @@
     "--text-color": "#f2f4ff",
     "--error-color": "#ff5a5f",
     "--error-extra-color": "#a02f36"
+  },
+  {
+    "name": "Velvet Plum",
+    "--bg-color": "#241a2b",
+    "--main-color": "#f0a868",
+    "--sub-color": "#7c6889",
+    "--sub-alt-color": "#1b1220",
+    "--text-color": "#f1e7f4",
+    "--error-color": "#ff6b81",
+    "--error-extra-color": "#a33a4d"
+  },
+  {
+    "name": "Dune",
+    "--bg-color": "#242019",
+    "--main-color": "#7fb3d5",
+    "--sub-color": "#8c8271",
+    "--sub-alt-color": "#1b1813",
+    "--text-color": "#efe8da",
+    "--error-color": "#e0645c",
+    "--error-extra-color": "#8f342f"
+  },
+  {
+    "name": "Merlot",
+    "--bg-color": "#1e1216",
+    "--main-color": "#e0b458",
+    "--sub-color": "#856770",
+    "--sub-alt-color": "#160c10",
+    "--text-color": "#f2e5e8",
+    "--error-color": "#ff5f6d",
+    "--error-extra-color": "#9c2f3c"
+  },
+  {
+    "name": "Kelp Forest",
+    "--bg-color": "#0f1c1a",
+    "--main-color": "#e8cfa0",
+    "--sub-color": "#6d8a83",
+    "--sub-alt-color": "#0a1413",
+    "--text-color": "#e6f0ec",
+    "--error-color": "#ef7a6a",
+    "--error-extra-color": "#9c4034"
+  },
+  {
+    "name": "Graphite Mint",
+    "--bg-color": "#1c1f21",
+    "--main-color": "#7fe0c0",
+    "--sub-color": "#71797d",
+    "--sub-alt-color": "#161819",
+    "--text-color": "#e8ecee",
+    "--error-color": "#ff7b72",
+    "--error-extra-color": "#a34741"
   }
 ]
