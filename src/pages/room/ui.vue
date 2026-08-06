@@ -71,7 +71,7 @@
 
 <script setup lang="ts">
   import { computed, onUnmounted, provide, watch, watchEffect } from 'vue'
-  import { onBeforeRouteLeave, useRouter } from 'vue-router'
+  import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
   import { useI18n } from 'vue-i18n'
   import { LEAVE_SHAKE_KEY } from '@/shared/constants/inject-keys'
   import { useShake } from '@/shared/lib/hooks/useShake'
@@ -110,6 +110,16 @@
       if (!room) void router.replace(routeLocation.servers())
     }
   )
+
+  // The address carries the room code (`/room?c=CODE`), so sharing the room is
+  // copying the URL — the lobby middleware honours the same link inbound.
+  const route = useRoute()
+  watchEffect(() => {
+    const code = session.room?.code
+    if (code !== undefined && route.query.c !== code) {
+      void router.replace({ query: { ...route.query, c: code } })
+    }
+  })
 
   /**
    * The seat is a SERVER fact: walking away from this route without the leave

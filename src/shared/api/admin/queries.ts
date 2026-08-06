@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/vue-query'
+import { keepPreviousData, queryOptions } from '@tanstack/vue-query'
 import {
   reportQueue,
   reviewQueue,
@@ -8,7 +8,7 @@ import {
   userBans
 } from './endpoints'
 import { adminKeys } from './keys'
-import type { ReportSubjectType } from './types'
+import type { ReportSubjectType, ReviewSort } from './types'
 
 export const reportQueueQueryOptions = (type?: ReportSubjectType) =>
   queryOptions({
@@ -38,10 +38,17 @@ export const playerBadgesQueryOptions = (identifier: string) =>
     retry: false
   })
 
-export const reviewQueueQueryOptions = (minSuspicion?: number) =>
+export const reviewQueueQueryOptions = (params: {
+  minSuspicion?: number
+  sort?: ReviewSort
+  offset?: number
+  limit?: number
+} = {}) =>
   queryOptions({
-    queryKey: adminKeys.reviewQueue(minSuspicion),
-    queryFn: () => reviewQueue(minSuspicion)
+    queryKey: adminKeys.reviewQueue(params.minSuspicion, params.sort, params.offset),
+    queryFn: () => reviewQueue(params),
+    // A page flip keeps the previous rows on screen instead of blanking.
+    placeholderData: keepPreviousData
   })
 
 export const runOverridesQueryOptions = (runId: string) =>

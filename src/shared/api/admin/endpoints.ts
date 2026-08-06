@@ -29,7 +29,8 @@ import type {
   IssueBanInput,
   OverrideRunInput,
   ReportSubjectType,
-  ResolveReportsInput
+  ResolveReportsInput,
+  ReviewSort
 } from './types'
 
 export const reportQueue = (type?: ReportSubjectType, limit?: number): Promise<ReportQueue> =>
@@ -83,11 +84,18 @@ export const revokeBadge = (identifier: string, code: string): Promise<BadgeRevo
     { method: 'DELETE' }
   )
 
-export const reviewQueue = (minSuspicion?: number, limit?: number): Promise<ReviewQueue> =>
+export const reviewQueue = (params: {
+  minSuspicion?: number
+  sort?: ReviewSort
+  offset?: number
+  limit?: number
+}): Promise<ReviewQueue> =>
   request('/admin/runs/review', ReviewQueueSchema, {
     query: {
-      ...(minSuspicion === undefined ? {} : { minSuspicion }),
-      ...(limit === undefined ? {} : { limit })
+      ...(params.minSuspicion === undefined ? {} : { minSuspicion: params.minSuspicion }),
+      ...(params.sort === undefined ? {} : { sort: params.sort }),
+      ...(params.offset === undefined ? {} : { offset: params.offset }),
+      ...(params.limit === undefined ? {} : { limit: params.limit })
     }
   })
 

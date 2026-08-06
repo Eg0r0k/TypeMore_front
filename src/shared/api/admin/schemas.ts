@@ -174,7 +174,10 @@ export type ReviewRow = v.InferOutput<typeof ReviewRowSchema>
 
 export const ReviewQueueSchema = v.object({
   runs: arrayOrEmpty(ReviewRowSchema),
-  minSuspicion: v.number()
+  minSuspicion: v.number(),
+  /** Pre-LIMIT total and the page's offset — the pagination facts. */
+  total: v.optional(v.number(), 0),
+  offset: v.optional(v.number(), 0)
 })
 export type ReviewQueue = v.InferOutput<typeof ReviewQueueSchema>
 

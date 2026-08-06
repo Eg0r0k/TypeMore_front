@@ -2,21 +2,37 @@
   <section class="flex min-w-0 flex-col" :aria-label="t('admin.runs.label')">
     <SectionHeader :title="t('admin.runs.label')" :description="t('admin.runs.lead')" />
 
-    <ToggleGroup
-      class="mt-5"
-      :model-value="String(floor)"
-      :aria-label="t('admin.runs.floorLabel')"
-      @update:model-value="onFloor"
-    >
-      <ToggleGroupItem
-        v-for="preset in FLOORS"
-        :key="preset"
-        :value="String(preset)"
-        :data-testid="`admin-runs-floor-${preset}`"
+    <div class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+      <ToggleGroup
+        :model-value="String(floor)"
+        :aria-label="t('admin.runs.floorLabel')"
+        @update:model-value="onFloor"
       >
-        {{ preset === 0 ? t('admin.runs.floorAll') : `≥ ${preset}` }}
-      </ToggleGroupItem>
-    </ToggleGroup>
+        <ToggleGroupItem
+          v-for="preset in FLOORS"
+          :key="preset"
+          :value="String(preset)"
+          :data-testid="`admin-runs-floor-${preset}`"
+        >
+          {{ preset === 0 ? t('admin.runs.floorAll') : `≥ ${preset}` }}
+        </ToggleGroupItem>
+      </ToggleGroup>
+
+      <ToggleGroup
+        :model-value="sort"
+        :aria-label="t('admin.runs.sortLabel')"
+        @update:model-value="onSort"
+      >
+        <ToggleGroupItem
+          v-for="key in SORTS"
+          :key="key"
+          :value="key"
+          :data-testid="`admin-runs-sort-${key}`"
+        >
+          {{ t(`admin.runs.sort.${key}`) }}
+        </ToggleGroupItem>
+      </ToggleGroup>
+    </div>
 
     <div v-if="queue.isPending.value" class="mt-4 flex flex-col gap-1" data-testid="admin-runs-skeleton">
       <div v-for="i in 3" :key="i" class="h-14 animate-pulse rounded-[6px] bg-sub-alt" />
@@ -115,6 +131,37 @@
         <RunPanel v-if="isOpen(run)" class="px-3 pb-3" :run="run" :can-override="canOverride" />
       </li>
     </ul>
+
+    <nav
+      v-if="pages > 1"
+      class="mt-4 flex items-center gap-3"
+      :aria-label="t('admin.runs.pagesLabel')"
+      data-testid="admin-runs-pager"
+    >
+      <Button
+        color="shadow"
+        size="s"
+        :disabled="page === 0"
+        :aria-label="t('admin.runs.prevPage')"
+        data-testid="admin-runs-prev"
+        @click="page -= 1"
+      >
+        <IconChevronLeft class="size-4" aria-hidden="true" />
+      </Button>
+      <span class="text-sm tabular-nums text-sub" data-testid="admin-runs-page">
+        {{ t('admin.runs.page', { page: page + 1, pages, total }) }}
+      </span>
+      <Button
+        color="shadow"
+        size="s"
+        :disabled="page + 1 >= pages"
+        :aria-label="t('admin.runs.nextPage')"
+        data-testid="admin-runs-next"
+        @click="page += 1"
+      >
+        <IconChevronRight class="size-4" aria-hidden="true" />
+      </Button>
+    </nav>
   </section>
 </template>
 
@@ -125,9 +172,11 @@
   import { RouterLink, useRoute } from 'vue-router'
   import IconKeyboard from '~icons/tabler/keyboard'
   import IconChevronDown from '~icons/tabler/chevron-down'
+  import IconChevronLeft from '~icons/tabler/chevron-left'
+  import IconChevronRight from '~icons/tabler/chevron-right'
   import IconPlayerPlay from '~icons/tabler/player-play'
 
-  import { reviewQueueQueryOptions, type ReviewRow } from '@shared/api'
+  import { reviewQueueQueryOptions, type ReviewRow, type ReviewSort } from '@shared/api'
   import { usePermissions } from '@/entities/auth'
   import { formatShortDate } from '@/shared/lib/helpers/datetime'
   import { ROUTE_NAMES, routeLocation } from '@/shared/router'
@@ -163,11 +212,37 @@
   const onFloor = (value: unknown): void => {
     if (typeof value !== 'string') return
     const parsed = Number(value)
-    if ((FLOORS as readonly number[]).includes(parsed)) floor.value = parsed
+    if ((FLOORS as readonly number[]).includes(parsed)) {
+      floor.value = parsed
+      page.value = 0
+    }
   }
 
-  const queue = useQuery(computed(() => reviewQueueQueryOptions(floor.value)))
+  const SORTS: readonly ReviewSort[] = ['suspicion', 'date', 'player']
+  const sort = ref<ReviewSort>('suspicion')
+  const onSort = (value: unknown): void => {
+    if (typeof value === 'string' && (SORTS as readonly string[]).includes(value)) {
+      sort.value = value as ReviewSort
+      page.value = 0
+    }
+  }
+
+  const PAGE_SIZE = 20
+  const page = ref(0)
+
+  const queue = useQuery(
+    computed(() =>
+      reviewQueueQueryOptions({
+        minSuspicion: floor.value,
+        sort: sort.value,
+        offset: page.value * PAGE_SIZE,
+        limit: PAGE_SIZE
+      })
+    )
+  )
   const runs = computed(() => queue.data.value?.runs ?? [])
+  const total = computed(() => queue.data.value?.total ?? 0)
+  const pages = computed(() => Math.max(1, Math.ceil(total.value / PAGE_SIZE)))
 
   const { can } = usePermissions()
   const canOverride = computed(() => can('runs:override'))

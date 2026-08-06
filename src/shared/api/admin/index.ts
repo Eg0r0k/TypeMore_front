@@ -40,5 +40,6 @@ export type {
   OverridableStatus,
   OverrideRunInput,
   ResolveReportsInput,
-  ResolveVerdict
+  ResolveVerdict,
+  ReviewSort
 } from './types'

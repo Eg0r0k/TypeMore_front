@@ -21,11 +21,27 @@
       </Button>
       <DropdownMenu v-if="isAuth">
         <DropdownMenuTrigger as-child>
-          <Button color="shadow" size="s" class="controls__user" :button-label="displayName">
+          <Button
+            color="shadow"
+            size="s"
+            class="controls__user"
+            :button-label="displayName"
+            :title="isRestricted ? t('auth.header.restricted') : undefined"
+          >
             <!-- The account's own face, next to its own name — decoration in
-                 the accessibility tree, because the name is right there. -->
-            <UserAvatar :name="displayName" :src="avatarUrl" class="size-6" />
-            {{ displayName }}
+                 the accessibility tree, because the name is right there. A
+                 RESTRICTED account trades the face for a warning mark and the
+                 name turns error-coloured: the words stay one hover away in
+                 the title, and nothing else is disclosed. -->
+            <span
+              v-if="isRestricted"
+              class="flex size-6 shrink-0 items-center justify-center rounded-full bg-error/15"
+              data-testid="account-restricted"
+            >
+              <IconAlertTriangle class="size-4 text-error" aria-hidden="true" />
+            </span>
+            <UserAvatar v-else :name="displayName" :src="avatarUrl" class="size-6" />
+            <span :class="isRestricted && 'text-error'">{{ displayName }}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -71,6 +87,7 @@
   import IconChartBar from '~icons/tabler/chart-bar'
   import IconShield from '~icons/tabler/shield'
   import IconUser from '~icons/tabler/user'
+  import IconAlertTriangle from '~icons/tabler/alert-triangle'
 
   import { computed } from 'vue'
   import { storeToRefs } from 'pinia'
@@ -93,6 +110,7 @@
   const { isAuth } = storeToRefs(useAuthStore())
   const { data: user } = useCurrentUser()
   const displayName = computed(() => user.value?.displayName ?? '')
+  const isRestricted = computed(() => user.value?.restricted === true)
   const { isModerator } = usePermissions()
   /** Absent until the server serves avatars; the initials stand in until then. */
   const avatarUrl = computed(() => user.value?.avatarUrl ?? null)

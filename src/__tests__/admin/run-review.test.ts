@@ -20,9 +20,18 @@ const h = vi.hoisted(() => ({
 }))
 
 vi.mock('@shared/api', () => ({
-  reviewQueueQueryOptions: (floor?: number) => ({
-    queryKey: ['admin', 'review', 'queue', floor ?? 'default'],
-    queryFn: () => h.queue(floor),
+  reviewQueueQueryOptions: (
+    params: { minSuspicion?: number; sort?: string; offset?: number; limit?: number } = {}
+  ) => ({
+    queryKey: [
+      'admin',
+      'review',
+      'queue',
+      params.minSuspicion ?? 'default',
+      params.sort ?? 'suspicion',
+      params.offset ?? 0
+    ],
+    queryFn: () => h.queue(params),
     retry: false
   }),
   runOverridesQueryOptions: (runId: string) => ({
@@ -107,7 +116,12 @@ describe('the run review queue', () => {
     const wrapper = mountReview()
     await flushPromises()
 
-    expect(h.queue).toHaveBeenCalledWith(0.1)
+    expect(h.queue).toHaveBeenCalledWith({
+      minSuspicion: 0.1,
+      sort: 'suspicion',
+      offset: 0,
+      limit: 20
+    })
     const item = wrapper.get('[data-testid="admin-runs-item"]')
     expect(item.get('[data-testid="admin-run-player"]').attributes('href')).toBe(
       '/admin/players?u=u1'
@@ -136,7 +150,39 @@ describe('the run review queue', () => {
     await wrapper.get('[data-testid="admin-runs-floor-0"]').trigger('click')
     await flushPromises()
 
-    expect(h.queue).toHaveBeenLastCalledWith(0)
+    expect(h.queue).toHaveBeenLastCalledWith(
+      expect.objectContaining({ minSuspicion: 0, offset: 0 })
+    )
+  })
+
+  it('re-asks per ordering — the sort is the server’s, not a client shuffle', async () => {
+    const wrapper = mountReview()
+    await flushPromises()
+
+    await wrapper.get('[data-testid="admin-runs-sort-date"]').trigger('click')
+    await flushPromises()
+    expect(h.queue).toHaveBeenLastCalledWith(expect.objectContaining({ sort: 'date' }))
+
+    await wrapper.get('[data-testid="admin-runs-sort-player"]').trigger('click')
+    await flushPromises()
+    expect(h.queue).toHaveBeenLastCalledWith(expect.objectContaining({ sort: 'player' }))
+  })
+
+  it('pages by the server total, and a sort change rewinds to page one', async () => {
+    h.queue.mockResolvedValue({ runs: [row()], minSuspicion: 0.1, total: 45, offset: 0 })
+    const wrapper = mountReview()
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="admin-runs-page"]').text()).toContain('1 of 3')
+    await wrapper.get('[data-testid="admin-runs-next"]').trigger('click')
+    await flushPromises()
+    expect(h.queue).toHaveBeenLastCalledWith(expect.objectContaining({ offset: 20 }))
+
+    await wrapper.get('[data-testid="admin-runs-sort-date"]').trigger('click')
+    await flushPromises()
+    expect(h.queue).toHaveBeenLastCalledWith(
+      expect.objectContaining({ sort: 'date', offset: 0 })
+    )
   })
 
   it('expands into the decision history, with no form for a reader', async () => {

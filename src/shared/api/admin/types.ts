@@ -20,6 +20,9 @@ export interface IssueBanInput {
 /** `pending` is refused by the server: it is not a judgement to disagree with. */
 export type OverridableStatus = 'accepted' | 'flagged' | 'rejected'
 
+/** Review-queue orderings the server knows. */
+export type ReviewSort = 'suspicion' | 'date' | 'player'
+
 export interface OverrideRunInput {
   runId: string
   status: OverridableStatus

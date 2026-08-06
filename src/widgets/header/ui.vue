@@ -19,14 +19,12 @@
       :class="{ 'opacity-0': screen.isTyping }"
       :inert="screen.isTyping"
     >
-      <AccountRestricted />
       <Navigation :links="navigationLinks" />
     </div>
   </header>
 </template>
 
 <script lang="ts" setup>
-  import { AccountRestricted } from '@/features/account-restricted'
   import { Navigation } from '@/features/header/navigation'
   import { useScreenStore } from '@/entities/screen'
   import { NAV_LINKS } from './model/const/values'

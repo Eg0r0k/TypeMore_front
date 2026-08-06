@@ -472,7 +472,8 @@ export default {
       submit: 'join',
       invalid: 'room codes are 6 characters',
       notFound: 'room not found',
-      full: 'that room is full'
+      full: 'that room is full',
+      failed: 'could not join the room'
     },
     /** Public room list — discovery beside create/join-by-code, not instead of it. */
     lobby: {
@@ -949,6 +950,16 @@ export default {
       lead: 'judged runs above a suspicion floor, worst first — accepted ones included: these are the calls the machine wanted help with.',
       floorLabel: 'suspicion floor',
       floorAll: 'all',
+      sortLabel: 'order',
+      sort: {
+        suspicion: 'by suspicion',
+        date: 'by date',
+        player: 'by name'
+      },
+      pagesLabel: 'pages',
+      page: 'page {page} of {pages} · {total} runs',
+      prevPage: 'previous page',
+      nextPage: 'next page',
       suspicion: 'suspicion',
       details: 'details',
       watchReplay: 'watch the replay',
