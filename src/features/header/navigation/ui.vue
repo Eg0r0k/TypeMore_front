@@ -38,6 +38,10 @@
             <IconChartBar class="size-4" aria-hidden="true" />
             {{ t('auth.header.profile') }}
           </DropdownMenuItem>
+          <DropdownMenuItem v-if="isModerator" data-testid="header-admin-link" @select="onAdmin">
+            <IconShield class="size-4" aria-hidden="true" />
+            {{ t('admin.title') }}
+          </DropdownMenuItem>
           <DropdownMenuItem @select="onLogout">{{ t('auth.header.logout') }}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -65,6 +69,7 @@
   import type { HeaderLink } from './types/links'
   import IconSettings from '~icons/tabler/settings'
   import IconChartBar from '~icons/tabler/chart-bar'
+  import IconShield from '~icons/tabler/shield'
   import IconUser from '~icons/tabler/user'
 
   import { computed } from 'vue'
@@ -88,12 +93,14 @@
   const { isAuth } = storeToRefs(useAuthStore())
   const { data: user } = useCurrentUser()
   const displayName = computed(() => user.value?.displayName ?? '')
+  const isModerator = computed(() => (user.value?.permissions ?? []).length > 0)
   /** Absent until the server serves avatars; the initials stand in until then. */
   const avatarUrl = computed(() => user.value?.avatarUrl ?? null)
 
   const { mutate: logout } = useLogoutMutation()
 
   const onProfile = (): void => void router.push(routeLocation.profile())
+  const onAdmin = (): void => void router.push(routeLocation.admin())
   /** Settings live in App.vue now; the header only asks for them. */
   const dialogs = useDialogsStore()
 

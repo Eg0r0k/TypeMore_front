@@ -921,5 +921,35 @@ export default {
       notFound: 'this is no longer available to report',
       generic: 'could not send the report — try again'
     }
+  },
+  admin: {
+    title: 'moderation',
+    nav: {
+      reports: 'reports'
+    },
+    reports: {
+      label: 'report queue',
+      filter: {
+        all: 'all',
+        user: 'players',
+        quote: 'quotes',
+        run: 'runs'
+      },
+      empty: 'no open reports — the queue is clear',
+      loadFailed: 'could not load the queue',
+      retry: 'retry',
+      reports: 'report | reports',
+      last: 'last {date}',
+      withdrawn: 'withdrawn',
+      show: 'show reports',
+      hide: 'hide',
+      loading: 'loading…',
+      detailFailed: 'could not load the reports',
+      resolvedAs: 'resolved: {status}',
+      notePlaceholder: 'resolution note (optional)',
+      actioned: 'actioned',
+      dismissed: 'dismiss',
+      resolveFailed: 'could not resolve — try again'
+    }
   }
 } as const

@@ -8,6 +8,7 @@ import { errorRoutes } from './error'
 import { matchRoutes } from './match'
 import { boardsRoutes } from './boards'
 import { friendsRoutes } from './friends'
+import { adminRoutes } from './admin'
 
 // `errorRoutes` (the catch-all) MUST stay last so real routes match first.
 export const routes: RouteRecordRaw[] = [
@@ -19,6 +20,7 @@ export const routes: RouteRecordRaw[] = [
   ...matchRoutes,
   ...boardsRoutes,
   ...friendsRoutes,
+  ...adminRoutes,
   ...errorRoutes
 ]
 
@@ -31,5 +33,6 @@ export {
   matchRoutes,
   boardsRoutes,
   friendsRoutes,
+  adminRoutes,
   errorRoutes
 }

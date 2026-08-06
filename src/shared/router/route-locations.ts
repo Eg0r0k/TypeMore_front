@@ -20,5 +20,7 @@ export const routeLocation = {
   friends: (): RouteLocationRaw => ({ name: ROUTE_NAMES.FRIENDS }),
   profile: (): RouteLocationRaw => ({ name: ROUTE_NAMES.PROFILE }),
   /** Another player's public profile, by display name (`/u/{name}`). */
-  user: (name: string): RouteLocationRaw => ({ name: ROUTE_NAMES.USER, params: { name } })
+  user: (name: string): RouteLocationRaw => ({ name: ROUTE_NAMES.USER, params: { name } }),
+  admin: (): RouteLocationRaw => ({ name: ROUTE_NAMES.ADMIN }),
+  adminReports: (): RouteLocationRaw => ({ name: ROUTE_NAMES.ADMIN_REPORTS })
 } as const
