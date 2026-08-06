@@ -3,6 +3,18 @@
     <!-- min-w-0: the app shell's #main is a grid, and a grid item may not
          shrink below min-content without it — same trap /profile documents. -->
 
+    <!-- An active ban is a public fact on this page: the strip says the fact
+         and nothing else — no reason, no term — mirroring the wire. -->
+    <section
+      v-if="restricted"
+      role="status"
+      class="flex items-center gap-2.5 rounded-lg bg-sub-alt px-4 py-3"
+      data-testid="user-restricted"
+    >
+      <IconBan class="size-4 shrink-0 text-error" aria-hidden="true" />
+      <Typography size="s" color="error">{{ t('user.restricted') }}</Typography>
+    </section>
+
     <!-- Resolving the name. -->
     <div
       v-if="header.isPending.value"
@@ -212,6 +224,7 @@
   import { useRoute, useRouter } from 'vue-router'
   import { useI18n } from 'vue-i18n'
   import IconLock from '~icons/tabler/lock'
+  import IconBan from '~icons/tabler/ban'
 
   import {
     isApiError,
@@ -274,6 +287,8 @@
     () =>
       header.isError.value && isApiError(header.error.value) && header.error.value.status === 404
   )
+
+  const restricted = computed(() => header.data.value?.restricted === true)
 
   /**
    * The own-profile check, for the PREVIEW case only: the server lets the

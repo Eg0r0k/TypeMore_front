@@ -195,6 +195,28 @@ describe('/u/{name} — the closed profile state', () => {
     expect(wrapper.find('[data-testid="user-closed"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('no player is called')
   })
+
+  it('a banned account is marked for everyone — the fact, and nothing else', async () => {
+    h.header.mockResolvedValue({
+      name: 'Ada',
+      joined: '2026-07-01T00:00:00Z',
+      public: false,
+      restricted: true
+    })
+    const wrapper = await mountPage()
+
+    const strip = wrapper.get('[data-testid="user-restricted"]')
+    expect(strip.text()).toContain('restricted')
+    // The mark rides ABOVE the closed state, not instead of it.
+    expect(wrapper.find('[data-testid="user-closed"]').exists()).toBe(true)
+  })
+
+  it('an unbanned header shows no mark', async () => {
+    h.header.mockResolvedValue({ name: 'Ada', joined: '2026-07-01T00:00:00Z', public: false })
+    const wrapper = await mountPage()
+
+    expect(wrapper.find('[data-testid="user-restricted"]').exists()).toBe(false)
+  })
 })
 
 describe('/u/{name} — the open profile', () => {

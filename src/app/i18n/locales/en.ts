@@ -456,6 +456,7 @@ export default {
     ping: { label: 'your ping', value: '{ms} ms' },
     create: 'create room',
     joinByCode: 'join by code',
+    restricted: 'this account is restricted — online rooms are unavailable',
     /** Side panel beside the room list: the two entry points with hints. */
     panel: {
       label: 'play',
@@ -869,6 +870,7 @@ export default {
   user: {
     notFound: 'no player is called “{name}”',
     goHome: 'back to typing',
+    restricted: 'this account is restricted for breaking the rules',
     /** The whole-profile state: the page is real, its owner keeps it closed. */
     closed: 'this profile is closed by its owner',
     /** One section's state on an otherwise open profile. */

@@ -550,6 +550,7 @@ export const publicProfile = (name: string, isPublic: boolean): PublicProfile =>
   name,
   joined: instant(512),
   public: isPublic,
+  restricted: false,
   // The identity half, so the preview exercises the parts of the header that
   // only exist once somebody has filled them in. A CLOSED profile carries
   // none of it — that is the server's rule, and a fixture that broke it would

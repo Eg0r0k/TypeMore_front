@@ -78,6 +78,7 @@
     if (!err || err === errorBaseline.value) return null
     if (err.code === 'room_not_found') return t('servers.join.notFound')
     if (err.code === 'room_full') return t('servers.join.full')
+    if (err.code === 'account_restricted') return t('servers.restricted')
     return err.message
   })
 

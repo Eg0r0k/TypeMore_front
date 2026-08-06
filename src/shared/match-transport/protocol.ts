@@ -85,6 +85,9 @@ const ERROR_CODES = [
   'forbidden',
   'not_ready',
   'rate_limited',
+  // A banned account's create_room/join_room refusal (docs/MODERATION.md) —
+  // the same machine code the run-submission gate answers with.
+  'account_restricted',
   'internal'
 ] as const
 export type ErrorCode = (typeof ERROR_CODES)[number]

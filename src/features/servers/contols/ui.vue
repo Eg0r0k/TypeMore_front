@@ -34,11 +34,12 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, ref } from 'vue'
+  import { computed, ref, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
   import { useMatchSessionStore } from '@/entities/match'
   import { JoinCodeModal } from '@/features/modal/joinCode'
   import { Button } from '@/shared/ui/button'
+  import { toast } from '@/shared/ui/sonner'
   import { Typography } from '@/shared/ui/typography'
   import IconHash from '~icons/tabler/hash'
   import IconPlus from '~icons/tabler/plus'
@@ -56,6 +57,15 @@
 
   // Room commands are only sendable from a connected, not-yet-seated socket.
   const canAct = computed(() => session.connection === 'idle' && !session.room)
+
+  // A banned account's create_room is refused in-band; without this the click
+  // would just silently do nothing (the join modal shows its own copy inline).
+  watch(
+    () => session.lastError,
+    (err) => {
+      if (err?.code === 'account_restricted') toast.error(t('servers.restricted'))
+    }
+  )
 </script>
 
 <style lang="scss" scoped>

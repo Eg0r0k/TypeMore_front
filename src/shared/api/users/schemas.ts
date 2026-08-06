@@ -33,6 +33,11 @@ export const PublicProfileSchema = v.object({
   joined: v.string(),
   public: v.boolean(),
   /**
+   * An active ban, as a bare public fact — no reason, no expiry
+   * (backend docs/MODERATION.md). Defaulted so an older server still parses.
+   */
+  restricted: v.optional(v.boolean(), false),
+  /**
    * The picture, when the server grows one — see the note on
    * `ProfileSummarySchema.avatarUrl`. Modelled on the HEADER too because this
    * is the one payload a CLOSED profile still answers with, and a closed
