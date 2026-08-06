@@ -155,8 +155,9 @@ describe('profile header — the banner sparkline', () => {
     const five = mountHeader(summaryOf(), { recentWpm: [80, 90, 85, 95, 100] })
     const svg = five.find('[data-testid="profile-sparkline"]')
     expect(svg.exists()).toBe(true)
-    // One point per run, and no accessible name: the line is decoration.
-    expect(svg.find('polyline').attributes('points')?.split(' ')).toHaveLength(5)
+    // One curve segment between each pair of runs, and no accessible name: the
+    // line is decoration.
+    expect(svg.find('path[fill="none"]').attributes('d')?.split(' C ')).toHaveLength(5)
     expect(svg.attributes('aria-hidden')).toBe('true')
   })
 
