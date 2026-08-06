@@ -7,11 +7,24 @@ import { describe, expect, it } from 'vitest'
 import { topPercent } from '@/features/leaderboards'
 
 describe('topPercent', () => {
-  it('never flatters rank 1 into Top 0%', () => {
-    // 1/1000 = 0.1% — rounded UP, and floored at 1.
-    expect(topPercent(1, 1000)).toBe(1)
+  it('goes finer than a whole percent at the top, and still never says Top 0%', () => {
+    // The whole-percent floor used to tell rank 1 of 10 000 "Top 1%"; the
+    // honest figure is two decimal places, floored at 0.01.
+    expect(topPercent(1, 1000)).toBe(0.1)
+    expect(topPercent(1, 10_000)).toBe(0.01)
+    expect(topPercent(1, 1_000_000)).toBe(0.01)
     expect(topPercent(1, 1)).toBe(100)
     expect(topPercent(1, 2)).toBe(50)
+  })
+
+  it('rounds the fine steps UP too, so precision never flatters', () => {
+    // 1/999 ≈ 0.1001% → 0.2, not 0.1; 3/2000 = 0.15% → exact one decimal? no:
+    // 0.15 has no one-decimal form, so 0.2. 1/150 ≈ 0.667% → 0.7.
+    expect(topPercent(1, 999)).toBe(0.2)
+    expect(topPercent(3, 2000)).toBe(0.2)
+    expect(topPercent(1, 150)).toBe(0.7)
+    // The 1% boundary stays whole: 1/100 is exactly Top 1%.
+    expect(topPercent(1, 100)).toBe(1)
   })
 
   it('puts the last place at exactly Top 100%', () => {
