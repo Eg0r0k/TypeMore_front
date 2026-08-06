@@ -23,6 +23,14 @@ export const routeLocation = {
   user: (name: string): RouteLocationRaw => ({ name: ROUTE_NAMES.USER, params: { name } }),
   admin: (): RouteLocationRaw => ({ name: ROUTE_NAMES.ADMIN }),
   adminReports: (): RouteLocationRaw => ({ name: ROUTE_NAMES.ADMIN_REPORTS }),
-  adminPlayers: (): RouteLocationRaw => ({ name: ROUTE_NAMES.ADMIN_PLAYERS }),
-  adminRuns: (): RouteLocationRaw => ({ name: ROUTE_NAMES.ADMIN_RUNS })
+  /** `identifier` (uuid/name/email) opens the card at once — the hop from a report or a review row. */
+  adminPlayers: (identifier?: string): RouteLocationRaw => ({
+    name: ROUTE_NAMES.ADMIN_PLAYERS,
+    ...(identifier === undefined ? {} : { query: { u: identifier } })
+  }),
+  /** `runId` focuses the review queue on one run (the floor drops to zero). */
+  adminRuns: (runId?: string): RouteLocationRaw => ({
+    name: ROUTE_NAMES.ADMIN_RUNS,
+    ...(runId === undefined ? {} : { query: { run: runId } })
+  })
 } as const

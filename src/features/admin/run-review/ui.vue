@@ -50,12 +50,13 @@
           <div class="flex min-w-0 flex-col gap-0.5">
             <div class="flex min-w-0 items-baseline gap-x-2">
               <RouterLink
-                v-if="run.displayName"
-                :to="routeLocation.user(run.displayName)"
+                v-if="run.userId"
+                :to="routeLocation.adminPlayers(run.userId)"
                 class="focus-ring link-main min-w-0 truncate text-sm"
+                :title="t('admin.runs.openCard')"
                 data-testid="admin-run-player"
               >
-                {{ run.displayName }}
+                {{ run.displayName ?? run.userId.slice(0, 8) }}
               </RouterLink>
               <span v-else class="font-mono text-xs text-sub">{{ run.id.slice(0, 8) }}</span>
               <span
@@ -121,7 +122,7 @@
   import { computed, ref } from 'vue'
   import { useQuery } from '@tanstack/vue-query'
   import { useI18n } from 'vue-i18n'
-  import { RouterLink } from 'vue-router'
+  import { RouterLink, useRoute } from 'vue-router'
   import IconKeyboard from '~icons/tabler/keyboard'
   import IconChevronDown from '~icons/tabler/chevron-down'
   import IconPlayerPlay from '~icons/tabler/player-play'
@@ -148,7 +149,16 @@
   const FLOORS = [0, 0.1, 0.3] as const
   const HOT_SUSPICION = 0.5
 
-  const floor = ref<number>(0.1)
+  // The hop from a report: ?run=<id> drops the floor (the run may sit below
+  // any of them) and opens that run's panel.
+  const route = useRoute()
+  const focusedRun = ((): string | null => {
+    const raw = route.query.run
+    const value = Array.isArray(raw) ? raw[0] : raw
+    return typeof value === 'string' && value !== '' ? value : null
+  })()
+
+  const floor = ref<number>(focusedRun === null ? 0.1 : 0)
 
   const onFloor = (value: unknown): void => {
     if (typeof value !== 'string') return
@@ -178,7 +188,7 @@
     return parts.join(' · ')
   }
 
-  const open = ref<string | null>(null)
+  const open = ref<string | null>(focusedRun)
   const isOpen = (run: ReviewRow): boolean => open.value === run.id
   const toggle = (run: ReviewRow): void => {
     open.value = isOpen(run) ? null : run.id

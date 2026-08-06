@@ -1,5 +1,37 @@
 <template>
   <div class="flex flex-col gap-3">
+    <div v-if="subject.type !== 'quote'" class="flex flex-wrap items-center gap-1.5">
+      <Button v-if="subject.type === 'user'" as-child color="shadow" size="s">
+        <RouterLink
+          :to="routeLocation.adminPlayers(subject.id)"
+          data-testid="admin-report-open-card"
+        >
+          <IconUserCog class="size-4" aria-hidden="true" />
+          {{ t('admin.reports.openCard') }}
+        </RouterLink>
+      </Button>
+      <template v-if="subject.type === 'run'">
+        <Button as-child color="shadow" size="s">
+          <RouterLink
+            :to="routeLocation.adminRuns(subject.id)"
+            data-testid="admin-report-open-review"
+          >
+            <IconKeyboard class="size-4" aria-hidden="true" />
+            {{ t('admin.reports.openReview') }}
+          </RouterLink>
+        </Button>
+        <Button as-child color="shadow" size="s">
+          <RouterLink
+            :to="{ name: ROUTE_NAMES.REPLAY, params: { runId: subject.id } }"
+            data-testid="admin-report-open-replay"
+          >
+            <IconPlayerPlay class="size-4" aria-hidden="true" />
+            {{ t('admin.runs.watchReplay') }}
+          </RouterLink>
+        </Button>
+      </template>
+    </div>
+
     <p v-if="detail.isPending.value" class="text-sm text-sub">{{ t('admin.reports.loading') }}</p>
 
     <div v-else-if="detail.isError.value" class="flex items-center gap-3">
@@ -72,6 +104,10 @@
   import { ref } from 'vue'
   import { useQuery } from '@tanstack/vue-query'
   import { useI18n } from 'vue-i18n'
+  import { RouterLink } from 'vue-router'
+  import IconUserCog from '~icons/tabler/user-cog'
+  import IconKeyboard from '~icons/tabler/keyboard'
+  import IconPlayerPlay from '~icons/tabler/player-play'
 
   import {
     subjectReportsQueryOptions,
@@ -80,6 +116,7 @@
     type ResolveVerdict
   } from '@shared/api'
   import { formatExactInstant, formatShortDate } from '@/shared/lib/helpers/datetime'
+  import { ROUTE_NAMES, routeLocation } from '@/shared/router'
   import { Button } from '@/shared/ui/button'
   import { Input } from '@/shared/ui/input'
   import { toast } from '@/shared/ui/sonner'

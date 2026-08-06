@@ -74,7 +74,8 @@ function mountReview() {
     routes: [
       { path: '/', name: 'home', component: { template: '<div />' } },
       { path: '/u/:name', name: 'user', component: { template: '<div />' } },
-      { path: '/replay/:runId', name: 'replay', component: { template: '<div />' } }
+      { path: '/replay/:runId', name: 'replay', component: { template: '<div />' } },
+      { path: '/admin/players', name: 'admin-players', component: { template: '<div />' } }
     ]
   })
   return mount(RunReview, {
@@ -108,7 +109,9 @@ describe('the run review queue', () => {
 
     expect(h.queue).toHaveBeenCalledWith(0.1)
     const item = wrapper.get('[data-testid="admin-runs-item"]')
-    expect(item.get('[data-testid="admin-run-player"]').attributes('href')).toBe('/u/speedster')
+    expect(item.get('[data-testid="admin-run-player"]').attributes('href')).toBe(
+      '/admin/players?u=u1'
+    )
     expect(item.find('[data-testid="admin-run-status-accepted"]').exists()).toBe(true)
     expect(item.get('[data-testid="admin-run-suspicion"]').text()).toBe('0.42')
     expect(item.text()).toContain('212 wpm')

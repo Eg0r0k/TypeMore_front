@@ -123,15 +123,18 @@ const badgesAnswer = () => ({
   knownBadges: ['staff', 'translator']
 })
 
-function mountCard() {
-  const i18n = createI18n({ legacy: false, locale: 'en', messages: { en } })
-  const router = createRouter({
+function makeRouter() {
+  return createRouter({
     history: createMemoryHistory(),
     routes: [
       { path: '/', name: 'home', component: { template: '<div />' } },
       { path: '/u/:name', name: 'user', component: { template: '<div />' } }
     ]
   })
+}
+
+function mountWith(router: ReturnType<typeof makeRouter>) {
+  const i18n = createI18n({ legacy: false, locale: 'en', messages: { en } })
   return mount(PlayerCard, {
     global: {
       plugins: [
@@ -145,6 +148,8 @@ function mountCard() {
     }
   })
 }
+
+const mountCard = () => mountWith(makeRouter())
 
 async function search(wrapper: ReturnType<typeof mountCard>, query: string): Promise<void> {
   await wrapper.get('[data-testid="admin-player-search"] input').setValue(query)
@@ -203,6 +208,18 @@ describe('the player card', () => {
     expect(wrapper.get('[data-testid="admin-player-profile-link"]').attributes('href')).toBe(
       '/u/grief3r'
     )
+  })
+
+  it('opens straight from ?u= — the hop another admin screen makes', async () => {
+    h.bans.mockResolvedValue(bansAnswer())
+    const router = makeRouter()
+    // The navigation settles BEFORE mount, the way a real hop arrives.
+    await router.push(`/?u=${UUID}`)
+    const wrapper = mountWith(router)
+    await flushPromises()
+
+    expect(h.bans).toHaveBeenCalledWith(UUID)
+    expect(wrapper.get('[data-testid="admin-player-header"]').text()).toContain('grief3r')
   })
 
   it('answers an unknown identifier with "nobody", not an error card', async () => {

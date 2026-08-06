@@ -118,10 +118,10 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, ref } from 'vue'
+  import { computed, ref, watch } from 'vue'
   import { useQuery } from '@tanstack/vue-query'
   import { useI18n } from 'vue-i18n'
-  import { RouterLink } from 'vue-router'
+  import { RouterLink, useRoute } from 'vue-router'
   import * as v from 'valibot'
 
   import {
@@ -158,6 +158,22 @@
   const identifier = ref<string | null>(null)
   /** What the identifier was picked AS — suggestions hide until the query moves again. */
   const pickedQuery = ref('')
+
+  // The hop from another admin screen: ?u=<identifier> opens the card as if
+  // it had been submitted here.
+  const route = useRoute()
+  watch(
+    () => route.query.u,
+    (raw) => {
+      const value = Array.isArray(raw) ? raw[0] : raw
+      if (typeof value === 'string' && value.trim() !== '') {
+        search.query.value = value
+        pickedQuery.value = value
+        identifier.value = value
+      }
+    },
+    { immediate: true }
+  )
 
   const suggestionsShown = computed(
     () =>

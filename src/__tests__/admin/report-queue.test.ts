@@ -65,7 +65,10 @@ function mountQueue() {
     history: createMemoryHistory(),
     routes: [
       { path: '/', name: 'home', component: { template: '<div />' } },
-      { path: '/u/:name', name: 'user', component: { template: '<div />' } }
+      { path: '/u/:name', name: 'user', component: { template: '<div />' } },
+      { path: '/replay/:runId', name: 'replay', component: { template: '<div />' } },
+      { path: '/admin/players', name: 'admin-players', component: { template: '<div />' } },
+      { path: '/admin/runs', name: 'admin-runs', component: { template: '<div />' } }
     ]
   })
   return mount(ReportQueue, {
@@ -159,6 +162,34 @@ describe('the report inbox', () => {
     expect(reports.text()).toContain('witness')
     expect(reports.text()).toContain('wpm 400')
     expect(wrapper.find('[data-testid="admin-resolve-form"]').exists()).toBe(false)
+    // The hop that makes the queue a hub: the player card one click away, by uuid.
+    expect(wrapper.get('[data-testid="admin-report-open-card"]').attributes('href')).toBe(
+      '/admin/players?u=11111111-0000-4000-8000-000000000001'
+    )
+  })
+
+  it('offers a run report the review hop and the replay', async () => {
+    h.queue.mockResolvedValue({
+      items: [
+        item({
+          subject: { type: 'run', id: 'run-1' },
+          snapshot: { runOwnerName: 'grief3r', runStatus: 'flagged' }
+        })
+      ]
+    })
+    h.detail.mockResolvedValue({ subject: { type: 'run', id: 'run-1' }, reports: [] })
+    const wrapper = mountQueue()
+    await flushPromises()
+
+    await wrapper.get('[data-testid="admin-reports-toggle-run-run-1"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="admin-report-open-review"]').attributes('href')).toBe(
+      '/admin/runs?run=run-1'
+    )
+    expect(wrapper.get('[data-testid="admin-report-open-replay"]').attributes('href')).toBe(
+      '/replay/run-1'
+    )
   })
 
   it('resolves with the verdict and the trimmed note when the writer asks', async () => {

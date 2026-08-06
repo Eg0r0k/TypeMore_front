@@ -950,6 +950,7 @@ export default {
       suspicion: 'suspicion',
       details: 'details',
       watchReplay: 'watch the replay',
+      openCard: 'open the player card',
       empty: 'nothing above this floor — the queue is clear',
       loadFailed: 'could not load the queue',
       retry: 'retry',
@@ -1014,6 +1015,8 @@ export default {
       label: 'report queue',
       lead: 'one row is one subject, loudest first; resolving records the decision — the act itself lives on its own surface.',
       resolvedToast: 'reports resolved',
+      openCard: 'player card',
+      openReview: 'to run review',
       filter: {
         all: 'all',
         user: 'players',
