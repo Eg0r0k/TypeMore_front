@@ -114,7 +114,7 @@
   import IconFlag from '~icons/tabler/flag'
 
   import { reportQueueQueryOptions, type ReportQueueItem } from '@shared/api'
-  import { useCurrentUser } from '@/entities/auth'
+  import { usePermissions } from '@/entities/auth'
   import { formatExactInstant, formatShortDate } from '@/shared/lib/helpers/datetime'
   import { routeLocation } from '@/shared/router'
   import { Button } from '@/shared/ui/button'
@@ -139,8 +139,8 @@
   )
   const items = computed(() => queue.data.value?.items ?? [])
 
-  const { data: user } = useCurrentUser()
-  const canResolve = computed(() => (user.value?.permissions ?? []).includes('reports:write'))
+  const { can } = usePermissions()
+  const canResolve = computed(() => can('reports:write'))
 
   const SUBJECT_ICONS: Record<string, unknown> = {
     user: IconUser,

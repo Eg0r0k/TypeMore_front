@@ -76,7 +76,7 @@
   import { storeToRefs } from 'pinia'
   import { useRouter } from 'vue-router'
   import { useI18n } from 'vue-i18n'
-  import { useAuthStore, useCurrentUser } from '@/entities/auth'
+  import { useAuthStore, useCurrentUser, usePermissions } from '@/entities/auth'
   import { useDialogsStore } from '@/entities/dialogs'
   import { useLogoutMutation } from '@shared/api'
   import { routeLocation } from '@/shared/router'
@@ -93,7 +93,7 @@
   const { isAuth } = storeToRefs(useAuthStore())
   const { data: user } = useCurrentUser()
   const displayName = computed(() => user.value?.displayName ?? '')
-  const isModerator = computed(() => (user.value?.permissions ?? []).length > 0)
+  const { isModerator } = usePermissions()
   /** Absent until the server serves avatars; the initials stand in until then. */
   const avatarUrl = computed(() => user.value?.avatarUrl ?? null)
 

@@ -28,7 +28,7 @@
   import { useI18n } from 'vue-i18n'
   import { RouterLink, RouterView } from 'vue-router'
 
-  import { useCurrentUser } from '@/entities/auth'
+  import { usePermissions, type Permission } from '@/entities/auth'
   import { routeLocation } from '@/shared/router'
   import { Typography } from '@/shared/ui/typography'
 
@@ -39,19 +39,21 @@
    * server's 404.
    */
   const { t } = useI18n()
-  const { data: user } = useCurrentUser()
+  const { can } = usePermissions()
 
-  const SECTIONS = [
+  const SECTIONS: readonly {
+    permission: Permission
+    to: ReturnType<typeof routeLocation.adminReports>
+    label: string
+    testid: string
+  }[] = [
     {
       permission: 'reports:read',
       to: routeLocation.adminReports(),
       label: 'admin.nav.reports',
       testid: 'admin-nav-reports'
     }
-  ] as const
+  ]
 
-  const permissions = computed(() => user.value?.permissions ?? [])
-  const sections = computed(() =>
-    SECTIONS.filter((section) => permissions.value.includes(section.permission))
-  )
+  const sections = computed(() => SECTIONS.filter((section) => can(section.permission)))
 </script>

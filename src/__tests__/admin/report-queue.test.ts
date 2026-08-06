@@ -40,7 +40,11 @@ vi.mock('@shared/api', () => ({
 }))
 
 vi.mock('@/entities/auth', () => ({
-  useCurrentUser: () => ({ data: ref({ permissions: h.permissions }) })
+  usePermissions: () => ({
+    permissions: ref(h.permissions),
+    isModerator: ref(h.permissions.length > 0),
+    can: (permission: string) => h.permissions.includes(permission)
+  })
 }))
 
 const { ReportQueue } = await import('@/features/admin')

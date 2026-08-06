@@ -1,4 +1,6 @@
 export { useAuthStore } from './model/store'
 export type { AuthStatus } from './model/store'
 export { useAuthBootstrap, useCurrentUser } from './model/session'
+export { usePermissions } from './model/permissions'
+export type { Permission } from './model/permissions'
 export { apiErrorKey, authErrorKey, isKnownAuthError } from './model/errors'
