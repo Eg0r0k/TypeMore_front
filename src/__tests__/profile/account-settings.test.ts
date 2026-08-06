@@ -12,19 +12,45 @@ import en from '@/app/i18n/locales/en'
  * The `me` query is the state source, the PATCH mutation the only writer —
  * both mocked at the API boundary.
  */
-const h = vi.hoisted(() => ({
-  me: vi.fn(),
-  mutate: vi.fn(),
-  mutationPending: { value: false },
-  mutationError: { value: false }
-}))
+const h = vi.hoisted(() => {
+  class MockApiError extends Error {
+    readonly status: number
+    readonly code: string
+    constructor(status: number, code: string) {
+      super(code)
+      this.status = status
+      this.code = code
+    }
+  }
+  return {
+    MockApiError,
+    me: vi.fn(),
+    mutate: vi.fn(),
+    rename: vi.fn(),
+    mutationPending: { value: false },
+    mutationError: { value: false }
+  }
+})
 
 vi.mock('@shared/api', () => ({
+  isApiError: (value: unknown): boolean => value instanceof h.MockApiError,
   meQueryOptions: () => ({ queryKey: ['me'], queryFn: h.me, retry: false }),
   useUpdateSettingsMutation: () => ({
     mutate: h.mutate,
     isPending: ref(h.mutationPending.value),
     isError: ref(h.mutationError.value)
+  }),
+  useChangeDisplayNameMutation: () => ({
+    isPending: ref(false),
+    mutate: (
+      input: unknown,
+      opts?: { onSuccess?: (r: unknown) => void; onError?: (e: unknown) => void }
+    ) => {
+      h.rename(input)?.then?.(
+        (r: unknown) => opts?.onSuccess?.(r),
+        (e: unknown) => opts?.onError?.(e)
+      )
+    }
   })
 }))
 
@@ -70,8 +96,57 @@ const mountSection = (authed: boolean) => {
 beforeEach(() => {
   h.me.mockReset()
   h.mutate.mockReset()
+  h.rename.mockReset()
   h.mutationPending.value = false
   h.mutationError.value = false
+})
+
+describe('settings — the nickname', () => {
+  it('prefills the current name and renames only when the draft moved', async () => {
+    h.me.mockResolvedValue(me())
+    h.rename.mockResolvedValue(me({ displayName: 'Lovelace' }))
+    const wrapper = mountSection(true)
+    await flushPromises()
+
+    const input = wrapper.get('[data-testid="settings-display-name"]')
+    expect((input.element as HTMLInputElement).value).toBe('Ada')
+    expect(
+      wrapper.get('[data-testid="settings-display-name-save"]').attributes('disabled')
+    ).toBeDefined()
+
+    await input.setValue('  Lovelace  ')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(h.rename).toHaveBeenCalledWith({ displayName: 'Lovelace' })
+  })
+
+  it('locks the field inside the 30-day window and names the reopening date', async () => {
+    h.me.mockResolvedValue(me({ displayNameChangedAt: new Date().toISOString() }))
+    const wrapper = mountSection(true)
+    await flushPromises()
+
+    expect(
+      wrapper.get('[data-testid="settings-display-name"]').attributes('disabled')
+    ).toBeDefined()
+    expect(wrapper.find('[data-testid="settings-display-name-cooldown"]').exists()).toBe(true)
+    expect(h.rename).not.toHaveBeenCalled()
+  })
+
+  it('says "taken" when the server does', async () => {
+    h.me.mockResolvedValue(me())
+    h.rename.mockImplementation(() => Promise.reject(new h.MockApiError(409, 'name_taken')))
+    const wrapper = mountSection(true)
+    await flushPromises()
+
+    await wrapper.get('[data-testid="settings-display-name"]').setValue('Occupied')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="settings-display-name-error"]').text()).toContain(
+      'already in use'
+    )
+  })
 })
 
 describe('settings — account privacy switches', () => {

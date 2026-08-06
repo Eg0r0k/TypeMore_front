@@ -48,3 +48,8 @@ export interface SettingsInput {
   profilePublic?: boolean
   keyboardPublic?: boolean
 }
+
+/** `PATCH /me/display-name` — the rename, allowed once per 30 days. */
+export interface DisplayNameInput {
+  displayName: string
+}

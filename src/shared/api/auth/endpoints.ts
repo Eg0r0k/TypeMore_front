@@ -1,6 +1,7 @@
-import { NoContentSchema, apiBase, request } from '../transport'
+﻿import { NoContentSchema, apiBase, request } from '../transport'
 import { LinkStartSchema, UserSchema, type LinkStart, type User } from './schemas'
 import type {
+  DisplayNameInput,
   EmailAddInput,
   LoginInput,
   OAuthProvider,
@@ -14,7 +15,7 @@ import type {
 } from './types'
 
 /**
- * Layer 1 — Typed auth endpoints mirroring the backend's `docs/AUTH.md`. Each
+ * Layer 1 вЂ” Typed auth endpoints mirroring the backend's `docs/AUTH.md`. Each
  * returns a parsed, validated payload; the server-state layer wraps these, so
  * components never call them directly.
  */
@@ -65,12 +66,16 @@ export const me = (): Promise<User> => request('/me', UserSchema)
 export const updateSettings = (input: SettingsInput): Promise<User> =>
   request('/me/settings', UserSchema, { method: 'PATCH', body: input })
 
+/** The rename, allowed once per 30 days (409 `display_name_cooldown` inside). */
+export const changeDisplayName = (input: DisplayNameInput): Promise<User> =>
+  request('/me/display-name', UserSchema, { method: 'PATCH', body: input })
+
 export const linkStart = (provider: OAuthProvider): Promise<LinkStart> =>
   request(`/auth/link/${provider}/start`, LinkStartSchema, { method: 'POST' })
 
 /**
  * Absolute URL to begin an OAuth flow. This is a full-page redirect (the browser
- * navigates), not a fetch — so it returns a URL string built from the API base.
+ * navigates), not a fetch вЂ” so it returns a URL string built from the API base.
  */
 export const oauthStartUrl = (provider: OAuthProvider): string =>
   `${apiBase()}/auth/oauth/${provider}/start`

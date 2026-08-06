@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import {
+  changeDisplayName,
   emailAdd,
   linkStart,
   login,
@@ -14,6 +15,7 @@ import {
 } from './endpoints'
 import { authKeys } from './keys'
 import type {
+  DisplayNameInput,
   EmailAddInput,
   LoginInput,
   OAuthProvider,
@@ -92,5 +94,19 @@ export const useUpdateSettingsMutation = () => {
   return useMutation({
     mutationFn: (input: SettingsInput) => updateSettings(input),
     onSuccess: (user) => qc.setQueryData(authKeys.me(), user)
+  })
+}
+
+export const useChangeDisplayNameMutation = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: DisplayNameInput) => changeDisplayName(input),
+    onSuccess: (user) => {
+      qc.setQueryData(authKeys.me(), user)
+      // A rename touches everything that carries the name — the profile
+      // summary, board rows, the header. Once a month is cheap enough to just
+      // refetch the world.
+      void qc.invalidateQueries()
+    }
   })
 }

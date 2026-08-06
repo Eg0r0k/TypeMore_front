@@ -41,7 +41,12 @@ export const UserSchema = v.object({
    * what it was before permissions existed — so an empty array and an absent
    * field must mean the same thing.
    */
-  permissions: v.optional(v.array(v.string()), [])
+  permissions: v.optional(v.array(v.string()), []),
+  /**
+   * Starts the rename cooldown (+30 days; PATCH /me/display-name). Omitted
+   * while the name has never been changed — registration starts no clock.
+   */
+  displayNameChangedAt: v.nullish(v.string())
 })
 export type User = v.InferOutput<typeof UserSchema>
 

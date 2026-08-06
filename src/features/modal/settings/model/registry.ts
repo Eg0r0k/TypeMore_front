@@ -41,6 +41,7 @@ export type SettingId =
   | 'background'
   | 'theme'
   | 'colors'
+  | 'displayName'
   | 'profilePublic'
   | 'keyboardPublic'
   | 'data'
@@ -88,6 +89,11 @@ export const SETTINGS: readonly SettingMeta[] = [
   { id: 'background', category: 'appearance', keywords: ['image', 'wallpaper', 'picture'] },
   { id: 'theme', category: 'appearance', keywords: ['colors', 'preset', 'dark', 'light'] },
   { id: 'colors', category: 'appearance', keywords: ['palette', 'custom', 'hex'] },
+  {
+    id: 'displayName',
+    category: 'account',
+    keywords: ['nickname', 'nick', 'rename', 'name', 'ник', 'никнейм', 'имя', 'переименовать']
+  },
   {
     id: 'profilePublic',
     category: 'account',

@@ -8,6 +8,46 @@
     </div>
 
     <template v-else>
+      <SettingRow id="displayName">
+        <form class="flex w-full items-center gap-2" @submit.prevent="onRename">
+          <Input
+            v-model="nameDraft"
+            :disabled="renameLocked || renaming"
+            :aria-label="t('settings.displayName.label')"
+            data-testid="settings-display-name"
+          />
+          <Button
+            type="submit"
+            color="main"
+            size="s"
+            :disabled="renameLocked || renaming || !renameable"
+            data-testid="settings-display-name-save"
+          >
+            {{ t('settings.displayName.save') }}
+          </Button>
+        </form>
+        <template #note>
+          <Typography
+            v-if="renameLocked"
+            size="xs"
+            color="sub"
+            tag-name="p"
+            data-testid="settings-display-name-cooldown"
+          >
+            {{ t('settings.displayName.cooldown', { date: nextRenameDate }) }}
+          </Typography>
+          <Typography
+            v-else-if="renameError"
+            size="xs"
+            color="error"
+            tag-name="p"
+            data-testid="settings-display-name-error"
+          >
+            {{ t(renameError) }}
+          </Typography>
+        </template>
+      </SettingRow>
+
       <SettingRow id="profilePublic">
         <Switch
           :model-value="profilePublic"
@@ -57,17 +97,23 @@
 </template>
 
 <script setup lang="ts">
-  import { computed } from 'vue'
+  import { computed, ref, watch } from 'vue'
   import { useQuery } from '@tanstack/vue-query'
   import { useI18n } from 'vue-i18n'
 
   import {
+    isApiError,
     meQueryOptions,
+    useChangeDisplayNameMutation,
     useUpdateSettingsMutation,
     type SettingsInput
   } from '@shared/api'
   import { gatedBy } from '@shared/lib/helpers/gated-query'
   import { useAuthStore } from '@/entities/auth'
+  import { formatShortDate } from '@/shared/lib/helpers/datetime'
+  import { Button } from '@/shared/ui/button'
+  import { Input } from '@/shared/ui/input'
+  import { toast } from '@/shared/ui/sonner'
   import { Switch } from '@/shared/ui/switch'
   import { Typography } from '@/shared/ui/typography'
   import SettingRow from './SettingRow.vue'
@@ -88,7 +134,7 @@
    * which the mutation writes straight into that cache — the switch settles on
    * the server's answer, not on optimism.
    */
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const authStore = useAuthStore()
 
   const me = useQuery(computed(() => gatedBy(meQueryOptions(), authStore.isAuth)))
@@ -100,6 +146,61 @@
   const failed = computed(() => mutation.isError.value)
 
   const save = (input: SettingsInput): void => void mutation.mutate(input)
+
+  /** Once per 30 days — the client-side twin of the server's cooldown predicate. */
+  const RENAME_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000
+
+  const nameDraft = ref('')
+  watch(
+    () => me.data.value?.displayName,
+    (name) => {
+      if (name !== undefined) nameDraft.value = name
+    },
+    { immediate: true }
+  )
+
+  const nextRenameAt = computed(() => {
+    const changed = me.data.value?.displayNameChangedAt
+    if (!changed) return null
+    const at = Date.parse(changed) + RENAME_COOLDOWN_MS
+    return at > Date.now() ? at : null
+  })
+  const renameLocked = computed(() => nextRenameAt.value !== null)
+  const nextRenameDate = computed(() =>
+    nextRenameAt.value === null
+      ? ''
+      : formatShortDate(new Date(nextRenameAt.value).toISOString(), locale.value)
+  )
+  const renameable = computed(() => {
+    const draft = nameDraft.value.trim()
+    return draft !== '' && draft !== (me.data.value?.displayName ?? '')
+  })
+
+  const rename = useChangeDisplayNameMutation()
+  const renaming = computed(() => rename.isPending.value)
+  const renameError = ref<string | null>(null)
+
+  const RENAME_ERROR_KEYS: Record<string, string> = {
+    name_taken: 'settings.displayName.errors.taken',
+    display_name_cooldown: 'settings.displayName.errors.cooldown',
+    bad_request: 'settings.displayName.errors.invalid'
+  }
+
+  const onRename = (): void => {
+    if (!renameable.value || renameLocked.value) return
+    renameError.value = null
+    rename.mutate(
+      { displayName: nameDraft.value.trim() },
+      {
+        onSuccess: () => toast(t('settings.displayName.renamed')),
+        onError: (error) => {
+          renameError.value =
+            (isApiError(error) && RENAME_ERROR_KEYS[error.code]) ||
+            'settings.displayName.errors.generic'
+        }
+      }
+    )
+  }
 </script>
 
 <style lang="scss" scoped>

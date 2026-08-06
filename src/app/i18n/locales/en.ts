@@ -240,6 +240,19 @@ export default {
     },
     profileSave: 'save profile',
     profileSaved: 'saved',
+    displayName: {
+      label: 'nickname',
+      description: 'Changes once every 30 days; the old /u/ link stops working.',
+      save: 'rename',
+      renamed: 'nickname changed',
+      cooldown: 'the next change opens {date}',
+      errors: {
+        taken: 'that nickname is already in use',
+        cooldown: 'the nickname can change once every 30 days',
+        invalid: '3-20 characters: letters, digits, "_", ".", "-"',
+        generic: 'could not change the nickname — try again'
+      }
+    },
     profilePublic: {
       label: 'public profile',
       description: 'Off, visitors see only your nick. Leaderboard runs stay public either way.'
