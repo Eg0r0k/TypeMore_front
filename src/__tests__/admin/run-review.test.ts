@@ -73,7 +73,8 @@ function mountReview() {
     history: createMemoryHistory(),
     routes: [
       { path: '/', name: 'home', component: { template: '<div />' } },
-      { path: '/u/:name', name: 'user', component: { template: '<div />' } }
+      { path: '/u/:name', name: 'user', component: { template: '<div />' } },
+      { path: '/replay/:runId', name: 'replay', component: { template: '<div />' } }
     ]
   })
   return mount(RunReview, {
@@ -112,6 +113,9 @@ describe('the run review queue', () => {
     expect(item.get('[data-testid="admin-run-suspicion"]').text()).toBe('0.42')
     expect(item.text()).toContain('212 wpm')
     expect(item.text()).toContain('99%')
+    expect(item.get('[data-testid="admin-run-replay"]').attributes('href')).toBe(
+      `/replay/${RUN_ID}`
+    )
   })
 
   it('marks a hand-decided run, because "already handled" is what a reviewer needs first', async () => {

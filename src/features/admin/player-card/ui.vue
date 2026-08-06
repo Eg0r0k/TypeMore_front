@@ -2,35 +2,44 @@
   <section class="flex min-w-0 flex-col gap-4" :aria-label="t('admin.players.label')">
     <SectionHeader :title="t('admin.players.label')" :description="t('admin.players.lead')" />
 
-    <form class="mt-1 flex flex-wrap items-center gap-2" @submit.prevent="onSearch">
-      <Input
-        v-model="draft"
+    <form class="mt-1 flex max-w-xl flex-col gap-1" @submit.prevent="onSubmit">
+      <SearchBar
+        v-model="search.query.value"
         :placeholder="t('admin.players.searchPlaceholder')"
-        class="min-w-64 flex-1"
         data-testid="admin-player-search"
       />
-      <Button
-        type="submit"
-        color="main"
-        size="s"
-        :disabled="draft.trim() === ''"
-        data-testid="admin-player-open"
+      <ul
+        v-if="suggestionsShown"
+        class="flex flex-col gap-0.5"
+        :aria-busy="search.refreshing.value"
+        data-testid="admin-player-suggestions"
       >
-        {{ t('admin.players.search') }}
-      </Button>
+        <li v-for="hit in search.hits.value" :key="hit.name">
+          <button
+            type="button"
+            class="focus-ring flex w-full items-baseline gap-2 rounded-[6px] px-3 py-2 text-start transition-tm hover:bg-sub-alt"
+            :data-testid="`admin-player-suggestion-${hit.name}`"
+            @click="pick(hit.name)"
+          >
+            <span class="min-w-0 truncate text-sm text-text">{{ hit.name }}</span>
+            <span class="ms-auto shrink-0 text-xs text-sub">
+              {{ formatShortDate(hit.joined, locale) }}
+            </span>
+          </button>
+        </li>
+      </ul>
+      <Typography v-else-if="identifier === null" size="xs" color="sub">
+        {{ t('admin.players.searchHint') }}
+      </Typography>
     </form>
 
     <template v-if="identifier !== null">
       <div v-if="bans.isPending.value" class="flex flex-col gap-2">
-        <div v-for="i in 2" :key="i" class="h-16 animate-pulse rounded-[6px] bg-sub-alt" />
+        <div class="h-20 animate-pulse rounded-[6px] bg-sub-alt" />
+        <div class="h-40 animate-pulse rounded-[6px] bg-sub-alt" />
       </div>
 
-      <Typography
-        v-else-if="notFound"
-        size="s"
-        color="sub"
-        data-testid="admin-player-not-found"
-      >
+      <Typography v-else-if="notFound" size="s" color="sub" data-testid="admin-player-not-found">
         {{ t('admin.players.notFound') }}
       </Typography>
 
@@ -43,7 +52,7 @@
             color="shadow"
             size="s"
             :data-testid="`admin-player-candidate-${candidate.displayName}`"
-            @click="pick(candidate)"
+            @click="pickCandidate(candidate)"
           >
             {{ candidate.displayName }}
           </Button>
@@ -57,38 +66,53 @@
         </Button>
       </div>
 
-      <template v-else-if="bans.data.value !== undefined">
+      <article
+        v-else-if="bans.data.value !== undefined"
+        class="flex flex-col gap-6 rounded-[6px] bg-sub-alt/25 p-4 sm:p-5"
+      >
         <div
-          class="flex flex-wrap items-baseline gap-x-3 gap-y-1"
+          class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-2 sm:grid-cols-[auto_minmax(0,1fr)_auto]"
           data-testid="admin-player-header"
         >
-          <Typography tag-name="h2" size="l" color="primary">
-            {{ bans.data.value.user.displayName }}
-          </Typography>
-          <span
-            v-if="bans.data.value.restricted"
-            class="text-sm font-semibold text-error"
-            data-testid="admin-player-restricted"
-          >
-            {{ t('admin.players.restricted') }}
-          </span>
-          <span class="font-mono text-xs text-sub">{{ bans.data.value.user.id }}</span>
-          <RouterLink
-            :to="routeLocation.user(bans.data.value.user.displayName)"
-            class="link-main text-sm"
-            data-testid="admin-player-profile-link"
-          >
-            {{ t('admin.players.openProfile') }}
-          </RouterLink>
+          <UserAvatar :name="bans.data.value.user.displayName" :src="null" class="size-12" />
+          <div class="flex min-w-0 flex-col gap-0.5">
+            <div class="flex min-w-0 flex-wrap items-baseline gap-x-2">
+              <Typography tag-name="h3" size="l" color="primary" class="min-w-0 truncate">
+                {{ bans.data.value.user.displayName }}
+              </Typography>
+              <span
+                v-if="bans.data.value.restricted"
+                class="text-sm font-semibold text-error"
+                data-testid="admin-player-restricted"
+              >
+                {{ t('admin.players.restricted') }}
+              </span>
+            </div>
+            <span class="truncate font-mono text-xs text-sub">{{ bans.data.value.user.id }}</span>
+          </div>
+          <Button as-child color="shadow" size="s" class="col-span-2 justify-self-start sm:col-span-1 sm:justify-self-auto">
+            <RouterLink
+              :to="routeLocation.user(bans.data.value.user.displayName)"
+              data-testid="admin-player-profile-link"
+            >
+              {{ t('admin.players.openProfile') }}
+            </RouterLink>
+          </Button>
         </div>
 
-        <BansSection
-          :user="bans.data.value.user"
-          :bans="bans.data.value.bans"
-          :can-write="canBanWrite"
-        />
-        <BadgesSection v-if="badges.data.value" :data="badges.data.value" :can-write="canBanWrite" />
-      </template>
+        <div class="grid items-start gap-x-8 gap-y-6 lg:grid-cols-2">
+          <BansSection
+            :user="bans.data.value.user"
+            :bans="bans.data.value.bans"
+            :can-write="canBanWrite"
+          />
+          <BadgesSection
+            v-if="badges.data.value"
+            :data="badges.data.value"
+            :can-write="canBanWrite"
+          />
+        </div>
+      </article>
     </template>
   </section>
 </template>
@@ -108,30 +132,59 @@
     type AdminUser
   } from '@shared/api'
   import { usePermissions } from '@/entities/auth'
+  import { usePlayerSearch } from '@/features/friends/player-search'
+  import { formatShortDate } from '@/shared/lib/helpers/datetime'
   import { routeLocation } from '@/shared/router'
+  import { UserAvatar } from '@/shared/ui/avatar'
   import { Button } from '@/shared/ui/button'
-  import { Input } from '@/shared/ui/input'
+  import { SearchBar } from '@/shared/ui/search'
   import { Typography } from '@/shared/ui/typography'
   import SectionHeader from '../parts/section-header.vue'
   import BadgesSection from './badges-section.vue'
   import BansSection from './bans-section.vue'
 
   /**
-   * One player, everything a moderator can do to them. The server resolves the
-   * identifier (uuid → email → nick, refusing ambiguity with the candidates),
-   * so this card never guesses: a 409 renders as a choice, and picking one
-   * re-asks by uuid.
+   * One player, everything a moderator can do to them. Typing offers NAME
+   * suggestions (the same live search the friends page uses); a uuid or an
+   * email is submitted as typed with Enter. The server owns resolution
+   * (uuid → email → nick, refusing ambiguity with candidates), so this card
+   * never guesses: a 409 renders as a choice, and picking one re-asks by uuid.
    */
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const { can } = usePermissions()
   const canBanWrite = computed(() => can('bans:write'))
 
-  const draft = ref('')
+  const search = usePlayerSearch()
   const identifier = ref<string | null>(null)
+  /** What the identifier was picked AS — suggestions hide until the query moves again. */
+  const pickedQuery = ref('')
 
-  const onSearch = (): void => {
-    if (draft.value.trim() === '') return
-    identifier.value = draft.value.trim()
+  const suggestionsShown = computed(
+    () =>
+      search.hits.value.length > 0 &&
+      search.query.value.trim() !== '' &&
+      search.query.value.trim() !== pickedQuery.value
+  )
+
+  const open = (value: string): void => {
+    pickedQuery.value = value
+    identifier.value = value
+  }
+
+  const pick = (name: string): void => {
+    search.query.value = name
+    open(name)
+  }
+
+  const onSubmit = (): void => {
+    const value = search.query.value.trim()
+    if (value !== '') open(value)
+  }
+
+  const pickCandidate = (candidate: AdminUser): void => {
+    search.query.value = candidate.displayName
+    pickedQuery.value = candidate.displayName
+    identifier.value = candidate.id
   }
 
   const enabledOn = <T extends object>(options: T, on: boolean): T & { enabled: boolean } => ({
@@ -140,7 +193,9 @@
   })
 
   const bans = useQuery(
-    computed(() => enabledOn(playerBansQueryOptions(identifier.value ?? ''), identifier.value !== null))
+    computed(() =>
+      enabledOn(playerBansQueryOptions(identifier.value ?? ''), identifier.value !== null)
+    )
   )
   const badges = useQuery(
     computed(() =>
@@ -161,9 +216,4 @@
     const parsed = v.safeParse(ResolutionCandidatesSchema, bans.error.value.details)
     return parsed.success ? parsed.output.candidates : []
   })
-
-  const pick = (candidate: AdminUser): void => {
-    draft.value = candidate.displayName
-    identifier.value = candidate.id
-  }
 </script>

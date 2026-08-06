@@ -31,6 +31,7 @@ const h = vi.hoisted(() => {
     badges: vi.fn(),
     issueBan: vi.fn(),
     revokeBan: vi.fn(),
+    suggest: vi.fn(),
     permissions: ['bans:read', 'bans:write'] as string[]
   }
 })
@@ -48,6 +49,18 @@ vi.mock('@shared/api', async () => {
   })
   return {
     isApiError: (value: unknown): boolean => value instanceof h.MockApiError,
+    // The live-search trio usePlayerSearch reads; the real bounds, so the
+    // "does not ask below three characters" behaviour stays real.
+    SEARCH_MIN_QUERY_LEN: 3,
+    isSearchable: (query: string): boolean => {
+      const length = [...query.trim()].length
+      return length >= 3 && length <= 20
+    },
+    userSearchQueryOptions: (query: string) => ({
+      queryKey: ['users', 'search', query.trim()],
+      queryFn: () => h.suggest(query),
+      retry: false
+    }),
     ResolutionCandidatesSchema: v.object({
       candidates: v.array(v.object({ id: v.string(), displayName: v.string() }))
     }),
@@ -134,8 +147,8 @@ function mountCard() {
 }
 
 async function search(wrapper: ReturnType<typeof mountCard>, query: string): Promise<void> {
-  await wrapper.get('[data-testid="admin-player-search"]').setValue(query)
-  await wrapper.get('[data-testid="admin-player-open"]').trigger('submit')
+  await wrapper.get('[data-testid="admin-player-search"] input').setValue(query)
+  await wrapper.get('form').trigger('submit')
   await flushPromises()
 }
 
@@ -145,8 +158,35 @@ describe('the player card', () => {
     h.badges.mockReset()
     h.issueBan.mockReset()
     h.revokeBan.mockReset()
+    h.suggest.mockReset()
     h.permissions = ['bans:read', 'bans:write']
     h.badges.mockResolvedValue(badgesAnswer())
+    h.suggest.mockResolvedValue({ users: [] })
+  })
+
+  it('suggests names as you type, and a click opens the card', async () => {
+    vi.useFakeTimers()
+    try {
+      h.suggest.mockResolvedValue({
+        users: [{ name: 'grief3r', joined: '2026-07-01T10:00:00Z', public: true }]
+      })
+      h.bans.mockResolvedValue(bansAnswer())
+      const wrapper = mountCard()
+
+      await wrapper.get('[data-testid="admin-player-search"] input').setValue('grie')
+      await vi.advanceTimersByTimeAsync(300)
+      await flushPromises()
+
+      expect(h.suggest).toHaveBeenCalledWith('grie')
+      await wrapper.get('[data-testid="admin-player-suggestion-grief3r"]').trigger('click')
+      await flushPromises()
+
+      expect(h.bans).toHaveBeenCalledWith('grief3r')
+      expect(wrapper.get('[data-testid="admin-player-header"]').text()).toContain('grief3r')
+      expect(wrapper.find('[data-testid="admin-player-suggestions"]').exists()).toBe(false)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('renders the resolved player: restriction, ban history, badges', async () => {

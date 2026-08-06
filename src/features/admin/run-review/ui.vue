@@ -46,7 +46,7 @@
         :class="isOpen(run) ? 'bg-sub-alt/40' : 'hover:bg-sub-alt/25'"
         data-testid="admin-runs-item"
       >
-        <div class="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-4 px-3 py-2.5">
+        <div class="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-x-3 px-3 py-2.5">
           <div class="flex min-w-0 flex-col gap-0.5">
             <div class="flex min-w-0 items-baseline gap-x-2">
               <RouterLink
@@ -85,6 +85,16 @@
             {{ run.suspicion.toFixed(2) }}
           </span>
 
+          <RouterLink
+            :to="{ name: ROUTE_NAMES.REPLAY, params: { runId: run.id } }"
+            class="focus-ring flex items-center rounded-[6px] px-2.5 py-1.5 text-sub transition-tm hover:bg-sub-alt hover:text-text"
+            :aria-label="t('admin.runs.watchReplay')"
+            :title="t('admin.runs.watchReplay')"
+            data-testid="admin-run-replay"
+          >
+            <IconPlayerPlay class="size-4 shrink-0" aria-hidden="true" />
+          </RouterLink>
+
           <button
             type="button"
             class="focus-ring flex items-center rounded-[6px] px-2.5 py-1.5 text-sub transition-tm hover:bg-sub-alt hover:text-text"
@@ -114,11 +124,12 @@
   import { RouterLink } from 'vue-router'
   import IconKeyboard from '~icons/tabler/keyboard'
   import IconChevronDown from '~icons/tabler/chevron-down'
+  import IconPlayerPlay from '~icons/tabler/player-play'
 
   import { reviewQueueQueryOptions, type ReviewRow } from '@shared/api'
   import { usePermissions } from '@/entities/auth'
   import { formatShortDate } from '@/shared/lib/helpers/datetime'
-  import { routeLocation } from '@/shared/router'
+  import { ROUTE_NAMES, routeLocation } from '@/shared/router'
   import { Button } from '@/shared/ui/button'
   import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
   import { Typography } from '@/shared/ui/typography'
