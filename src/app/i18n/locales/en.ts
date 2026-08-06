@@ -988,6 +988,8 @@ export default {
       lead: 'one player, everything a moderator can do to them: resolution, bans, badges.',
       searchPlaceholder: 'name, uuid or email',
       searchHint: 'names suggest as you type; a uuid or an email opens with Enter',
+      searching: 'searching…',
+      searchFailed: 'the name search failed — suggestions are unavailable, Enter still opens an exact identifier',
       search: 'open',
       notFound: 'no exact match — an identifier is a full name, uuid or email; partial names search via suggestions',
       ambiguous: 'more than one account matches — pick one:',

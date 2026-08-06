@@ -210,6 +210,42 @@ describe('the player card', () => {
     )
   })
 
+  it('keeps suggesting after an Enter — the reported regression', async () => {
+    vi.useFakeTimers()
+    try {
+      h.suggest.mockResolvedValue({
+        users: [{ name: 'grief3r', joined: '2026-07-01T10:00:00Z', public: true }]
+      })
+      h.bans.mockImplementation(() => Promise.reject(new h.MockApiError(404, 'not_found')))
+      const wrapper = mountCard()
+
+      await wrapper.get('[data-testid="admin-player-search"] input').setValue('grie')
+      await vi.advanceTimersByTimeAsync(300)
+      await flushPromises()
+      expect(wrapper.find('[data-testid="admin-player-suggestions"]').exists()).toBe(true)
+
+      // Enter on the partial query: no exact match, the not-found state shows.
+      await wrapper.get('form').trigger('submit')
+      await flushPromises()
+      expect(wrapper.find('[data-testid="admin-player-suggestions"]').exists()).toBe(false)
+
+      // Typing on MUST bring the suggestions back.
+      h.suggest.mockResolvedValue({
+        users: [{ name: 'boardsmoke', joined: '2026-07-01T10:00:00Z', public: true }]
+      })
+      await wrapper.get('[data-testid="admin-player-search"] input').setValue('boar')
+      await vi.advanceTimersByTimeAsync(300)
+      await flushPromises()
+
+      expect(h.suggest).toHaveBeenLastCalledWith('boar')
+      expect(wrapper.find('[data-testid="admin-player-suggestion-boardsmoke"]').exists()).toBe(
+        true
+      )
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('opens straight from ?u= — the hop another admin screen makes', async () => {
     h.bans.mockResolvedValue(bansAnswer())
     const router = makeRouter()

@@ -28,6 +28,24 @@
           </button>
         </li>
       </ul>
+      <Typography
+        v-else-if="search.state.value === 'searching'"
+        size="xs"
+        color="sub"
+        role="status"
+        data-testid="admin-player-searching"
+      >
+        {{ t('admin.players.searching') }}
+      </Typography>
+      <Typography
+        v-else-if="search.state.value === 'error'"
+        size="xs"
+        color="error"
+        role="status"
+        data-testid="admin-player-search-error"
+      >
+        {{ t('admin.players.searchFailed') }}
+      </Typography>
       <Typography v-else-if="identifier === null" size="xs" color="sub">
         {{ t('admin.players.searchHint') }}
       </Typography>
