@@ -27,7 +27,7 @@
       >
         <!-- Its own provider: the report button carries a tooltip, and this
              header is mounted by pages that have no reason to know that. -->
-        <TooltipProvider v-if="!shareName || !canReport" :delay-duration="80">
+        <TooltipProvider v-if="shareName || canReport" :delay-duration="80">
           <div class="flex items-center gap-1.5">
             <ProfileCopyLink v-if="shareName" :name="shareName" />
             <Tooltip v-if="canReport">
